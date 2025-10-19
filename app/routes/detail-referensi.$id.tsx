@@ -1,14 +1,14 @@
-import { useNavigate, useParams } from 'react-router'
-import Header from '~/components/header'
-import Footer from '~/components/footer'
+import { useNavigate, useParams } from "react-router";
+import Header from "~/components/header";
+import Footer from "~/components/footer";
 
 const DetailReferensi = () => {
-  const navigate = useNavigate()
-  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
 
   const handleBack = () => {
-    navigate('/referensi')
-  }
+    navigate("/referensi");
+  };
 
   return (
     <>
@@ -24,7 +24,9 @@ const DetailReferensi = () => {
                   &lt;
                 </button>
                 <div className="text-white text-2xl font-bold text-center leading-relaxed">
-                  Gambar<br />Instansi
+                  Gambar
+                  <br />
+                  Instansi
                 </div>
                 <button className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-colors z-10">
                   &gt;
@@ -41,7 +43,9 @@ const DetailReferensi = () => {
                 >
                   Kembali
                 </span>
-                <h1 className="text-4xl font-bold text-gray-900">PT. Cinta Sejati</h1>
+                <h1 className="text-4xl font-bold text-gray-900">
+                  PT. Cinta Sejati
+                </h1>
               </div>
 
               <div className="mb-8">
@@ -67,7 +71,9 @@ const DetailReferensi = () => {
                   Lokasi organisasi
                 </button>
                 <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center">
-                  <div className="text-white text-2xl font-bold">Preview Maps</div>
+                  <div className="text-white text-2xl font-bold">
+                    Preview Maps
+                  </div>
                 </div>
               </div>
             </div>
@@ -77,7 +83,7 @@ const DetailReferensi = () => {
 
       <Footer />
     </>
-  )
-}
+  );
+};
 
-export default DetailReferensi
+export default DetailReferensi;
