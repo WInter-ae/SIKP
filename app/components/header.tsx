@@ -10,7 +10,7 @@ const Header = () => {
   };
 
   return (
-    <header
+    <headerjobivb uyivovbiu
       className={`bg-gradient-to-r from-primary to-secondary shadow-md transition-colors duration-300`}
     >
       <div className="container mx-auto px-4">
