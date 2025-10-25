@@ -27,7 +27,7 @@ const Header = () => {
                 className={`text-white text-sm hover:opacity-80 transition-opacity ${isActive("/")}`}
 
               >
-                Beranda
+                Beranda KENTANG GORENG
               </Link>
               <Link
                 to="/referensi"
