@@ -9,7 +9,11 @@ const Header = () => {
     return location.pathname === path ? "font-bold" : "";
   };
 
+<<<<<<< Updated upstream
   return (gagag
+=======
+  return (
+>>>>>>> Stashed changes
     <header
       className={`bg-gradient-to-r from-primary to-secondary shadow-md transition-colors duration-300`}
     >
