@@ -16,7 +16,7 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-3">
           <div className="text-white text-xl font-bold px-5 py-2 bg-white/10 rounded">
-            LOGO
+            LOGO Amba
           </div>
 
           {/* Navigation and Theme Toggle in the same row */}
