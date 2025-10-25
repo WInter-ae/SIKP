@@ -153,6 +153,6 @@ const Beranda = () => {
   );
 };
 
-thtrtrjetj56ueudryuhhew5y
+join dong
 
 export default Beranda;
