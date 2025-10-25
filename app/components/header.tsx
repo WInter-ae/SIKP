@@ -9,8 +9,8 @@ const Header = () => {
     return location.pathname === path ? "font-bold" : "";
   };
 
-  return (
-    <headerjobivb uyivovbiu
+  return (gagag
+    <header
       className={`bg-gradient-to-r from-primary to-secondary shadow-md transition-colors duration-300`}
     >
       <div className="container mx-auto px-4">
@@ -25,8 +25,9 @@ const Header = () => {
               <Link
                 to="/"
                 className={`text-white text-sm hover:opacity-80 transition-opacity ${isActive("/")}`}
+
               >
-                Beranda
+                Beranda KENTANG GORENG
               </Link>
               <Link
                 to="/referensi"
