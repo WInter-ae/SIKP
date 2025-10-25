@@ -153,4 +153,6 @@ const Beranda = () => {
   );
 };
 
+thtrtrjetj56ueudryuhhew5y
+
 export default Beranda;
