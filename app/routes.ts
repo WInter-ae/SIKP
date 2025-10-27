@@ -4,5 +4,3 @@ import { flatRoutes } from "@react-router/fs-routes";
 export default flatRoutes({
   ignoredRouteFiles: ["home.tsx"],
 }) satisfies RouteConfig;
-
-haloo
