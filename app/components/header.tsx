@@ -9,7 +9,7 @@ const Header = () => {
     return location.pathname === path ? "font-bold" : "";
   };
 
-  return (gagag
+  return (
     <header
       className={`bg-gradient-to-r from-primary to-secondary shadow-md transition-colors duration-300`}
     >
