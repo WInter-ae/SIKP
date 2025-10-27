@@ -153,6 +153,4 @@ const Beranda = () => {
   );
 };
 
-join dong
-
 export default Beranda;
