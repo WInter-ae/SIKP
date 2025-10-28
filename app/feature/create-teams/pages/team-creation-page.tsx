@@ -1,9 +1,8 @@
 import React from "react";
-import Timeline from "~/components/timeline";
-import AddMemberForm from "~/components/add-member";
-import MemberList from "~/components/member-list";
+import Timeline from "~/feature/create-teams/components/timeline";
+import MemberList from "~/feature/create-teams/components/member-list";
 
-const TeamCreation = () => {
+const TeamCreationPage = () => {
   const teamMembers = [
     { id: 1, name: "Adam", role: "Ketua (Anda)", isLeader: true },
     { id: 2, name: "Robin", role: "Anggota" },
@@ -43,7 +42,6 @@ const TeamCreation = () => {
           <p className="text-green-800">Anda adalah Ketua Tim</p>
         </div>
 
-        <AddMemberForm />
 
         <MemberList title="Daftar Anggota" members={teamMembers} />
         <MemberList
@@ -67,4 +65,4 @@ const TeamCreation = () => {
   );
 };
 
-export default TeamCreation;
+export default TeamCreationPage;
