@@ -42,7 +42,6 @@ const TeamCreationPage = () => {
           <p className="text-green-800">Anda adalah Ketua Tim</p>
         </div>
 
-
         <MemberList title="Daftar Anggota" members={teamMembers} />
         <MemberList
           title="Daftar Permintaan Gabung Tim"
