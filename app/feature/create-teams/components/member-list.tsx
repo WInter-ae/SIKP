@@ -1,4 +1,3 @@
-import React from "react";
 import type { MemberListProps } from "../types";
 
 function MemberList({ title, members, showActions = false }: MemberListProps) {
