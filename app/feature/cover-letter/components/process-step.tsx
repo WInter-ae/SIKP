@@ -4,23 +4,9 @@ import { DocIcon } from "~/components/icons/doc";
 import { TimeCircleIcon } from "~/components/icons/time-circle";
 import { RedoIcon } from "~/components/icons/redo";
 import { CheckIcon } from "~/components/icons/check";
+import type { ProcessStepProps } from "../types";
 
-interface ProcessStepProps {
-  title: string;
-  description: string;
-  /**
-   * @deprecated The icon is now determined by the status prop.
-   * This prop is no longer used.
-   */
-  icon?: string;
-  status: "submitted" | "rejected" | "resubmitted" | "approved";
-  comment?: string;
-  onAction?: () => void;
-  actionText?: string;
-  showDocumentPreview?: boolean;
-}
-
-const ProcessStep: React.FC<ProcessStepProps> = ({
+function ProcessStep({
   title,
   description,
   status,
@@ -28,7 +14,7 @@ const ProcessStep: React.FC<ProcessStepProps> = ({
   onAction,
   actionText,
   showDocumentPreview = false,
-}) => {
+}: ProcessStepProps) {
   const getStatusStyles = () => {
     switch (status) {
       case "submitted":
@@ -118,6 +104,6 @@ const ProcessStep: React.FC<ProcessStepProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default ProcessStep;

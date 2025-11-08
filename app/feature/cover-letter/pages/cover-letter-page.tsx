@@ -1,8 +1,7 @@
-import React from "react";
 import ProcessStep from "~/feature/cover-letter/components/process-step";
 import Timeline from "~/feature/cover-letter/components/timeline";
 
-const CoverLetterPage = () => {
+function CoverLetterPage() {
   const handleResubmit = () => {
     console.log("Resubmit application");
   };
@@ -63,6 +62,6 @@ const CoverLetterPage = () => {
       </main>
     </div>
   );
-};
+}
 
 export default CoverLetterPage;
