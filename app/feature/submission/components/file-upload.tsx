@@ -1,11 +1,7 @@
 import React, { useState } from "react";
+import type { FileUploadProps } from "../types";
 
-interface FileUploadProps {
-  label: string;
-  onFileChange?: (file: File) => void;
-}
-
-const FileUpload: React.FC<FileUploadProps> = ({ label, onFileChange }) => {
+function FileUpload({ label, onFileChange }: FileUploadProps) {
   const [fileName, setFileName] = useState<string>("");
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
@@ -69,6 +65,6 @@ const FileUpload: React.FC<FileUploadProps> = ({ label, onFileChange }) => {
       </div>
     </div>
   );
-};
+}
 
 export default FileUpload;

@@ -3,9 +3,9 @@ import Timeline from "../components/timeline";
 import FileUpload from "../components/file-upload";
 import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
-import type { AdditionalInfoData } from "../components/submission-types";
+import type { AdditionalInfoData } from "../types";
 
-const SubmissionPage = () => {
+function SubmissionPage() {
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfoData>({
     tujuanSurat: "",
     namaTempat: "",
@@ -106,6 +106,6 @@ const SubmissionPage = () => {
       </main>
     </div>
   );
-};
+}
 
 export default SubmissionPage;

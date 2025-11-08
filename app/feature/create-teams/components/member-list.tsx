@@ -1,23 +1,7 @@
 import React from "react";
+import type { MemberListProps } from "../types";
 
-interface Member {
-  id: number;
-  name: string;
-  role: string;
-  isLeader?: boolean;
-}
-
-interface MemberListProps {
-  title: string;
-  members: Member[];
-  showActions?: boolean;
-}
-
-const MemberList: React.FC<MemberListProps> = ({
-  title,
-  members,
-  showActions = false,
-}) => {
+function MemberList({ title, members, showActions = false }: MemberListProps) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
       <div className="bg-gray-100 px-6 py-3 font-semibold text-gray-800 border-b">
@@ -69,6 +53,6 @@ const MemberList: React.FC<MemberListProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default MemberList;

@@ -1,5 +1,3 @@
-import React from "react";
-
 interface TimelineItem {
   id: number;
   title: string;

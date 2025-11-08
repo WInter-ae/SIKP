@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import type { AdditionalInfoData } from "../components/submission-types";
+import type { AdditionalInfoData } from "../types";
 
 interface AdditionalInfoFormProps {
   onDataChange?: (data: AdditionalInfoData) => void;
 }
 
-const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
-  onDataChange,
-}) => {
+function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
   const [formData, setFormData] = useState<AdditionalInfoData>({
     tujuanSurat: "",
     namaTempat: "",
@@ -17,14 +15,14 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
     pembimbingLapangan: "",
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     const updatedFormData = { ...formData, [name]: value };
     setFormData(updatedFormData);
     if (onDataChange) {
       onDataChange(updatedFormData);
     }
-  };
+  }
 
   return (
     <div className="mb-8">
@@ -111,6 +109,6 @@ const AdditionalInfoForm: React.FC<AdditionalInfoFormProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default AdditionalInfoForm;

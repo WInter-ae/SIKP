@@ -1,25 +1,7 @@
 import React, { useState } from "react";
+import type { DocumentDropdownProps } from "../types";
 
-interface Member {
-  id: number;
-  name: string;
-  role: string;
-}
-
-interface Document {
-  id: number;
-  title: string;
-}
-
-interface DocumentDropdownProps {
-  document: Document;
-  members: Member[];
-}
-
-const DocumentDropdown: React.FC<DocumentDropdownProps> = ({
-  document,
-  members,
-}) => {
+function DocumentDropdown({ document, members }: DocumentDropdownProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [uploadedFiles, setUploadedFiles] = useState<{
     [key: number]: boolean;
@@ -74,6 +56,6 @@ const DocumentDropdown: React.FC<DocumentDropdownProps> = ({
       )}
     </div>
   );
-};
+}
 
 export default DocumentDropdown;
