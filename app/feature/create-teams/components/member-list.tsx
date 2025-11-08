@@ -9,7 +9,7 @@ function MemberList({ title, members, showActions = false }: MemberListProps) {
       <div className="p-6">
         {members.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
-            <i className="fas fa-users text-4xl mb-3 text-gray-300"></i>
+            <i className="fa fa-users text-4xl mb-3 text-gray-300"></i>
             <p>Tidak ada anggota</p>
           </div>
         ) : (

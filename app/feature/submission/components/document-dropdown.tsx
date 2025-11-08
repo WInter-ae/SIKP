@@ -26,7 +26,7 @@ function DocumentDropdown({ document, members }: DocumentDropdownProps) {
       >
         <span>{document.title}</span>
         <i
-          className={`fas ${isOpen ? "fa-chevron-up" : "fa-chevron-down"} text-gray-600`}
+          className={`fa ${isOpen ? "fa-chevron-up" : "fa-chevron-down"} text-gray-600`}
         ></i>
       </div>
 
