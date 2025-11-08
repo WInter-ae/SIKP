@@ -2,7 +2,7 @@ import Timeline from "~/feature/during-intern/components/timeline";
 import Card from "~/feature/during-intern/components/card";
 import { Link } from "react-router";
 
-const DuringInternPage = () => {
+function DuringInternPage() {
   return (
     <div className="min-h-screen bg-gray-100">
       <main className="max-w-6xl mx-auto p-6">
@@ -21,22 +21,22 @@ const DuringInternPage = () => {
           <Card
             title="Logbook"
             description="Catat aktivitas harian selama masa kerja praktik"
-            icon="fa-book"
+            icon=""
             to="/logbook"
           />
 
           <Card
             title="Penilaian"
             description="Lihat hasil penilaian dari pembimbing lapangan"
-            icon="fa-star"
+            icon=""
             to="/penilaian"
           />
 
           <Card
             title="Pengesahan"
             description="Dapatkan pengesahan dokumen kerja praktik"
-            icon="fa-check-circle"
-            to="/pengesahan"
+            icon=""
+            to="/ols"
           />
         </div>
 
@@ -59,6 +59,6 @@ const DuringInternPage = () => {
       </main>
     </div>
   );
-};
+}
 
 export default DuringInternPage;
