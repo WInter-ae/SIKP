@@ -1,4 +1,3 @@
-import React from "react";
 import Timeline from "~/feature/create-teams/components/timeline";
 import MemberList from "~/feature/create-teams/components/member-list";
 
@@ -41,7 +40,6 @@ const TeamCreationPage = () => {
           </p>
           <p className="text-green-800">Anda adalah Ketua Tim</p>
         </div>
-
 
         <MemberList title="Daftar Anggota" members={teamMembers} />
         <MemberList

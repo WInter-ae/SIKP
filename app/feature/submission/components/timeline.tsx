@@ -6,8 +6,8 @@ interface TimelineItem {
 
 const Timeline = () => {
   const timelineItems: TimelineItem[] = [
-    { id: 1, title: "Pembuatan Tim", active: true },
-    { id: 2, title: "Pengajuan", active: false },
+    { id: 1, title: "Pembuatan Tim", active: false },
+    { id: 2, title: "Pengajuan", active: true },
     { id: 3, title: "Surat Pengantar", active: false },
     { id: 4, title: "Surat Balasan", active: false },
     { id: 5, title: "Saat Magang", active: false },
