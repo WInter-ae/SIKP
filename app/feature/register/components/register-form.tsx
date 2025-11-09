@@ -19,46 +19,45 @@ export function RegisterForm({
     <form className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Create your account</h1>
+          <h1 className="text-2xl font-bold">Buat Akun Anda</h1>
           <p className="text-muted-foreground text-sm text-balance">
-            Fill in the form below to create your account
+            Isi formulir di bawah ini untuk membuat akun Anda
           </p>
         </div>
         <Field>
-          <FieldLabel htmlFor="name">Full Name</FieldLabel>
+          <FieldLabel htmlFor="name">Nama Lengkap</FieldLabel>
           <Input id="name" type="text" placeholder="John Doe" required />
         </Field>
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input id="email" type="email" placeholder="m@example.com" required />
           <FieldDescription>
-            We&apos;ll use this to contact you. We will not share your email
-            with anyone else.
+            Kami akan menggunakan email ini untuk menghubungi Anda. Kami tidak akan membagikan email Anda kepada siapa pun.
           </FieldDescription>
         </Field>
         <Field>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <FieldLabel htmlFor="password">Kata Sandi</FieldLabel>
           <Input id="password" type="password" required />
           <FieldDescription>
-            Must be at least 8 characters long.
+            Minimal 8 karakter.
           </FieldDescription>
         </Field>
         <Field>
-          <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
+          <FieldLabel htmlFor="confirm-password">Konfirmasi Kata Sandi</FieldLabel>
           <Input id="confirm-password" type="password" required />
-          <FieldDescription>Please confirm your password.</FieldDescription>
+          <FieldDescription>Silakan konfirmasi kata sandi Anda.</FieldDescription>
         </Field>
         <Field>
-          <Button type="submit">Create Account</Button>
+          <Button type="submit">Buat Akun</Button>
         </Field>
-        <FieldSeparator>Or continue with</FieldSeparator>
+        <FieldSeparator>Atau lanjutkan dengan</FieldSeparator>
         <Field>
           <Button variant="outline" type="button">
             <Github />
-            Sign up with GitHub
+            Daftar dengan GitHub
           </Button>
           <FieldDescription className="px-6 text-center">
-            Already have an account? <Link to="/login">Log In</Link>
+            Sudah punya akun? <Link to="/login">Masuk</Link>
           </FieldDescription>
         </Field>
       </FieldGroup>
