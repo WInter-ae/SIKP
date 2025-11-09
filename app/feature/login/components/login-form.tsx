@@ -3,6 +3,7 @@ import { Button } from "~/components/ui/button"
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
@@ -10,13 +11,48 @@ import {
 import { Input } from "~/components/ui/input"
 import { Github } from "lucide-react"
 import { Link } from "react-router"
+import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+
+// Schema validasi untuk form login
+const loginSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email wajib diisi")
+    .email("Format email tidak valid"),
+  password: z
+    .string()
+    .min(1, "Kata sandi wajib diisi")
+    .min(8, "Kata sandi minimal 8 karakter"),
+})
+
+type LoginFormData = z.infer<typeof loginSchema>
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    mode: "onBlur", // Validasi saat blur
+  })
+
+  const onSubmit = (data: LoginFormData) => {
+    console.log("Login data:", data)
+    // TODO: Implement login logic
+  }
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form
+      className={cn("flex flex-col gap-6", className)}
+      onSubmit={form.handleSubmit(onSubmit)}
+      {...props}
+    >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Masuk ke Akun Anda</h1>
@@ -24,26 +60,64 @@ export function LoginForm({
             Masukkan email Anda di bawah ini untuk masuk ke akun Anda
           </p>
         </div>
+
+        <Controller
+          name="email"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="email">Email</FieldLabel>
+              <Input
+                {...field}
+                id="email"
+                type="email"
+                placeholder="m@example.com"
+                aria-invalid={fieldState.invalid}
+                autoComplete="email"
+              />
+              {fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} />
+              )}
+            </Field>
+          )}
+        />
+
+        <Controller
+          name="password"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <div className="flex items-center">
+                <FieldLabel htmlFor="password">Kata Sandi</FieldLabel>
+                <Link
+                  to="#"
+                  className="ml-auto text-sm underline-offset-4 hover:underline"
+                >
+                  Lupa kata sandi?
+                </Link>
+              </div>
+              <Input
+                {...field}
+                id="password"
+                type="password"
+                aria-invalid={fieldState.invalid}
+                autoComplete="current-password"
+              />
+              {fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} />
+              )}
+            </Field>
+          )}
+        />
+
         <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Button type="submit" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? "Memproses..." : "Masuk"}
+          </Button>
         </Field>
-        <Field>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">Kata Sandi</FieldLabel>
-            <Link
-              to="#"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              Lupa kata sandi?
-            </Link>
-          </div>
-          <Input id="password" type="password" required />
-        </Field>
-        <Field>
-          <Button type="submit">Masuk</Button>
-        </Field>
+
         <FieldSeparator>Atau lanjutkan dengan</FieldSeparator>
+
         <Field>
           <Button variant="outline" type="button">
             <Github />
