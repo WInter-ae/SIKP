@@ -10,10 +10,12 @@ import {
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
 import { Github } from "lucide-react"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { authClient } from "~/lib/auth-client"
+import { useState } from "react"
 
 // Schema validasi untuk form login
 const loginSchema = z.object({
@@ -33,6 +35,9 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -42,9 +47,26 @@ export function LoginForm({
     mode: "onBlur", // Validasi saat blur
   })
 
-  const onSubmit = (data: LoginFormData) => {
-    console.log("Login data:", data)
-    // TODO: Implement login logic
+  const onSubmit = async (data: LoginFormData) => {
+    try {
+      setError(null)
+
+      const result = await authClient.signIn.email({
+        email: data.email,
+        password: data.password,
+      })
+
+      if (result.error) {
+        setError(result.error.message || "Login gagal. Silakan coba lagi.")
+        return
+      }
+
+      // Redirect ke halaman mahasiswa jika berhasil
+      navigate("/mahasiswa")
+    } catch (err) {
+      setError("Terjadi kesalahan. Silakan coba lagi.")
+      console.error("Login error:", err)
+    }
   }
 
   return (
@@ -60,6 +82,15 @@ export function LoginForm({
             Masukkan email Anda di bawah ini untuk masuk ke akun Anda
           </p>
         </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="rounded-md bg-destructive/15 p-3 text-sm text-destructive"
+          >
+            {error}
+          </div>
+        )}
 
         <Controller
           name="email"

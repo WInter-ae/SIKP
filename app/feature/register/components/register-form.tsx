@@ -10,10 +10,12 @@ import {
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
 import { Github } from "lucide-react"
-import { Link } from "react-router"
+import { Link, useNavigate } from "react-router"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import { authClient } from "~/lib/auth-client"
+import { useState } from "react"
 
 // Schema validasi untuk form register
 const registerSchema = z
@@ -47,6 +49,9 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const navigate = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -58,9 +63,27 @@ export function RegisterForm({
     mode: "onBlur", // Validasi saat blur
   })
 
-  const onSubmit = (data: RegisterFormData) => {
-    console.log("Register data:", data)
-    // TODO: Implement register logic
+  const onSubmit = async (data: RegisterFormData) => {
+    try {
+      setError(null)
+
+      const result = await authClient.signUp.email({
+        email: data.email,
+        password: data.password,
+        name: data.name,
+      })
+
+      if (result.error) {
+        setError(result.error.message || "Registrasi gagal. Silakan coba lagi.")
+        return
+      }
+
+      // Redirect ke halaman mahasiswa jika berhasil
+      navigate("/mahasiswa")
+    } catch (err) {
+      setError("Terjadi kesalahan. Silakan coba lagi.")
+      console.error("Register error:", err)
+    }
   }
 
   return (
@@ -76,6 +99,15 @@ export function RegisterForm({
             Isi formulir di bawah ini untuk membuat akun Anda
           </p>
         </div>
+
+        {error && (
+          <div
+            role="alert"
+            className="rounded-md bg-destructive/15 p-3 text-sm text-destructive"
+          >
+            {error}
+          </div>
+        )}
 
         <Controller
           name="name"
