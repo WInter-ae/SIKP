@@ -41,7 +41,7 @@ function SubmissionPage() {
 
   const handleSubmit = () => {
     console.log("Form submitted with data:", { additionalInfo });
-    navigate("/mahasiswa/surat-pengantar")
+    navigate("/mahasiswa/kp/surat-pengantar")
   };
 
   return (

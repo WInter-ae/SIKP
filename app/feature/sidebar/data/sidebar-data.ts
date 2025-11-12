@@ -21,7 +21,7 @@ import type { NavItem, UserRole } from "../types"
 const mahasiswaMenu: NavItem[] = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/mahasiswa",
     icon: Home,
   },
   {
@@ -32,23 +32,23 @@ const mahasiswaMenu: NavItem[] = [
     items: [
       {
         title: "Buat Tim",
-        url: "/mahasiswa/buat-tim",
+        url: "/mahasiswa/kp/buat-tim",
       },
       {
         title: "Pengajuan",
-        url: "/mahasiswa/pengajuan",
+        url: "/mahasiswa/kp/pengajuan",
       },
       {
         title: "Surat Pengantar",
-        url: "/mahasiswa/surat-pengantar",
+        url: "/mahasiswa/kp/surat-pengantar",
       },
       {
         title: "Surat Balasan",
-        url: "/mahasiswa/surat-balasan",
+        url: "/mahasiswa/kp/surat-balasan",
       },
       {
         title: "Saat Magang",
-        url: "/mahasiswa/saat-magang",
+        url: "/mahasiswa/kp/saat-magang",
       },
       {
         title: "Pasca Magang",
@@ -102,7 +102,7 @@ const mahasiswaMenu: NavItem[] = [
 const adminMenu: NavItem[] = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/admin",
     icon: Home,
   },
   {
@@ -169,7 +169,7 @@ const adminMenu: NavItem[] = [
 const dosenMenu: NavItem[] = [
   {
     title: "Dashboard",
-    url: "/dashboard",
+    url: "/dosen",
     icon: Home,
   },
   {

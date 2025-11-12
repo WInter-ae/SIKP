@@ -53,7 +53,7 @@ const TeamCreationPage = () => {
 
       <div className="text-center mt-8">
         <Button asChild className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-lg font-medium text-lg transition">
-          <Link to="/mahasiswa/pengajuan">
+          <Link to="/mahasiswa/kp/pengajuan">
             Selanjutnya
           </Link>
         </Button>
