@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import Timeline from "../components/timeline";
 import FileUpload from "../components/file-upload";
 import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
 import type { AdditionalInfoData } from "../types";
+import { useNavigate } from "react-router";
 
 function SubmissionPage() {
+  const navigate = useNavigate();
+
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfoData>({
     tujuanSurat: "",
     namaTempat: "",
@@ -39,23 +41,20 @@ function SubmissionPage() {
 
   const handleSubmit = () => {
     console.log("Form submitted with data:", { additionalInfo });
-    // Implement form submission logic here
+    navigate("/mahasiswa/surat-pengantar")
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Halaman Pengajuan Syarat Kerja Praktik
-          </h1>
-          <p className="text-gray-600">
-            Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
-            Praktik
-          </p>
-        </div>
-
-        <Timeline />
+    <>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          Halaman Pengajuan Syarat Kerja Praktik
+        </h1>
+        <p className="text-gray-600">
+          Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
+          Praktik
+        </p>
+      </div>
 
         <div className="bg-green-50 border-l-4 border-green-700 p-4 mb-8 rounded-r">
           <p className="text-green-800 flex items-center">
@@ -103,8 +102,7 @@ function SubmissionPage() {
             </button>
           </div>
         </div>
-      </main>
-    </div>
+    </>
   );
 }
 

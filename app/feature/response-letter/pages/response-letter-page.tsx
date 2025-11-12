@@ -1,10 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import FileUpload from "../components/file-upload";
 import StatusDropdown from "../components/status-dropdown";
 import ProcessSteps from "../components/process-step";
-import Timeline from "~/feature/response-letter/components/timeline";
+import { Link } from "react-router";
 
-const ReplyLetterPage = () => {
+function ResponseLetterPage() {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string>("");
   const [showProcessSteps, setShowProcessSteps] = useState<boolean>(false);
@@ -75,17 +75,15 @@ const ReplyLetterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Halaman Surat Balasan
-          </h1>
-          <p className="text-gray-600">
-            Upload surat balasan dan pantau status persetujuan kerja praktik
-          </p>
-        </div>
-        <Timeline />
+    <>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          Halaman Surat Balasan
+        </h1>
+        <p className="text-gray-600">
+          Upload surat balasan dan pantau status persetujuan kerja praktik
+        </p>
+      </div>
 
         <div className="bg-green-50 border-l-4 border-green-700 p-4 mb-8 rounded-r">
           <p className="text-green-800 flex items-center">
@@ -126,24 +124,23 @@ const ReplyLetterPage = () => {
         )}
 
         <div className="flex justify-between mt-8">
-          <a
-            href="/kebutuhan-magang"
+          <Link
+            to="/mahasiswa/surat-pengantar"
             className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
           >
             <i className="fas fa-arrow-left mr-2"></i>
             Sebelumnya
-          </a>
-          <a
-            href="#"
+          </Link>
+          <Link
+            to="/mahasiswa/saat-magang"
             className="flex items-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             Selanjutnya
             <i className="fas fa-arrow-right ml-2"></i>
-          </a>
+          </Link>
         </div>
-      </main>
-    </div>
+    </>
   );
-};
+}
 
-export default ReplyLetterPage;
+export default ResponseLetterPage;

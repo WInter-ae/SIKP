@@ -1,5 +1,6 @@
-import Timeline from "~/feature/create-teams/components/timeline";
 import MemberList from "~/feature/create-teams/components/member-list";
+import { Button } from "~/components/ui/button";
+import { Link } from "react-router";
 
 const TeamCreationPage = () => {
   const teamMembers = [
@@ -12,18 +13,15 @@ const TeamCreationPage = () => {
   const inviteRequests = [{ id: 4, name: "Rafly", role: "Mahasiswa" }];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="max-w-6xl mx-auto p-6">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Halaman Pembuatan Tim
-          </h1>
-          <p className="text-gray-600">
-            Buat tim Anda untuk melaksanakan Kerja Praktik
-          </p>
-        </div>
-
-        <Timeline />
+    <>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          Halaman Pembuatan Tim
+        </h1>
+        <p className="text-gray-600">
+          Buat tim Anda untuk melaksanakan Kerja Praktik
+        </p>
+      </div>
 
         <div className="flex space-x-4 mb-8">
           <button className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition">
@@ -53,13 +51,14 @@ const TeamCreationPage = () => {
           showActions={true}
         />
 
-        <div className="text-center mt-8">
-          <button className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-lg font-medium text-lg transition">
+      <div className="text-center mt-8">
+        <Button asChild className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-lg font-medium text-lg transition">
+          <Link to="/mahasiswa/pengajuan">
             Selanjutnya
-          </button>
-        </div>
-      </main>
-    </div>
+          </Link>
+        </Button>
+      </div>
+    </>
   );
 };
 
