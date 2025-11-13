@@ -125,14 +125,14 @@ function ResponseLetterPage() {
 
         <div className="flex justify-between mt-8">
           <Link
-            to="/mahasiswa/surat-pengantar"
+            to="/mahasiswa/kp/surat-pengantar"
             className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
           >
             <i className="fas fa-arrow-left mr-2"></i>
             Sebelumnya
           </Link>
           <Link
-            to="/mahasiswa/saat-magang"
+            to="/mahasiswa/kp/saat-magang"
             className="flex items-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
           >
             Selanjutnya

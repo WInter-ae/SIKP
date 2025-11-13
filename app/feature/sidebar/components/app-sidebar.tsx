@@ -1,0 +1,59 @@
+"use client"
+
+import * as React from "react"
+import { GraduationCap } from "lucide-react"
+
+import { NavMain } from "./nav-main"
+import { NavUser } from "./nav-user"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarRail,
+} from "~/components/ui/sidebar"
+import { getSidebarMenuByRole } from "../data/sidebar-data"
+import type { User } from "../types"
+
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  user?: User
+}
+
+// Default user untuk development/testing
+// Nanti bisa diganti dengan data user dari authentication context
+const defaultUser: User = {
+  name: "John Doe",
+  email: "john.doe@example.com",
+  avatar: "/avatars/default.jpg",
+  role: "mahasiswa", // Default role: mahasiswa
+}
+
+export function AppSidebar({ user = defaultUser, ...props }: AppSidebarProps) {
+  // Get menu items based on user role
+  const navItems = React.useMemo(() => getSidebarMenuByRole(user.role), [user.role])
+
+  return (
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <div className="flex items-center gap-2 px-2 py-4">
+          <div className="bg-primary text-primary-foreground flex aspect-square size-10 items-center justify-center rounded-lg">
+            <GraduationCap className="size-6" />
+          </div>
+          <div className="grid flex-1 text-left text-sm leading-tight">
+            <span className="truncate font-semibold">SIKP</span>
+            <span className="truncate text-xs text-muted-foreground">
+              Sistem Informasi Kerja Praktik
+            </span>
+          </div>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <NavMain items={navItems} />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser user={user} />
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
+  )
+}

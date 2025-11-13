@@ -3,12 +3,12 @@ import { useTimeline, TimelineStep } from "../context/timeline-context";
 
 // Mapping dari TimelineStep ke route path
 const TIMELINE_ROUTES: Record<TimelineStep, string> = {
-  [TimelineStep.BUAT_TIM]: "/mahasiswa/buat-tim",
-  [TimelineStep.PENGAJUAN]: "/mahasiswa/pengajuan",
-  [TimelineStep.SURAT_PENGANTAR]: "/mahasiswa/surat-pengantar",
-  [TimelineStep.SURAT_BALASAN]: "/mahasiswa/surat-balasan",
-  [TimelineStep.SAAT_MAGANG]: "/mahasiswa/saat-magang",
-  [TimelineStep.PASCA_MAGANG]: "/mahasiswa/pasca-magang",
+  [TimelineStep.BUAT_TIM]: "/mahasiswa/kp/buat-tim",
+  [TimelineStep.PENGAJUAN]: "/mahasiswa/kp/pengajuan",
+  [TimelineStep.SURAT_PENGANTAR]: "/mahasiswa/kp/surat-pengantar",
+  [TimelineStep.SURAT_BALASAN]: "/mahasiswa/kp/surat-balasan",
+  [TimelineStep.SAAT_MAGANG]: "/mahasiswa/kp/saat-magang",
+  [TimelineStep.PASCA_MAGANG]: "/mahasiswa/kp/pasca-magang",
 };
 
 function Timeline() {

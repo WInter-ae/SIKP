@@ -38,7 +38,7 @@ function DuringInternPage() {
 
         <div className="flex justify-between">
           <Link
-            to="/mahasiswa/surat-balasan"
+            to="/mahasiswa/kp/surat-balasan"
             className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
           >
             <i className="fas fa-arrow-left mr-2"></i>
