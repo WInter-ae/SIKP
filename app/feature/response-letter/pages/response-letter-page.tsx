@@ -85,60 +85,60 @@ function ResponseLetterPage() {
         </p>
       </div>
 
-        <div className="bg-green-50 border-l-4 border-green-700 p-4 mb-8 rounded-r">
-          <p className="text-green-800 flex items-center">
-            <i className="fas fa-info-circle mr-2"></i>
-            Pastikan surat balasan telah diupload dengan benar sebelum
-            mengirimkan ke admin
-          </p>
-        </div>
+      <div className="bg-green-50 border-l-4 border-green-700 p-4 mb-8 rounded-r">
+        <p className="text-green-800 flex items-center">
+          <i className="fas fa-info-circle mr-2"></i>
+          Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan
+          ke admin
+        </p>
+      </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
-            Upload Surat Balasan
-          </h2>
-          <FileUpload
-            label="Surat Balasan dari Perusahaan"
-            onFileChange={handleFileChange}
-          />
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+          Upload Surat Balasan
+        </h2>
+        <FileUpload
+          label="Surat Balasan dari Perusahaan"
+          onFileChange={handleFileChange}
+        />
 
-          <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
-            Status Surat Balasan
-          </h2>
-          <StatusDropdown value={status} onChange={handleStatusChange} />
+        <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+          Status Surat Balasan
+        </h2>
+        <StatusDropdown value={status} onChange={handleStatusChange} />
 
-          <div className="text-center">
-            <button
-              onClick={handleSubmit}
-              className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
-            >
-              Kirim
-            </button>
-          </div>
-        </div>
-
-        {showProcessSteps && (
-          <div id="process-steps-container">
-            <ProcessSteps steps={steps} />
-          </div>
-        )}
-
-        <div className="flex justify-between mt-8">
-          <Link
-            to="/mahasiswa/kp/surat-pengantar"
-            className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
+        <div className="text-center">
+          <button
+            onClick={handleSubmit}
+            className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
           >
-            <i className="fas fa-arrow-left mr-2"></i>
-            Sebelumnya
-          </Link>
-          <Link
-            to="/mahasiswa/kp/saat-magang"
-            className="flex items-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
-          >
-            Selanjutnya
-            <i className="fas fa-arrow-right ml-2"></i>
-          </Link>
+            Kirim
+          </button>
         </div>
+      </div>
+
+      {showProcessSteps && (
+        <div id="process-steps-container">
+          <ProcessSteps steps={steps} />
+        </div>
+      )}
+
+      <div className="flex justify-between mt-8">
+        <Link
+          to="/mahasiswa/kp/surat-pengantar"
+          className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
+        >
+          <i className="fas fa-arrow-left mr-2"></i>
+          Sebelumnya
+        </Link>
+        <Link
+          to="/mahasiswa/kp/saat-magang"
+          className="flex items-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
+        >
+          Selanjutnya
+          <i className="fas fa-arrow-right ml-2"></i>
+        </Link>
+      </div>
     </>
   );
 }
