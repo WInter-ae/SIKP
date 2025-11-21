@@ -1,6 +1,15 @@
 import type { MemberListProps } from "../types";
 
-function MemberList({ title, members, showActions = false }: MemberListProps) {
+function MemberList({
+  title,
+  members,
+  showActions = false,
+  showCancel = false,
+  onAccept,
+  onReject,
+  onRemove,
+  onCancel,
+}: MemberListProps) {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
       <div className="bg-gray-100 px-6 py-3 font-semibold text-gray-800 border-b">
@@ -25,23 +34,44 @@ function MemberList({ title, members, showActions = false }: MemberListProps) {
                   </div>
                   <div>
                     <div className="font-medium">{member.name}</div>
-                    <div className="text-sm text-gray-600">{member.role}</div>
+                    <div className="text-sm text-gray-600">
+                      {member.role}
+                      {member.nim && ` • ${member.nim}`}
+                    </div>
                   </div>
                 </div>
 
                 {showActions && (
                   <div className="flex space-x-2">
-                    <button className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition">
+                    <button
+                      onClick={() => onAccept?.(member.id)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition"
+                    >
                       Terima
                     </button>
-                    <button className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition">
+                    <button
+                      onClick={() => onReject?.(member.id)}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition"
+                    >
                       Tolak
                     </button>
                   </div>
                 )}
 
-                {!showActions && !member.isLeader && (
-                  <button className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition">
+                {showCancel && (
+                  <button
+                    onClick={() => onCancel?.(member.id)}
+                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition"
+                  >
+                    Batalkan
+                  </button>
+                )}
+
+                {!showActions && !showCancel && !member.isLeader && (
+                  <button
+                    onClick={() => onRemove?.(member.id)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition"
+                  >
                     Keluarkan
                   </button>
                 )}
