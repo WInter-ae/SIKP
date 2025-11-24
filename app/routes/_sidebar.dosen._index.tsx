@@ -1,12 +1,18 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import {
   Users,
   FileCheck,
   Clock,
   CheckCircle,
   AlertCircle,
-  FileText
-} from "lucide-react"
+  FileText,
+} from "lucide-react";
 
 export default function DosenDashboard() {
   const stats = [
@@ -14,60 +20,75 @@ export default function DosenDashboard() {
       title: "Total Mahasiswa Bimbingan",
       value: "12",
       icon: Users,
-      description: "3 tim magang aktif"
+      description: "3 tim magang aktif",
     },
     {
       title: "Menunggu Verifikasi",
       value: "5",
       icon: Clock,
-      description: "Surat & laporan pending"
+      description: "Surat & laporan pending",
     },
     {
       title: "Terverifikasi",
       value: "28",
       icon: CheckCircle,
-      description: "Bulan ini"
+      description: "Bulan ini",
     },
     {
       title: "Perlu Perhatian",
       value: "2",
       icon: AlertCircle,
-      description: "Mahasiswa butuh bimbingan"
-    }
-  ]
+      description: "Mahasiswa butuh bimbingan",
+    },
+  ];
 
   const pendingVerifications = [
     {
       student: "Budi Santoso",
       type: "Laporan Mingguan #5",
       submitted: "18 Jan 2025",
-      team: "Frontend Dev"
+      team: "Frontend Dev",
     },
     {
       student: "Ani Wijaya",
       type: "Surat Pengantar",
       submitted: "17 Jan 2025",
-      team: "Backend Dev"
+      team: "Backend Dev",
     },
     {
       student: "Citra Dewi",
       type: "Laporan Akhir",
       submitted: "16 Jan 2025",
-      team: "Frontend Dev"
+      team: "Frontend Dev",
     },
     {
       student: "Dedi Kurniawan",
       type: "Logbook Harian",
       submitted: "15 Jan 2025",
-      team: "Mobile Dev"
-    }
-  ]
+      team: "Mobile Dev",
+    },
+  ];
 
   const teams = [
-    { name: "Frontend Development", members: 3, progress: 80, mentor: "PT. Maju Jaya" },
-    { name: "Backend Development", members: 4, progress: 65, mentor: "PT. Digital Solusi" },
-    { name: "Mobile Development", members: 3, progress: 90, mentor: "PT. Teknologi Masa Depan" }
-  ]
+    {
+      name: "Frontend Development",
+      members: 3,
+      progress: 80,
+      mentor: "PT. Maju Jaya",
+    },
+    {
+      name: "Backend Development",
+      members: 4,
+      progress: 65,
+      mentor: "PT. Digital Solusi",
+    },
+    {
+      name: "Mobile Development",
+      members: 3,
+      progress: 90,
+      mentor: "PT. Teknologi Masa Depan",
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6 p-6">
@@ -84,12 +105,16 @@ export default function DosenDashboard() {
         {stats.map((stat, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
               <stat.icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
+              <p className="text-xs text-muted-foreground">
+                {stat.description}
+              </p>
             </CardContent>
           </Card>
         ))}
@@ -108,12 +133,17 @@ export default function DosenDashboard() {
           <CardContent>
             <div className="space-y-4">
               {pendingVerifications.map((item, index) => (
-                <div key={index} className="flex items-center gap-4 p-3 rounded-lg border">
+                <div
+                  key={index}
+                  className="flex items-center gap-4 p-3 rounded-lg border"
+                >
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
                     <FileCheck className="h-5 w-5 text-orange-600" />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">{item.student}</p>
+                    <p className="text-sm font-medium leading-none">
+                      {item.student}
+                    </p>
                     <p className="text-sm text-muted-foreground">{item.type}</p>
                     <p className="text-xs text-muted-foreground">
                       Tim: {item.team} • Dikirim: {item.submitted}
@@ -134,9 +164,7 @@ export default function DosenDashboard() {
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>Tim Bimbingan</CardTitle>
-            <CardDescription>
-              Overview tim yang Anda bimbing
-            </CardDescription>
+            <CardDescription>Overview tim yang Anda bimbing</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -144,12 +172,16 @@ export default function DosenDashboard() {
                 <div key={index} className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">{team.name}</p>
+                      <p className="text-sm font-medium leading-none">
+                        {team.name}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {team.members} anggota • {team.mentor}
                       </p>
                     </div>
-                    <span className="text-xs font-medium">{team.progress}%</span>
+                    <span className="text-xs font-medium">
+                      {team.progress}%
+                    </span>
                   </div>
                   <div className="h-2 w-full rounded-full bg-secondary">
                     <div
@@ -168,9 +200,7 @@ export default function DosenDashboard() {
       <Card>
         <CardHeader>
           <CardTitle>Aktivitas Terbaru</CardTitle>
-          <CardDescription>
-            Riwayat verifikasi dan bimbingan
-          </CardDescription>
+          <CardDescription>Riwayat verifikasi dan bimbingan</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -178,28 +208,33 @@ export default function DosenDashboard() {
               {
                 action: "Memverifikasi Laporan Mingguan - Eko Prasetyo",
                 time: "1 jam yang lalu",
-                status: "success"
+                status: "success",
               },
               {
-                action: "Memberikan feedback pada Surat Pengantar - Fitri Handayani",
+                action:
+                  "Memberikan feedback pada Surat Pengantar - Fitri Handayani",
                 time: "3 jam yang lalu",
-                status: "info"
+                status: "info",
               },
               {
                 action: "Sesi bimbingan dengan Tim Frontend Dev",
                 time: "1 hari yang lalu",
-                status: "success"
+                status: "success",
               },
               {
                 action: "Menyetujui Pengajuan Magang - Tim Backend Dev",
                 time: "2 hari yang lalu",
-                status: "success"
-              }
+                status: "success",
+              },
             ].map((activity, index) => (
               <div key={index} className="flex items-center gap-4 text-sm">
-                <div className={`h-2 w-2 rounded-full ${
-                  activity.status === 'success' ? 'bg-green-500' : 'bg-blue-500'
-                }`} />
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    activity.status === "success"
+                      ? "bg-green-500"
+                      : "bg-blue-500"
+                  }`}
+                />
                 <span className="flex-1">{activity.action}</span>
                 <span className="text-muted-foreground">{activity.time}</span>
               </div>
@@ -212,7 +247,9 @@ export default function DosenDashboard() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Rata-rata Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Rata-rata Progress
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">78%</div>
@@ -223,7 +260,9 @@ export default function DosenDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Verifikasi Bulan Ini</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Verifikasi Bulan Ini
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">28</div>
@@ -234,7 +273,9 @@ export default function DosenDashboard() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Sesi Bimbingan</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Sesi Bimbingan
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">15</div>
@@ -245,5 +286,5 @@ export default function DosenDashboard() {
         </Card>
       </div>
     </div>
-  )
+  );
 }
