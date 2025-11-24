@@ -1,4 +1,3 @@
-import React from "react";
 import type { ProcessStepsProps } from "../types";
 
 function ProcessSteps({ steps }: ProcessStepsProps) {

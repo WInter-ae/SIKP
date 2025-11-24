@@ -5,6 +5,7 @@ import ProcessSteps from "../components/process-step";
 import { Link, useNavigate } from "react-router";
 import { AnnouncementDialog } from "../components/announcement-dialog";
 import { Button } from "~/components/ui/button";
+import { EyeIcon } from "~/components/icons/eyeicon";
 
 function ResponseLetterPage() {
   const navigate = useNavigate();
@@ -78,6 +79,20 @@ function ResponseLetterPage() {
     }, 100);
   };
 
+  const handlePreview = () => {
+    if (file) {
+      try {
+        const fileURL = URL.createObjectURL(file);
+        window.open(fileURL, "_blank");
+        // Melepas URL objek setelah tab baru dibuka untuk menghindari memory leak
+        setTimeout(() => URL.revokeObjectURL(fileURL), 100);
+      } catch (error) {
+        console.error("Gagal membuat pratinjau file:", error);
+        alert("Tidak dapat menampilkan pratinjau file.");
+      }
+    }
+  };
+
   const handleNextPage = () => {
     setShowAnnouncement(false);
     navigate("/mahasiswa/kp/saat-magang");
@@ -106,10 +121,25 @@ function ResponseLetterPage() {
         <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
           Upload Surat Balasan
         </h2>
-        <FileUpload
-          label="Surat Balasan dari Perusahaan"
-          onFileChange={handleFileChange}
-        />
+        <div className="flex items-center gap-4">
+          <div className="flex-grow">
+            <FileUpload
+              label="Surat Balasan dari Perusahaan"
+              onFileChange={handleFileChange}
+            />
+          </div>
+          {file && (
+            <div className="pt-8">
+              <span
+                onClick={handlePreview}
+                role="button"
+                className="cursor-pointer text-gray-600 hover:text-gray-800"
+              >
+                <EyeIcon className="size-6" />
+              </span>
+            </div>
+          )}
+        </div>
 
         <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
           Status Surat Balasan

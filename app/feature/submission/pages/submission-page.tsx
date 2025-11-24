@@ -5,6 +5,7 @@ import AdditionalInfoForm from "../components/add-info-form";
 import type { AdditionalInfoData } from "../types";
 import { useNavigate } from "react-router";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { EyeIcon } from "~/components/icons/eyeicon";
 
 function SubmissionPage() {
   const navigate = useNavigate();
@@ -19,6 +20,9 @@ function SubmissionPage() {
     tanggalSelesai: "",
     pembimbingLapangan: "",
   });
+
+  const [proposalFile, setProposalFile] = useState<File | null>(null);
+
   const teamMembers = [
     { id: 1, name: "Adam", role: "(Ketua)" },
     { id: 2, name: "Robin", role: "" },
@@ -35,6 +39,7 @@ function SubmissionPage() {
 
   const handleProposalUpload = (file: File) => {
     console.log("Proposal uploaded:", file);
+    setProposalFile(file);
   };
 
   const handleAdditionalInfoChange = (data: AdditionalInfoData) => {
@@ -43,9 +48,22 @@ function SubmissionPage() {
   };
 
   const handleSubmit = () => {
-    console.log("Form submitted with data:", { additionalInfo });
+    console.log("Form submitted with data:", { additionalInfo, proposalFile });
     navigate("/mahasiswa/kp/surat-pengantar");
     setIsConfirmDialogOpen(false);
+  };
+
+  const handlePreviewProposal = () => {
+    if (proposalFile) {
+      try {
+        const fileURL = URL.createObjectURL(proposalFile);
+        window.open(fileURL, "_blank");
+        setTimeout(() => URL.revokeObjectURL(fileURL), 100);
+      } catch (error) {
+        console.error("Gagal membuat pratinjau file:", error);
+        alert("Tidak dapat menampilkan pratinjau file.");
+      }
+    }
   };
 
   return (
@@ -73,10 +91,25 @@ function SubmissionPage() {
           <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
             Surat Proposal
           </h2>
-          <FileUpload
-            label="Upload Surat Proposal (Ketua Tim)"
-            onFileChange={handleProposalUpload}
-          />
+          <div className="flex items-center gap-4">
+            <div className="flex-grow">
+              <FileUpload
+                label="Upload Surat Proposal (Ketua Tim)"
+                onFileChange={handleProposalUpload}
+              />
+            </div>
+            {proposalFile && (
+              <div className="pt-8">
+                <span
+                  onClick={handlePreviewProposal}
+                  role="button"
+                  className="cursor-pointer text-gray-600 hover:text-gray-800"
+                >
+                  <EyeIcon className="size-6" />
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Lampiran Berkas Pribadi Section */}
@@ -120,7 +153,8 @@ function SubmissionPage() {
             <span className="block">
               <span className="font-semibold text-red-700">Peringatan:</span>{" "}
               <span className="font-semibold inline-block">
-                Anda tidak akan dapat mengubah data pengajuan hingga proses review selesai.
+                Anda tidak akan dapat mengubah data pengajuan hingga proses
+                review selesai.
               </span>
             </span>
           </>
