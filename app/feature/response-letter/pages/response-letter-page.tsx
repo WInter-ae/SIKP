@@ -2,12 +2,17 @@ import { useState } from "react";
 import FileUpload from "../components/file-upload";
 import StatusDropdown from "../components/status-dropdown";
 import ProcessSteps from "../components/process-step";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { AnnouncementDialog } from "../components/announcement-dialog";
+import { Button } from "~/components/ui/button";
+import { EyeIcon } from "~/components/icons/eyeicon";
 
 function ResponseLetterPage() {
+  const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string>("");
   const [showProcessSteps, setShowProcessSteps] = useState<boolean>(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [steps, setSteps] = useState([
     {
       id: 1,
@@ -74,6 +79,25 @@ function ResponseLetterPage() {
     }, 100);
   };
 
+  const handlePreview = () => {
+    if (file) {
+      try {
+        const fileURL = URL.createObjectURL(file);
+        window.open(fileURL, "_blank");
+        // Melepas URL objek setelah tab baru dibuka untuk menghindari memory leak
+        setTimeout(() => URL.revokeObjectURL(fileURL), 100);
+      } catch (error) {
+        console.error("Gagal membuat pratinjau file:", error);
+        alert("Tidak dapat menampilkan pratinjau file.");
+      }
+    }
+  };
+
+  const handleNextPage = () => {
+    setShowAnnouncement(false);
+    navigate("/mahasiswa/kp/saat-magang");
+  };
+
   return (
     <>
       <div className="mb-8">
@@ -97,10 +121,25 @@ function ResponseLetterPage() {
         <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
           Upload Surat Balasan
         </h2>
-        <FileUpload
-          label="Surat Balasan dari Perusahaan"
-          onFileChange={handleFileChange}
-        />
+        <div className="flex items-center gap-4">
+          <div className="flex-grow">
+            <FileUpload
+              label="Surat Balasan dari Perusahaan"
+              onFileChange={handleFileChange}
+            />
+          </div>
+          {file && (
+            <div className="pt-8">
+              <span
+                onClick={handlePreview}
+                role="button"
+                className="cursor-pointer text-gray-600 hover:text-gray-800"
+              >
+                <EyeIcon className="size-6" />
+              </span>
+            </div>
+          )}
+        </div>
 
         <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
           Status Surat Balasan
@@ -131,14 +170,29 @@ function ResponseLetterPage() {
           <i className="fas fa-arrow-left mr-2"></i>
           Sebelumnya
         </Link>
-        <Link
-          to="/mahasiswa/kp/saat-magang"
+        <Button
+          onClick={() => setShowAnnouncement(true)}
           className="flex items-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
         >
           Selanjutnya
           <i className="fas fa-arrow-right ml-2"></i>
-        </Link>
+        </Button>
       </div>
+
+      <AnnouncementDialog
+        open={showAnnouncement}
+        onOpenChange={setShowAnnouncement}
+        title=""
+        description={
+          <>
+            Selamat Melaksanakan Kerja Praktik.
+            <br />
+            <span>Semangat!</span>
+          </>
+        }
+        onConfirm={handleNextPage}
+        confirmText="Lanjutkan"
+      />
     </>
   );
 }

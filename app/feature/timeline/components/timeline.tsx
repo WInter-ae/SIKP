@@ -37,7 +37,9 @@ function Timeline() {
             </div>
             <div
               className={`text-sm font-medium text-center transition-colors ${
-                item.active ? "text-green-700" : "text-gray-500 group-hover:text-green-600"
+                item.active
+                  ? "text-green-700"
+                  : "text-gray-500 group-hover:text-green-600"
               }`}
             >
               {item.title}

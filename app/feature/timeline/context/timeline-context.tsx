@@ -6,10 +6,10 @@ export const TimelineStep = {
   SURAT_PENGANTAR: "surat-pengantar",
   SURAT_BALASAN: "surat-balasan",
   SAAT_MAGANG: "saat-magang",
-  PASCA_MAGANG: "pasca-magang"
+  PASCA_MAGANG: "pasca-magang",
 } as const;
 
-export type TimelineStep = typeof TimelineStep[keyof typeof TimelineStep];
+export type TimelineStep = (typeof TimelineStep)[keyof typeof TimelineStep];
 
 interface TimelineItem {
   id: number;
@@ -25,19 +25,46 @@ interface TimelineContextType {
 }
 
 const TimelineContext = createContext<TimelineContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function TimelineProvider({ children }: { children: ReactNode }) {
-  const [activeStep, setActiveStep] = useState<TimelineStep>(TimelineStep.BUAT_TIM);
+  const [activeStep, setActiveStep] = useState<TimelineStep>(
+    TimelineStep.BUAT_TIM,
+  );
 
   const timelineItems: TimelineItem[] = [
-    { id: 1, step: TimelineStep.BUAT_TIM, title: "Pembuatan Tim", active: false },
+    {
+      id: 1,
+      step: TimelineStep.BUAT_TIM,
+      title: "Pembuatan Tim",
+      active: false,
+    },
     { id: 2, step: TimelineStep.PENGAJUAN, title: "Pengajuan", active: false },
-    { id: 3, step: TimelineStep.SURAT_PENGANTAR, title: "Surat Pengantar", active: false },
-    { id: 4, step: TimelineStep.SURAT_BALASAN, title: "Surat Balasan", active: false },
-    { id: 5, step: TimelineStep.SAAT_MAGANG, title: "Saat Magang", active: false },
-    { id: 6, step: TimelineStep.PASCA_MAGANG, title: "Pasca Magang", active: false },
+    {
+      id: 3,
+      step: TimelineStep.SURAT_PENGANTAR,
+      title: "Surat Pengantar",
+      active: false,
+    },
+    {
+      id: 4,
+      step: TimelineStep.SURAT_BALASAN,
+      title: "Surat Balasan",
+      active: false,
+    },
+    {
+      id: 5,
+      step: TimelineStep.SAAT_MAGANG,
+      title: "Saat Magang",
+      active: false,
+    },
+    {
+      id: 6,
+      step: TimelineStep.PASCA_MAGANG,
+      title: "Pasca Magang",
+      active: false,
+    },
   ].map((item) => ({
     ...item,
     active: item.step === activeStep,
