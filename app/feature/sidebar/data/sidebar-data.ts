@@ -123,7 +123,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Balasan",
-        url: "#",
+        url: "/admin/surat-balasan",
       },
     ],
   },
