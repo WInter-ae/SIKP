@@ -51,6 +51,10 @@ const mahasiswaMenu: NavItem[] = [
         url: "/mahasiswa/kp/saat-magang",
       },
       {
+        title: "Pengujian Sidang",
+        url: "/mahasiswa/kp/pengujian-sidang",
+      },
+      {
         title: "Pasca Magang",
         url: "#",
       },
@@ -171,6 +175,18 @@ const dosenMenu: NavItem[] = [
     title: "Dashboard",
     url: "/dosen",
     icon: Home,
+  },
+  {
+    title: "Kerja Praktik",
+    url: "#",
+    icon: GraduationCap,
+    isActive: true,
+    items: [
+      {
+        title: "Verifikasi Sidang",
+        url: "/dosen/kp/verifikasi-sidang",
+      },
+    ],
   },
   {
     title: "Verifikasi",
