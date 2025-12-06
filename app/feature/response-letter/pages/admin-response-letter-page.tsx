@@ -1,15 +1,7 @@
 import { useState } from "react";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -31,28 +23,28 @@ function AdminResponseLetterPage() {
   const [students] = useState<Student[]>([
     {
       id: 1,
-      name: "Nama Mahasiswa",
+      name: "A",
       role: "Tim",
       tanggal: "20/07/2025",
       status: "Disetujui",
     },
     {
       id: 2,
-      name: "Nama Mahasiswa",
+      name: "B",
       role: "Individu",
       tanggal: "20/07/2025",
       status: "Ditolak",
     },
     {
       id: 3,
-      name: "Nama Mahasiswa",
+      name: "C",
       role: "Tim",
       tanggal: "20/07/2025",
       status: "Ditolak",
     },
     {
       id: 4,
-      name: "Nama Mahasiswa",
+      name: "D",
       role: "Individu",
       tanggal: "20/07/2025",
       status: "Disetujui",
@@ -62,10 +54,6 @@ function AdminResponseLetterPage() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
-  const [actionType, setActionType] = useState<"approve" | "reject" | null>(
-    null
-  );
-  const [comment, setComment] = useState("");
 
   const handleViewDetail = (student: Student) => {
     setSelectedStudent(student);
@@ -74,29 +62,14 @@ function AdminResponseLetterPage() {
 
   const handleApprove = (student: Student) => {
     setSelectedStudent(student);
-    setActionType("approve");
-    setShowApproveDialog(true);
-  };
-
-  const handleReject = (student: Student) => {
-    setSelectedStudent(student);
-    setActionType("reject");
     setShowApproveDialog(true);
   };
 
   const handleSubmitAction = () => {
-    if (actionType === "reject" && !comment.trim()) {
-      alert("Komentar wajib diisi untuk penolakan");
-      return;
-    }
-
-    const action = actionType === "approve" ? "disetujui" : "ditolak";
     alert(
-      `Surat balasan ${selectedStudent?.name} berhasil ${action}!\n${comment ? `Komentar: ${comment}` : ""}`
+      `Surat balasan ${selectedStudent?.name} berhasil disetujui!`,
     );
     setShowApproveDialog(false);
-    setComment("");
-    setActionType(null);
     setSelectedStudent(null);
   };
 
@@ -316,15 +289,6 @@ function AdminResponseLetterPage() {
                 >
                   Setujui
                 </Button>
-                <Button
-                  onClick={() => {
-                    setShowDetailDialog(false);
-                    handleReject(selectedStudent);
-                  }}
-                  className="flex-1 bg-red-600 hover:bg-red-700"
-                >
-                  Tolak
-                </Button>
               </>
             )}
           </DialogFooter>
@@ -335,42 +299,18 @@ function AdminResponseLetterPage() {
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>
-              {actionType === "approve"
-                ? "Setujui Surat Balasan"
-                : "Tolak Surat Balasan"}
-            </DialogTitle>
+            <DialogTitle>Setujui Surat Balasan</DialogTitle>
             <DialogDescription className="text-gray-700">
               {selectedStudent &&
-                (actionType === "approve"
-                  ? `Apakah Anda yakin ingin menyetujui surat balasan dari ${selectedStudent.name}?`
-                  : `Apakah Anda yakin ingin menolak surat balasan dari ${selectedStudent.name}?`)}
+                `Apakah Anda yakin ingin menyetujui surat balasan dari ${selectedStudent.name}?`}
             </DialogDescription>
           </DialogHeader>
-
-          {actionType === "reject" && (
-            <div className="my-4">
-              <Label htmlFor="comment" className="text-gray-900">
-                Komentar Penolakan *
-              </Label>
-              <Textarea
-                id="comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Masukkan alasan penolakan..."
-                className="mt-2"
-                rows={4}
-              />
-            </div>
-          )}
 
           <DialogFooter className="gap-3 sm:gap-2">
             <Button
               variant="outline"
               onClick={() => {
                 setShowApproveDialog(false);
-                setComment("");
-                setActionType(null);
               }}
               className="flex-1"
             >
@@ -378,13 +318,9 @@ function AdminResponseLetterPage() {
             </Button>
             <Button
               onClick={handleSubmitAction}
-              className={`flex-1 ${
-                actionType === "approve"
-                  ? "bg-green-600 hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700"
-              }`}
+              className="flex-1 bg-green-600 hover:bg-green-700"
             >
-              {actionType === "approve" ? "Setujui" : "Tolak"}
+              Setujui
             </Button>
           </DialogFooter>
         </DialogContent>
