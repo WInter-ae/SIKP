@@ -230,11 +230,6 @@ function AdminSubmissionPage() {
           paragraphLoop: true,
           linebreaks: true,
           nullGetter: (part) => {
-            if (part.module === "open-xml-templating/docxtemplater-build") {
-              throw new Error(
-                "Template .docx error: File mungkin korup atau bukan format .docx yang valid.",
-              );
-            }
             console.warn(
               `Placeholder {${part.value}} tidak ditemukan dalam data.`,
             );
