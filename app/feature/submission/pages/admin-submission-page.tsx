@@ -166,15 +166,26 @@ function AdminSubmissionPage() {
       return;
     }
 
-    // Validate file type by checking magic bytes
+    // Validate file type by checking magic bytes and internal structure
     try {
-      const arrayBuffer = await file.slice(0, 4).arrayBuffer();
+      const arrayBuffer = await file.arrayBuffer();
       const bytes = new Uint8Array(arrayBuffer);
       
       // Check for ZIP signature (0x504B0304) which is used by .docx files
-      const isDocx = bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04;
+      const hasZipSignature = bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04;
       
-      if (!isDocx) {
+      if (!hasZipSignature) {
+        alert("File yang dipilih bukan format Word Document (.docx) yang valid. Silakan pilih file .docx yang benar.");
+        e.target.value = ""; // Reset input
+        return;
+      }
+
+      // Verify it's actually a .docx file by checking for expected internal structure
+      const zip = new PizZip(arrayBuffer);
+      const hasContentTypes = zip.files["[Content_Types].xml"] !== undefined;
+      const hasWordDocument = zip.files["word/document.xml"] !== undefined;
+      
+      if (!hasContentTypes || !hasWordDocument) {
         alert("File yang dipilih bukan format Word Document (.docx) yang valid. Silakan pilih file .docx yang benar.");
         e.target.value = ""; // Reset input
         return;
