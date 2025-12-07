@@ -4,6 +4,7 @@ import Docxtemplater from "docxtemplater";
 import * as mammoth from "mammoth";
 import "quill/dist/quill.snow.css"; 
 import * as FileSaver from "file-saver";
+import type { HtmlToDocxFunction } from "~/../../html-to-docx";
 import { Textarea } from "~/components/ui/textarea";
 import {
   Dialog,
@@ -185,7 +186,19 @@ function AdminSubmissionPage() {
     }
 
     try {
-      const htmlToDocx = (await import("html-to-docx")).default;
+      // Attempt to dynamically import the html-to-docx module
+      let htmlToDocx: HtmlToDocxFunction;
+      try {
+        htmlToDocx = (await import("html-to-docx")).default;
+      } catch (importError) {
+        console.error("Gagal memuat modul html-to-docx:", importError);
+        alert(
+          "Gagal memuat modul yang diperlukan untuk mengonversi dokumen. Silakan coba lagi atau hubungi administrator.",
+        );
+        return;
+      }
+
+      // Attempt to convert HTML to DOCX
       const fileBuffer = await htmlToDocx(editorHtml, undefined, {
         table: { row: { cantSplit: true } },
         footer: true,
