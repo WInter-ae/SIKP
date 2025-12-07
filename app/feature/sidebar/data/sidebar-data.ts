@@ -223,3 +223,17 @@ export function getSidebarMenuByRole(role: UserRole): NavItem[] {
       return mahasiswaMenu
   }
 }
+
+export function getSidebarMenuByUrl(pathname: string): NavItem[] {
+  if (pathname.startsWith("/admin")) {
+    return adminMenu
+  }
+  if (pathname.startsWith("/dosen")) {
+    return dosenMenu
+  }
+  if (pathname.startsWith("/mahasiswa")) {
+    return mahasiswaMenu
+  }
+  // Default ke mahasiswa jika tidak ada yang cocok
+  return mahasiswaMenu
+}
