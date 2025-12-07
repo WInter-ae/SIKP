@@ -4,13 +4,9 @@ import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
 import type { AdditionalInfoData } from "../types";
 import { useNavigate } from "react-router";
-import { ConfirmDialog } from "../components/confirm-dialog";
-import { EyeIcon } from "~/components/icons/eyeicon";
 
 function SubmissionPage() {
   const navigate = useNavigate();
-
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfoData>({
     tujuanSurat: "",
@@ -20,8 +16,6 @@ function SubmissionPage() {
     tanggalSelesai: "",
     pembimbingLapangan: "",
   });
-
-  const [proposalFile, setProposalFile] = useState<File | null>(null);
 
   const teamMembers = [
     { id: 1, name: "Adam", role: "(Ketua)" },
@@ -39,7 +33,6 @@ function SubmissionPage() {
 
   const handleProposalUpload = (file: File) => {
     console.log("Proposal uploaded:", file);
-    setProposalFile(file);
   };
 
   const handleAdditionalInfoChange = (data: AdditionalInfoData) => {
