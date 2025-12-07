@@ -672,11 +672,17 @@ function EditorDialog({
 }) {
   const { quill, quillRef } = useQuill();
   const contentRef = useRef(initialHtml);
+  const contentInitializedRef = useRef(false);
+
+  useEffect(() => {
+    contentInitializedRef.current = false;
+  }, [initialHtml]);
 
   useEffect(() => {
     if (quill) {
-      if (quill.root.innerHTML !== initialHtml) {
+      if (!contentInitializedRef.current) {
         quill.clipboard.dangerouslyPasteHTML(initialHtml);
+        contentInitializedRef.current = true;
       }
 
       const handleChange = () => {
