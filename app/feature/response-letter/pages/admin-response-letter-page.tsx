@@ -112,11 +112,7 @@ function AdminResponseLetterPage() {
                         {student.name}
                       </div>
                       <span
-                        className={`inline-block px-2 py-1 text-xs font-medium rounded ${
-                          student.role === "Tim"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
+                        className="inline-block px-2 py-1 text-xs font-medium rounded bg-yellow-100 text-yellow-800"
                       >
                         {student.role}
                       </span>
