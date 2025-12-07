@@ -23,6 +23,7 @@ Dokumen ini menjelaskan aturan dan konvensi penulisan kode untuk proyek SIKP (Si
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
 - **UI Components**: [shadcn/ui](https://ui.shadcn.com/) (berbasis Radix UI)
+- **Icons**: [Lucide React](https://lucide.dev/) - icon library yang konsisten dengan shadcn/ui
 - **Form Handling**: React Hook Form + Zod
 - **Authentication**: Better Auth
 - **Package Manager**: pnpm
@@ -125,11 +126,6 @@ feature/
 - Prefix dengan `use-`
 - Gunakan **kebab-case**
 - Contoh: `use-mobile.ts`, `use-theme.ts`
-
-### 7. File Icon Component
-
-- Suffix dengan `icon.tsx` atau nama deskriptif
-- Contoh: `eyeicon.tsx`, `check.tsx`, `doc.tsx`
 
 ---
 
@@ -612,6 +608,65 @@ import { cn } from "~/lib/utils";
 <Button className={cn("bg-blue-500", isDark && "bg-blue-900", className)} />;
 ```
 
+### 5. Icons
+
+**Gunakan Lucide React sebagai icon library:**
+
+```tsx
+// ✅ BENAR - Import dari lucide-react
+import { Check, XCircle, Eye, FileText, Upload, ChevronDown } from "lucide-react";
+
+// Penggunaan dalam komponen
+<Button>
+  <Check className="h-4 w-4 mr-2" />
+  Simpan
+</Button>
+
+<Eye className="h-5 w-5 text-muted-foreground" />
+```
+
+**Konvensi penggunaan icon:**
+
+- **Ukuran standar**: `h-4 w-4` untuk icon kecil, `h-5 w-5` untuk medium, `h-6 w-6` untuk besar
+- **Warna**: Gunakan Tailwind color utilities (`text-primary`, `text-muted-foreground`, dll)
+- **Dalam Button**: Tambahkan `mr-2` untuk spacing sebelum teks
+- **Standalone icon**: Bisa langsung pakai className untuk styling
+
+**JANGAN gunakan:**
+
+```tsx
+// ❌ SALAH - Font Awesome
+<i className="fas fa-check"></i>
+
+// ❌ SALAH - Custom icon components
+import { CheckIcon } from "~/components/icons/check";
+
+// ❌ SALAH - Inline SVG
+<svg>...</svg>
+```
+
+**Icon yang sering dipakai:**
+
+| Kegunaan | Icon Lucide |
+|----------|-------------|
+| Success/Check | `Check`, `CheckCircle` |
+| Error/Close | `X`, `XCircle` |
+| Warning | `AlertTriangle` |
+| Info | `Info` |
+| Eye/Preview | `Eye`, `EyeOff` |
+| Document | `FileText`, `File` |
+| Upload | `Upload`, `CloudUpload` |
+| Download | `Download` |
+| Edit | `Pencil`, `Edit` |
+| Delete | `Trash2` |
+| Search | `Search` |
+| Settings | `Settings` |
+| User | `User`, `Users` |
+| Arrow | `ArrowLeft`, `ArrowRight`, `ChevronDown`, `ChevronUp` |
+| Calendar | `Calendar` |
+| Clock/Time | `Clock` |
+| Location | `MapPin` |
+
 ---
 
 ## Type Safety
@@ -762,6 +817,7 @@ Sebelum submit PR, pastikan:
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Tailwind CSS Docs](https://tailwindcss.com/docs)
 - [shadcn/ui Docs](https://ui.shadcn.com/)
+- [Lucide Icons](https://lucide.dev/icons/) - Icon library
 - [Radix UI Docs](https://www.radix-ui.com/)
 - [Better Auth Docs](https://www.better-auth.com/)
 
