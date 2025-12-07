@@ -1,56 +1,112 @@
-import Card from "~/feature/during-intern/components/card";
 import { Link } from "react-router";
 
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+
+import { ArrowLeft, ArrowRight, BookOpen, ClipboardCheck, FileCheck } from "lucide-react";
+
 function DuringInternPage() {
+  const menuItems = [
+    {
+      title: "Logbook",
+      description: "Catat aktivitas harian selama masa kerja praktik",
+      icon: BookOpen,
+      to: "/logbook",
+    },
+    {
+      title: "Penilaian",
+      description: "Lihat hasil penilaian dari pembimbing lapangan",
+      icon: ClipboardCheck,
+      to: "/penilaian",
+    },
+    {
+      title: "Pengesahan",
+      description: "Dapatkan pengesahan dokumen kerja praktik",
+      icon: FileCheck,
+      to: "https://ols.ilkom.unsri.ac.id/login",
+      external: true,
+    },
+  ];
+
   return (
     <>
+      {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
           Halaman Kebutuhan Saat Magang
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-400">
           Kelola kebutuhan Anda selama masa kerja praktik
         </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 mb-12">
-        <Card
-          title="Logbook"
-          description="Catat aktivitas harian selama masa kerja praktik"
-          icon=""
-          to="/logbook"
-        />
+      {/* Menu Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const isExternal = item.external;
 
-        <Card
-          title="Penilaian"
-          description="Lihat hasil penilaian dari pembimbing lapangan"
-          icon=""
-          to="/penilaian"
-        />
-
-        <Card
-          title="Pengesahan"
-          description="Dapatkan pengesahan dokumen kerja praktik"
-          icon=""
-          to="https://ols.ilkom.unsri.ac.id/login"
-        />
+          return (
+            <Card
+              key={item.title}
+              className="hover:shadow-lg transition-shadow cursor-pointer group"
+            >
+              {isExternal ? (
+                <a
+                  href={item.to}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block h-full"
+                >
+                  <CardHeader className="text-center pb-2">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                      <Icon className="h-8 w-8 text-green-700 dark:text-green-400" />
+                    </div>
+                    <CardTitle className="text-xl">{item.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <CardDescription>{item.description}</CardDescription>
+                  </CardContent>
+                </a>
+              ) : (
+                <Link to={item.to} className="block h-full">
+                  <CardHeader className="text-center pb-2">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
+                      <Icon className="h-8 w-8 text-green-700 dark:text-green-400" />
+                    </div>
+                    <CardTitle className="text-xl">{item.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <CardDescription>{item.description}</CardDescription>
+                  </CardContent>
+                </Link>
+              )}
+            </Card>
+          );
+        })}
       </div>
 
+      {/* Navigation Buttons */}
       <div className="flex justify-between">
-        <Link
-          to="/mahasiswa/kp/surat-balasan"
-          className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
+        <Button
+          variant="secondary"
+          asChild
+          className="px-6 py-3 font-medium"
         >
-          <i className="fas fa-arrow-left mr-2"></i>
-          Sebelumnya
-        </Link>
-        <Link
-          to="#"
-          className="flex items-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
+          <Link to="/mahasiswa/kp/surat-balasan">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Sebelumnya
+          </Link>
+        </Button>
+        <Button
+          asChild
+          className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 font-medium"
         >
-          Selanjutnya
-          <i className="fas fa-arrow-right ml-2"></i>
-        </Link>
+          <Link to="#">
+            Selanjutnya
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
       </div>
     </>
   );

@@ -1,11 +1,23 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+
+import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Separator } from "~/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
+
 import FileUpload from "../components/file-upload";
 import StatusDropdown from "../components/status-dropdown";
 import ProcessSteps from "../components/process-step";
-import { Link, useNavigate } from "react-router";
 import { AnnouncementDialog } from "../components/announcement-dialog";
-import { Button } from "~/components/ui/button";
-import { EyeIcon } from "~/components/icons/eyeicon";
+
+import { ArrowLeft, ArrowRight, Eye, Info } from "lucide-react";
 
 function ResponseLetterPage() {
   const navigate = useNavigate();
@@ -100,61 +112,84 @@ function ResponseLetterPage() {
 
   return (
     <>
+      {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
           Halaman Surat Balasan
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-400">
           Upload surat balasan dan pantau status persetujuan kerja praktik
         </p>
       </div>
 
-      <div className="bg-green-50 border-l-4 border-green-700 p-4 mb-8 rounded-r">
-        <p className="text-green-800 flex items-center">
-          <i className="fas fa-info-circle mr-2"></i>
+      {/* Info Alert */}
+      <Alert className="mb-8 border-l-4 border-green-700 bg-green-50 dark:bg-green-950/30">
+        <Info className="h-5 w-5 text-green-700" />
+        <AlertDescription className="text-green-800 dark:text-green-300">
           Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan
           ke admin
-        </p>
-      </div>
+        </AlertDescription>
+      </Alert>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
-          Upload Surat Balasan
-        </h2>
-        <div className="flex items-center gap-4">
-          <div className="flex-grow">
-            <FileUpload
-              label="Surat Balasan dari Perusahaan"
-              onFileChange={handleFileChange}
-            />
-          </div>
-          {file && (
-            <div className="pt-8">
-              <span
-                onClick={handlePreview}
-                role="button"
-                className="cursor-pointer text-gray-600 hover:text-gray-800"
-              >
-                <EyeIcon className="size-6" />
-              </span>
+      <Card className="mb-8">
+        <CardContent className="p-6">
+          {/* Upload Surat Balasan Section */}
+          <CardHeader className="px-0 pt-0">
+            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+              Upload Surat Balasan
+            </CardTitle>
+          </CardHeader>
+          <Separator className="mb-4" />
+          <div className="flex items-center gap-4 mb-6">
+            <div className="flex-grow">
+              <FileUpload
+                label="Surat Balasan dari Perusahaan"
+                onFileChange={handleFileChange}
+              />
             </div>
-          )}
-        </div>
+            {file && (
+              <div className="pt-8">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handlePreview}
+                        className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                      >
+                        <Eye className="size-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Preview File</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            )}
+          </div>
 
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
-          Status Surat Balasan
-        </h2>
-        <StatusDropdown value={status} onChange={handleStatusChange} />
+          {/* Status Surat Balasan Section */}
+          <CardHeader className="px-0 pt-0">
+            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+              Status Surat Balasan
+            </CardTitle>
+          </CardHeader>
+          <Separator className="mb-4" />
+          <StatusDropdown value={status} onChange={handleStatusChange} />
 
-        <div className="text-center">
-          <button
-            onClick={handleSubmit}
-            className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
-          >
-            Kirim
-          </button>
-        </div>
-      </div>
+          {/* Submit Button */}
+          <div className="text-center mt-6">
+            <Button
+              onClick={handleSubmit}
+              className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 font-medium"
+            >
+              Kirim
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {showProcessSteps && (
         <div id="process-steps-container">
@@ -162,20 +197,24 @@ function ResponseLetterPage() {
         </div>
       )}
 
+      {/* Navigation Buttons */}
       <div className="flex justify-between mt-8">
-        <Link
-          to="/mahasiswa/kp/surat-pengantar"
-          className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
+        <Button
+          variant="secondary"
+          asChild
+          className="px-6 py-3 font-medium"
         >
-          <i className="fas fa-arrow-left mr-2"></i>
-          Sebelumnya
-        </Link>
+          <Link to="/mahasiswa/kp/surat-pengantar">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Sebelumnya
+          </Link>
+        </Button>
         <Button
           onClick={() => setShowAnnouncement(true)}
-          className="flex items-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
+          className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 font-medium"
         >
           Selanjutnya
-          <i className="fas fa-arrow-right ml-2"></i>
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
 
