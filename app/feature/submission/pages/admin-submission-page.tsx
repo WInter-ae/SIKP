@@ -153,10 +153,53 @@ function AdminSubmissionPage() {
     setSelectedSubmission(null);
   };
 
-  const handleTemplateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setCoverLetterTemplate(e.target.files[0]);
-      alert(`Template "${e.target.files[0].name}" berhasil diupload.`);
+  const handleTemplateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) {
+      return;
+    }
+
+    const file = e.target.files[0];
+    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+
+    // Validate file size
+    if (file.size > maxSizeInBytes) {
+      alert("Ukuran file melebihi batas maksimum 10MB. Silakan pilih file yang lebih kecil.");
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    // Validate file type by checking magic bytes and internal structure
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      
+      // Check for ZIP signature (0x504B0304) which is used by .docx files
+      const hasZipSignature = bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04;
+      
+      if (!hasZipSignature) {
+        alert("File yang dipilih bukan format Word Document (.docx) yang valid. Silakan pilih file .docx yang benar.");
+        e.target.value = ""; // Reset input
+        return;
+      }
+
+      // Verify it's actually a .docx file by checking for expected internal structure
+      const zip = new PizZip(arrayBuffer);
+      const hasContentTypes = zip.files["[Content_Types].xml"] !== undefined;
+      const hasWordDocument = zip.files["word/document.xml"] !== undefined;
+      
+      if (!hasContentTypes || !hasWordDocument) {
+        alert("File yang dipilih bukan format Word Document (.docx) yang valid. Silakan pilih file .docx yang benar.");
+        e.target.value = ""; // Reset input
+        return;
+      }
+
+      // All validations passed
+      setCoverLetterTemplate(file);
+      alert(`Template "${file.name}" berhasil diupload.`);
+    } catch (error) {
+      console.error("Error validating file:", error);
+      alert("Terjadi kesalahan saat memvalidasi file. Silakan coba lagi.");
+      e.target.value = ""; // Reset input
     }
   };
 
