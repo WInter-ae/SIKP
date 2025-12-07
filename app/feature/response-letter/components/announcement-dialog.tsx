@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
+import { CheckCircle } from "lucide-react";
 
 interface AnnouncementDialogProps {
   open: boolean;
@@ -30,7 +31,7 @@ export function AnnouncementDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="items-center text-center">
           <div className="text-primary mb-4">
-            <i className="fas fa-check-circle fa-4x"></i>
+            <CheckCircle className="h-16 w-16" />
           </div>
           <DialogTitle className="text-2xl">{title}</DialogTitle>
           <DialogDescription className="text-xl font-semibold text-center">{description}</DialogDescription>

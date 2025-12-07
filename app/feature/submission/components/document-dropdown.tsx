@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { DocumentDropdownProps } from "../types";
-import { EyeIcon } from "~/components/icons/eyeicon";
+import { Eye, ChevronUp, ChevronDown } from "lucide-react";
 import { FileUploadDialog } from "./file-upload-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 
@@ -59,9 +59,11 @@ function DocumentDropdown({ document, members }: DocumentDropdownProps) {
         onClick={toggleDropdown}
       >
         <span>{document.title}</span>
-        <i
-          className={`fa ${isOpen ? "fa-chevron-up" : "fa-chevron-down"} text-muted-foreground`}
-        ></i>
+        {isOpen ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        )}
       </div>
 
       {isOpen && (
@@ -89,7 +91,7 @@ function DocumentDropdown({ document, members }: DocumentDropdownProps) {
                     role="button"
                     className="cursor-pointer text-muted-foreground hover:text-foreground"
                   >
-                    <EyeIcon className="size-5" />
+                    <Eye className="h-5 w-5" />
                   </span>
                 </div>
               ) : (

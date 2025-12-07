@@ -4,9 +4,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Avatar } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
-import { CheckIcon } from "~/components/icons/check";
-import { TimeCircleIcon } from "~/components/icons/time-circle";
-import { Clock, Calendar, MapPin, FileText, User } from "lucide-react";
+import { Check, XCircle, Clock, Calendar, MapPin, FileText, User } from "lucide-react";
 import type { PengajuanSidang } from "../types/dosen";
 import { VerifikasiDialog } from "./verifikasi-dialog";
 
@@ -145,7 +143,7 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
               onClick={handleApprove}
               className="flex-1 h-11 font-semibold gap-2"
             >
-              <CheckIcon className="h-5 w-5" />
+              <Check className="h-5 w-5" />
               Setujui Pengajuan
             </Button>
             <Button
@@ -153,7 +151,7 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
               variant="destructive"
               className="flex-1 h-11 font-semibold gap-2"
             >
-              <TimeCircleIcon className="h-5 w-5" />
+              <XCircle className="h-5 w-5" />
               Tolak Pengajuan
             </Button>
           </div>

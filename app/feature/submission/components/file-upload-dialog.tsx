@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
+import { Upload } from "lucide-react";
 
 interface FileUploadDialogProps {
   open: boolean;
@@ -86,7 +87,7 @@ export function FileUploadDialog({
             onChange={handleFileChange}
           />
           <label htmlFor="file-upload-dialog" className="cursor-pointer">
-            <i className="fas fa-cloud-upload-alt text-3xl text-muted-foreground mb-2"></i>
+            <Upload className="h-8 w-8 text-muted-foreground mb-2 mx-auto" />
             <p className="text-muted-foreground">
               {fileName || "Klik untuk upload atau drag and drop file"}
             </p>

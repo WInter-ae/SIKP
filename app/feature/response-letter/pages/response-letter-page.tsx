@@ -31,7 +31,6 @@ function ResponseLetterPage() {
       title: "Mengirimkan Surat Balasan",
       description:
         "Surat balasan telah diterima dan sedang dalam proses review oleh admin",
-      icon: "fa-paper-plane",
       status: "submitted" as const,
       visible: false,
     },
@@ -40,7 +39,6 @@ function ResponseLetterPage() {
       title: "Pemberian Izin Pengajuan Ulang",
       description:
         "Surat balasan ditolak. Anda diberikan izin untuk mengajukan ulang.",
-      icon: "fa-times-circle",
       status: "rejected" as const,
       visible: false,
     },
@@ -49,7 +47,6 @@ function ResponseLetterPage() {
       title: "Persetujuan Kerja Praktik",
       description:
         "Surat balasan disetujui. Kerja praktik Anda telah disetujui.",
-      icon: "fa-check-circle",
       status: "approved" as const,
       visible: false,
     },

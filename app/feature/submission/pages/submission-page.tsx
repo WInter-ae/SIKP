@@ -16,7 +16,6 @@ import FileUpload from "../components/file-upload";
 import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
 import { ConfirmDialog } from "../components/confirm-dialog";
-import { EyeIcon } from "~/components/icons/eyeicon";
 
 import type { AdditionalInfoData } from "../types";
 import { Eye, Info } from "lucide-react";

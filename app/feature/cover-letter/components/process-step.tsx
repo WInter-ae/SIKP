@@ -2,14 +2,9 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
-import { EyeIcon } from "~/components/icons/eyeicon";
-import { DocIcon } from "~/components/icons/doc";
-import { TimeCircleIcon } from "~/components/icons/time-circle";
-import { RedoIcon } from "~/components/icons/redo";
-import { CheckIcon } from "~/components/icons/check";
+import { Eye, FileText, XCircle, RefreshCw, Check } from "lucide-react";
 
 import type { ProcessStepProps } from "../types";
-import { Eye } from "lucide-react";
 
 function ProcessStep({
   title,
@@ -27,28 +22,28 @@ function ProcessStep({
           bg: "bg-muted",
           border: "border-l-muted-foreground",
           iconBg: "bg-muted-foreground",
-          iconComponent: <DocIcon className="size-6" />,
+          iconComponent: <FileText className="h-6 w-6" />,
         };
       case "rejected":
         return {
           bg: "bg-destructive/10",
           border: "border-l-destructive",
           iconBg: "bg-destructive",
-          iconComponent: <TimeCircleIcon className="size-7" />,
+          iconComponent: <XCircle className="h-7 w-7" />,
         };
       case "resubmitted":
         return {
           bg: "bg-muted",
           border: "border-l-muted-foreground",
           iconBg: "bg-muted-foreground",
-          iconComponent: <RedoIcon className="size-7" />,
+          iconComponent: <RefreshCw className="h-7 w-7" />,
         };
       case "approved":
         return {
           bg: "bg-primary/10",
           border: "border-l-primary",
           iconBg: "bg-primary",
-          iconComponent: <CheckIcon className="size-7" />,
+          iconComponent: <Check className="h-7 w-7" />,
         };
       default:
         return {
