@@ -4,6 +4,7 @@ import Docxtemplater from "docxtemplater";
 import * as mammoth from "mammoth";
 import "quill/dist/quill.snow.css"; 
 import * as FileSaver from "file-saver";
+import { toast } from "sonner";
 import { Textarea } from "~/components/ui/textarea";
 import {
   Dialog,
@@ -127,13 +128,13 @@ function AdminSubmissionPage() {
 
   const handleSubmitAction = () => {
     if (actionType === "reject" && !comment.trim()) {
-      alert("Komentar wajib diisi untuk penolakan.");
+      toast.error("Komentar wajib diisi untuk penolakan.");
       return;
     }
 
     const action = actionType === "approve" ? "disetujui" : "ditolak";
-    alert(
-      `Pengajuan dari ${selectedSubmission?.teamName} berhasil ${action}!\n${comment ? `Komentar: ${comment}` : ""}`,
+    toast.success(
+      `Pengajuan dari ${selectedSubmission?.teamName} berhasil ${action}!${comment ? `\nKomentar: ${comment}` : ""}`,
     );
 
     // Logika untuk generate surat pengantar bisa tarok di sini
@@ -154,13 +155,13 @@ function AdminSubmissionPage() {
   const handleTemplateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setCoverLetterTemplate(e.target.files[0]);
-      alert(`Template "${e.target.files[0].name}" berhasil diupload.`);
+      toast.success(`Template "${e.target.files[0].name}" berhasil diupload.`);
     }
   };
 
   const handleReviewAndEdit = async () => {
     if (!coverLetterTemplate) {
-      alert("Silakan unggah file template .docx terlebih dahulu.");
+      toast.error("Silakan unggah file template .docx terlebih dahulu.");
       return;
     }
     setIsEditing(true);
@@ -172,7 +173,7 @@ function AdminSubmissionPage() {
       setShowEditDialog(true);
     } catch (error) {
       console.error("Gagal mengonversi .docx ke HTML", error);
-      alert("Gagal memuat pratinjau. Pastikan file adalah .docx yang valid.");
+      toast.error("Gagal memuat pratinjau. Pastikan file adalah .docx yang valid.");
     } finally {
       setIsEditing(false);
     }
@@ -180,7 +181,7 @@ function AdminSubmissionPage() {
 
   const handleSaveEditedDocument = async (editorHtml: string) => {
     if (!editorHtml) {
-      alert("Tidak ada konten untuk disimpan.");
+      toast.error("Tidak ada konten untuk disimpan.");
       return;
     }
 
@@ -197,10 +198,10 @@ function AdminSubmissionPage() {
         `EDITED_${coverLetterTemplate?.name || "template"}.docx`,
       );
       setShowEditDialog(false);
-      alert("Dokumen yang diedit berhasil disimpan!");
+      toast.success("Dokumen yang diedit berhasil disimpan!");
     } catch (error) {
       console.error("Gagal menyimpan dokumen yang diedit:", error);
-      alert("Terjadi kesalahan saat menyimpan dokumen.");
+      toast.error("Terjadi kesalahan saat menyimpan dokumen.");
     }
   };
 
@@ -211,7 +212,7 @@ function AdminSubmissionPage() {
   };
   const handleGenerateLetter = () => {
     if (!coverLetterTemplate || !selectedSubmission) {
-      alert("Silakan unggah template dan pilih pengajuan terlebih dahulu.");
+      toast.error("Silakan unggah template dan pilih pengajuan terlebih dahulu.");
       return;
     }
 
@@ -220,7 +221,7 @@ function AdminSubmissionPage() {
     reader.onload = (e) => {
       const content = e.target?.result;
       if (!content) {
-        alert("Gagal membaca file template.");
+        toast.error("Gagal membaca file template.");
         return;
       }
 
@@ -302,7 +303,7 @@ function AdminSubmissionPage() {
             userMessage += " " + error.message;
           }
         }
-        alert(userMessage);
+        toast.error(userMessage);
       }
     };
   };
