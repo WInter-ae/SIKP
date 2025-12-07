@@ -19,10 +19,10 @@ function CoverLetterPage() {
     <>
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Status Pengajuan Surat Pengantar
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-muted-foreground">
           Monitor status pengajuan surat pengantar kerja praktik Anda
         </p>
       </div>
@@ -71,7 +71,7 @@ function CoverLetterPage() {
             </Button>
             <Button
               asChild
-              className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 font-medium"
+              className="px-6 py-3 font-medium"
             >
               <Link to="/mahasiswa/kp/surat-balasan">
                 Selanjutnya

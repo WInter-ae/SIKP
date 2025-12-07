@@ -80,9 +80,9 @@ export function VerifikasiDialog({
 
         <div className="space-y-4 py-4">
           {/* Info Mahasiswa */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          <div className="bg-muted p-4 rounded-lg">
             <p className="font-semibold text-base">{mahasiswa.nama}</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">NIM: {mahasiswa.nim}</p>
+            <p className="text-sm text-muted-foreground">NIM: {mahasiswa.nim}</p>
           </div>
 
           {/* Input Nilai (hanya untuk approve) */}
@@ -102,7 +102,7 @@ export function VerifikasiDialog({
                 placeholder="Masukkan nilai akhir (0-100)"
                 className="h-11"
               />
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 Nilai akan ditampilkan pada berita acara mahasiswa
               </p>
             </div>
@@ -124,7 +124,7 @@ export function VerifikasiDialog({
               }
               className="min-h-[120px] resize-none"
             />
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Catatan ini akan dilihat oleh mahasiswa
             </p>
           </div>
@@ -142,11 +142,8 @@ export function VerifikasiDialog({
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className={`h-11 font-semibold ${
-              type === "approved"
-                ? "bg-green-700 hover:bg-green-800"
-                : "bg-red-600 hover:bg-red-700"
-            }`}
+            variant={type === "approved" ? "default" : "destructive"}
+            className="h-11 font-semibold"
           >
             {isSubmitting ? (
               <>

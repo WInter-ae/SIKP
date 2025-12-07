@@ -1,18 +1,30 @@
 import { Link } from "react-router";
+
+import {
+  Card as ShadcnCard,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "~/components/ui/card";
+
 import type { CardProps } from "~/feature/during-intern/types";
 
 function Card({ title, description, icon, to }: CardProps) {
   return (
-    <Link
-      to={to}
-      className="flex-1 bg-white rounded-xl shadow-md p-8 text-center transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-    >
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-5 text-green-700 text-4xl">
-        <i className={`fas ${icon}`}></i>
-      </div>
-      <h2 className="text-2xl font-semibold text-gray-800 mb-3">{title}</h2>
-      <p className="text-gray-600">{description}</p>
-    </Link>
+    <ShadcnCard className="flex-1 transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+      <Link to={to} className="block h-full">
+        <CardHeader className="text-center pb-2">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-5">
+            <i className={`fas ${icon} text-4xl text-primary`}></i>
+          </div>
+          <CardTitle className="text-2xl">{title}</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center">
+          <CardDescription>{description}</CardDescription>
+        </CardContent>
+      </Link>
+    </ShadcnCard>
   );
 }
 

@@ -35,16 +35,16 @@ export function JoinTeamDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="text-gray-900">
+      <DialogContent>
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-gray-900">Gabung Tim</DialogTitle>
-            <DialogDescription className="text-gray-700">
+            <DialogTitle>Gabung Tim</DialogTitle>
+            <DialogDescription>
               Masukkan kode tim untuk bergabung dengan tim yang sudah ada.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label htmlFor="teamCode" className="text-gray-900">Kode Tim</Label>
+            <Label htmlFor="teamCode">Kode Tim</Label>
             <Input
               id="teamCode"
               placeholder="Masukkan kode tim (contoh: TEAM-ABC123)"

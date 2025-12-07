@@ -321,10 +321,10 @@ const TeamCreationPage = () => {
     <>
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Pembuatan Tim
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-muted-foreground">
           Buat tim Anda untuk melaksanakan Kerja Praktik
         </p>
       </div>
@@ -332,14 +332,13 @@ const TeamCreationPage = () => {
       {!team ? (
         <Card className="mb-8">
           <CardContent className="py-12 text-center">
-            <Users className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
+            <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-6">
               Anda belum memiliki tim. Silakan buat tim baru atau gabung dengan tim yang sudah ada.
             </p>
             <div className="flex justify-center gap-4">
               <Button
                 onClick={handleCreateTeam}
-                className="bg-green-700 hover:bg-green-800 text-white"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Buat Tim Baru
@@ -356,12 +355,10 @@ const TeamCreationPage = () => {
         </Card>
       ) : (
         <>
-          {/* Action Buttons */}
           <div className="flex justify-between items-center mb-8">
             <div className="flex gap-4">
               <Button
                 onClick={handleCreateTeam}
-                className="bg-green-700 hover:bg-green-800 text-white"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Buat Tim Baru
@@ -376,7 +373,6 @@ const TeamCreationPage = () => {
             </div>
             <Button
               onClick={() => setShowInviteDialog(true)}
-              className="bg-green-600 hover:bg-green-700 text-white"
               disabled={!team || team.members.length >= team.maxMembers}
             >
               <UserPlus className="mr-2 h-4 w-4" />
@@ -385,9 +381,9 @@ const TeamCreationPage = () => {
           </div>
 
           {/* Team Info Card */}
-          <Alert className="mb-8 border-green-200 bg-green-50 dark:bg-green-950/30">
-            <Info className="h-5 w-5 text-green-700" />
-            <AlertDescription className="text-green-800 dark:text-green-300">
+          <Alert className="mb-8 border-primary/20 bg-primary/5">
+            <Info className="h-5 w-5 text-primary" />
+            <AlertDescription className="text-foreground">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex items-center gap-4">
                   <span>
@@ -398,7 +394,7 @@ const TeamCreationPage = () => {
                   </span>
                   {team.members.some((m) => m.isLeader) && (
                     <span className="flex items-center gap-1">
-                      <Crown className="h-4 w-4 text-yellow-600" />
+                      <Crown className="h-4 w-4 text-yellow-500" />
                       Anda adalah Ketua Tim
                     </span>
                   )}
@@ -452,7 +448,7 @@ const TeamCreationPage = () => {
         <Button
           onClick={handleNext}
           size="lg"
-          className="bg-green-700 hover:bg-green-800 text-white px-8 font-medium text-lg"
+          className="px-8 font-medium text-lg"
         >
           Selanjutnya
         </Button>

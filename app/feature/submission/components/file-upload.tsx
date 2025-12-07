@@ -1,5 +1,10 @@
-import React, { useState } from "react";
+import { useState } from "react";
+
+import { Label } from "~/components/ui/label";
+import { cn } from "~/lib/utils";
+
 import type { FileUploadProps } from "../types";
+import { Upload } from "lucide-react";
 
 function FileUpload({ label, onFileChange }: FileUploadProps) {
   const [fileName, setFileName] = useState<string>("");
@@ -39,13 +44,14 @@ function FileUpload({ label, onFileChange }: FileUploadProps) {
 
   return (
     <div className="mb-4">
-      <label className="block text-gray-700 font-medium mb-2">{label}</label>
+      <Label className="block font-medium mb-2">{label}</Label>
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
+        className={cn(
+          "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition",
           isDragging
-            ? "border-green-500 bg-green-50"
-            : "border-gray-300 hover:border-green-400"
-        }`}
+            ? "border-primary bg-primary/5"
+            : "border-border hover:border-primary/50"
+        )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -57,8 +63,8 @@ function FileUpload({ label, onFileChange }: FileUploadProps) {
           onChange={handleFileChange}
         />
         <label htmlFor="file-upload" className="cursor-pointer">
-          <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
-          <p className="text-gray-600">
+          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+          <p className="text-muted-foreground">
             {fileName ? fileName : "Klik untuk upload atau drag and drop file"}
           </p>
         </label>

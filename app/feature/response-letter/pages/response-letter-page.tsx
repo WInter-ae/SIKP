@@ -114,18 +114,18 @@ function ResponseLetterPage() {
     <>
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Surat Balasan
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-muted-foreground">
           Upload surat balasan dan pantau status persetujuan kerja praktik
         </p>
       </div>
 
       {/* Info Alert */}
-      <Alert className="mb-8 border-l-4 border-green-700 bg-green-50 dark:bg-green-950/30">
-        <Info className="h-5 w-5 text-green-700" />
-        <AlertDescription className="text-green-800 dark:text-green-300">
+      <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
+        <Info className="h-5 w-5 text-primary" />
+        <AlertDescription className="text-foreground">
           Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan
           ke admin
         </AlertDescription>
@@ -135,7 +135,7 @@ function ResponseLetterPage() {
         <CardContent className="p-6">
           {/* Upload Surat Balasan Section */}
           <CardHeader className="px-0 pt-0">
-            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+            <CardTitle className="text-xl font-semibold text-foreground">
               Upload Surat Balasan
             </CardTitle>
           </CardHeader>
@@ -156,7 +156,7 @@ function ResponseLetterPage() {
                         variant="ghost"
                         size="icon"
                         onClick={handlePreview}
-                        className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                        className="text-muted-foreground hover:text-foreground"
                       >
                         <Eye className="size-5" />
                       </Button>
@@ -172,7 +172,7 @@ function ResponseLetterPage() {
 
           {/* Status Surat Balasan Section */}
           <CardHeader className="px-0 pt-0">
-            <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+            <CardTitle className="text-xl font-semibold text-foreground">
               Status Surat Balasan
             </CardTitle>
           </CardHeader>
@@ -183,7 +183,7 @@ function ResponseLetterPage() {
           <div className="text-center mt-6">
             <Button
               onClick={handleSubmit}
-              className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 font-medium"
+              className="px-6 py-3 font-medium"
             >
               Kirim
             </Button>
@@ -211,7 +211,7 @@ function ResponseLetterPage() {
         </Button>
         <Button
           onClick={() => setShowAnnouncement(true)}
-          className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 font-medium"
+          className="px-6 py-3 font-medium"
         >
           Selanjutnya
           <ArrowRight className="ml-2 h-4 w-4" />

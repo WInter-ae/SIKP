@@ -31,10 +31,10 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="text-gray-900">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-gray-900">{title}</DialogTitle>
-          <DialogDescription className="text-gray-700">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
             {description}
           </DialogDescription>
         </DialogHeader>

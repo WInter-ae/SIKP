@@ -63,7 +63,7 @@ export function FileUploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="text-gray-900">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Upload {documentTitle}</DialogTitle>
           <DialogDescription>Untuk anggota: {memberName}</DialogDescription>
@@ -72,8 +72,8 @@ export function FileUploadDialog({
         <div
           className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition ${
             isDragging
-              ? "border-green-500 bg-green-50"
-              : "border-gray-300 hover:border-green-400"
+              ? "border-primary bg-primary/5"
+              : "border-border hover:border-primary/50"
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -86,8 +86,8 @@ export function FileUploadDialog({
             onChange={handleFileChange}
           />
           <label htmlFor="file-upload-dialog" className="cursor-pointer">
-            <i className="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
-            <p className="text-gray-600">
+            <i className="fas fa-cloud-upload-alt text-3xl text-muted-foreground mb-2"></i>
+            <p className="text-muted-foreground">
               {fileName || "Klik untuk upload atau drag and drop file"}
             </p>
           </label>

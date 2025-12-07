@@ -32,10 +32,10 @@ function DuringInternPage() {
     <>
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Kebutuhan Saat Magang
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-muted-foreground">
           Kelola kebutuhan Anda selama masa kerja praktik
         </p>
       </div>
@@ -59,8 +59,8 @@ function DuringInternPage() {
                   className="block h-full"
                 >
                   <CardHeader className="text-center pb-2">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                      <Icon className="h-8 w-8 text-green-700 dark:text-green-400" />
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Icon className="h-8 w-8 text-primary" />
                     </div>
                     <CardTitle className="text-xl">{item.title}</CardTitle>
                   </CardHeader>
@@ -71,8 +71,8 @@ function DuringInternPage() {
               ) : (
                 <Link to={item.to} className="block h-full">
                   <CardHeader className="text-center pb-2">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors">
-                      <Icon className="h-8 w-8 text-green-700 dark:text-green-400" />
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Icon className="h-8 w-8 text-primary" />
                     </div>
                     <CardTitle className="text-xl">{item.title}</CardTitle>
                   </CardHeader>
@@ -100,7 +100,7 @@ function DuringInternPage() {
         </Button>
         <Button
           asChild
-          className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 font-medium"
+          className="px-6 py-3 font-medium"
         >
           <Link to="#">
             Selanjutnya

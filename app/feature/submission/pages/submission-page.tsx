@@ -84,19 +84,19 @@ function SubmissionPage() {
     <>
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Pengajuan Syarat Kerja Praktik
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-muted-foreground">
           Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
           Praktik
         </p>
       </div>
 
       {/* Info Alert */}
-      <Alert className="mb-8 border-l-4 border-green-700 bg-green-50 dark:bg-green-950/30">
-        <Info className="h-5 w-5 text-green-700" />
-        <AlertDescription className="text-green-800 dark:text-green-300">
+      <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
+        <Info className="h-5 w-5 text-primary" />
+        <AlertDescription className="text-foreground">
           Pastikan semua dokumen telah diupload sebelum melakukan pengajuan
         </AlertDescription>
       </Alert>
@@ -106,7 +106,7 @@ function SubmissionPage() {
           {/* Surat Proposal Section */}
           <div className="mb-8">
             <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+              <CardTitle className="text-xl font-semibold text-foreground">
                 Surat Proposal
               </CardTitle>
             </CardHeader>
@@ -127,7 +127,7 @@ function SubmissionPage() {
                           variant="ghost"
                           size="icon"
                           onClick={handlePreviewProposal}
-                          className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                          className="text-muted-foreground hover:text-foreground"
                         >
                           <Eye className="size-5" />
                         </Button>
@@ -145,7 +145,7 @@ function SubmissionPage() {
           {/* Lampiran Berkas Pribadi Section */}
           <div className="mb-8">
             <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-xl font-semibold text-gray-800 dark:text-gray-100">
+              <CardTitle className="text-xl font-semibold text-foreground">
                 Lampiran Berkas Pribadi
               </CardTitle>
             </CardHeader>
@@ -167,7 +167,7 @@ function SubmissionPage() {
             <Button
               onClick={() => setIsConfirmDialogOpen(true)}
               size="lg"
-              className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 font-medium text-lg"
+              className="px-8 py-3 font-medium text-lg"
             >
               Ajukan Surat Pengantar
             </Button>
