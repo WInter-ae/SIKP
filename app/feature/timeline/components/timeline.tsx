@@ -1,5 +1,10 @@
 import { Link } from "react-router";
+
+import { Card, CardContent } from "~/components/ui/card";
+import { cn } from "~/lib/utils";
+
 import { useTimeline, TimelineStep } from "../context/timeline-context";
+import { Lock } from "lucide-react";
 
 // Mapping dari TimelineStep ke route path
 const TIMELINE_ROUTES: Record<TimelineStep, string> = {
@@ -15,39 +20,43 @@ function Timeline() {
   const { timelineItems } = useTimeline();
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-      <div className="flex justify-between relative">
-        {/* Progress line */}
-        <div className="absolute top-5 left-0 right-0 h-1 bg-gray-200 z-0"></div>
+    <Card className="mb-8">
+      <CardContent className="p-6">
+        <div className="flex justify-between relative">
+          {/* Progress line */}
+          <div className="absolute top-5 left-0 right-0 h-1 bg-muted z-0"></div>
 
-        {timelineItems.map((item) => (
-          <Link
-            key={item.id}
-            to={TIMELINE_ROUTES[item.step]}
-            className="relative z-10 flex flex-col items-center w-1/6 group cursor-pointer transition-all"
-          >
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all ${
-                item.active
-                  ? "bg-green-700 text-white"
-                  : "bg-gray-200 text-gray-500 group-hover:bg-green-600 group-hover:text-white"
-              }`}
+          {timelineItems.map((item) => (
+            <Link
+              key={item.id}
+              to={TIMELINE_ROUTES[item.step]}
+              className="relative z-10 flex flex-col items-center w-1/6 group cursor-pointer transition-all"
             >
-              <i className="fa fa-lock"></i>
-            </div>
-            <div
-              className={`text-sm font-medium text-center transition-colors ${
-                item.active
-                  ? "text-green-700"
-                  : "text-gray-500 group-hover:text-green-600"
-              }`}
-            >
-              {item.title}
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
+              <div
+                className={cn(
+                  "w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all",
+                  item.active
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground group-hover:bg-primary/80 group-hover:text-primary-foreground"
+                )}
+              >
+                <Lock className="h-4 w-4" />
+              </div>
+              <div
+                className={cn(
+                  "text-sm font-medium text-center transition-colors",
+                  item.active
+                    ? "text-primary"
+                    : "text-muted-foreground group-hover:text-primary"
+                )}
+              >
+                {item.title}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

@@ -1,11 +1,19 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+
+import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Separator } from "~/components/ui/separator";
+
 import MemberList from "~/feature/create-teams/components/member-list";
 import { ConfirmDialog } from "~/feature/create-teams/components/confirm-dialog";
 import { JoinTeamDialog } from "~/feature/create-teams/components/join-team-dialog";
 import { InviteMemberDialog } from "~/feature/create-teams/components/invite-member-dialog";
-import { Button } from "~/components/ui/button";
+
 import type { Member, Team } from "~/feature/create-teams/types";
+import { Users, UserPlus, Copy, Info, Crown } from "lucide-react";
 
 const TeamCreationPage = () => {
   const navigate = useNavigate();
@@ -311,116 +319,136 @@ const TeamCreationPage = () => {
 
   return (
     <>
+      {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Pembuatan Tim
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Buat tim Anda untuk melaksanakan Kerja Praktik
         </p>
       </div>
 
       {!team ? (
-        <div className="text-center py-12">
-          <div className="mb-6">
-            <p className="text-gray-600 mb-4">
+        <Card className="mb-8">
+          <CardContent className="py-12 text-center">
+            <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground mb-6">
               Anda belum memiliki tim. Silakan buat tim baru atau gabung dengan tim yang sudah ada.
             </p>
-          </div>
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={handleCreateTeam}
-              className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
-            >
-              Buat Tim Baru
-            </button>
-            <button
-              onClick={() => setShowJoinDialog(true)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
-            >
-              Gabung Tim
-            </button>
-          </div>
-        </div>
+            <div className="flex justify-center gap-4">
+              <Button
+                onClick={handleCreateTeam}
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Buat Tim Baru
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => setShowJoinDialog(true)}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Gabung Tim
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <>
           <div className="flex justify-between items-center mb-8">
-            <div className="flex space-x-4">
-              <button
+            <div className="flex gap-4">
+              <Button
                 onClick={handleCreateTeam}
-                className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
               >
+                <UserPlus className="mr-2 h-4 w-4" />
                 Buat Tim Baru
-              </button>
-              <button
+              </Button>
+              <Button
+                variant="secondary"
                 onClick={() => setShowJoinDialog(true)}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
               >
+                <Users className="mr-2 h-4 w-4" />
                 Gabung Tim
-              </button>
+              </Button>
             </div>
-            <button
+            <Button
               onClick={() => setShowInviteDialog(true)}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition flex items-center gap-2"
               disabled={!team || team.members.length >= team.maxMembers}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-              </svg>
+              <UserPlus className="mr-2 h-4 w-4" />
               Undang Anggota
-            </button>
+            </Button>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-8">
-            <p className="text-green-800 text-center">
-              Jumlah Anggota Tim:{" "}
-              <span className="font-bold">
-                {team.members.length}/{team.maxMembers}
-              </span>
-            </p>
-            {team.members.some((m) => m.isLeader) && (
-              <p className="text-green-800 text-center">Anda adalah Ketua Tim</p>
-            )}
-            <p className="text-green-800 text-center mt-2">
-              Kode Tim: <span className="font-bold">{team.code}</span>
-            </p>
+          {/* Team Info Card */}
+          <Alert className="mb-8 border-primary/20 bg-primary/5">
+            <Info className="h-5 w-5 text-primary" />
+            <AlertDescription className="text-foreground">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-4">
+                  <span>
+                    Jumlah Anggota Tim:{" "}
+                    <Badge variant="secondary" className="ml-1">
+                      {team.members.length}/{team.maxMembers}
+                    </Badge>
+                  </span>
+                  {team.members.some((m) => m.isLeader) && (
+                    <span className="flex items-center gap-1">
+                      <Crown className="h-4 w-4 text-yellow-500" />
+                      Anda adalah Ketua Tim
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>Kode Tim:</span>
+                  <Badge variant="outline" className="font-mono font-bold">
+                    {team.code}
+                  </Badge>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+
+          {/* Member Lists */}
+          <div className="space-y-6">
+            <MemberList
+              title="Daftar Anggota"
+              members={team.members}
+              onRemove={handleRemoveMember}
+            />
+
+            <MemberList
+              title="Undangan yang Dikirim"
+              members={pendingInvites}
+              showCancel={true}
+              onCancel={handleCancelInvite}
+            />
+
+            <MemberList
+              title="Daftar Permintaan Gabung Tim"
+              members={joinRequests}
+              showActions={true}
+              onAccept={handleAcceptJoinRequest}
+              onReject={handleRejectJoinRequest}
+            />
+
+            <MemberList
+              title="Daftar Permintaan Ajakan Tim"
+              members={inviteRequests}
+              showActions={true}
+              onAccept={handleAcceptInvite}
+              onReject={handleRejectInvite}
+            />
           </div>
-
-          <MemberList
-            title="Daftar Anggota"
-            members={team.members}
-            onRemove={handleRemoveMember}
-          />
-
-          <MemberList
-            title="Undangan yang Dikirim"
-            members={pendingInvites}
-            showCancel={true}
-            onCancel={handleCancelInvite}
-          />
-
-          <MemberList
-            title="Daftar Permintaan Gabung Tim"
-            members={joinRequests}
-            showActions={true}
-            onAccept={handleAcceptJoinRequest}
-            onReject={handleRejectJoinRequest}
-          />
-
-          <MemberList
-            title="Daftar Permintaan Ajakan Tim"
-            members={inviteRequests}
-            showActions={true}
-            onAccept={handleAcceptInvite}
-            onReject={handleRejectInvite}
-          />
         </>
       )}
 
+      {/* Next Button */}
       <div className="text-center mt-8">
         <Button
           onClick={handleNext}
-          className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-lg font-medium text-lg transition"
+          size="lg"
+          className="px-8 font-medium text-lg"
         >
           Selanjutnya
         </Button>

@@ -41,7 +41,7 @@ export function SuratPreview({ surat, onDownload, onPrint }: SuratPreviewProps) 
               </Button>
             )}
             {onDownload && (
-              <Button size="sm" onClick={onDownload} className="bg-green-700 hover:bg-green-800">
+              <Button size="sm" onClick={onDownload}>
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
