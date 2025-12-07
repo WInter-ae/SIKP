@@ -185,7 +185,21 @@ function AdminSubmissionPage() {
     }
 
     try {
-      const htmlToDocx = (await import("html-to-docx")).default;
+      // Attempt to dynamically import the html-to-docx module
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let htmlToDocx: any;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        htmlToDocx = (await import("html-to-docx" as any)).default;
+      } catch (importError) {
+        console.error("Gagal memuat modul html-to-docx:", importError);
+        alert(
+          "Gagal memuat modul yang diperlukan untuk mengonversi dokumen. Silakan coba lagi atau hubungi administrator.",
+        );
+        return;
+      }
+
+      // Attempt to convert HTML to DOCX
       const fileBuffer = await htmlToDocx(editorHtml, undefined, {
         table: { row: { cantSplit: true } },
         footer: true,
