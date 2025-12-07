@@ -4,13 +4,9 @@ import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
 import type { AdditionalInfoData } from "../types";
 import { useNavigate } from "react-router";
-import { ConfirmDialog } from "../components/confirm-dialog";
-import { EyeIcon } from "~/components/icons/eyeicon";
 
 function SubmissionPage() {
   const navigate = useNavigate();
-
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfoData>({
     tujuanSurat: "",
@@ -20,8 +16,6 @@ function SubmissionPage() {
     tanggalSelesai: "",
     pembimbingLapangan: "",
   });
-
-  const [proposalFile, setProposalFile] = useState<File | null>(null);
 
   const teamMembers = [
     { id: 1, name: "Adam", role: "(Ketua)" },
@@ -39,7 +33,6 @@ function SubmissionPage() {
 
   const handleProposalUpload = (file: File) => {
     console.log("Proposal uploaded:", file);
-    setProposalFile(file);
   };
 
   const handleAdditionalInfoChange = (data: AdditionalInfoData) => {
@@ -48,22 +41,8 @@ function SubmissionPage() {
   };
 
   const handleSubmit = () => {
-    console.log("Form submitted with data:", { additionalInfo, proposalFile });
+    console.log("Form submitted with data:", { additionalInfo });
     navigate("/mahasiswa/kp/surat-pengantar");
-    setIsConfirmDialogOpen(false);
-  };
-
-  const handlePreviewProposal = () => {
-    if (proposalFile) {
-      try {
-        const fileURL = URL.createObjectURL(proposalFile);
-        window.open(fileURL, "_blank");
-        setTimeout(() => URL.revokeObjectURL(fileURL), 100);
-      } catch (error) {
-        console.error("Gagal membuat pratinjau file:", error);
-        alert("Tidak dapat menampilkan pratinjau file.");
-      }
-    }
   };
 
   return (
@@ -91,25 +70,10 @@ function SubmissionPage() {
           <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
             Surat Proposal
           </h2>
-          <div className="flex items-center gap-4">
-            <div className="flex-grow">
-              <FileUpload
-                label="Upload Surat Proposal (Ketua Tim)"
-                onFileChange={handleProposalUpload}
-              />
-            </div>
-            {proposalFile && (
-              <div className="pt-8">
-                <span
-                  onClick={handlePreviewProposal}
-                  role="button"
-                  className="cursor-pointer text-gray-600 hover:text-gray-800"
-                >
-                  <EyeIcon className="size-6" />
-                </span>
-              </div>
-            )}
-          </div>
+          <FileUpload
+            label="Upload Surat Proposal (Ketua Tim)"
+            onFileChange={handleProposalUpload}
+          />
         </div>
 
         {/* Lampiran Berkas Pribadi Section */}
@@ -132,38 +96,13 @@ function SubmissionPage() {
         {/* Submit Button */}
         <div className="text-center mt-8">
           <button
-            onClick={() => setIsConfirmDialogOpen(true)}
+            onClick={handleSubmit}
             className="bg-green-700 hover:bg-green-800 text-white px-8 py-3 rounded-lg font-medium text-lg transition"
           >
             Ajukan Surat Pengantar
           </button>
         </div>
       </div>
-
-      <ConfirmDialog
-        open={isConfirmDialogOpen}
-        onOpenChange={setIsConfirmDialogOpen}
-        title="Konfirmasi Pengajuan"
-        description={
-          <>
-            Apakah Anda yakin ingin mengajukan surat pengantar? Pastikan semua
-            data dan dokumen yang Anda masukkan sudah benar.
-            <br />
-            <br />
-            <span className="block">
-              <span className="font-semibold text-red-700">Peringatan:</span>{" "}
-              <span className="font-semibold inline-block">
-                Anda tidak akan dapat mengubah data pengajuan hingga proses
-                review selesai.
-              </span>
-            </span>
-          </>
-        }
-        onConfirm={handleSubmit}
-        confirmText="Ya, Ajukan"
-        cancelText="Batal"
-        variant="default"
-      />
     </>
   );
 }
