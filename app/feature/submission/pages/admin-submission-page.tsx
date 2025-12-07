@@ -3,9 +3,23 @@ import DOMPurify from "dompurify";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import * as mammoth from "mammoth";
-import "quill/dist/quill.snow.css"; 
+import "quill/dist/quill.snow.css";
 import * as FileSaver from "file-saver";
 import { toast } from "sonner";
+import {
+  Eye,
+  CheckCircle,
+  XCircle,
+  Download,
+  FileText,
+  Upload,
+  Users,
+  Calendar,
+  MapPin,
+  Building,
+  User,
+  FileCheck,
+} from "lucide-react";
 import type { HtmlToDocxFunction } from "~/../../html-to-docx";
 import { Textarea } from "~/components/ui/textarea";
 import {
@@ -20,6 +34,21 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { useQuill } from "~/hooks/use-quill";
 import { Button } from "~/components/ui/button";
+import { Badge } from "~/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Separator } from "~/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 
 interface Submission {
   id: number;
@@ -366,354 +395,514 @@ function AdminSubmissionPage() {
     };
   };
 
+  const getStatusBadge = (status: Submission["status"]) => {
+    switch (status) {
+      case "Disetujui":
+        return (
+          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Disetujui
+          </Badge>
+        );
+      case "Ditolak":
+        return (
+          <Badge variant="destructive">
+            <XCircle className="w-3 h-3 mr-1" />
+            Ditolak
+          </Badge>
+        );
+      default:
+        return (
+          <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200">
+            <Calendar className="w-3 h-3 mr-1" />
+            Menunggu
+          </Badge>
+        );
+    }
+  };
+
   return (
-    <div className="bg-white min-h-screen px-[3%]">
-      <div className="mb-8 mt-[10vh]">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          Pengajuan Kerja Praktik
-        </h1>
-        <p className="text-gray-600">
-          Kelola dan review pengajuan syarat kerja praktik dari mahasiswa.
-        </p>
-      </div>
-
-      {/* Template Upload Section */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
-          Template Surat Pengantar
-        </h2>
-        <Label htmlFor="template-upload" className="text-gray-700">
-          Upload template surat pengantar (.docx) untuk digenerate otomatis.
-        </Label>
-        <div className="flex items-center gap-4 mt-2">
-          <Input
-            id="template-upload"
-            type="file"
-            accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            className="flex-grow"
-            onChange={handleTemplateUpload}
-          />
-          <Button
-            variant="outline"
-            onClick={handleReviewAndEdit}
-            disabled={!coverLetterTemplate || isEditing}
-          >
-            {isEditing ? "Memuat Editor..." : "Review & Edit Template"}
-          </Button>
-        </div>
-        {coverLetterTemplate && (
-          <p className="text-sm text-green-700 mt-2">
-            Template aktif: <strong>{coverLetterTemplate.name}</strong>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Pengajuan Kerja Praktik
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Kelola dan review pengajuan syarat kerja praktik dari mahasiswa.
           </p>
-        )}
-      </div>
+        </div>
 
-      {/* Submissions Table */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-100 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-800">
-                Tim / Mahasiswa
-              </th>
-              <th className="px-6 py-3 text-center text-sm font-semibold text-gray-800">
-                Tanggal Pengajuan
-              </th>
-              <th className="px-6 py-3 text-center text-sm font-semibold text-gray-800">
-                Status
-              </th>
-              <th className="px-6 py-3 text-center text-sm font-semibold text-gray-800">
-                Aksi
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {submissions.map((submission) => (
-              <tr key={submission.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4">
-                  <div className="font-medium text-gray-900">
-                    {submission.teamName}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {submission.members.join(", ")}
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-center text-sm text-gray-700">
-                  {submission.submissionDate}
-                </td>
-                <td className="px-6 py-4 text-center">
-                  <span
-                    className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
-                      submission.status === "Disetujui"
-                        ? "bg-green-500 text-white"
-                        : submission.status === "Ditolak"
-                          ? "bg-red-500 text-white"
-                          : "bg-yellow-500 text-white"
-                    }`}
-                  >
-                    {submission.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <button
-                      onClick={() => handleViewDetail(submission)}
-                      className="p-2 hover:bg-gray-100 rounded-full transition"
-                      title="Lihat Detail"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-gray-600"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path
-                          fillRule="evenodd"
-                          d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleApprove(submission)}
-                      className="p-2 hover:bg-green-50 rounded-full transition"
-                      title="Setujui"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-green-600"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleReject(submission)}
-                      className="p-2 hover:bg-red-50 rounded-full transition"
-                      title="Tolak"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5 text-red-600"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Detail Dialog */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Detail Pengajuan KP</DialogTitle>
-            <DialogDescription>
-              Detail lengkap pengajuan dari {selectedSubmission?.teamName}.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedSubmission && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-              {/* Kolom Kiri: Info Pengajuan */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">
-                  Informasi Tim
-                </h3>
-                <div>
-                  <Label>Nama Tim/Mahasiswa</Label>
-                  <p>{selectedSubmission.teamName}</p>
-                </div>
-                <div>
-                  <Label>Anggota</Label>
-                  <p>{selectedSubmission.members.join(", ")}</p>
-                </div>
-                <div>
-                  <Label>Tanggal Pengajuan</Label>
-                  <p>{selectedSubmission.submissionDate}</p>
-                </div>
-
-                <h3 className="font-semibold text-lg border-b pb-2 mt-4">
-                  Keterangan Lain
-                </h3>
-                <div>
-                  <Label>Tujuan Surat</Label>
-                  <p>{selectedSubmission.tujuanSurat}</p>
-                </div>
-                <div>
-                  <Label>Nama Tempat KP</Label>
-                  <p>{selectedSubmission.namaTempat}</p>
-                </div>
-                <div>
-                  <Label>Alamat Tempat KP</Label>
-                  <p>{selectedSubmission.alamatTempat}</p>
-                </div>
-                <div>
-                  <Label>Tanggal Mulai</Label>
-                  <p>{selectedSubmission.tanggalMulai}</p>
-                </div>
-                <div>
-                  <Label>Tanggal Selesai</Label>
-                  <p>{selectedSubmission.tanggalSelesai}</p>
-                </div>
-                <div>
-                  <Label>Pembimbing Lapangan</Label>
-                  <p>{selectedSubmission.pembimbingLapangan}</p>
-                </div>
+        {/* Template Upload Section */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Template Surat Pengantar
+            </CardTitle>
+            <CardDescription>
+              Upload template surat pengantar (.docx) untuk digenerate otomatis.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex-1 w-full">
+                <Input
+                  id="template-upload"
+                  type="file"
+                  accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={handleTemplateUpload}
+                  className="cursor-pointer"
+                />
               </div>
-
-              {/* Kolom Kanan: Dokumen */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg border-b pb-2">
-                  Dokumen Terlampir
-                </h3>
-                <div className="border rounded-lg p-3 bg-gray-50">
-                  <p className="font-medium">Proposal KP</p>
-                  <Button size="sm" className="mt-2 w-full">
-                    Download {selectedSubmission.proposalFile}
-                  </Button>
-                </div>
-                {selectedSubmission.documents.map((doc, index) => (
-                  <div key={index} className="border rounded-lg p-3 bg-gray-50">
-                    <p className="font-medium">
-                      {doc.title} ({doc.uploader})
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      className="mt-2 w-full"
-                    >
-                      Download {doc.fileName}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDetailDialog(false)}
-            >
-              Tutup
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Approve/Reject Dialog */}
-      <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {actionType === "approve"
-                ? "Setujui Pengajuan"
-                : "Tolak Pengajuan"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedSubmission &&
-                (actionType === "approve"
-                  ? `Anda akan menyetujui pengajuan dari ${selectedSubmission.teamName}. Surat pengantar akan digenerate berdasarkan template.`
-                  : `Apakah Anda yakin ingin menolak pengajuan dari ${selectedSubmission.teamName}?`)}
-            </DialogDescription>
-          </DialogHeader>
-
-          {actionType === "approve" && selectedSubmission && (
-            <div className="my-4 p-4 border rounded-lg bg-gray-50 space-y-3">
-              <h4 className="font-semibold text-gray-800">
-                Generate Surat Pengantar
-              </h4>
-              <p className="text-sm text-gray-600">
-                Surat akan digenerate menggunakan template{" "}
-                <strong>
-                  {coverLetterTemplate?.name || "[Belum Diupload]"}
-                </strong>{" "}
-                dengan data berikut:
-              </p>
-              <ul className="text-sm list-disc list-inside bg-white p-3 rounded">
-                <li>
-                  <strong>Nama Tim:</strong> {selectedSubmission.teamName}
-                </li>
-                <li>
-                  <strong>Anggota:</strong>{" "}
-                  {selectedSubmission.members.join(", ")}
-                </li>
-                <li>
-                  <strong>Tujuan:</strong> {selectedSubmission.tujuanSurat},{" "}
-                  {selectedSubmission.namaTempat}
-                </li>
-                <li>
-                  <strong>Alamat:</strong> {selectedSubmission.alamatTempat}
-                </li>
-              </ul>
-              <Button className="w-full mt-2" onClick={handleGenerateLetter}>
-                Generate Surat Pengantar
+              <Button
+                variant="outline"
+                onClick={handleReviewAndEdit}
+                disabled={!coverLetterTemplate || isEditing}
+                className="w-full sm:w-auto"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                {isEditing ? "Memuat..." : "Review & Edit"}
               </Button>
             </div>
-          )}
+            {coverLetterTemplate && (
+              <div className="mt-4 flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                <FileCheck className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-green-700 dark:text-green-300">
+                  Template aktif:{" "}
+                  <span className="font-medium">{coverLetterTemplate.name}</span>
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {actionType === "reject" && (
-            <div className="my-4">
-              <Label htmlFor="comment" className="text-gray-900">
-                Komentar Penolakan *
-              </Label>
-              <Textarea
-                id="comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Masukkan alasan penolakan..."
-                className="mt-2"
-                rows={4}
-              />
+        {/* Submissions Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Daftar Pengajuan
+            </CardTitle>
+            <CardDescription>
+              {submissions.length} pengajuan terdaftar
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">
+                      Tim / Mahasiswa
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">
+                      Tanggal Pengajuan
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">
+                      Status
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">
+                      Aksi
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {submissions.map((submission) => (
+                    <tr
+                      key={submission.id}
+                      className="hover:bg-muted/50 transition-colors"
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Users className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {submission.teamName}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {submission.members.join(", ")}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="text-sm text-muted-foreground">
+                          {submission.submissionDate}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        {getStatusBadge(submission.status)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-center gap-1">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleViewDetail(submission)}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Lihat Detail</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleApprove(submission)}
+                                  className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Setujui</TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleReject(submission)}
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Tolak</TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+          </CardContent>
+        </Card>
 
-          <DialogFooter className="gap-3 sm:gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetActionState();
-              }}
-              className="flex-1"
-            >
-              Batal
-            </Button>
-            <Button
-              onClick={handleSubmitAction}
-              className={`flex-1 ${actionType === "approve" ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"}`}
-            >
-              {actionType === "approve"
-                ? "Tandai Selesai (Tanpa Generate)"
-                : "Tolak Pengajuan"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        {/* Detail Dialog */}
+        <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
+          <DialogContent className="min-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Detail Pengajuan KP
+              </DialogTitle>
+              <DialogDescription>
+                Detail lengkap pengajuan dari {selectedSubmission?.teamName}.
+              </DialogDescription>
+            </DialogHeader>
 
-      {/* Edit Template Dialog */}
-      {showEditDialog && (
-        <EditorDialog
-          open={showEditDialog}
-          onOpenChange={setShowEditDialog}
-          initialHtml={editorHtml}
-          onSave={handleSaveEditedDocument}
-        />
-      )}
+            {selectedSubmission && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 py-4">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  {/* Team Information */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Informasi Tim
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Nama Tim/Mahasiswa
+                        </Label>
+                        <p className="text-sm font-medium">
+                          {selectedSubmission.teamName}
+                        </p>
+                      </div>
+                      <Separator />
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Anggota
+                        </Label>
+                        <p className="text-sm">
+                          {selectedSubmission.members.join(", ")}
+                        </p>
+                      </div>
+                      <Separator />
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Tanggal Pengajuan
+                        </Label>
+                        <p className="text-sm">
+                          {selectedSubmission.submissionDate}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Other Details */}
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Building className="w-4 h-4" />
+                        Keterangan Lain
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Tujuan Surat
+                        </Label>
+                        <p className="text-sm">
+                          {selectedSubmission.tujuanSurat}
+                        </p>
+                      </div>
+                      <Separator />
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Nama Tempat KP
+                        </Label>
+                        <p className="text-sm">
+                          {selectedSubmission.namaTempat}
+                        </p>
+                      </div>
+                      <Separator />
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Alamat Tempat KP
+                        </Label>
+                        <p className="text-sm flex items-start gap-2">
+                          <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                          {selectedSubmission.alamatTempat}
+                        </p>
+                      </div>
+                      <Separator />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                            Tanggal Mulai
+                          </Label>
+                          <p className="text-sm flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            {selectedSubmission.tanggalMulai}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                            Tanggal Selesai
+                          </Label>
+                          <p className="text-sm flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            {selectedSubmission.tanggalSelesai}
+                          </p>
+                        </div>
+                      </div>
+                      <Separator />
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground uppercase tracking-wide">
+                          Pembimbing Lapangan
+                        </Label>
+                        <p className="text-sm flex items-center gap-2">
+                          <User className="w-4 h-4 text-muted-foreground" />
+                          {selectedSubmission.pembimbingLapangan}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Right Column - Documents */}
+                <div>
+                  <Card className="h-full">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Dokumen Terlampir
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {/* Proposal KP */}
+                      <div className="flex items-center justify-between p-3 rounded-lg border bg-primary/5 hover:bg-primary/10 transition-colors">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <FileText className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">
+                              Proposal KP
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {selectedSubmission.proposalFile}
+                            </p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Download className="w-4 h-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
+
+                      {/* Other Documents */}
+                      {selectedSubmission.documents.map((doc, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">
+                                {doc.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {doc.fileName} • {doc.uploader}
+                              </p>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm">
+                            <Download className="w-4 h-4 mr-1" />
+                            Download
+                          </Button>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="border-t pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setShowDetailDialog(false)}
+              >
+                Tutup
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Approve/Reject Dialog */}
+        <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {actionType === "approve" ? (
+                  <>
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    Setujui Pengajuan
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-5 h-5 text-red-600" />
+                    Tolak Pengajuan
+                  </>
+                )}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedSubmission &&
+                  (actionType === "approve"
+                    ? `Anda akan menyetujui pengajuan dari ${selectedSubmission.teamName}. Surat pengantar akan digenerate berdasarkan template.`
+                    : `Apakah Anda yakin ingin menolak pengajuan dari ${selectedSubmission.teamName}?`)}
+              </DialogDescription>
+            </DialogHeader>
+
+            {actionType === "approve" && selectedSubmission && (
+              <Card className="bg-muted/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Generate Surat Pengantar
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Surat akan digenerate menggunakan template{" "}
+                    <span className="font-medium text-foreground">
+                      {coverLetterTemplate?.name || "[Belum Diupload]"}
+                    </span>
+                  </p>
+                  <div className="space-y-2 p-3 bg-background rounded-lg border">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Tim:</span>
+                      <span>{selectedSubmission.teamName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Building className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Tujuan:</span>
+                      <span>
+                        {selectedSubmission.tujuanSurat},{" "}
+                        {selectedSubmission.namaTempat}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">Alamat:</span>
+                      <span>{selectedSubmission.alamatTempat}</span>
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={handleGenerateLetter}
+                    disabled={!coverLetterTemplate}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    Generate Surat Pengantar
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {actionType === "reject" && (
+              <div className="space-y-3">
+                <Label htmlFor="comment">
+                  Komentar Penolakan <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Masukkan alasan penolakan..."
+                  rows={4}
+                />
+              </div>
+            )}
+
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={resetActionState}>
+                Batal
+              </Button>
+              <Button
+                onClick={handleSubmitAction}
+                variant={actionType === "approve" ? "default" : "destructive"}
+              >
+                {actionType === "approve"
+                  ? "Tandai Selesai (Tanpa Generate)"
+                  : "Tolak Pengajuan"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Template Dialog */}
+        {showEditDialog && (
+          <EditorDialog
+            open={showEditDialog}
+            onOpenChange={setShowEditDialog}
+            initialHtml={editorHtml}
+            onSave={handleSaveEditedDocument}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -762,13 +951,16 @@ function EditorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Review & Edit Template Surat</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            Review & Edit Template Surat
+          </DialogTitle>
           <DialogDescription>
             Lakukan perubahan pada konten template. Perubahan akan disimpan
             sebagai file .docx baru.
           </DialogDescription>
         </DialogHeader>
-        <div className="flex-grow h-full overflow-y-auto bg-white border rounded-md">
+        <div className="flex-grow h-full overflow-y-auto bg-background border rounded-lg">
           <div ref={quillRef} className="h-full" />
         </div>
         <DialogFooter>
@@ -776,6 +968,7 @@ function EditorDialog({
             Batal
           </Button>
           <Button onClick={() => onSave(contentRef.current)}>
+            <Download className="w-4 h-4 mr-2" />
             Simpan Perubahan
           </Button>
         </DialogFooter>
