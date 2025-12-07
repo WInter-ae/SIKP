@@ -4,6 +4,7 @@ import Docxtemplater from "docxtemplater";
 import * as mammoth from "mammoth";
 import "quill/dist/quill.snow.css"; 
 import * as FileSaver from "file-saver";
+import type { HtmlToDocxFunction } from "~/../../html-to-docx";
 import { Textarea } from "~/components/ui/textarea";
 import {
   Dialog,
@@ -186,15 +187,7 @@ function AdminSubmissionPage() {
 
     try {
       // Attempt to dynamically import the html-to-docx module
-      let htmlToDocx: (
-        html: string,
-        headerHTMLString?: string | undefined,
-        options?: {
-          table?: { row?: { cantSplit?: boolean } };
-          footer?: boolean;
-          pageNumber?: boolean;
-        },
-      ) => Promise<Blob>;
+      let htmlToDocx: HtmlToDocxFunction;
       try {
         htmlToDocx = (await import("html-to-docx")).default;
       } catch (importError) {
