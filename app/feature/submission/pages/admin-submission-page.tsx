@@ -260,10 +260,49 @@ function AdminSubmissionPage() {
         );
         handleSubmitAction(); // Tandai selesai setelah generate berhasil
       } catch (error) {
-        console.error("Error generating document:", error);
-        alert(
-          "Terjadi kesalahan saat membuat dokumen. Pastikan template valid.",
-        );
+        // Log full error details for debugging
+        if (error instanceof Error) {
+          console.error("Error generating document:", error, error.stack);
+        } else {
+          console.error("Error generating document:", error);
+        }
+
+        // Provide more specific user-facing error messages
+        let userMessage = "Terjadi kesalahan saat membuat dokumen.";
+        if (error instanceof Error) {
+          if (
+            error.message.includes("File mungkin korup") ||
+            error.message.includes("corrupt") ||
+            error.message.includes("zip") ||
+            error.message.includes("not a valid")
+          ) {
+            userMessage =
+              "Template .docx tidak valid atau korup. Silakan unggah file template yang benar.";
+          } else if (
+            error.message.includes("Placeholder") ||
+            error.message.includes("not found") ||
+            error.message.includes("undefined")
+          ) {
+            userMessage =
+              "Beberapa placeholder pada template tidak ditemukan dalam data. Periksa kembali template dan data yang diisi.";
+          } else if (
+            error.message.includes("Cannot read property") ||
+            error.message.includes("undefined")
+          ) {
+            userMessage =
+              "Terjadi kesalahan pada data yang dimasukkan. Pastikan semua field telah diisi dengan benar.";
+          } else if (
+            error.message.includes("docxtemplater") ||
+            error.message.includes("Docxtemplater")
+          ) {
+            userMessage =
+              "Terjadi kesalahan saat memproses template. Pastikan template sesuai format yang didukung.";
+          } else {
+            // Optionally, append the error message for advanced users
+            userMessage += " " + error.message;
+          }
+        }
+        alert(userMessage);
       }
     };
   };
