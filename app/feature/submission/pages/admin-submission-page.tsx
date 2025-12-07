@@ -186,11 +186,17 @@ function AdminSubmissionPage() {
 
     try {
       // Attempt to dynamically import the html-to-docx module
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let htmlToDocx: any;
+      let htmlToDocx: (
+        html: string,
+        headerHTMLString?: string | undefined,
+        options?: {
+          table?: { row?: { cantSplit?: boolean } };
+          footer?: boolean;
+          pageNumber?: boolean;
+        },
+      ) => Promise<Blob>;
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        htmlToDocx = (await import("html-to-docx" as any)).default;
+        htmlToDocx = (await import("html-to-docx")).default;
       } catch (importError) {
         console.error("Gagal memuat modul html-to-docx:", importError);
         alert(
