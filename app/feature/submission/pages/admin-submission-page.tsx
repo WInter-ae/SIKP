@@ -133,9 +133,10 @@ function AdminSubmissionPage() {
     }
 
     const action = actionType === "approve" ? "disetujui" : "ditolak";
-    toast.success(
-      `Pengajuan dari ${selectedSubmission?.teamName} berhasil ${action}!${comment ? `\nKomentar: ${comment}` : ""}`,
-    );
+    const message = comment
+      ? `Pengajuan dari ${selectedSubmission?.teamName} berhasil ${action}! Komentar: ${comment}`
+      : `Pengajuan dari ${selectedSubmission?.teamName} berhasil ${action}!`;
+    toast.success(message);
 
     // Logika untuk generate surat pengantar bisa tarok di sini
     if (actionType === "approve") {
