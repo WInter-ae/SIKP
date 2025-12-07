@@ -22,7 +22,7 @@ Dokumen ini menjelaskan aturan dan konvensi penulisan kode untuk proyek SIKP (Si
 - **Runtime**: React 19
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
-- **UI Components**: Radix UI
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/) (berbasis Radix UI)
 - **Form Handling**: React Hook Form + Zod
 - **Authentication**: Better Auth
 - **Package Manager**: pnpm
@@ -761,9 +761,10 @@ Sebelum submit PR, pastikan:
 - [React Router v7 Docs](https://reactrouter.com/dev)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Tailwind CSS Docs](https://tailwindcss.com/docs)
+- [shadcn/ui Docs](https://ui.shadcn.com/)
 - [Radix UI Docs](https://www.radix-ui.com/)
 - [Better Auth Docs](https://www.better-auth.com/)
 
 ---
 
-**Last Updated:** 3 Desember 2025
+**Last Updated:** 7 Desember 2025
