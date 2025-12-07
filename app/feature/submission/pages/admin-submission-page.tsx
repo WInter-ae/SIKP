@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import DOMPurify from "dompurify";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import * as mammoth from "mammoth";
@@ -694,7 +695,9 @@ function EditorDialog({
   useEffect(() => {
     if (quill) {
       if (!contentInitializedRef.current) {
-        quill.clipboard.dangerouslyPasteHTML(initialHtml);
+        // Sanitize HTML before pasting to prevent XSS vulnerabilities
+        const sanitizedHtml = DOMPurify.sanitize(initialHtml);
+        quill.clipboard.dangerouslyPasteHTML(sanitizedHtml);
         contentInitializedRef.current = true;
       }
 
