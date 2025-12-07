@@ -9,4 +9,4 @@ export { TeamSwitcher } from "./components/team-switcher"
 export type { User, UserRole, NavItem, SidebarData } from "./types"
 
 // Data
-export { getSidebarMenuByRole } from "./data/sidebar-data"
+export { getSidebarMenuByRole, getSidebarMenuByUrl } from "./data/sidebar-data"
