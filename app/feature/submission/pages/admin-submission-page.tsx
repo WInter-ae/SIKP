@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
+import DOMPurify from "dompurify";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import * as mammoth from "mammoth";
 import "quill/dist/quill.snow.css"; 
 import * as FileSaver from "file-saver";
 import { toast } from "sonner";
+import type { HtmlToDocxFunction } from "~/../../html-to-docx";
 import { Textarea } from "~/components/ui/textarea";
 import {
   Dialog,
@@ -153,10 +155,53 @@ function AdminSubmissionPage() {
     setSelectedSubmission(null);
   };
 
-  const handleTemplateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setCoverLetterTemplate(e.target.files[0]);
-      toast.success(`Template "${e.target.files[0].name}" berhasil diupload.`);
+  const handleTemplateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !e.target.files[0]) {
+      return;
+    }
+
+    const file = e.target.files[0];
+    const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+
+    // Validate file size
+    if (file.size > maxSizeInBytes) {
+      alert("Ukuran file melebihi batas maksimum 10MB. Silakan pilih file yang lebih kecil.");
+      e.target.value = ""; // Reset input
+      return;
+    }
+
+    // Validate file type by checking magic bytes and internal structure
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      
+      // Check for ZIP signature (0x504B0304) which is used by .docx files
+      const hasZipSignature = bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04;
+      
+      if (!hasZipSignature) {
+        alert("File yang dipilih bukan format Word Document (.docx) yang valid. Silakan pilih file .docx yang benar.");
+        e.target.value = ""; // Reset input
+        return;
+      }
+
+      // Verify it's actually a .docx file by checking for expected internal structure
+      const zip = new PizZip(arrayBuffer);
+      const hasContentTypes = zip.files["[Content_Types].xml"] !== undefined;
+      const hasWordDocument = zip.files["word/document.xml"] !== undefined;
+      
+      if (!hasContentTypes || !hasWordDocument) {
+        alert("File yang dipilih bukan format Word Document (.docx) yang valid. Silakan pilih file .docx yang benar.");
+        e.target.value = ""; // Reset input
+        return;
+      }
+
+      // All validations passed
+      setCoverLetterTemplate(file);
+      alert(`Template "${file.name}" berhasil diupload.`);
+    } catch (error) {
+      console.error("Error validating file:", error);
+      alert("Terjadi kesalahan saat memvalidasi file. Silakan coba lagi.");
+      e.target.value = ""; // Reset input
     }
   };
 
@@ -187,7 +232,19 @@ function AdminSubmissionPage() {
     }
 
     try {
-      const htmlToDocx = (await import("html-to-docx")).default;
+      // Attempt to dynamically import the html-to-docx module
+      let htmlToDocx: HtmlToDocxFunction;
+      try {
+        htmlToDocx = (await import("html-to-docx")).default;
+      } catch (importError) {
+        console.error("Gagal memuat modul html-to-docx:", importError);
+        alert(
+          "Gagal memuat modul yang diperlukan untuk mengonversi dokumen. Silakan coba lagi atau hubungi administrator.",
+        );
+        return;
+      }
+
+      // Attempt to convert HTML to DOCX
       const fileBuffer = await htmlToDocx(editorHtml, undefined, {
         table: { row: { cantSplit: true } },
         footer: true,
@@ -683,7 +740,9 @@ function EditorDialog({
   useEffect(() => {
     if (quill) {
       if (!contentInitializedRef.current) {
-        quill.clipboard.dangerouslyPasteHTML(initialHtml);
+        // Sanitize HTML before pasting to prevent XSS vulnerabilities
+        const sanitizedHtml = DOMPurify.sanitize(initialHtml);
+        quill.clipboard.dangerouslyPasteHTML(sanitizedHtml);
         contentInitializedRef.current = true;
       }
 
