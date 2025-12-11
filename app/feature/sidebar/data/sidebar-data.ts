@@ -82,7 +82,7 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Mentor Lapangan",
-    url: "#",
+    url: "/mahasiswa/mentor-lapangan",
     icon: UserCircle,
   },
   {
