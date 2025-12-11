@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import type { DocumentDropdownProps } from "../types";
-import { EyeIcon } from "~/components/icons/eyeicon";
+import { Eye, ChevronUp, ChevronDown } from "lucide-react";
 import { FileUploadDialog } from "./file-upload-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 
@@ -53,25 +53,27 @@ function DocumentDropdown({ document, members }: DocumentDropdownProps) {
   };
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
+    <div className="border border-border rounded-lg overflow-hidden mb-4">
       <div
-        className="bg-gray-100 p-4 font-medium text-gray-800 flex justify-between items-center cursor-pointer"
+        className="bg-muted p-4 font-medium text-foreground flex justify-between items-center cursor-pointer"
         onClick={toggleDropdown}
       >
         <span>{document.title}</span>
-        <i
-          className={`fa ${isOpen ? "fa-chevron-up" : "fa-chevron-down"} text-gray-600`}
-        ></i>
+        {isOpen ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        )}
       </div>
 
       {isOpen && (
-        <div className="p-4 bg-white">
+        <div className="p-4 bg-card">
           {members.map((member) => (
             <div
               key={member.id}
-              className="flex justify-between items-center py-3 border-b border-gray-100 last:border-b-0"
+              className="flex justify-between items-center py-3 border-b border-border last:border-b-0"
             >
-              <div className="font-medium text-gray-700">
+              <div className="font-medium text-foreground">
                 {member.name} {member.role}
               </div>
               {uploadedFiles[member.id] ? (
@@ -80,16 +82,16 @@ function DocumentDropdown({ document, members }: DocumentDropdownProps) {
                     onClick={() =>
                       setReuploadingMember({ id: member.id, name: member.name })
                     }
-                    className="px-3 py-1 rounded text-sm font-medium transition bg-green-600 text-white hover:bg-green-700"
+                    className="px-3 py-1 rounded text-sm font-medium transition bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     Terupload
                   </button>
                   <span
                     onClick={(e) => handlePreview(e, member.id)}
                     role="button"
-                    className="cursor-pointer text-gray-600 hover:text-gray-800"
+                    className="cursor-pointer text-muted-foreground hover:text-foreground"
                   >
-                    <EyeIcon className="size-5" />
+                    <Eye className="h-5 w-5" />
                   </span>
                 </div>
               ) : (
@@ -97,7 +99,7 @@ function DocumentDropdown({ document, members }: DocumentDropdownProps) {
                   onClick={() =>
                     setUploadingMember({ id: member.id, name: member.name })
                   }
-                  className="px-3 py-1 rounded text-sm font-medium transition bg-gray-200 text-gray-800 hover:bg-gray-300"
+                  className="px-3 py-1 rounded text-sm font-medium transition bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 >
                   Upload
                 </button>

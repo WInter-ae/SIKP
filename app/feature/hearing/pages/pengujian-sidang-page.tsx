@@ -203,12 +203,12 @@ export default function PengujianSidangPage() {
   // Tampilkan loading state saat sedang load data dari localStorage
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-background">
         <div className="container max-w-7xl mx-auto p-6">
           <div className="flex items-center justify-center py-20">
             <div className="text-center space-y-4">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-700 mx-auto"></div>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">Memuat data...</p>
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground text-lg">Memuat data...</p>
             </div>
           </div>
         </div>
@@ -217,7 +217,7 @@ export default function PengujianSidangPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto p-6 space-y-6">
         {/* Header with Back Button */}
         <div className="flex items-center gap-4">
@@ -230,10 +230,10 @@ export default function PengujianSidangPage() {
             Kembali
           </Button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-bold">
               Pengujian Sidang Kerja Praktik
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-muted-foreground mt-1">
               Ajukan berita acara sidang dan dapatkan surat setelah disetujui dosen
             </p>
           </div>
