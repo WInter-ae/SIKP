@@ -1,195 +1,266 @@
+import { ChevronLeft, ChevronRight, Users, Code2, Sparkles } from "lucide-react";
+
+import { cn } from "~/lib/utils";
 import { useTheme } from "~/contexts/theme-context";
 import Header from "~/components/header";
 import Footer from "~/components/footer";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 
+// Types
 interface Technology {
   id: number;
   name: string;
+  icon: string;
+  color: string;
 }
 
 interface TeamMember {
   id: number;
   name: string;
   role: string;
+  initials: string;
 }
 
-const Tentang = () => {
-  const { isDarkMode } = useTheme();
-  const technologies: Technology[] = [
-    { id: 1, name: "[APK]" },
-    { id: 2, name: "[APK]" },
-    { id: 3, name: "[APK]" },
-  ];
+// Constants
+const TECHNOLOGIES: Technology[] = [
+  { id: 1, name: "React", icon: "⚛️", color: "from-blue-400 to-cyan-400" },
+  { id: 2, name: "TypeScript", icon: "📘", color: "from-blue-500 to-blue-600" },
+  { id: 3, name: "Tailwind CSS", icon: "🎨", color: "from-teal-400 to-cyan-500" },
+];
 
-  const teamMembers: TeamMember[] = [
-    { id: 1, name: "Nama", role: "Role" },
-    { id: 2, name: "Nama", role: "Role" },
-    { id: 3, name: "Nama", role: "Role" },
-    { id: 4, name: "Nama", role: "Role" },
-    { id: 5, name: "Nama", role: "Role" },
-    { id: 6, name: "Nama", role: "Role" },
-  ];
+const TEAM_MEMBERS: TeamMember[] = [
+  { id: 1, name: "Ahmad Fauzi", role: "Project Lead", initials: "AF" },
+  { id: 2, name: "Budi Santoso", role: "Frontend Developer", initials: "BS" },
+  { id: 3, name: "Citra Dewi", role: "Backend Developer", initials: "CD" },
+  { id: 4, name: "Dian Pratama", role: "UI/UX Designer", initials: "DP" },
+  { id: 5, name: "Eka Putri", role: "Quality Assurance", initials: "EP" },
+  { id: 6, name: "Fajar Nugroho", role: "DevOps Engineer", initials: "FN" },
+];
+
+// Components
+interface TechCardProps {
+  tech: Technology;
+  isDarkMode: boolean;
+}
+
+function TechCard({ tech, isDarkMode }: TechCardProps) {
+  return (
+    <div className="flex flex-col items-center gap-4 group">
+      <div
+        className={cn(
+          "w-24 h-24 rounded-2xl flex items-center justify-center text-4xl transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg",
+          `bg-gradient-to-br ${tech.color}`
+        )}
+      >
+        {tech.icon}
+      </div>
+      <p
+        className={cn(
+          "text-sm font-medium transition-colors duration-300",
+          isDarkMode ? "text-white" : "text-gray-900"
+        )}
+      >
+        {tech.name}
+      </p>
+    </div>
+  );
+}
+
+interface TeamMemberCardProps {
+  member: TeamMember;
+  isDarkMode: boolean;
+}
+
+function TeamMemberCard({ member, isDarkMode }: TeamMemberCardProps) {
+  return (
+    <Card
+      className={cn(
+        "group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0",
+        isDarkMode ? "bg-gray-800" : "bg-white shadow-md"
+      )}
+    >
+      <CardContent className="p-6">
+        <div className="flex items-center gap-4">
+          <Avatar className="h-14 w-14 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+            <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-semibold">
+              {member.initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <p
+              className={cn(
+                "font-semibold transition-colors duration-300",
+                isDarkMode ? "text-white" : "text-gray-900"
+              )}
+            >
+              {member.name}
+            </p>
+            <p
+              className={cn(
+                "text-sm transition-colors duration-300",
+                isDarkMode ? "text-gray-400" : "text-gray-600"
+              )}
+            >
+              {member.role}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function Tentang() {
+  const { isDarkMode } = useTheme();
 
   return (
     <>
       <Header />
 
       <section
-        className={`py-16 min-h-[calc(100vh-300px)] transition-colors duration-300 ${
-          isDarkMode ? "bg-gray-900" : "bg-white"
-        }`}
+        className={cn(
+          "py-20 min-h-[calc(100vh-300px)] transition-colors duration-300",
+          isDarkMode ? "bg-gray-900" : "bg-gray-50"
+        )}
       >
         <div className="container mx-auto px-4">
           {/* About Header */}
-          <div className="flex flex-col md:flex-row items-center gap-10 p-10 border-b border-gray-200 mb-12">
-            <div className="flex-shrink-0">
-              <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
-                <circle cx="40" cy="40" r="40" fill="#64B5F6" />
-                <circle cx="40" cy="30" r="12" fill="white" />
-                <path
-                  d="M20 65C20 55 28 50 40 50C52 50 60 55 60 65"
-                  fill="white"
-                />
-              </svg>
-            </div>
-            <div className="flex-1 text-center md:text-left">
-              <h1
-                className={`text-4xl font-bold mb-4 transition-colors duration-300 ${
-                  isDarkMode ? "text-white" : "text-gray-900"
-                }`}
-              >
-                Tentang
-              </h1>
-              <p
-                className={`text-sm leading-relaxed transition-colors duration-300 ${
-                  isDarkMode ? "text-gray-300" : "text-gray-600"
-                }`}
-              >
-                Portal Kerja Praktik adalah aplikasi untuk mempermudah mahasiswa
-                dalam mencari, mendaftar, dan melaksanakan program kerja
-                praktik.
-              </p>
-            </div>
+          <div className="max-w-4xl mx-auto mb-16">
+            <Card
+              className={cn(
+                "overflow-hidden border-0",
+                isDarkMode ? "bg-gray-800" : "bg-white shadow-lg"
+              )}
+            >
+              <CardContent className="p-8 md:p-12">
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  {/* Icon */}
+                  <div className="flex-shrink-0">
+                    <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                      <Sparkles className="h-12 w-12 text-white" />
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 text-center md:text-left">
+                    <h1
+                      className={cn(
+                        "text-3xl md:text-4xl font-bold mb-4 transition-colors duration-300",
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      )}
+                    >
+                      Tentang SIKP
+                    </h1>
+                    <p
+                      className={cn(
+                        "text-lg leading-relaxed transition-colors duration-300",
+                        isDarkMode ? "text-gray-300" : "text-gray-600"
+                      )}
+                    >
+                      Portal Kerja Praktik adalah aplikasi yang dirancang untuk
+                      mempermudah mahasiswa dalam mencari, mendaftar, dan
+                      melaksanakan program kerja praktik. Dengan sistem yang
+                      terintegrasi, proses administrasi menjadi lebih efisien dan
+                      transparan.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Technology Section */}
-          <div
-            className={`py-10 border-b border-gray-200 mb-12 transition-colors duration-300 ${
-              isDarkMode ? "border-gray-700" : "border-gray-200"
-            }`}
-          >
-            <h2
-              className={`text-3xl font-bold text-center mb-4 transition-colors duration-300 ${
-                isDarkMode ? "text-white" : "text-gray-900"
-              }`}
-            >
-              Teknologi
-            </h2>
-            <p
-              className={`text-center text-sm mb-10 transition-colors duration-300 ${
-                isDarkMode ? "text-gray-300" : "text-gray-600"
-              }`}
-            >
-              zxcvbnm,sdfghjkwertyuisdfghcvbncvbn
-            </p>
-
-            <div className="relative flex items-center justify-center gap-8 py-5">
-              <button
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-colors duration-300 ${
-                  isDarkMode
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                }`}
-              >
-                &lt;
-              </button>
-              <div className="flex gap-10 items-center">
-                {technologies.map((tech) => (
-                  <div
-                    key={tech.id}
-                    className="flex flex-col items-center gap-4"
-                  >
-                    <div
-                      className={`w-24 h-24 rounded-full border-2 transition-colors duration-300 ${
-                        isDarkMode
-                          ? "bg-gray-800 border-blue-300"
-                          : "bg-blue-100 border-blue-400"
-                      }`}
-                    ></div>
-                    <p
-                      className={`text-sm font-medium transition-colors duration-300 ${
-                        isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {tech.name}
-                    </p>
-                  </div>
-                ))}
+          <div className="mb-20">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+                <Code2 className="h-4 w-4" />
+                <span className="text-sm font-medium">Tech Stack</span>
               </div>
-              <button
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-xl font-bold transition-colors duration-300 ${
-                  isDarkMode
-                    ? "bg-gray-800 text-gray-300 hover:bg-gray-700"
-                    : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-300"
-                }`}
+              <h2
+                className={cn(
+                  "text-3xl md:text-4xl font-bold mb-4 transition-colors duration-300",
+                  isDarkMode ? "text-white" : "text-gray-900"
+                )}
               >
-                &gt;
-              </button>
+                Teknologi yang Digunakan
+              </h2>
+              <p
+                className={cn(
+                  "text-lg max-w-2xl mx-auto",
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                )}
+              >
+                Dibangun dengan teknologi modern untuk memberikan pengalaman terbaik
+              </p>
+            </div>
+
+            <div className="relative max-w-3xl mx-auto">
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn(
+                    "rounded-full",
+                    isDarkMode ? "border-gray-700 hover:bg-gray-800" : ""
+                  )}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+
+                <div className="flex gap-12 items-center py-8">
+                  {TECHNOLOGIES.map((tech) => (
+                    <TechCard key={tech.id} tech={tech} isDarkMode={isDarkMode} />
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn(
+                    "rounded-full",
+                    isDarkMode ? "border-gray-700 hover:bg-gray-800" : ""
+                  )}
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </div>
 
           {/* Team Section */}
-          <div className="py-10">
-            <h2
-              className={`text-3xl font-bold text-center mb-4 transition-colors duration-300 ${
-                isDarkMode ? "text-white" : "text-gray-900"
-              }`}
-            >
-              Tim Pengembang
-            </h2>
-            <p
-              className={`text-center text-sm mb-10 transition-colors duration-300 ${
-                isDarkMode ? "text-gray-300" : "text-gray-600"
-              }`}
-            >
-              zxcvbnm,sdfghjkwertyuisdfghcvbncvbn
-            </p>
+          <div>
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-4">
+                <Users className="h-4 w-4" />
+                <span className="text-sm font-medium">Our Team</span>
+              </div>
+              <h2
+                className={cn(
+                  "text-3xl md:text-4xl font-bold mb-4 transition-colors duration-300",
+                  isDarkMode ? "text-white" : "text-gray-900"
+                )}
+              >
+                Tim Pengembang
+              </h2>
+              <p
+                className={cn(
+                  "text-lg max-w-2xl mx-auto",
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                )}
+              >
+                Tim yang berdedikasi untuk mengembangkan platform terbaik bagi mahasiswa
+              </p>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {teamMembers.map((member) => (
-                <div
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {TEAM_MEMBERS.map((member) => (
+                <TeamMemberCard
                   key={member.id}
-                  className={`p-5 rounded-lg flex items-center gap-4 transition-colors duration-300 ${
-                    isDarkMode ? "bg-gray-800" : "bg-gray-100"
-                  }`}
-                >
-                  <div className="flex-shrink-0">
-                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
-                      <circle cx="30" cy="30" r="30" fill="#64B5F6" />
-                      <circle cx="30" cy="22" r="9" fill="white" />
-                      <path
-                        d="M15 48C15 40 21 37 30 37C39 37 45 40 45 48"
-                        fill="white"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p
-                      className={`text-sm font-bold mb-1 transition-colors duration-300 ${
-                        isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {member.name}
-                    </p>
-                    <p
-                      className={`text-xs transition-colors duration-300 ${
-                        isDarkMode ? "text-gray-300" : "text-gray-600"
-                      }`}
-                    >
-                      {member.role}
-                    </p>
-                  </div>
-                </div>
+                  member={member}
+                  isDarkMode={isDarkMode}
+                />
               ))}
             </div>
           </div>
@@ -199,6 +270,6 @@ const Tentang = () => {
       <Footer />
     </>
   );
-};
+}
 
 export default Tentang;
