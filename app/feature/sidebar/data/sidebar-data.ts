@@ -237,17 +237,17 @@ const mentorMenu: NavItem[] = [
   },
   {
     title: "Arsip",
-    url: "#",
+    url: "/mentor/arsip",
     icon: Archive,
   },
   {
     title: "Profil",
-    url: "#",
+    url: "/mentor/profil",
     icon: UserCircle,
   },
   {
     title: "Pengaturan",
-    url: "#",
+    url: "/mentor/pengaturan",
     icon: Settings,
   },
 ]
