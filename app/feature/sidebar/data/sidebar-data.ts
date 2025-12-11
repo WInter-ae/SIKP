@@ -1,7 +1,9 @@
 import {
   Archive,
+  Bell,
   BookOpen,
   Building2,
+  ClipboardCheck,
   FileText,
   FolderKanban,
   GraduationCap,
@@ -211,6 +213,45 @@ const dosenMenu: NavItem[] = [
   },
 ]
 
+// Menu untuk Pembimbing Lapangan (Mentor)
+const mentorMenu: NavItem[] = [
+  {
+    title: "Dashboard",
+    url: "/mentor",
+    icon: Home,
+  },
+  {
+    title: "Mentee",
+    url: "/mentor/mentee",
+    icon: Users,
+  },
+  {
+    title: "Penilaian",
+    url: "/mentor/penilaian",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Notifikasi",
+    url: "/mentor/notifikasi",
+    icon: Bell,
+  },
+  {
+    title: "Arsip",
+    url: "#",
+    icon: Archive,
+  },
+  {
+    title: "Profil",
+    url: "#",
+    icon: UserCircle,
+  },
+  {
+    title: "Pengaturan",
+    url: "#",
+    icon: Settings,
+  },
+]
+
 export function getSidebarMenuByRole(role: UserRole): NavItem[] {
   switch (role) {
     case "mahasiswa":
@@ -219,6 +260,8 @@ export function getSidebarMenuByRole(role: UserRole): NavItem[] {
       return adminMenu
     case "dosen":
       return dosenMenu
+    case "mentor":
+      return mentorMenu
     default:
       return mahasiswaMenu
   }
@@ -230,6 +273,9 @@ export function getSidebarMenuByUrl(pathname: string): NavItem[] {
   }
   if (pathname.startsWith("/dosen")) {
     return dosenMenu
+  }
+  if (pathname.startsWith("/mentor")) {
+    return mentorMenu
   }
   if (pathname.startsWith("/mahasiswa")) {
     return mahasiswaMenu
