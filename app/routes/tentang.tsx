@@ -47,12 +47,12 @@ const TECHNOLOGIES: Technology[] = [
 ];
 
 const TEAM_MEMBERS: TeamMember[] = [
-  { id: 1, name: "Ahmad Fauzi", role: "Project Lead", initials: "AF", gradient: "from-amber-500 to-orange-600" },
-  { id: 2, name: "Budi Santoso", role: "Frontend Developer", initials: "BS", gradient: "from-blue-500 to-cyan-600" },
-  { id: 3, name: "Citra Dewi", role: "Backend Developer", initials: "CD", gradient: "from-emerald-500 to-teal-600" },
-  { id: 4, name: "Dian Pratama", role: "UI/UX Designer", initials: "DP", gradient: "from-pink-500 to-rose-600" },
-  { id: 5, name: "Eka Putri", role: "Quality Assurance", initials: "EP", gradient: "from-purple-500 to-violet-600" },
-  { id: 6, name: "Fajar Nugroho", role: "DevOps Engineer", initials: "FN", gradient: "from-red-500 to-orange-600" },
+  { id: 1, name: "M. Adam Yudistira", role: "Project Lead", initials: "MAY", gradient: "from-amber-500 to-orange-600" },
+  { id: 2, name: "Rafly Alamsyach", role: "Frontend Developer", initials: "RA", gradient: "from-blue-500 to-cyan-600" },
+  { id: 3, name: "Mukarrobin", role: "Backend Developer", initials: "M", gradient: "from-emerald-500 to-teal-600" },
+  { id: 4, name: "Muhammad Akbar", role: "UI/UX Designer", initials: "MA", gradient: "from-pink-500 to-rose-600" },
+  { id: 5, name: "Panji Hidayatullah", role: "Quality Assurance", initials: "PH", gradient: "from-purple-500 to-violet-600" },
+  { id: 6, name: "Muhammad Raihan", role: "DevOps Engineer", initials: "MR", gradient: "from-red-500 to-orange-600" },
 ];
 
 const STATS = [
