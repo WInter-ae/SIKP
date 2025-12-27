@@ -84,12 +84,12 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Mentor Lapangan",
-    url: "#",
+    url: "/mahasiswa/mentor-lapangan",
     icon: UserCircle,
   },
   {
     title: "Laporan KP",
-    url: "#",
+    url: "/mahasiswa/kp/laporan",
     icon: BookMarked,
   },
   {
