@@ -1,5 +1,4 @@
-import React, { useState, useMemo } from "react";
-import type { Application, DocumentFile } from "../types";
+import { useState, useMemo } from "react";
 import {
   AlertCircle,
   Building,
@@ -12,6 +11,8 @@ import {
   X,
 } from "lucide-react";
 
+import type { Application, DocumentFile } from "../types";
+
 interface ReviewModalProps {
   application: Application | null;
   isOpen: boolean;
@@ -20,13 +21,13 @@ interface ReviewModalProps {
   onReject: (comment: string) => void;
 }
 
-const ReviewModal: React.FC<ReviewModalProps> = ({
+function ReviewModal({
   application,
   isOpen,
   onClose,
   onApprove,
   onReject,
-}) => {
+}: ReviewModalProps) {
   const [comment, setComment] = useState("");
   const [docReviews, setDocReviews] = useState<
     Record<string, "approved" | "rejected">
@@ -439,7 +440,7 @@ const ReviewModal: React.FC<ReviewModalProps> = ({
       </div>
     </div>
   );
-};
+}
 
 // Helper function to render document item
 const renderDocItem = (

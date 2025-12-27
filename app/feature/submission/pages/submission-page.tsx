@@ -72,7 +72,6 @@ function SubmissionPage() {
   ];
 
   const handleProposalUpload = (file: File) => {
-    console.log("Proposal uploaded:", file);
     setProposalFile(file);
   };
 
@@ -93,7 +92,6 @@ function SubmissionPage() {
   };
 
   const handleAdditionalInfoChange = (data: AdditionalInfoData) => {
-    console.log("Additional info changed:", data);
     setAdditionalInfo(data);
   };
 

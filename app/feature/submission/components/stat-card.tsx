@@ -1,24 +1,19 @@
-import React from "react";
+import type { LucideIcon } from "lucide-react";
 
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: string;
+  icon: LucideIcon;
   iconBgColor: string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({
-  title,
-  value,
-  icon,
-  iconBgColor,
-}) => {
+function StatCard({ title, value, icon: Icon, iconBgColor }: StatCardProps) {
   return (
     <div className="bg-white rounded-lg shadow p-6 flex items-center">
       <div
         className={`w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl mr-4 ${iconBgColor}`}
       >
-        <i className={`fas ${icon}`}></i>
+        <Icon className="h-6 w-6" />
       </div>
       <div>
         <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
@@ -26,6 +21,6 @@ const StatCard: React.FC<StatCardProps> = ({
       </div>
     </div>
   );
-};
+}
 
 export default StatCard;
