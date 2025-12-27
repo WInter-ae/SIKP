@@ -185,6 +185,10 @@ const dosenMenu: NavItem[] = [
     isActive: true,
     items: [
       {
+        title: "Verifikasi Judul",
+        url: "/dosen/kp/verifikasi-judul",
+      },
+      {
         title: "Verifikasi Sidang",
         url: "/dosen/kp/verifikasi-sidang",
       },
