@@ -1,0 +1,1105 @@
+# Dokumentasi Branch Saat-Magang
+
+Branch ini berisi implementasi fitur-fitur yang dibutuhkan mahasiswa selama masa kerja praktik (magang), serta fitur verifikasi untuk dosen pembimbing.
+
+## 📋 Daftar Isi
+
+- [Overview](#overview)
+- [Struktur Feature](#struktur-feature)
+- [Fitur yang Diimplementasikan](#fitur-yang-diimplementasikan)
+  - [1. Logbook](#1-logbook)
+  - [2. Penilaian](#2-penilaian)
+  - [3. Mentor Lapangan](#3-mentor-lapangan)
+  - [4. Pengajuan & Verifikasi Judul Laporan](#4-pengajuan--verifikasi-judul-laporan)
+- [File yang Dibuat/Dimodifikasi](#file-yang-dibuatdimodifikasi)
+- [Route dan Navigasi](#route-dan-navigasi)
+- [Type Definitions](#type-definitions)
+- [Cara Menggunakan](#cara-menggunakan)
+- [Commit History](#commit-history)
+
+---
+
+## Overview
+
+Branch **Saat-Magang** mengimplementasikan fitur-fitur yang diperlukan mahasiswa selama masa kerja praktik, termasuk:
+1. Pencatatan logbook harian
+2. Melihat penilaian dari mentor lapangan
+3. Pengesahan dokumen (link ke OLS)
+4. Pendaftaran mentor lapangan
+5. **Pengajuan judul laporan KP dan verifikasi oleh dosen** ⭐ NEW
+
+**Alur Interaksi:**
+```
+MAHASISWA                                    DOSEN
+    │                                           │
+    ├─► 1. Daftar Mentor Lapangan              │
+    │   (field-mentor-page)                     │
+    │                                           │
+    ├─► 2. Catat Logbook Harian                │
+    │   (logbook-page)                          │
+    │                                           │
+    ├─► 3. Lihat Penilaian dari Mentor        │
+    │   (assessment-page)                       │
+    │                                           │
+    ├─► 4. Ajukan Judul Laporan               │
+    │   (title-submission-form)                 │
+    │                                           │
+    │                           ◄───────────────┤
+    │                           5. Review Judul │
+    │                           (verifikasi-    │
+    │                            judul-page)    │
+    │                                           │
+    │   6. Terima Feedback      ◄───────────────┤
+    │   (Disetujui/Revisi/      Kirim Catatan   │
+    │    Ditolak)                               │
+    │                                           │
+    └─► 7. (Jika Revisi) Update & Submit Ulang │
+```
+
+---
+
+## Struktur Feature
+
+### 1. During Intern (`app/feature/during-intern/`)
+
+```
+during-intern/
+├── components/
+│   └── card.tsx                 # Reusable card component untuk menu
+├── pages/
+│   ├── during-intern-page.tsx   # Halaman utama saat magang (menu hub)
+│   ├── logbook-page.tsx         # Halaman pencatatan logbook
+│   ├── assessment-page.tsx      # Halaman penilaian dari mentor
+│   └── ols-page.tsx            # (Jika ada) Redirect ke OLS
+└── types/
+    └── index.d.ts              # Type definitions untuk during-intern
+```
+
+### 2. Field Mentor (`app/feature/field-mentor/`)
+
+```
+field-mentor/
+├── components/                  # (Empty - belum ada komponen khusus)
+├── pages/
+│   └── field-mentor-page.tsx   # Halaman pendaftaran mentor lapangan
+└── types/
+    └── index.d.ts              # Type definitions untuk mentor
+```
+
+### 3. KP Report (`app/feature/kp-report/`)
+
+```
+kp-report/
+├── components/
+│   ├── title-submission-form.tsx           # Form pengajuan judul mahasiswa
+│   ├── pengajuan-judul-card.tsx           # Card untuk display pengajuan
+│   └── verifikasi-judul-dialog.tsx        # Dialog verifikasi dosen
+├── pages/
+│   └── verifikasi-judul-dosen-page.tsx    # Halaman verifikasi dosen
+└── types/
+    └── judul.ts                           # Type definitions untuk judul
+```
+
+---
+
+## Fitur yang Diimplementasikan
+
+### 1. Logbook (`logbook-page.tsx`)
+
+**Fungsi:**
+- Pencatatan aktivitas harian mahasiswa selama magang
+- Tracking progress kerja praktik
+
+**Fitur:**
+- **Form Input Logbook:**
+  - Tanggal kegiatan (date picker)
+  - Deskripsi aktivitas
+  - Dokumentasi/catatan
+  
+- **List Logbook:**
+  - Tampilan list logbook yang sudah dibuat
+  - Filter by date range
+  - Edit dan delete entry
+
+- **Export:**
+  - Export ke PDF untuk laporan
+  - Print logbook
+
+**Mock Data:**
+```typescript
+const logbookEntries = [
+  {
+    id: 1,
+    date: "2024-01-15",
+    activity: "Meeting dengan tim untuk briefing project",
+    description: "Diskusi requirement dan timeline",
+  },
+  // ...
+];
+```
+
+**UI Components:**
+- DatePicker untuk pilih tanggal
+- Textarea untuk deskripsi
+- Card untuk display logbook entries
+- Button group (Add, Edit, Delete, Export)
+
+---
+
+### 2. Penilaian (`assessment-page.tsx`)
+
+**Fungsi:**
+- Form pengajuan judul laporan KP oleh mahasiswa
+- Submit judul untuk mendapat persetujuan dosen
+
+**Fitur:**
+- **Input Judul:**
+  - Judul Bahasa Indonesia (required)
+  - Judul Bahasa Inggris (optional)
+  
+- **Deskripsi Proyek:**
+  - Deskripsi lengkap minimal 100 karakter (required)
+  - Metodologi pengembangan (optional)
+  
+- **Teknologi:**
+  - Input multiple teknologi yang digunakan
+  - Add/remove teknologi dengan badge
+  - Support keyboard (Enter) untuk tambah
+
+- **Status Tracking:**
+  - Draft - Belum diajukan
+  - Diajukan - Menunggu verifikasi
+  - Disetujui - Sudah disetujui (form disabled)
+  - Revisi - Perlu perbaikan (form enabled)
+  - Ditolak - Harus ajukan judul baru (form enabled)
+
+- **Catatan Dosen:**
+  - Tampilan catatan dari dosen dengan background berwarna
+  - Hijau untuk disetujui
+  - Biru untuk revisi
+  - Merah untuk ditolak
+
+**State Management:**
+```typescript
+interface TitleSubmissionFormProps {
+  currentTitle?: string;
+  titleStatus?: "draft" | "diajukan" | "disetujui" | "ditolak" | "revision";
+  onSubmit: (data: {
+    judulLaporan: string;
+    judulInggris: string;
+    deskripsi: string;
+    metodologi: string;
+    teknologi: string[];
+  }) => void;
+  disabled?: boolean;
+  catatanDosen?: string;
+}
+```
+
+**Validasi:**
+- Judul Indonesia wajib diisi
+- Deskripsi minimal 100 karakter
+- Teknologi bisa kosong atau multiple
+- Form disabled jika sudah disetujui
+
+**UI Components:**
+- Textarea untuk judul dan deskripsi
+- Badge untuk teknologi (removable)
+- Alert dengan warna status
+- Button submit dengan text dinamis
+
+---
+
+#### B. Verifikasi Judul Dosen (`verifikasi-judul-dosen-page.tsx`)
+
+**Fungsi:**
+- Halaman dosen untuk verifikasi judul yang diajukan mahasiswa
+- Approve, reject, atau minta revisi judul
+
+**Fitur:**
+- **Dashboard Statistik:**
+  - Card stats: Menunggu, Disetujui, Revisi, Ditolak
+  - Icon rounded dengan warna berbeda
+  - Hover effect pada cards
+
+- **Search & Filter:**
+  - Search berdasarkan nama, NIM, judul, atau tempat magang
+  - Filter real-time saat mengetik
+
+- **Tabs:**
+  - Menunggu Verifikasi (submitted)
+  - Disetujui (approved)
+  - Perlu Revisi (revision)
+  - Ditolak (rejected)
+  - Badge counter per tab
+  - Responsive untuk mobile
+
+- **Pengajuan Card:**
+  - Info mahasiswa (nama, NIM, prodi, tim)
+  - Judul highlighted dengan background
+  - Detail: tempat magang, periode, deskripsi
+  - Teknologi yang digunakan (badges)
+  - Metodologi (jika ada)
+  - Riwayat revisi (jika ada)
+  - Toggle detail view
+  - Catatan dosen dengan border berwarna
+
+- **Verifikasi Dialog:**
+  - 3 pilihan keputusan:
+    - ✅ Setujui - Judul sesuai
+    - 📝 Revisi - Perlu perbaikan
+    - ❌ Tolak - Tidak sesuai
+  - Catatan wajib (minimal 10 karakter)
+  - Preview info mahasiswa dan judul
+  - Validasi sebelum submit
+
+- **Notifikasi:**
+  - Toast notification setelah verifikasi
+  - Auto-hide setelah 4 detik
+
+- **Panduan Verifikasi:**
+  - Info card dengan guideline
+  - Gradient background
+
+**Type Definitions:**
+```typescript
+interface PengajuanJudul {
+  id: string;
+  mahasiswa: {
+    id: string;
+    nama: string;
+    nim: string;
+    prodi: string;
+    email?: string;
+  };
+  tim?: {
+    id: string;
+    nama: string;
+    anggota: string[];
+  };
+  data: {
+    judulLaporan: string;
+    judulInggris?: string;
+    tempatMagang: string;
+    periode: {
+      mulai: string;
+      selesai: string;
+    };
+    deskripsi: string;
+    metodologi?: string;
+    teknologi?: string[];
+  };
+  status: "submitted" | "approved" | "rejected" | "revision";
+  tanggalPengajuan: string;
+  tanggalVerifikasi?: string;
+  catatanDosen?: string;
+  revisi?: {
+    count: number;
+    history: Array<{
+      tanggal: string;
+      catatan: string;
+    }>;
+  };
+}
+```
+
+**UI Components:**
+- Stats cards dengan gradient
+- Tabs responsive
+- Search input dengan icon
+- Card dengan border dinamis
+- Dialog modal untuk verifikasi
+- Badge status berwarna
+- Progress indicator (loading state)
+- Empty state untuk setiap tab
+
+---
+
+#### C. Komponen Pendukung
+
+**1. Pengajuan Judul Card (`pengajuan-judul-card.tsx`)**
+- Card component untuk menampilkan pengajuan
+- Border kiri dinamis berdasarkan status
+- Toggle detail view
+- Catatan dosen dengan styling khusus
+- Riwayat revisi dengan timeline
+
+**2. Verifikasi Dialog (`verifikasi-judul-dialog.tsx`)**
+- Modal untuk verifikasi
+- Radio button untuk pilihan status
+- Textarea catatan dengan validation
+- Preview data mahasiswa dan judul
+- Error handling
+
+**3. Type Definitions (`kp-report/types/judul.ts`)**
+- Interface untuk PengajuanJudul
+- Interface untuk form data verifikasi
+
+---
+
+#### D. Routes & Integration
+
+**Routes Mahasiswa:**
+- `/mahasiswa/kp/laporan` - Tab "Judul" untuk pengajuan
+
+**Routes Dosen:**
+- `/dosen/kp/verifikasi-judul` - Halaman verifikasi
+
+**Sidebar Menu:**
+```typescript
+// Dosen menu
+{
+  title: "Kerja Praktik",
+  icon: GraduationCap,
+  items: [
+    {
+      title: "Verifikasi Judul",
+      url: "/dosen/kp/verifikasi-judul",
+    },
+    {
+      title: "Verifikasi Sidang",
+      url: "/dosen/kp/verifikasi-sidang",
+    },
+  ],
+}
+```
+
+---
+
+#### E. Mock Data
+
+**Mahasiswa Mock:**
+```typescript
+// 6 contoh pengajuan dengan berbagai status
+// - 3 submitted (menunggu)
+// - 1 approved
+// - 1 revision
+// - 1 rejected
+```
+
+---
+
+### 1. Halaman Saat Magang (`during-intern-page.tsx`)
+
+**Fungsi:**
+- Hub menu untuk fitur-fitur saat magang
+- Navigasi ke Logbook, Penilaian, dan Pengesahan
+
+**Fitur:**
+- Card menu dengan icon Lucide
+- Link internal dan eksternal (ke OLS)
+- Navigasi ke halaman sebelumnya (Surat Balasan)
+- Navigasi ke halaman berikutnya (placeholder)
+
+**Komponen yang Digunakan:**
+- `Card` (custom component dari `during-intern/components/card.tsx`)
+- `Button` dari shadcn/ui
+- Icons: `BookOpen`, `ClipboardCheck`, `FileCheck`, `ArrowLeft`, `ArrowRight`
+
+---
+
+### 2. Halaman Logbook (`logbook-page.tsx`)
+
+**Fungsi:**
+- Pencatatan aktivitas harian mahasiswa selama magang
+- Generate tanggal otomatis berdasarkan periode kerja
+
+**Fitur:**
+- **Input Periode Kerja:**
+  - Tanggal mulai dan selesai
+  - Hari kerja (Senin-Jumat atau Senin-Sabtu)
+  - Auto-generate tanggal sesuai hari kerja
+
+- **Pencatatan Logbook:**
+  - Pilih tanggal dari dropdown (tanggal yang sudah di-generate)
+  - Input deskripsi aktivitas
+  - Tambah entry logbook
+  - Lihat daftar logbook yang sudah dibuat
+
+- **Validasi:**
+  - Periode kerja harus diisi lengkap
+  - Tanggal dan deskripsi harus diisi sebelum submit
+  - Hanya tanggal yang sudah di-generate yang bisa dipilih
+
+**State Management:**
+```typescript
+interface WorkPeriod {
+  startDate?: string;
+  endDate?: string;
+  startDay?: string;
+  endDay?: string;
+}
+
+interface LogbookEntry {
+  id: string;
+  date: string;
+  description: string;
+}
+```
+
+**UI Components:**
+- Form input dengan label dan validation
+- Select dropdown untuk tanggal
+- Textarea untuk deskripsi
+- Table untuk menampilkan logbook entries
+- Button untuk submit dan generate
+
+---
+
+### 3. Halaman Penilaian (`assessment-page.tsx`)
+
+**Fungsi:**
+- Menampilkan penilaian dari mentor lapangan
+- Melihat detail skor per kategori penilaian
+
+**Fitur:**
+- **Info Mentor:**
+  - Nama mentor
+  - Posisi dan perusahaan
+  - Status penilaian
+
+- **Kategori Penilaian:**
+  - Kedisiplinan
+  - Kerjasama
+  - Inisiatif
+  - Kualitas Kerja
+
+- **Progress Bar:**
+  - Visual skor dengan progress bar
+  - Skor dari max score
+  - Deskripsi untuk setiap kategori
+
+- **Total Skor:**
+  - Rata-rata skor keseluruhan
+  - Grade (A/B/C/D)
+  - Visual star rating
+
+**Mock Data:**
+```typescript
+const assessments = [
+  {
+    id: 1,
+    category: "Kedisiplinan",
+    score: 85,
+    maxScore: 100,
+    description: "Kehadiran dan ketepatan waktu",
+  },
+  // ...
+];
+```
+
+**UI Components:**
+- Card untuk info mentor
+- Progress bars dengan warna gradasi
+- Star icons untuk rating
+- Responsive layout
+
+---
+
+### 4. Halaman Mentor Lapangan (`field-mentor-page.tsx`)
+
+**Fungsi:**
+- Pendaftaran mentor lapangan oleh mahasiswa
+- Generate kode unik untuk mentor
+- Tracking status mentor
+
+**Fitur:**
+- **Info Section:**
+  - Panduan pendaftaran mentor
+  - Instruksi penggunaan kode
+
+- **Status Mentor:**
+  - Tampilan mentor yang sudah terdaftar
+  - Status: pending, registered, approved, rejected
+  - Kode mentor yang bisa dicopy
+
+- **Form Pendaftaran:**
+  - Nama mentor
+  - Email mentor
+  - No. telepon mentor
+  - Perusahaan/Instansi
+  - Posisi/Jabatan
+  - Alamat perusahaan
+
+- **Generate Kode:**
+  - Auto-generate kode unik format `MNT-XXXXXX`
+  - Copy to clipboard functionality
+  - Kode diberikan ke mentor untuk registrasi
+
+**Flow:**
+1. Mahasiswa mengisi form data mentor
+2. Submit → Generate kode unik
+3. Kode ditampilkan dan bisa dicopy
+4. Mahasiswa memberikan kode ke mentor
+5. Mentor registrasi menggunakan kode
+
+**State Management:**
+```typescript
+interface FieldMentor {
+  id: string;
+  code: string;
+  name: string;
+  email: string;
+  company: string;
+  position: string;
+  phone: string;
+  status: "pending" | "registered" | "approved" | "rejected";
+  createdAt: string;
+  nip: string;
+}
+
+interface MentorRequest {
+  mentorName: string;
+  mentorEmail: string;
+  mentorPhone: string;
+  company: string;
+  position: string;
+  address: string;
+}
+```
+
+**UI Components:**
+- Form dengan input fields
+- Card untuk status mentor
+- Button copy kode
+- Status badge dengan warna
+- Icons: `UserPlus`, `CheckCircle`, `Copy`, `User`
+
+---
+
+### 5. Card Component (`card.tsx`)
+
+**Fungsi:**
+- Reusable card component untuk menu items
+- Support icon dari Lucide React
+
+**Props:**
+```typescript
+interface CardProps {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  to: string;
+}
+```
+
+**Features:**
+- Hover effect (shadow + translate)
+- Centered icon dengan background circle
+- Link integration dengan React Router
+
+---
+
+## File yang Dibuat/Dimodifikasi
+
+### File Baru
+
+#### Feature Files
+1. `app/feature/kp-report/components/title-submission-form.tsx` ⭐ NEW
+2. `app/feature/kp-report/components/pengajuan-judul-card.tsx` ⭐ NEW
+3. `app/feature/kp-report/components/verifikasi-judul-dialog.tsx` ⭐ NEW
+4. `app/feature/kp-report/pages/verifikasi-judul-dosen-page.tsx` ⭐ NEW
+5. `app/feature/kp-report/types/judul.ts` ⭐ NEW
+6. `app/feature/during-intern/components/card.tsx`
+7. `app/feature/during-intern/pages/during-intern-page.tsx`
+8. `app/feature/during-intern/pages/logbook-page.tsx`
+9. `app/feature/during-intern/pages/assessment-page.tsx`
+10. `app/feature/during-intern/types/index.d.ts`
+11. `app/feature/field-mentor/pages/field-mentor-page.tsx`
+12. `app/feature/field-mentor/types/index.d.ts`
+
+#### Route Files
+8. `app/routes/_sidebar.dosen.kp.verifikasi-judul.tsx` ⭐ NEW
+9. `app/routes/_sidebar.mahasiswa.kp._timeline.saat-magang.tsx`
+10. `app/routes/_sidebar.mahasiswa.kp._timeline.logbook.tsx`
+11. `app/routes/_sidebar.mahasiswa.kp._timeline.penilaian.tsx`
+12. `app/routes/_sidebar.mahasiswa.mentor-lapangan.tsx`
+
+### File Dimodifikasi
+
+1. `app/feature/sidebar/data/sidebar-data.ts`
+   - Menambahkan menu "Mentor Lapangan" di sidebar mahasiswa
+   - Menambahkan menu "Verifikasi Judul" di sidebar dosen ⭐
+
+2. `app/feature/timeline/context/timeline-context.tsx`
+   - Menambahkan `SAAT_MAGANG` step ke timeline
+
+3. `app/feature/timeline/components/timeline.tsx`
+   - Menambahkan route mapping untuk `SAAT_MAGANG`
+
+4. `app/feature/kp-report/components/title-submission-form.tsx` ⭐
+   - Updated dari simple form menjadi comprehensive form
+   - Tambah input judul Inggris, deskripsi, metodologi, teknologi
+   - Status revisi dan catatan dosen
+
+---
+
+## Route dan Navigasi
+
+### Routes yang Ditambahkan
+
+| Route | Component | Deskripsi |
+|-------|-----------|-----------|
+| `/mahasiswa/kp/laporan` | `KPReportPage` | Tab "Judul" untuk pengajuan ⭐ |
+| `/mahasiswa/kp/saat-magang` | `DuringInternPage` | Halaman hub saat magang |
+| `/mahasiswa/kp/logbook` | `LogbookPage` | Pencatatan logbook |
+| `/mahasiswa/kp/penilaian` | `AssessmentPage` | Lihat penilaian |
+| `/mahasiswa/mentor-lapangan` | `FieldMentorPage` | Pendaftaran mentor |
+| `/dosen/kp/verifikasi-judul` | `VerifikasiJudulDosenPage` | Verifikasi judul laporan ⭐ |
+
+### Timeline Integration
+
+```typescript
+// timeline-context.tsx
+enum TimelineStep {
+  // ...
+  SAAT_MAGANG: "saat-magang",
+  // ...
+}
+
+// timeline.tsx
+const stepUrls = {
+  // ...
+  [TimelineStep.SAAT_MAGANG]: "/mahasiswa/kp/saat-magang",
+  // ...
+};
+```
+
+### Sidebar Menu
+
+**Mahasiswa:**
+```typescript
+{
+  title: "Laporan KP",
+  url: "/mahasiswa/kp/laporan",
+  icon: BookMarked,
+},
+{
+  title: "Mentor Lapangan",
+  url: "/mahasiswa/mentor-lapangan",
+  icon: UserCircle,
+},
+```
+
+**Dosen:**
+```typescript
+{
+  title: "Kerja Praktik",
+  url: "#",
+  icon: GraduationCap,
+  items: [
+    {
+      title: "Verifikasi Judul", // ⭐ NEW
+      url: "/dosen/kp/verifikasi-judul",
+    },
+    {
+      title: "Verifikasi Sidang",
+      url: "/dosen/kp/verifikasi-sidang",
+    },
+  ],
+},
+```
+
+---
+
+## Type Definitions
+
+### KP Report Types (`kp-report/types/judul.ts`) ⭐ NEW
+
+```typescript
+export interface PengajuanJudul {
+  id: string;
+  mahasiswa: {
+    id: string;
+    nama: string;
+    nim: string;
+    prodi: string;
+    email?: string;
+  };
+  tim?: {
+    id: string;
+    nama: string;
+    anggota: string[];
+  };
+  data: {
+    judulLaporan: string;
+    judulInggris?: string;
+    tempatMagang: string;
+    periode: {
+      mulai: string;
+      selesai: string;
+    };
+    deskripsi: string;
+    metodologi?: string;
+    teknologi?: string[];
+  };
+  status: "submitted" | "approved" | "rejected" | "revision";
+  tanggalPengajuan: string;
+  tanggalVerifikasi?: string;
+  catatanDosen?: string;
+  revisi?: {
+    count: number;
+    history: Array<{
+      tanggal: string;
+      catatan: string;
+    }>;
+  };
+}
+
+export interface VerifikasiJudulFormData {
+  status: "approved" | "rejected" | "revision";
+  catatan: string;
+}
+```
+
+### During Intern Types (`during-intern/types/index.d.ts`)
+
+```typescript
+import type { LucideIcon } from "lucide-react";
+
+export interface CardProps {
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  to: string;
+}
+```
+
+### Field Mentor Types (`field-mentor/types/index.d.ts`)
+
+```typescript
+export interface FieldMentor {
+  id: string;
+  code: string;
+  name: string;
+  email: string;
+  company: string;
+  position: string;
+  phone: string;
+  status: "pending" | "registered" | "approved" | "rejected";
+  createdAt: string;
+  registeredAt?: string;
+  approvedAt?: string;
+  photo?: string;
+  nip: string;
+}
+
+export interface MentorRequest {
+  mentorName: string;
+  mentorEmail: string;
+  mentorPhone: string;
+  company: string;
+  position: string;
+  address: string;
+}
+```
+
+---
+
+## Cara Menggunakan
+
+### Untuk Mahasiswa
+
+#### 0. Mengajukan Judul Laporan KP ⭐
+```
+Dashboard Mahasiswa → Laporan KP → Tab "Judul"
+atau langsung ke: /mahasiswa/kp/laporan
+```
+
+**Langkah:**
+1. Buka halaman Laporan KP
+2. Klik tab "Judul"
+3. Isi form pengajuan judul:
+   - Judul Bahasa Indonesia (wajib)
+   - Judul Bahasa Inggris (opsional)
+   - Deskripsi proyek (wajib, min 100 karakter)
+   - Metodologi (opsional)
+   - Teknologi yang digunakan (opsional, bisa multiple)
+4. Klik "Ajukan Judul Laporan"
+5. Tunggu verifikasi dari dosen pembimbing
+
+**Status:**
+- **Draft**: Belum diajukan
+- **Diajukan**: Menunggu verifikasi dosen
+- **Disetujui**: Judul disetujui, lanjut ke tahap berikutnya
+- **Revisi**: Perbaiki sesuai catatan dosen, ajukan ulang
+- **Ditolak**: Ajukan judul baru yang berbeda
+
+#### 1. Mengakses Halaman Saat Magang
+```
+Dashboard Mahasiswa → Timeline KP → Saat Magang
+atau langsung ke: /mahasiswa/kp/saat-magang
+```
+
+#### 2. Mengisi Logbook
+1. Klik menu "Logbook" di halaman Saat Magang
+2. Isi periode kerja (tanggal mulai, selesai, dan hari kerja)
+3. Klik "Generate Tanggal Kerja"
+4. Pilih tanggal dari dropdown
+5. Isi deskripsi aktivitas
+6. Klik "Tambah Logbook"
+7. Logbook tersimpan dan tampil di tabel
+
+#### 3. Melihat Penilaian
+1. Klik menu "Penilaian" di halaman Saat Magang
+2. Lihat detail penilaian per kategori
+3. Lihat total skor dan grade
+4. Kembali ke halaman sebelumnya jika perlu
+
+#### 4. Mendaftar Mentor Lapangan
+1. Klik menu "Mentor Lapangan" di sidebar
+2. Isi form data mentor dengan lengkap
+3. Klik "Submit Pendaftaran"
+4. Copy kode mentor yang di-generate
+5. Berikan kode ke mentor untuk registrasi
+
+### Untuk Dosen ⭐
+
+#### 1. Verifikasi Judul Laporan KP
+```
+Dashboard Dosen → Kerja Praktik → Verifikasi Judul
+atau langsung ke: /dosen/kp/verifikasi-judul
+```
+
+**Langkah:**
+1. Lihat statistik pengajuan di dashboard
+   - Menunggu: Pengajuan baru
+   - Disetujui: Sudah diverifikasi
+   - Revisi: Mahasiswa diminta perbaiki
+   - Ditolak: Judul tidak sesuai
+
+2. Gunakan search untuk mencari mahasiswa/judul tertentu
+
+3. Pilih tab sesuai status yang ingin dilihat
+
+4. Klik "Lihat Detail" untuk melihat informasi lengkap:
+   - Judul (Indonesia & Inggris)
+   - Deskripsi proyek
+   - Metodologi
+   - Teknologi yang digunakan
+   - Tempat dan periode magang
+   - Riwayat revisi (jika ada)
+
+5. Untuk pengajuan yang menunggu, klik "Verifikasi Judul"
+
+6. Pilih keputusan verifikasi:
+   - ✅ **Setujui**: Judul sudah sesuai dan layak dilanjutkan
+   - 📝 **Minta Revisi**: Judul perlu diperbaiki dengan catatan
+   - ❌ **Tolak**: Judul tidak sesuai, mahasiswa harus ajukan judul baru
+
+7. Isi catatan verifikasi (minimal 10 karakter):
+   - Untuk disetujui: Berikan apresiasi dan saran
+   - Untuk revisi: Jelaskan apa yang perlu diperbaiki
+   - Untuk ditolak: Jelaskan alasan penolakan dan arahan
+
+8. Klik "Simpan Verifikasi"
+
+9. Mahasiswa akan menerima notifikasi dan melihat catatan Anda
+
+**Tips Verifikasi:**
+- Pastikan judul mencerminkan isi dan ruang lingkup pekerjaan
+- Judul harus spesifik, tidak terlalu umum atau terlalu teknis
+- Perhatikan penggunaan teknologi dan metodologi yang disebutkan
+- Berikan feedback konstruktif untuk membantu mahasiswa berkembang
+
+---
+
+## Commit History
+
+### Main Commits
+
+```bash
+# Commit terakhir di branch ⭐ NEW
+0f3be70 (HEAD -> Saat-Magang, origin/Saat-Magang) 
+  Tambahan Untuk Halaman Pengajuan Judul (Mahasiswa) dan 
+  Membuat Halaman Verifikasi Judul (Dosen)
+  - Created: title-submission-form.tsx (comprehensive update)
+  - Created: verifikasi-judul-dosen-page.tsx
+  - Created: pengajuan-judul-card.tsx
+  - Created: verifikasi-judul-dialog.tsx
+  - Created: kp-report/types/judul.ts
+  - Created: route _sidebar.dosen.kp.verifikasi-judul.tsx
+  - Modified: sidebar-data.ts (added Verifikasi Judul menu)
+
+ba946bb Tampian Halaman Laporan KP
+
+1b31d92 Merge remote-tracking branch 'origin/main' into Saat-Magang
+
+b806c24 Membuat Halaman Logbook, Penilaian dan Halaman Mentor Lapangan
+  - Created: during-intern pages (logbook, assessment, during-intern)
+  - Created: field-mentor page
+  - Created: route files
+  - Modified: sidebar data
+```
+
+### Related Commits
+```bash
+059d787 (origin/Pembimbing-Lapangan) Membuat Halaman Lengkap Untuk Mentor
+
+12fb617 menu penilaian to ols
+```
+
+---
+
+## UI/UX Highlights
+
+### Design Patterns
+- **Card-based Navigation**: Menu menggunakan card dengan icon
+- **Form Validation**: Input validation sebelum submit
+- **Progress Indicators**: Visual feedback dengan progress bar
+- **Status Badges**: Color-coded status untuk mentor
+- **Responsive Layout**: Mobile-friendly design
+
+### Colors & Styling
+- **Primary**: Blue untuk CTA buttons
+- **Success**: Green untuk status approved
+- **Warning**: Yellow untuk status pending
+- **Danger**: Red untuk status rejected
+- **Neutral**: Gray untuk backgrounds dan borders
+
+### Icons Used (Lucide React)
+- `BookOpen` - Logbook
+- `ClipboardCheck` - Penilaian
+- `FileCheck` - Pengesahan
+- `UserPlus` - Tambah mentor
+- `User`, `Users` - User profiles
+- `Building2` - Perusahaan
+- `Copy` - Copy button
+- `CheckCircle`, `CheckCircle2` - Success indicator
+- `XCircle` - Error/Reject
+- `Clock` - Pending status
+- `ArrowLeft`, `ArrowRight` - Navigation
+- `FileText`, `FileEdit` - Document/Edit
+- `Plus`, `X` - Add/Remove
+- `Eye` - View detail
+- `AlertCircle` - Warning/Info
+- `Info` - Information
+- `Search` - Search icon
+- `Calendar` - Date picker
+- `Star` - Rating
+
+---
+
+## Testing Checklist
+
+### Pengajuan Judul (Mahasiswa) ⭐
+- [ ] Form judul Indonesia (required)
+- [ ] Form judul Inggris (optional)
+- [ ] Textarea deskripsi (min 100 char)
+- [ ] Input metodologi
+- [ ] Add/remove teknologi
+- [ ] Submit form validation
+- [ ] Status badge display
+- [ ] Catatan dosen display
+- [ ] Form disabled saat disetujui
+- [ ] Form enabled untuk revisi
+
+### Verifikasi Judul (Dosen) ⭐
+- [ ] Stats cards dengan counter
+- [ ] Search functionality
+- [ ] Filter by status (tabs)
+- [ ] Pengajuan card display
+- [ ] Toggle detail view
+- [ ] Verifikasi dialog open/close
+- [ ] Radio button selection
+- [ ] Catatan textarea validation
+- [ ] Submit verifikasi
+- [ ] Notification display
+- [ ] Status update
+- [ ] Riwayat revisi display
+- [ ] Empty state per tab
+- [ ] Responsive layout
+
+### Logbook Page
+- [ ] Generate tanggal berdasarkan periode kerja
+- [ ] Validasi periode kerja
+- [ ] Tambah logbook entry
+- [ ] Tampilkan daftar logbook
+- [ ] Hapus logbook (jika ada)
+
+### Assessment Page
+- [ ] Tampilan penilaian per kategori
+- [ ] Progress bar sesuai skor
+- [ ] Perhitungan rata-rata
+- [ ] Display grade
+- [ ] Info mentor lengkap
+
+### Field Mentor Page
+- [ ] Form validation
+- [ ] Generate kode mentor
+- [ ] Copy to clipboard
+- [ ] Tampilan status mentor
+- [ ] Update status mentor
+
+### Navigation
+- [ ] Timeline integration
+- [ ] Sidebar menu navigation
+- [ ] Breadcrumb navigation
+- [ ] Back/Forward buttons
+
+---
+
+## Known Issues & Future Improvements
+
+### Current Limitations
+1. **Mock Data**: Semua data masih menggunakan mock data, belum terintegrasi dengan backend
+2. **No Persistence**: Data tidak tersimpan setelah refresh (perlu local storage atau API)
+3. **No Authentication**: Belum ada validasi user authentication
+4. **Limited Validation**: Form validation masih basic
+
+### Future Enhancements
+1. **Backend Integration**
+   - API endpoints untuk CRUD logbook
+   - API untuk penilaian dari mentor
+   - API pendaftaran mentor
+   
+2. **Additional Features**
+   - Edit/Delete logbook entries
+   - Export logbook ke PDF
+   - Notifikasi penilaian baru
+   - Chat dengan mentor
+   - Upload attachment di logbook
+   
+3. **UX Improvements**
+   - Auto-save logbook entries
+   - Drag & drop untuk reorder
+   - Calendar view untuk logbook
+   - Rich text editor untuk deskripsi
+   
+4. **Validation**
+   - Email validation
+   - Phone number format
+   - Date range validation
+   - Duplicate entry prevention
+
+---
+
+## Dependencies
+
+### External Libraries
+- React Router v7 - Routing
+- Lucide React - Icons
+- shadcn/ui - UI Components
+
+### Internal Dependencies
+- `~/components/ui/*` - shadcn/ui components
+- `~/feature/timeline/context/timeline-context` - Timeline state
+- `~/lib/utils` - Utility functions
+
+---
+
+## Notes
+
+- Semua fitur menggunakan **Function Declaration** sesuai CODE_CONVENTION
+- Export default di akhir file
+- Menggunakan **Lucide React** untuk icons
+- Tailwind CSS untuk styling
+- TypeScript untuk type safety
+- File naming menggunakan **kebab-case**
+
+---
+
+**Branch**: Saat-Magang  
+**Last Updated**: December 28, 2025  
+**Author**: Development Team  
+**Status**: ✅ Completed (Ready for Backend Integration)
