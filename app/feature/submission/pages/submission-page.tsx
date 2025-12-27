@@ -17,7 +17,7 @@ import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
 import { ConfirmDialog } from "../components/confirm-dialog";
 
-import type { AdditionalInfoData } from "../types";
+import type { AdditionalInfoData, Application, Member } from "../types";
 import { Eye, Info } from "lucide-react";
 
 function SubmissionPage() {
@@ -34,12 +34,33 @@ function SubmissionPage() {
     pembimbingLapangan: "",
   });
 
+  const [collectedFiles, setCollectedFiles] = useState<
+    { docId: number; memberId: number; file: File }[]
+  >([]);
   const [proposalFile, setProposalFile] = useState<File | null>(null);
 
-  const teamMembers = [
-    { id: 1, name: "Adam", role: "(Ketua)" },
-    { id: 2, name: "Robin", role: "" },
-    { id: 3, name: "Raihan", role: "" },
+  const teamMembers: Member[] = [
+    {
+      id: 1,
+      name: "Adam",
+      role: "Ketua",
+      nim: "2021001234",
+      prodi: "Teknik Informatika",
+    },
+    {
+      id: 2,
+      name: "Robin",
+      role: "Anggota",
+      nim: "2021001235",
+      prodi: "Teknik Informatika",
+    },
+    {
+      id: 3,
+      name: "Raihan",
+      role: "Anggota",
+      nim: "2021001236",
+      prodi: "Teknik Informatika",
+    },
   ];
 
   const documents = [
@@ -55,15 +76,120 @@ function SubmissionPage() {
     setProposalFile(file);
   };
 
+  const handleDocumentUpload = (
+    docId: number,
+    memberId: number,
+    file: File,
+  ) => {
+    const dId = Number(docId);
+    const mId = Number(memberId);
+    setCollectedFiles((prev) => {
+      // Hapus file lama jika ada untuk kombinasi docId dan memberId yang sama
+      const filtered = prev.filter(
+        (item) => !(item.docId === dId && item.memberId === mId),
+      );
+      return [...filtered, { docId: dId, memberId: mId, file }];
+    });
+  };
+
   const handleAdditionalInfoChange = (data: AdditionalInfoData) => {
     console.log("Additional info changed:", data);
     setAdditionalInfo(data);
   };
 
-  const handleSubmit = () => {
-    console.log("Form submitted with data:", { additionalInfo, proposalFile });
-    navigate("/mahasiswa/kp/surat-pengantar");
-    setIsConfirmDialogOpen(false);
+  // Helper untuk mengubah file menjadi Base64 string agar bisa disimpan di localStorage
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleSubmit = async () => {
+    try {
+      // 1. Konstruksi Objek Application
+      // Note: ID menggunakan Date.now() agar unik dan tidak bentrok dengan mock data admin
+      const newApplication: Application = {
+        id: Date.now(), // Generate ID unik berdasarkan timestamp
+        date: new Date().toLocaleDateString("id-ID"),
+        status: "pending",
+        supervisor: "Dr. Budi Santoso, M.Kom", // Simulasi data dosen pembimbing (biasanya dari database)
+        members: teamMembers,
+        internship: additionalInfo,
+        documents: [],
+      };
+
+      // 2. Masukkan File Proposal
+      if (proposalFile) {
+        // Konversi ke Base64 jika ukuran < 2MB (batas aman localStorage)
+        // Jika lebih, gunakan dummy URL
+        const fileUrl =
+          proposalFile.size < 2 * 1024 * 1024
+            ? await fileToBase64(proposalFile)
+            : "#";
+
+        newApplication.documents.push({
+          id: `prop-${Date.now()}`,
+          title: "Surat Proposal",
+          uploadedBy: "Adam (Ketua)",
+          uploadDate: new Date().toLocaleDateString("id-ID"),
+          status: "uploaded",
+          url: fileUrl,
+        });
+      }
+
+      // 3. Masukkan File Lampiran Anggota
+      for (const item of collectedFiles) {
+        const docInfo = documents.find((d) => d.id === Number(item.docId));
+        const memberInfo = teamMembers.find(
+          (m) => m.id === Number(item.memberId),
+        );
+
+        if (docInfo && memberInfo) {
+          // Proses konversi file satu per satu
+          const fileUrl =
+            item.file.size < 2 * 1024 * 1024
+              ? await fileToBase64(item.file)
+              : "#";
+
+          newApplication.documents.push({
+            id: `doc-${item.docId}-${item.memberId}-${Date.now()}`,
+            title: docInfo.title,
+            uploadedBy: memberInfo.name,
+            uploadDate: new Date().toLocaleDateString("id-ID"),
+            status: "uploaded",
+            url: fileUrl,
+          });
+        }
+      }
+
+      // 4. Simpan ke LocalStorage
+      const existingData = localStorage.getItem("kp_submissions");
+      const submissions = existingData ? JSON.parse(existingData) : [];
+
+      try {
+        localStorage.setItem(
+          "kp_submissions",
+          JSON.stringify([newApplication, ...submissions]),
+        );
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "QuotaExceededError") {
+          alert(
+            "Gagal menyimpan: Ukuran file terlalu besar. Coba kurangi ukuran file.",
+          );
+          return;
+        }
+        throw e;
+      }
+
+      navigate("/mahasiswa/kp/surat-pengantar");
+      setIsConfirmDialogOpen(false);
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      alert("Terjadi kesalahan saat memproses pengajuan.");
+    }
   };
 
   const handlePreviewProposal = () => {
@@ -154,6 +280,7 @@ function SubmissionPage() {
                 key={document.id}
                 document={document}
                 members={teamMembers}
+                onUpload={handleDocumentUpload}
               />
             ))}
           </div>

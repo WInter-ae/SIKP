@@ -4,7 +4,7 @@ import { Eye, ChevronUp, ChevronDown } from "lucide-react";
 import { FileUploadDialog } from "./file-upload-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 
-function DocumentDropdown({ document, members }: DocumentDropdownProps) {
+function DocumentDropdown({ document, members, onUpload }: DocumentDropdownProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, File>>({});
   const [uploadingMember, setUploadingMember] = useState<{
@@ -23,6 +23,9 @@ function DocumentDropdown({ document, members }: DocumentDropdownProps) {
   const handleFileUpload = (file: File) => {
     if (uploadingMember) {
       setUploadedFiles((prev) => ({ ...prev, [uploadingMember.id]: file }));
+      if (onUpload) {
+        onUpload(document.id, uploadingMember.id, file);
+      }
       console.log(
         `File ${file.name} diupload untuk anggota ${uploadingMember.name}`,
       );
