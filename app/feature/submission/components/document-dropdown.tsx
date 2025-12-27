@@ -1,8 +1,14 @@
 import React, { useState } from "react";
-import type { DocumentDropdownProps } from "../types";
+import type { Document, Member } from "../types";
 import { Eye, ChevronUp, ChevronDown } from "lucide-react";
 import { FileUploadDialog } from "./file-upload-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
+
+interface DocumentDropdownProps {
+  document: Document;
+  members: Member[];
+  onUpload?: (documentId: number, memberId: number, file: File) => void;
+}
 
 function DocumentDropdown({ document, members, onUpload }: DocumentDropdownProps) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
