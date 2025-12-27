@@ -184,8 +184,7 @@ function SubmissionPage() {
 
       navigate("/mahasiswa/kp/surat-pengantar");
       setIsConfirmDialogOpen(false);
-    } catch (error) {
-      console.error("Error submitting application:", error);
+    } catch {
       alert("Terjadi kesalahan saat memproses pengajuan.");
     }
   };
@@ -196,8 +195,7 @@ function SubmissionPage() {
         const fileURL = URL.createObjectURL(proposalFile);
         window.open(fileURL, "_blank");
         setTimeout(() => URL.revokeObjectURL(fileURL), 100);
-      } catch (error) {
-        console.error("Gagal membuat pratinjau file:", error);
+      } catch {
         alert("Tidak dapat menampilkan pratinjau file.");
       }
     }

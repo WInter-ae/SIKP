@@ -1,9 +1,40 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import {
+  CheckCircle,
+  Clock,
+  Download,
+  Filter,
+  ListOrdered,
+  Search,
+  XCircle,
+} from "lucide-react";
+
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+
 import StatCard from "../components/stat-card";
 import ReviewModal from "../components/review-modal";
+
 import type { Application } from "../types";
 
-const SubmissionAdminPage = () => {
+function SubmissionAdminPage() {
   // Mock data for applications
   const [applications, setApplications] = useState<Application[]>([
     {
@@ -49,7 +80,6 @@ const SubmissionAdminPage = () => {
           uploadedBy: "Adam (Ketua Tim)",
           uploadDate: "15/06/2023",
           status: "uploaded",
-          // Tambahkan dummy PDF Base64 agar bisa dipreview
           url: "data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNTMgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQ5CiUlRU9GCg==",
         },
         {
@@ -76,7 +106,6 @@ const SubmissionAdminPage = () => {
           status: "uploaded",
           url: "data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNTMgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQ5CiUlRU9GCg==",
         },
-        // ... more documents
       ],
     },
     {
@@ -154,26 +183,21 @@ const SubmissionAdminPage = () => {
   ]);
 
   // Load data from LocalStorage on mount
-  React.useEffect(() => {
+  useEffect(() => {
     const storedData = localStorage.getItem("kp_submissions");
     if (storedData) {
       try {
         const parsedData = JSON.parse(storedData);
         if (Array.isArray(parsedData)) {
           setApplications((prev) => {
-            // Gabungkan data localStorage dengan data mock
-            // Pastikan tidak ada duplikasi berdasarkan ID
             const newIds = new Set(parsedData.map((d: Application) => d.id));
             const filteredPrev = prev.filter((p) => !newIds.has(p.id));
-
-            // Data baru (dari localStorage) ditaruh di paling atas
-            // Urutkan berdasarkan tanggal terbaru (opsional, asumsi ID timestamp lebih besar = lebih baru)
             const combined = [...parsedData, ...filteredPrev];
             return combined.sort((a, b) => b.id - a.id);
           });
         }
-      } catch (error) {
-        console.error("Gagal memuat data pengajuan:", error);
+      } catch {
+        // Gagal memuat data pengajuan dari localStorage
       }
     }
   }, []);
@@ -184,7 +208,7 @@ const SubmissionAdminPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  // Calculate statistics
+  // Calculate statistics with LucideIcon
   const stats = useMemo(() => {
     const pending = applications.filter(
       (app) => app.status === "pending",
@@ -201,26 +225,26 @@ const SubmissionAdminPage = () => {
       {
         title: "Menunggu Review",
         value: pending,
-        icon: "fa-clock",
-        iconBgColor: "bg-yellow-500",
+        icon: Clock,
+        iconBgColor: "bg-amber-500",
       },
       {
         title: "Disetujui",
         value: approved,
-        icon: "fa-check-circle",
-        iconBgColor: "bg-green-500",
+        icon: CheckCircle,
+        iconBgColor: "bg-green-600",
       },
       {
         title: "Ditolak",
         value: rejected,
-        icon: "fa-times-circle",
-        iconBgColor: "bg-red-500",
+        icon: XCircle,
+        iconBgColor: "bg-destructive",
       },
       {
         title: "Total Pengajuan",
         value: total,
-        icon: "fa-list",
-        iconBgColor: "bg-blue-500",
+        icon: ListOrdered,
+        iconBgColor: "bg-primary",
       },
     ];
   }, [applications]);
@@ -254,35 +278,49 @@ const SubmissionAdminPage = () => {
 
   const handleApprove = () => {
     alert("Pengajuan telah disetujui dan surat pengantar akan dibuat!");
-    // In a real app, you would update the application status in the backend
   };
 
   const handleReject = (comment: string) => {
     alert(`Pengajuan telah ditolak dengan komentar: ${comment}`);
-    // In a real app, you would update the application status in the backend
   };
 
   const getStatusBadge = (status: string) => {
-    const styles = {
-      pending: "bg-yellow-100 text-yellow-800",
-      approved: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
-    };
-    return styles[status as keyof typeof styles] || "";
+    switch (status) {
+      case "pending":
+        return (
+          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
+            Menunggu Review
+          </Badge>
+        );
+      case "approved":
+        return (
+          <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30">
+            Disetujui
+          </Badge>
+        );
+      case "rejected":
+        return (
+          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
+            Ditolak
+          </Badge>
+        );
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
+    }
   };
 
   return (
-    <div className="p-6 md:p-8 bg-gray-50 min-h-screen">
+    <div className="p-6 md:p-8 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Page Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-foreground">
             Penerimaan Pengajuan Surat Pengantar
           </h1>
-          <button className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition">
-            <i className="fas fa-download mr-2"></i>
+          <Button>
+            <Download className="w-4 h-4 mr-2" />
             Export Data
-          </button>
+          </Button>
         </div>
 
         {/* Statistics Cards */}
@@ -299,112 +337,98 @@ const SubmissionAdminPage = () => {
         </div>
 
         {/* Filter and Search */}
-        <div className="bg-white p-4 rounded-lg shadow flex flex-wrap gap-4 items-center">
-          <div className="flex-1 min-w-[250px] relative">
-            <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-            <input
-              type="text"
-              placeholder="Cari nama mahasiswa atau nim..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
-          </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="all">Semua Status</option>
-            <option value="pending">Menunggu Review</option>
-            <option value="approved">Disetujui</option>
-            <option value="rejected">Ditolak</option>
-          </select>
-          <button className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-800 transition">
-            <i className="fas fa-filter mr-2"></i>
-            Filter
-          </button>
-        </div>
+        <Card>
+          <CardContent className="p-4 flex flex-wrap gap-4 items-center">
+            <div className="flex-1 min-w-[250px] relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Cari nama mahasiswa atau nim..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Pilih Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="pending">Menunggu Review</SelectItem>
+                <SelectItem value="approved">Disetujui</SelectItem>
+                <SelectItem value="rejected">Ditolak</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button>
+              <Filter className="w-4 h-4 mr-2" />
+              Filter
+            </Button>
+          </CardContent>
+        </Card>
 
         {/* Applications Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="p-4 border-b font-semibold text-gray-700">
-            Daftar Pengajuan Surat Pengantar
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tanggal
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    NIM
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Nama Mahasiswa
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Perusahaan
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Aksi
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold text-foreground">
+              Daftar Pengajuan Surat Pengantar
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/50">
+                  <TableHead className="pl-6">Tanggal</TableHead>
+                  <TableHead>NIM</TableHead>
+                  <TableHead>Nama Mahasiswa</TableHead>
+                  <TableHead>Perusahaan</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="pr-6">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredApplications.map((app) => {
                   const leader =
                     app.members.find((m) => m.role === "Ketua") ||
                     app.members[0];
                   return (
-                    <tr key={app.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <TableRow key={app.id} className="hover:bg-muted/50">
+                      <TableCell className="text-foreground pl-6">
                         {app.date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      </TableCell>
+                      <TableCell className="text-foreground">
                         {leader?.nim || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        <div className="font-medium">
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-foreground">
                           {leader?.name || "Unknown"}
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-muted-foreground">
                           {app.members.length > 1
                             ? `+ ${app.members.length - 1} Anggota`
                             : "Individu"}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      </TableCell>
+                      <TableCell className="text-foreground">
                         {app.internship.namaTempat}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(app.status)}`}
-                        >
-                          {app.status === "pending" && "Menunggu Review"}
-                          {app.status === "approved" && "Disetujui"}
-                          {app.status === "rejected" && "Ditolak"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
+                      </TableCell>
+                      <TableCell>{getStatusBadge(app.status)}</TableCell>
+                      <TableCell className="pr-6">
+                        <Button
+                          variant="link"
+                          className="p-0 h-auto text-primary hover:text-primary/80"
                           onClick={() => handleReview(app)}
-                          className="text-blue-600 hover:text-blue-900"
                         >
                           {app.status === "pending" ? "Review" : "Lihat"}
-                        </button>
-                      </td>
-                    </tr>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
         {/* Review Modal */}
         <ReviewModal
@@ -417,6 +441,6 @@ const SubmissionAdminPage = () => {
       </div>
     </div>
   );
-};
+}
 
 export default SubmissionAdminPage;
