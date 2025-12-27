@@ -673,7 +673,7 @@ import { CheckIcon } from "~/components/icons/check";
 
 ### 1. Type Definitions
 
-**Letakkan type definitions di folder `types/`:**
+**Letakkan type definitions di folder `types/` untuk types yang digunakan di banyak tempat:**
 
 ```
 feature/
@@ -683,24 +683,67 @@ feature/
 ```
 
 ```typescript
-// types/index.d.ts
-export interface ProcessStepProps {
-  title: string;
-  description: string;
-  status: "submitted" | "rejected" | "resubmitted" | "approved";
-  comment?: string;
-  onAction?: () => void;
-  actionText?: string;
-  showDocumentPreview?: boolean;
+// types/index.d.ts - untuk types yang di-share antar file
+export interface Member {
+  id: number;
+  name: string;
+  role: string;
+}
+
+export interface Application {
+  id: number;
+  status: "pending" | "approved" | "rejected";
+  members: Member[];
 }
 ```
 
-### 2. Import Types
+### 2. Component Props
+
+**Props interface HARUS didefinisikan di file yang sama dengan komponennya:**
+
+- Nama interface harus `<NamaKomponen>Props`
+- Letakkan sebelum function component
+- JANGAN export props interface kecuali benar-benar diperlukan di tempat lain
+
+```tsx
+// ✅ BENAR - Props di file yang sama dengan komponen
+// process-step.tsx
+interface ProcessStepProps {
+  title: string;
+  description: string;
+  status: "submitted" | "rejected" | "approved";
+  onAction?: () => void;
+}
+
+function ProcessStep({ title, description, status, onAction }: ProcessStepProps) {
+  return <div>...</div>;
+}
+
+export default ProcessStep;
+```
+
+```tsx
+// ❌ SALAH - Props di file types terpisah
+// types/index.d.ts
+export interface ProcessStepProps { ... }
+
+// process-step.tsx
+import type { ProcessStepProps } from "../types";
+function ProcessStep({ ... }: ProcessStepProps) { ... }
+```
+
+```tsx
+// ❌ SALAH - Nama props tidak sesuai
+interface StepProps { ... }  // Seharusnya ProcessStepProps
+interface IProcessStepProps { ... }  // Jangan pakai prefix I
+```
+
+### 3. Import Types
 
 **Gunakan `type` keyword untuk import types:**
 
 ```tsx
-import type { ProcessStepProps } from "../types";
+import type { Member, Application } from "../types";
 import type { Route } from "./+types/root";
 ```
 
