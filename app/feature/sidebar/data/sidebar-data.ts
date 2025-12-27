@@ -89,7 +89,7 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Laporan KP",
-    url: "#",
+    url: "/mahasiswa/kp/laporan",
     icon: BookMarked,
   },
   {
