@@ -11,6 +11,8 @@ export interface Member {
   id: number;
   name: string;
   role: string;
+  nim?: string;
+  prodi?: string;
 }
 
 export interface Document {
@@ -18,12 +20,23 @@ export interface Document {
   title: string;
 }
 
-export interface DocumentDropdownProps {
-  document: Document;
-  members: Member[];
+export interface DocumentFile {
+  id: string;
+  title: string;
+  uploadedBy: string;
+  uploadDate: string;
+  status: "uploaded" | "missing";
+  url?: string;
 }
 
-export interface FileUploadProps {
-  label: string;
-  onFileChange?: (file: File) => void;
+export interface Application {
+  id: number;
+  date: string;
+  status: "pending" | "approved" | "rejected";
+  
+  // Team Info
+  members: Member[];
+  supervisor: string;
+  internship: AdditionalInfoData;
+  documents: DocumentFile[];
 }
