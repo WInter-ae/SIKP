@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import ResponseLetterPage from "~/feature/response-letter/pages/response-letter-page";
-import { useTimeline, TimelineStep } from "~/feature/timeline/context/timeline-context";
+import {
+  useTimeline,
+  TimelineStep,
+} from "~/feature/timeline/context/timeline-context";
 
 export default function Page() {
   const { setActiveStep } = useTimeline();

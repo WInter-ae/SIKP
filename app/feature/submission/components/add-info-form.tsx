@@ -1,4 +1,10 @@
-import React, { useState } from "react";
+import { useState, useRef } from "react";
+import { Calendar as CalendarIcon } from "lucide-react";
+
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Separator } from "~/components/ui/separator";
+
 import type { AdditionalInfoData } from "../types";
 
 interface AdditionalInfoFormProps {
@@ -15,6 +21,9 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
     pembimbingLapangan: "",
   });
 
+  const tanggalMulaiRef = useRef<HTMLInputElement>(null);
+  const tanggalSelesaiRef = useRef<HTMLInputElement>(null);
+
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
     const updatedFormData = { ...formData, [name]: value };
@@ -26,85 +35,90 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
 
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b">
+      <h2 className="text-xl font-semibold text-foreground mb-4">
         Keterangan Lain
       </h2>
+      <Separator className="mb-4" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Tujuan Surat
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="tujuanSurat">Tujuan Surat</Label>
+          <Input
             type="text"
+            id="tujuanSurat"
             name="tujuanSurat"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-500"
             placeholder="HRD/Lainnya"
             onChange={handleInputChange}
             value={formData.tujuanSurat}
           />
         </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Nama Tempat KP
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="namaTempat">Nama Tempat KP</Label>
+          <Input
             type="text"
+            id="namaTempat"
             name="namaTempat"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-500"
             placeholder=""
             onChange={handleInputChange}
             value={formData.namaTempat}
           />
         </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Alamat Tempat KP
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="alamatTempat">Alamat Tempat KP</Label>
+          <Input
             type="text"
+            id="alamatTempat"
             name="alamatTempat"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-500"
             placeholder=""
             onChange={handleInputChange}
             value={formData.alamatTempat}
           />
         </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Nama Unit/Divisi
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="pembimbingLapangan">Nama Unit/Divisi</Label>
+          <Input
             type="text"
+            id="pembimbingLapangan"
             name="pembimbingLapangan"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-500"
             placeholder=""
             onChange={handleInputChange}
             value={formData.pembimbingLapangan}
           />
         </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Tanggal Mulai KP
-          </label>
-          <input
-            type="date"
-            name="tanggalMulai"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-500"
-            onChange={handleInputChange}
-            value={formData.tanggalMulai}
-          />
+        <div className="space-y-2">
+          <Label htmlFor="tanggalMulai">Tanggal Mulai KP</Label>
+          <div className="relative">
+            <Input
+              type="date"
+              id="tanggalMulai"
+              name="tanggalMulai"
+              onChange={handleInputChange}
+              value={formData.tanggalMulai}
+              ref={tanggalMulaiRef}
+              className="pr-10"
+            />
+            <CalendarIcon
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+              onClick={() => tanggalMulaiRef.current?.showPicker()}
+            />
+          </div>
         </div>
-        <div>
-          <label className="block text-gray-700 font-medium mb-2">
-            Tanggal Selesai KP
-          </label>
-          <input
-            type="date"
-            name="tanggalSelesai"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-500"
-            onChange={handleInputChange}
-            value={formData.tanggalSelesai}
-          />
+        <div className="space-y-2">
+          <Label htmlFor="tanggalSelesai">Tanggal Selesai KP</Label>
+          <div className="relative">
+            <Input
+              type="date"
+              id="tanggalSelesai"
+              name="tanggalSelesai"
+              onChange={handleInputChange}
+              value={formData.tanggalSelesai}
+              ref={tanggalSelesaiRef}
+              className="pr-10"
+            />
+            <CalendarIcon
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+              onClick={() => tanggalSelesaiRef.current?.showPicker()}
+            />
+          </div>
         </div>
       </div>
     </div>

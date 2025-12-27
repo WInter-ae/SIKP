@@ -1,7 +1,9 @@
 import {
   Archive,
+  Bell,
   BookOpen,
   Building2,
+  ClipboardCheck,
   FileText,
   FolderKanban,
   GraduationCap,
@@ -49,6 +51,10 @@ const mahasiswaMenu: NavItem[] = [
       {
         title: "Saat Magang",
         url: "/mahasiswa/kp/saat-magang",
+      },
+      {
+        title: "Pengujian Sidang",
+        url: "/mahasiswa/kp/pengujian-sidang",
       },
       {
         title: "Pasca Magang",
@@ -112,7 +118,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Pengantar",
-        url: "#",
+        url: "/admin/pengajuan-surat-pengantar",
       },
     ],
   },
@@ -173,6 +179,18 @@ const dosenMenu: NavItem[] = [
     icon: Home,
   },
   {
+    title: "Kerja Praktik",
+    url: "#",
+    icon: GraduationCap,
+    isActive: true,
+    items: [
+      {
+        title: "Verifikasi Sidang",
+        url: "/dosen/kp/verifikasi-sidang",
+      },
+    ],
+  },
+  {
     title: "Verifikasi",
     url: "#",
     icon: FileCheck,
@@ -195,6 +213,45 @@ const dosenMenu: NavItem[] = [
   },
 ]
 
+// Menu untuk Pembimbing Lapangan (Mentor)
+const mentorMenu: NavItem[] = [
+  {
+    title: "Dashboard",
+    url: "/mentor",
+    icon: Home,
+  },
+  {
+    title: "Mentee",
+    url: "/mentor/mentee",
+    icon: Users,
+  },
+  {
+    title: "Penilaian",
+    url: "/mentor/penilaian",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Notifikasi",
+    url: "/mentor/notifikasi",
+    icon: Bell,
+  },
+  {
+    title: "Arsip",
+    url: "#",
+    icon: Archive,
+  },
+  {
+    title: "Profil",
+    url: "#",
+    icon: UserCircle,
+  },
+  {
+    title: "Pengaturan",
+    url: "#",
+    icon: Settings,
+  },
+]
+
 export function getSidebarMenuByRole(role: UserRole): NavItem[] {
   switch (role) {
     case "mahasiswa":
@@ -203,7 +260,26 @@ export function getSidebarMenuByRole(role: UserRole): NavItem[] {
       return adminMenu
     case "dosen":
       return dosenMenu
+    case "mentor":
+      return mentorMenu
     default:
       return mahasiswaMenu
   }
+}
+
+export function getSidebarMenuByUrl(pathname: string): NavItem[] {
+  if (pathname.startsWith("/admin")) {
+    return adminMenu
+  }
+  if (pathname.startsWith("/dosen")) {
+    return dosenMenu
+  }
+  if (pathname.startsWith("/mentor")) {
+    return mentorMenu
+  }
+  if (pathname.startsWith("/mahasiswa")) {
+    return mahasiswaMenu
+  }
+  // Default ke mahasiswa jika tidak ada yang cocok
+  return mahasiswaMenu
 }

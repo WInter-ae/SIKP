@@ -1,23 +1,34 @@
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+
+import { Button } from "~/components/ui/button";
+import { Card, CardContent } from "~/components/ui/card";
+
 import ProcessStep from "~/feature/cover-letter/components/process-step";
 
+import { ArrowLeft, ArrowRight } from "lucide-react";
+
 function CoverLetterPage() {
+  const navigate = useNavigate();
+
   const handleResubmit = () => {
-    console.log("Resubmit application");
+    // Arahkan ke halaman pengajuan saat tombol "Ajukan Ulang" diklik
+    navigate("/mahasiswa/kp/pengajuan");
   };
 
   return (
     <>
+      {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Status Pengajuan Surat Pengantar
         </h1>
-        <p className="text-gray-600">
+        <p className="text-muted-foreground">
           Monitor status pengajuan surat pengantar kerja praktik Anda
         </p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+      <Card className="mb-8">
+        <CardContent className="p-6">
           <ProcessStep
             title="Mengajukan Surat Pengantar"
             description="Pengajuan surat pengantar telah diterima dan sedang dalam proses review"
@@ -46,23 +57,30 @@ function CoverLetterPage() {
             showDocumentPreview={true}
           />
 
+          {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">
-            <Link
-              to="/mahasiswa/kp/pengajuan"
-              className="flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-3 rounded-lg font-medium transition"
+            <Button
+              variant="secondary"
+              asChild
+              className="px-6 py-3 font-medium"
             >
-              <i className="fas fa-arrow-left mr-2"></i>
-              Sebelumnya
-            </Link>
-            <Link
-              to="/mahasiswa/kp/surat-balasan"
-              className="flex items-center bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg font-medium transition"
+              <Link to="/mahasiswa/kp/pengajuan">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Sebelumnya
+              </Link>
+            </Button>
+            <Button
+              asChild
+              className="px-6 py-3 font-medium"
             >
-              Selanjutnya
-              <i className="fas fa-arrow-right ml-2"></i>
-            </Link>
-        </div>
-      </div>
+              <Link to="/mahasiswa/kp/surat-balasan">
+                Selanjutnya
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </>
   );
 }
