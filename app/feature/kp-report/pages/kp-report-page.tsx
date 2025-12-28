@@ -131,74 +131,74 @@ export default function KPReportPage() {
   const isTitleApproved = reportData.statusJudul === "disetujui";
 
   return (
-    <>
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6 sm:space-y-8">
       {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+      <div className="space-y-2">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
           Laporan Kerja Praktik
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           Kelola judul, dosen pembimbing, dan upload laporan Kerja Praktik Anda
         </p>
       </div>
 
       {/* Info Alert */}
-      <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
-        <Info className="h-5 w-5 text-primary" />
-        <AlertDescription className="text-foreground">
+      <Alert className="border-l-4 border-primary bg-primary/5">
+        <Info className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+        <AlertDescription className="text-sm sm:text-base text-foreground">
           Lengkapi semua tahapan secara berurutan: Pengajuan Judul → Dosen Pembimbing →
           Upload Laporan
         </AlertDescription>
       </Alert>
 
       {/* Team Info Card */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+      <Card>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <User className="h-4 w-4 sm:h-5 sm:w-5" />
             Informasi Tim KP
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Nama Tim</p>
-              <p className="font-medium">Tim KP Informatika 2024</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-1">
+              <p className="text-xs sm:text-sm text-muted-foreground">Nama Tim</p>
+              <p className="text-sm sm:text-base font-medium">Tim KP Informatika 2024</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Tempat KP</p>
-              <p className="font-medium">PT. Teknologi Digital Indonesia</p>
+            <div className="space-y-1">
+              <p className="text-xs sm:text-sm text-muted-foreground">Tempat KP</p>
+              <p className="text-sm sm:text-base font-medium">PT. Teknologi Digital Indonesia</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Anggota Tim</p>
-              <p className="font-medium">Adam Ramadhan (Ketua), Robin Setiawan, Raihan Pratama</p>
+            <div className="space-y-1">
+              <p className="text-xs sm:text-sm text-muted-foreground">Anggota Tim</p>
+              <p className="text-sm sm:text-base font-medium">Adam Ramadhan (Ketua), Robin Setiawan, Raihan Pratama</p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Periode</p>
-              <p className="font-medium">1 Januari 2024 - 31 Maret 2024</p>
+            <div className="space-y-1">
+              <p className="text-xs sm:text-sm text-muted-foreground">Periode</p>
+              <p className="text-sm sm:text-base font-medium">1 Januari 2024 - 31 Maret 2024</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="judul" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span className="hidden sm:inline">Judul</span>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+        <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+          <TabsTrigger value="judul" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline sm:inline">Judul</span>
           </TabsTrigger>
-          <TabsTrigger value="perubahan" className="flex items-center gap-2">
-            <Edit className="h-4 w-4" />
+          <TabsTrigger value="perubahan" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Edit className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Ubah Judul</span>
           </TabsTrigger>
-          <TabsTrigger value="dosen" className="flex items-center gap-2">
-            <User className="h-4 w-4" />
-            <span className="hidden sm:inline">Dosen</span>
+          <TabsTrigger value="dosen" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline sm:inline">Dosen</span>
           </TabsTrigger>
-          <TabsTrigger value="upload" className="flex items-center gap-2">
-            <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline">Upload</span>
+          <TabsTrigger value="upload" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
+            <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline sm:inline">Upload</span>
           </TabsTrigger>
         </TabsList>
 
@@ -306,15 +306,15 @@ export default function KPReportPage() {
       </Tabs>
 
       {/* Summary Card */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Ringkasan Status</CardTitle>
+      <Card>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg">Ringkasan Status</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Status Judul:</span>
-              <span className="font-medium capitalize">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+              <span className="text-xs sm:text-sm text-muted-foreground">Status Judul:</span>
+              <span className="text-sm sm:text-base font-medium capitalize">
                 {reportData.statusJudul === "draft" && "Belum Diajukan"}
                 {reportData.statusJudul === "diajukan" && "Menunggu Persetujuan"}
                 {reportData.statusJudul === "disetujui" && "Disetujui"}
@@ -322,22 +322,22 @@ export default function KPReportPage() {
               </span>
             </div>
             <Separator />
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Dosen Pembimbing:</span>
-              <span className="font-medium">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+              <span className="text-xs sm:text-sm text-muted-foreground">Dosen Pembimbing:</span>
+              <span className="text-sm sm:text-base font-medium">
                 {currentLecturer.nama}
               </span>
             </div>
             <Separator />
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Status Laporan:</span>
-              <span className="font-medium capitalize">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
+              <span className="text-xs sm:text-sm text-muted-foreground">Status Laporan:</span>
+              <span className="text-sm sm:text-base font-medium capitalize">
                 {currentReport ? currentReport.status : "Belum Upload"}
               </span>
             </div>
           </div>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 }
