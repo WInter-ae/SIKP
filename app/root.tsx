@@ -6,7 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-import { Toaster } from "sonner";
+import { Toaster } from "~/components/ui/sonner";
 
 import type { Route } from "./+types/root";
 import "./app.css";
