@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Calendar as CalendarIcon } from "lucide-react";
 
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -19,6 +20,9 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
     tanggalSelesai: "",
     pembimbingLapangan: "",
   });
+
+  const tanggalMulaiRef = useRef<HTMLInputElement>(null);
+  const tanggalSelesaiRef = useRef<HTMLInputElement>(null);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
@@ -82,23 +86,39 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="tanggalMulai">Tanggal Mulai KP</Label>
-          <Input
-            type="date"
-            id="tanggalMulai"
-            name="tanggalMulai"
-            onChange={handleInputChange}
-            value={formData.tanggalMulai}
-          />
+          <div className="relative">
+            <Input
+              type="date"
+              id="tanggalMulai"
+              name="tanggalMulai"
+              onChange={handleInputChange}
+              value={formData.tanggalMulai}
+              ref={tanggalMulaiRef}
+              className="pr-10"
+            />
+            <CalendarIcon
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+              onClick={() => tanggalMulaiRef.current?.showPicker()}
+            />
+          </div>
         </div>
         <div className="space-y-2">
           <Label htmlFor="tanggalSelesai">Tanggal Selesai KP</Label>
-          <Input
-            type="date"
-            id="tanggalSelesai"
-            name="tanggalSelesai"
-            onChange={handleInputChange}
-            value={formData.tanggalSelesai}
-          />
+          <div className="relative">
+            <Input
+              type="date"
+              id="tanggalSelesai"
+              name="tanggalSelesai"
+              onChange={handleInputChange}
+              value={formData.tanggalSelesai}
+              ref={tanggalSelesaiRef}
+              className="pr-10"
+            />
+            <CalendarIcon
+              className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
+              onClick={() => tanggalSelesaiRef.current?.showPicker()}
+            />
+          </div>
         </div>
       </div>
     </div>

@@ -118,7 +118,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Pengantar",
-        url: "#",
+        url: "/admin/pengajuan-surat-pengantar",
       },
     ],
   },
@@ -129,7 +129,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Balasan",
-        url: "#",
+        url: "/admin/surat-balasan",
       },
     ],
   },
@@ -241,17 +241,17 @@ const mentorMenu: NavItem[] = [
   },
   {
     title: "Arsip",
-    url: "#",
+    url: "/mentor/arsip",
     icon: Archive,
   },
   {
     title: "Profil",
-    url: "#",
+    url: "/mentor/profil",
     icon: UserCircle,
   },
   {
     title: "Pengaturan",
-    url: "#",
+    url: "/mentor/pengaturan",
     icon: Settings,
   },
 ]
