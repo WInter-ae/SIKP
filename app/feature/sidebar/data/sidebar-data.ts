@@ -131,6 +131,10 @@ const adminMenu: NavItem[] = [
         title: "Surat Balasan",
         url: "/admin/surat-balasan",
       },
+      {
+        title: "Persetujuan Pembimbing",
+        url: "/admin/persetujuan-pembimbing",
+      },
     ],
   },
   {
