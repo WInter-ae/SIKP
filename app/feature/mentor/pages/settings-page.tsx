@@ -3,9 +3,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Save, Bell, Lock, Globe, Moon, Sun, Monitor } from "lucide-react";
 
-// Internal utilities
-import { cn } from "~/lib/utils";
-
 // Components
 import {
   Card,
