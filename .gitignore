@@ -8,3 +8,6 @@
 
 # Windows Bug
 nul
+
+# NPM Lock
+package-lock.json
