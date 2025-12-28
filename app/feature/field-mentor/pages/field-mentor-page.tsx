@@ -1,7 +1,37 @@
 import { useState } from "react";
 import { Link } from "react-router";
-import { UserPlus, CheckCircle, Copy, User } from "lucide-react";
+import {
+  UserPlus,
+  CheckCircle,
+  Copy,
+  User,
+  ArrowLeft,
+  Building2,
+  Mail,
+  Phone,
+  Briefcase,
+  MapPin,
+  Info,
+  Clock,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
+
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
+import { Badge } from "~/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+
 import type { FieldMentor, MentorRequest } from "../types";
 
 const MENTOR_CODE_TIMESTAMP_LENGTH = 6;
@@ -31,10 +61,9 @@ function FieldMentorPage() {
   const handleSubmitRequest = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Generate unique mentor code with better collision resistance
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * MENTOR_CODE_RANDOM_MAX);
-    const generatedCode = `MNT-${timestamp.toString().slice(-MENTOR_CODE_TIMESTAMP_LENGTH)}-${random.toString().padStart(MENTOR_CODE_RANDOM_LENGTH, '0')}`;
+    const generatedCode = `MNT-${timestamp.toString().slice(-MENTOR_CODE_TIMESTAMP_LENGTH)}-${random.toString().padStart(MENTOR_CODE_RANDOM_LENGTH, "0")}`;
 
     const newMentor: FieldMentor = {
       id: Date.now().toString(),
@@ -46,14 +75,13 @@ function FieldMentorPage() {
       phone: mentorRequest.mentorPhone,
       status: "pending",
       createdAt: new Date().toISOString(),
-      nip: "", // Akan diisi saat mentor registrasi
+      nip: "",
     };
 
     setCurrentMentor(newMentor);
     setShowMentorCode(true);
     setShowRequestForm(false);
 
-    // Reset form
     setMentorRequest({
       mentorName: "",
       mentorEmail: "",
@@ -71,307 +99,446 @@ function FieldMentorPage() {
     toast.success("Kode berhasil disalin!");
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="flex-1 p-10 bg-white">
-        <h1 className="text-3xl font-bold mb-4">Mentor Lapangan</h1>
+  const getStatusBadge = (status: FieldMentor["status"]) => {
+    switch (status) {
+      case "pending":
+        return (
+          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+            <Clock className="mr-1 h-3 w-3" />
+            Menunggu Mentor Registrasi
+          </Badge>
+        );
+      case "registered":
+        return (
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+            <Info className="mr-1 h-3 w-3" />
+            Menunggu Persetujuan Admin
+          </Badge>
+        );
+      case "approved":
+        return (
+          <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
+            <CheckCircle className="mr-1 h-3 w-3" />
+            Disetujui - Aktif
+          </Badge>
+        );
+      case "rejected":
+        return (
+          <Badge variant="destructive">
+            <XCircle className="mr-1 h-3 w-3" />
+            Ditolak
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
 
-        <Link
-          to="/mahasiswa"
-          className="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition mb-8"
-        >
-          <span className="mr-2">&larr;</span>
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">Mentor Lapangan</h1>
+        <p className="text-muted-foreground">
+          Kelola data mentor lapangan untuk kerja praktik Anda
+        </p>
+      </div>
+
+      {/* Back Button */}
+      <Button variant="secondary" asChild>
+        <Link to="/mahasiswa">
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Kembali ke Dashboard
         </Link>
+      </Button>
 
-        {/* Info Section */}
-        <section className="p-6 bg-blue-50 rounded-lg shadow-md mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <UserPlus className="h-6 w-6" />
-            Informasi Mentor Lapangan
-          </h2>
-          <p className="text-gray-700 mb-2">
+      {/* Info Section */}
+      <Alert className="border-l-4 border-primary bg-primary/5">
+        <UserPlus className="h-5 w-5" />
+        <AlertTitle>Informasi Mentor Lapangan</AlertTitle>
+        <AlertDescription className="mt-2">
+          <p className="mb-2">
             Halaman ini digunakan untuk mendaftarkan mentor lapangan Anda di
             tempat Kerja Praktik.
           </p>
-          <ul className="list-disc list-inside text-gray-700 space-y-1">
+          <ul className="list-disc list-inside space-y-1 text-sm">
             <li>Isi data mentor lapangan dengan lengkap</li>
             <li>Setelah submit, sistem akan generate kode unik untuk mentor</li>
-            <li>
-              Berikan kode tersebut kepada mentor untuk registrasi dan login
-            </li>
+            <li>Berikan kode tersebut kepada mentor untuk registrasi dan login</li>
             <li>Mentor dapat menggunakan kode untuk mengakses sistem</li>
           </ul>
-        </section>
+        </AlertDescription>
+      </Alert>
 
-        {/* Current Mentor Section */}
-        {currentMentor && (
-          <section className="p-6 bg-green-50 rounded-lg shadow-md mb-8">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+      {/* Current Mentor Section */}
+      {currentMentor && (
+        <Card className="border-l-4 border-green-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
               Mentor Lapangan Terdaftar
-            </h2>
-            
-            <div className="flex flex-col md:flex-row gap-6 mb-4">
-              {/* Foto Profil */}
-              <div className="flex-shrink-0">
-                {currentMentor.photo ? (
-                  <img
-                    src={currentMentor.photo}
-                    alt={currentMentor.name}
-                    className="w-32 h-32 rounded-lg object-cover border-2 border-gray-300"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-lg bg-gray-200 flex items-center justify-center border-2 border-gray-300">
-                    <User className="h-16 w-16 text-gray-400" />
-                  </div>
-                )}
+            </CardTitle>
+            <CardDescription>
+              Data mentor lapangan yang telah didaftarkan
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Profile Photo */}
+              <div className="flex flex-col items-center">
+                <Avatar className="h-32 w-32">
+                  <AvatarImage src={currentMentor.photo} alt={currentMentor.name} />
+                  <AvatarFallback className="text-2xl bg-primary/10">
+                    {currentMentor.photo ? (
+                      <User className="h-12 w-12 text-muted-foreground" />
+                    ) : (
+                      getInitials(currentMentor.name)
+                    )}
+                  </AvatarFallback>
+                </Avatar>
                 {!currentMentor.photo && currentMentor.status === "pending" && (
-                  <p className="text-xs text-gray-500 mt-2 text-center">
+                  <p className="text-xs text-muted-foreground mt-2 text-center">
                     Foto akan muncul setelah mentor registrasi
                   </p>
                 )}
               </div>
 
-              {/* Data Mentor */}
+              {/* Mentor Data */}
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Nama Mentor</p>
-                  <p className="font-semibold">{currentMentor.name}</p>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-sm">Nama Mentor</Label>
+                  <p className="font-medium flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    {currentMentor.name}
+                  </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">NIP/NIK</p>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-sm">NIP/NIK</Label>
                   {currentMentor.nip ? (
-                    <p className="font-semibold">{currentMentor.nip}</p>
+                    <p className="font-medium">{currentMentor.nip}</p>
                   ) : (
-                    <p className="text-gray-400 italic">
+                    <p className="text-muted-foreground italic text-sm">
                       Akan diisi saat registrasi
                     </p>
                   )}
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-semibold">{currentMentor.email}</p>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-sm">Email</Label>
+                  <p className="font-medium flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    {currentMentor.email}
+                  </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">No. Telepon</p>
-                  <p className="font-semibold">{currentMentor.phone}</p>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-sm">No. Telepon</Label>
+                  <p className="font-medium flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    {currentMentor.phone}
+                  </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Perusahaan</p>
-                  <p className="font-semibold">{currentMentor.company}</p>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-sm">Perusahaan</Label>
+                  <p className="font-medium flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    {currentMentor.company}
+                  </p>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Jabatan</p>
-                  <p className="font-semibold">{currentMentor.position}</p>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground text-sm">Jabatan</Label>
+                  <p className="font-medium flex items-center gap-2">
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                    {currentMentor.position}
+                  </p>
                 </div>
-                <div className="md:col-span-2">
-                  <p className="text-sm text-gray-600">Status</p>
-                  <span
-                    className={`inline-block px-3 py-1 text-sm rounded-full ${
-                      currentMentor.status === "pending"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : currentMentor.status === "registered"
-                          ? "bg-blue-100 text-blue-800"
-                          : currentMentor.status === "approved"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {currentMentor.status === "pending"
-                      ? "Menunggu Mentor Registrasi"
-                      : currentMentor.status === "registered"
-                        ? "Menunggu Persetujuan Admin"
-                        : currentMentor.status === "approved"
-                          ? "Disetujui - Aktif"
-                          : "Ditolak"}
-                  </span>
+                <div className="md:col-span-2 space-y-1">
+                  <Label className="text-muted-foreground text-sm">Status</Label>
+                  <div>{getStatusBadge(currentMentor.status)}</div>
                 </div>
               </div>
             </div>
 
+            {/* Mentor Code Section */}
             {showMentorCode && (
-              <div className="p-4 bg-white rounded-lg border-2 border-green-300">
-                <p className="text-sm text-gray-600 mb-2">Kode Mentor</p>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 text-2xl font-bold text-green-700 bg-gray-50 p-3 rounded border border-gray-300">
-                    {currentMentor.code}
-                  </code>
-                  <button
-                    onClick={() => copyToClipboard(currentMentor.code)}
-                    className="p-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
-                    title="Salin kode"
-                  >
-                    <Copy className="h-5 w-5" />
-                  </button>
-                </div>
-                <p className="text-sm text-gray-600 mt-3">
-                  ⚠️ Berikan kode ini kepada mentor untuk registrasi dan login ke
-                  sistem
-                </p>
-              </div>
+              <Card className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+                <CardContent className="pt-6">
+                  <Label className="text-muted-foreground text-sm">Kode Mentor</Label>
+                  <div className="flex items-center gap-2 mt-2">
+                    <code className="flex-1 text-2xl font-bold text-green-700 dark:text-green-400 bg-background p-3 rounded-md border">
+                      {currentMentor.code}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => copyToClipboard(currentMentor.code)}
+                      className="h-12 w-12"
+                    >
+                      <Copy className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    ⚠️ Berikan kode ini kepada mentor untuk registrasi dan login ke sistem
+                  </p>
+                </CardContent>
+              </Card>
             )}
-          </section>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Request Form Section */}
-        {!currentMentor && !showRequestForm && (
-          <div className="text-center py-12">
-            <p className="text-gray-600 mb-6">
-              Anda belum memiliki mentor lapangan terdaftar
-            </p>
-            <button
-              onClick={() => setShowRequestForm(true)}
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg transition"
-            >
-              <UserPlus className="inline-block h-5 w-5 mr-2" />
+      {/* Empty State / Request Button */}
+      {!currentMentor && !showRequestForm && (
+        <Card className="text-center py-12">
+          <CardContent className="space-y-6">
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
+              <UserPlus className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Belum Ada Mentor Terdaftar</h3>
+              <p className="text-muted-foreground">
+                Anda belum memiliki mentor lapangan terdaftar. Klik tombol di bawah untuk mendaftarkan mentor.
+              </p>
+            </div>
+            <Button size="lg" onClick={() => setShowRequestForm(true)}>
+              <UserPlus className="mr-2 h-5 w-5" />
               Request Mentor Lapangan
-            </button>
-          </div>
-        )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
-        {showRequestForm && (
-          <section className="p-6 bg-gray-50 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-6">
+      {/* Request Form */}
+      {showRequestForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
               Form Request Mentor Lapangan
-            </h2>
-            <form onSubmit={handleSubmitRequest}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nama Mentor <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="mentorName"
-                    required
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    placeholder="Nama lengkap mentor"
-                    value={mentorRequest.mentorName}
-                    onChange={handleInputChange}
-                  />
+            </CardTitle>
+            <CardDescription>
+              Lengkapi data mentor lapangan Anda dengan informasi yang valid
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmitRequest} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="mentorName">
+                    Nama Mentor <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="mentorName"
+                      name="mentorName"
+                      required
+                      className="pl-10"
+                      placeholder="Nama lengkap mentor"
+                      value={mentorRequest.mentorName}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Mentor <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    name="mentorEmail"
-                    required
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    placeholder="email@example.com"
-                    value={mentorRequest.mentorEmail}
-                    onChange={handleInputChange}
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="mentorEmail">
+                    Email Mentor <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="mentorEmail"
+                      name="mentorEmail"
+                      type="email"
+                      required
+                      className="pl-10"
+                      placeholder="email@example.com"
+                      value={mentorRequest.mentorEmail}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    No. Telepon <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    name="mentorPhone"
-                    required
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    placeholder="08xxxxxxxxxx"
-                    value={mentorRequest.mentorPhone}
-                    onChange={handleInputChange}
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="mentorPhone">
+                    No. Telepon <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="mentorPhone"
+                      name="mentorPhone"
+                      type="tel"
+                      required
+                      className="pl-10"
+                      placeholder="08xxxxxxxxxx"
+                      value={mentorRequest.mentorPhone}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nama Perusahaan <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="company"
-                    required
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    placeholder="PT. Example Indonesia"
-                    value={mentorRequest.company}
-                    onChange={handleInputChange}
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="company">
+                    Nama Perusahaan <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="company"
+                      name="company"
+                      required
+                      className="pl-10"
+                      placeholder="PT. Example Indonesia"
+                      value={mentorRequest.company}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Jabatan <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="position"
-                    required
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    placeholder="Supervisor, Manager, dll"
-                    value={mentorRequest.position}
-                    onChange={handleInputChange}
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="position">
+                    Jabatan <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="position"
+                      name="position"
+                      required
+                      className="pl-10"
+                      placeholder="Supervisor, Manager, dll"
+                      value={mentorRequest.position}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Alamat Perusahaan <span className="text-red-500">*</span>
-                  </label>
-                  <textarea
-                    name="address"
-                    required
-                    rows={3}
-                    className="w-full border border-gray-300 rounded-md shadow-sm p-2"
-                    placeholder="Alamat lengkap perusahaan"
-                    value={mentorRequest.address}
-                    onChange={handleInputChange}
-                  ></textarea>
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="address">
+                    Alamat Perusahaan <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Textarea
+                      id="address"
+                      name="address"
+                      required
+                      rows={3}
+                      className="pl-10"
+                      placeholder="Alamat lengkap perusahaan"
+                      value={mentorRequest.address}
+                      onChange={handleInputChange}
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="flex justify-end gap-4">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setShowRequestForm(false)}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg shadow"
                 >
                   Batal
-                </button>
-                <button
-                  type="submit"
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow"
-                >
+                </Button>
+                <Button type="submit">
+                  <UserPlus className="mr-2 h-4 w-4" />
                   Submit Request
-                </button>
+                </Button>
               </div>
             </form>
-          </section>
-        )}
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Info Kode Section */}
-        <section className="p-6 bg-yellow-50 rounded-lg shadow-md mt-8">
-          <h3 className="text-lg font-semibold mb-3">
+      {/* Process Flow Info Section */}
+      <Card className="border-l-4 border-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
             📌 Alur Proses Mentor Lapangan
-          </h3>
-          <ol className="list-decimal list-inside text-gray-700 space-y-2">
-            <li>
-              <strong>Mahasiswa Request Mentor</strong> - Isi form dan submit, sistem akan generate kode unik
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ol className="space-y-3">
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                1
+              </span>
+              <div>
+                <p className="font-medium">Mahasiswa Request Mentor</p>
+                <p className="text-sm text-muted-foreground">
+                  Isi form dan submit, sistem akan generate kode unik
+                </p>
+              </div>
             </li>
-            <li>
-              <strong>Status: Menunggu Mentor Registrasi</strong> - Berikan kode kepada mentor untuk registrasi
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                2
+              </span>
+              <div>
+                <p className="font-medium">Status: Menunggu Mentor Registrasi</p>
+                <p className="text-sm text-muted-foreground">
+                  Berikan kode kepada mentor untuk registrasi
+                </p>
+              </div>
             </li>
-            <li>
-              <strong>Mentor Registrasi</strong> - Mentor menggunakan kode untuk membuat akun dan melengkapi data profil (foto profil dan NIP/NIK jika tersedia)
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                3
+              </span>
+              <div>
+                <p className="font-medium">Mentor Registrasi</p>
+                <p className="text-sm text-muted-foreground">
+                  Mentor menggunakan kode untuk membuat akun dan melengkapi data profil
+                </p>
+              </div>
             </li>
-            <li>
-              <strong>Status: Menunggu Persetujuan Admin</strong> - Setelah mentor registrasi, data lengkap akan muncul di sini dan menunggu admin approve
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                4
+              </span>
+              <div>
+                <p className="font-medium">Status: Menunggu Persetujuan Admin</p>
+                <p className="text-sm text-muted-foreground">
+                  Setelah mentor registrasi, data lengkap akan muncul dan menunggu admin approve
+                </p>
+              </div>
             </li>
-            <li>
-              <strong>Admin Approve</strong> - Admin memeriksa dan menyetujui/menolak mentor
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+                5
+              </span>
+              <div>
+                <p className="font-medium">Admin Approve</p>
+                <p className="text-sm text-muted-foreground">
+                  Admin memeriksa dan menyetujui/menolak mentor
+                </p>
+              </div>
             </li>
-            <li>
-              <strong>Status: Disetujui</strong> - Mentor dapat login dan mulai membimbing
+            <li className="flex gap-3">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-medium">
+                6
+              </span>
+              <div>
+                <p className="font-medium">Status: Disetujui</p>
+                <p className="text-sm text-muted-foreground">
+                  Mentor dapat login dan mulai membimbing
+                </p>
+              </div>
             </li>
           </ol>
-          <p className="text-sm text-red-600 mt-4">
-            ⚠️ Mentor tidak dapat login sebelum mendapat persetujuan dari admin
-          </p>
-        </section>
-      </main>
+          <Alert variant="destructive" className="mt-6">
+            <XCircle className="h-4 w-4" />
+            <AlertDescription>
+              Mentor tidak dapat login sebelum mendapat persetujuan dari admin
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     </div>
   );
 }

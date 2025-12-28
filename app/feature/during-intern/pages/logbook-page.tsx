@@ -1,6 +1,35 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
+import { ArrowLeft, Calendar, FileText, Plus, Save, Sparkles } from "lucide-react";
+
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { Alert, AlertDescription } from "~/components/ui/alert";
 
 interface LogbookEntry {
   id: string;
@@ -15,8 +44,21 @@ interface WorkPeriod {
   endDay?: string;
 }
 
+const DAYS_OPTIONS = [
+  { value: "senin", label: "Senin" },
+  { value: "selasa", label: "Selasa" },
+  { value: "rabu", label: "Rabu" },
+  { value: "kamis", label: "Kamis" },
+  { value: "jumat", label: "Jumat" },
+  { value: "sabtu", label: "Sabtu" },
+  { value: "minggu", label: "Minggu" },
+];
+
 function LogbookPage() {
-  const [workPeriod, setWorkPeriod] = useState<WorkPeriod>({});
+  const [workPeriod, setWorkPeriod] = useState<WorkPeriod>({
+    startDay: "senin",
+    endDay: "jumat",
+  });
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [description, setDescription] = useState("");
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
@@ -27,16 +69,15 @@ function LogbookPage() {
       toast.error("Mohon lengkapi periode kerja praktik!");
       return;
     }
-    
-    // Validate that end date is after start date
+
     const start = new Date(workPeriod.startDate);
     const end = new Date(workPeriod.endDate);
-    
+
     if (end < start) {
       toast.error("Tanggal selesai harus setelah atau sama dengan tanggal mulai!");
       return;
     }
-    
+
     toast.success("Periode berhasil disimpan!");
   };
 
@@ -68,7 +109,6 @@ function LogbookPage() {
     const end = new Date(workPeriod.endDate);
     const dates: string[] = [];
 
-    // Mapping hari dalam bahasa Indonesia ke nomor hari (0 = Minggu, 6 = Sabtu)
     const dayMap: { [key: string]: number } = {
       minggu: 0,
       senin: 1,
@@ -81,24 +121,21 @@ function LogbookPage() {
 
     const startDayNum = workPeriod.startDay
       ? dayMap[workPeriod.startDay.toLowerCase()]
-      : 1; // Default Senin
+      : 1;
     const endDayNum = workPeriod.endDay
       ? dayMap[workPeriod.endDay.toLowerCase()]
-      : 5; // Default Jumat
+      : 5;
 
     const MS_PER_DAY = 24 * 60 * 60 * 1000;
-    
+
     for (let d = new Date(start); d <= end; d = new Date(d.getTime() + MS_PER_DAY)) {
       const currentDay = d.getDay();
-      
-      // Cek apakah hari ini termasuk dalam hari kerja
+
       if (startDayNum <= endDayNum) {
-        // Normal case: Senin-Jumat
         if (currentDay >= startDayNum && currentDay <= endDayNum) {
           dates.push(new Date(d).toISOString().split("T")[0]);
         }
       } else {
-        // Wrap around case: Jumat-Minggu, atau Sabtu-Senin, dll
         if (currentDay >= startDayNum || currentDay <= endDayNum) {
           dates.push(new Date(d).toISOString().split("T")[0]);
         }
@@ -106,6 +143,7 @@ function LogbookPage() {
     }
 
     setGeneratedDates(dates);
+    toast.success(`${dates.length} hari kerja berhasil di-generate!`);
   };
 
   const getLogbookForDate = (date: string) => {
@@ -128,20 +166,19 @@ function LogbookPage() {
 
   const getWeekNumber = (dateString: string) => {
     if (!workPeriod.startDate) return 0;
-    
+
     const start = new Date(workPeriod.startDate);
     const current = new Date(dateString);
     const diffTime = current.getTime() - start.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return Math.floor(diffDays / 7) + 1;
   };
 
   const getWeekRowSpan = (dates: string[], currentIndex: number) => {
     const currentWeek = getWeekNumber(dates[currentIndex]);
     let count = 1;
-    
-    // Count forward
+
     for (let i = currentIndex + 1; i < dates.length; i++) {
       if (getWeekNumber(dates[i]) === currentWeek) {
         count++;
@@ -149,238 +186,263 @@ function LogbookPage() {
         break;
       }
     }
-    
+
     return count;
   };
 
   return (
-    <div className="flex min-h-screen bg-blue-50">
-      <main className="flex-1 p-10 bg-white">
-        <h1 className="text-3xl font-bold mb-4">Halaman Logbook</h1>
+    <div className="max-w-6xl mx-auto p-6 space-y-8">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">Halaman Logbook</h1>
+        <p className="text-muted-foreground">
+          Catat aktivitas harian selama masa kerja praktik
+        </p>
+      </div>
 
-        <Link
-          to="/mahasiswa/kp/saat-magang"
-          className="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-medium transition mb-8"
-        >
-          <span className="mr-2">&larr;</span>
+      {/* Back Button */}
+      <Button variant="secondary" asChild>
+        <Link to="/mahasiswa/kp/saat-magang">
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Kembali ke Saat Magang
         </Link>
+      </Button>
 
-        {/* Bagian 1: Form Periode */}
-        <section className="p-6 bg-gray-50 rounded-lg shadow-md mb-8">
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Periode Kerja Praktik
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  className="flex-1 border border-gray-300 rounded-md shadow-sm p-2"
-                  value={workPeriod.startDate || ""}
-                  onChange={(e) =>
-                    setWorkPeriod({
-                      ...workPeriod,
-                      startDate: e.target.value,
-                    })
-                  }
-                />
-                <span>s/d</span>
-                <input
-                  type="date"
-                  className="flex-1 border border-gray-300 rounded-md shadow-sm p-2"
-                  value={workPeriod.endDate || ""}
-                  onChange={(e) =>
-                    setWorkPeriod({
-                      ...workPeriod,
-                      endDate: e.target.value,
-                    })
-                  }
-                />
-              </div>
+      {/* Section 1: Work Period Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Periode Kerja Praktik
+          </CardTitle>
+          <CardDescription>
+            Tentukan periode dan hari kerja praktik Anda
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Tanggal Mulai</Label>
+              <Input
+                type="date"
+                value={workPeriod.startDate || ""}
+                onChange={(e) =>
+                  setWorkPeriod({ ...workPeriod, startDate: e.target.value })
+                }
+              />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Hari kerja
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  className="flex-1 border border-gray-300 rounded-md shadow-sm p-2"
-                  placeholder="Senin"
-                  value={workPeriod.startDay || ""}
-                  onChange={(e) =>
-                    setWorkPeriod({ ...workPeriod, startDay: e.target.value })
-                  }
-                />
-                <span>s/d</span>
-                <input
-                  type="text"
-                  className="flex-1 border border-gray-300 rounded-md shadow-sm p-2"
-                  placeholder="Jumat"
-                  value={workPeriod.endDay || ""}
-                  onChange={(e) =>
-                    setWorkPeriod({ ...workPeriod, endDay: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg shadow"
-                onClick={handleSubmitPeriod}
-              >
-                Submit
-              </button>
+            <div className="space-y-2">
+              <Label>Tanggal Selesai</Label>
+              <Input
+                type="date"
+                value={workPeriod.endDate || ""}
+                onChange={(e) =>
+                  setWorkPeriod({ ...workPeriod, endDate: e.target.value })
+                }
+              />
             </div>
           </div>
-        </section>
 
-        {/* Bagian 2: Form Tambah Logbook */}
-        <section className="p-6 bg-gray-50 rounded-lg shadow-md mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1">
-              <label
-                htmlFor="tanggal"
-                className="block text-sm font-medium text-gray-700 mb-1"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Hari Kerja Mulai</Label>
+              <Select
+                value={workPeriod.startDay}
+                onValueChange={(value) =>
+                  setWorkPeriod({ ...workPeriod, startDay: value })
+                }
               >
-                Tanggal
-              </label>
-              <input
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih hari" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS_OPTIONS.map((day) => (
+                    <SelectItem key={day.value} value={day.value}>
+                      {day.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Hari Kerja Selesai</Label>
+              <Select
+                value={workPeriod.endDay}
+                onValueChange={(value) =>
+                  setWorkPeriod({ ...workPeriod, endDay: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih hari" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DAYS_OPTIONS.map((day) => (
+                    <SelectItem key={day.value} value={day.value}>
+                      {day.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button onClick={handleSubmitPeriod}>
+              <Save className="mr-2 h-4 w-4" />
+              Simpan Periode
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 2: Add Logbook Entry Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Tambah Entri Logbook
+          </CardTitle>
+          <CardDescription>
+            Tambahkan catatan kegiatan harian Anda
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="tanggal">Tanggal</Label>
+              <Input
                 type="date"
                 id="tanggal"
-                className="w-full border border-gray-300 rounded-md shadow-sm p-2"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
               />
             </div>
-            <div className="md:col-span-2">
-              <label
-                htmlFor="deskripsi"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Deskripsi
-              </label>
-              <textarea
+            <div className="md:col-span-2 space-y-2">
+              <Label htmlFor="deskripsi">Deskripsi Kegiatan</Label>
+              <Textarea
                 id="deskripsi"
                 rows={4}
-                className="w-full border border-gray-300 rounded-md shadow-sm p-2 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Masukkan deskripsi kegiatan..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-              ></textarea>
-            </div>
-            <div className="md:col-span-3 flex justify-end">
-              <button
-                type="button"
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg shadow"
-                onClick={handleAddLogbook}
-              >
-                Tambah
-              </button>
+              />
             </div>
           </div>
-        </section>
 
-        {/* Bagian 3: Tabel Generate */}
-        <section className="p-6 bg-gray-50 rounded-lg shadow-md">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-4 text-lg">
-              <span className="font-semibold bg-white px-4 py-2 rounded-md shadow border border-gray-300">
-                {workPeriod.startDate
-                  ? formatDate(workPeriod.startDate)
-                  : "Belum diset"}
+          <div className="flex justify-end">
+            <Button onClick={handleAddLogbook}>
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Logbook
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Section 3: Generated Logbook Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Tabel Logbook
+          </CardTitle>
+          <CardDescription>
+            Generate dan kelola entri logbook berdasarkan periode kerja
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Period Display & Generate Button */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-medium text-sm text-muted-foreground">Periode:</span>
+              <span className="px-3 py-1.5 bg-muted rounded-md text-sm font-medium">
+                {workPeriod.startDate ? formatDate(workPeriod.startDate) : "Belum diset"}
               </span>
-              <span className="text-gray-600">s/d</span>
-              <span className="font-semibold bg-white px-4 py-2 rounded-md shadow border border-gray-300">
-                {workPeriod.endDate
-                  ? formatDate(workPeriod.endDate)
-                  : "Belum diset"}
+              <span className="text-muted-foreground">s/d</span>
+              <span className="px-3 py-1.5 bg-muted rounded-md text-sm font-medium">
+                {workPeriod.endDate ? formatDate(workPeriod.endDate) : "Belum diset"}
               </span>
             </div>
-            <button
-              type="button"
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-6 rounded-lg shadow"
-              onClick={handleGenerate}
-            >
+            <Button onClick={handleGenerate} variant="outline">
+              <Sparkles className="mr-2 h-4 w-4" />
               Generate
-            </button>
+            </Button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse border border-gray-300">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">
-                    Minggu Ke
-                  </th>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">
-                    Hari, Tanggal
-                  </th>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">
-                    Deskripsi Kegiatan
-                  </th>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">
-                    Paraf Pembimbing Lapangan
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {generatedDates.length > 0 ? (
-                  generatedDates.map((date, index) => {
+          {/* Info Alert */}
+          {generatedDates.length === 0 && (
+            <Alert>
+              <FileText className="h-4 w-4" />
+              <AlertDescription>
+                Klik tombol Generate untuk menampilkan tabel logbook berdasarkan periode yang telah diset.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Logbook Table */}
+          {generatedDates.length > 0 && (
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-24 text-center">Minggu Ke</TableHead>
+                    <TableHead className="min-w-48">Hari, Tanggal</TableHead>
+                    <TableHead className="min-w-64">Deskripsi Kegiatan</TableHead>
+                    <TableHead className="w-48 text-center">Paraf Pembimbing</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {generatedDates.map((date, index) => {
                     const entry = getLogbookForDate(date);
                     const weekNum = getWeekNumber(date);
                     const prevWeekNum = index > 0 ? getWeekNumber(generatedDates[index - 1]) : 0;
                     const showWeekNumber = weekNum !== prevWeekNum;
-                    
+
                     return (
-                      <tr key={index} className="bg-white">
+                      <TableRow key={index}>
                         {showWeekNumber && (
-                          <td 
-                            className="border border-gray-300 p-3 text-center align-middle" 
+                          <TableCell
+                            className="text-center font-medium bg-muted/50"
                             rowSpan={getWeekRowSpan(generatedDates, index)}
                           >
                             {weekNum}
-                          </td>
+                          </TableCell>
                         )}
-                        <td className="border border-gray-300 p-3">
-                          {getDayName(date)}, {formatDate(date)}
-                        </td>
-                        <td className="border border-gray-300 p-3">
-                          {entry?.description || "-"}
-                        </td>
-                        <td className="border border-gray-300 p-3 text-center">
-                          -
-                        </td>
-                      </tr>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{getDayName(date)}</span>
+                            <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {entry?.description || (
+                            <span className="text-muted-foreground italic">Belum diisi</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <span className="text-muted-foreground">-</span>
+                        </TableCell>
+                      </TableRow>
                     );
-                  })
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="border border-gray-300 p-8 text-center text-gray-500"
-                    >
-                      Klik tombol Generate untuk menampilkan tabel logbook
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
-          <div className="flex justify-center mt-6">
-            <button
-              type="button"
-              className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-8 rounded-lg shadow"
-              onClick={() => alert("Data logbook berhasil disimpan!")}
-            >
-              Simpan
-            </button>
-          </div>
-        </section>
-      </main>
+          {/* Save Button */}
+          {generatedDates.length > 0 && (
+            <div className="flex justify-center pt-4">
+              <Button
+                size="lg"
+                onClick={() => toast.success("Data logbook berhasil disimpan!")}
+              >
+                <Save className="mr-2 h-4 w-4" />
+                Simpan Logbook
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
