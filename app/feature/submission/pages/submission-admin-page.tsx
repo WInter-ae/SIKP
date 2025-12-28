@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { toast } from "sonner";
 import {
   CheckCircle,
   Clock,
@@ -290,7 +291,7 @@ function SubmissionAdminPage() {
             : app,
         ),
       );
-      alert(
+      toast.success(
         "Pengajuan telah disetujui dan surat pengantar berhasil dibuat dan dikirimkan!",
       );
       handleCloseModal();
@@ -314,7 +315,9 @@ function SubmissionAdminPage() {
             : app,
         ),
       );
-      alert(`Pengajuan telah ditolak dengan komentar: ${comment}`);
+      toast.error(
+        comment ? `Pengajuan ditolak: ${comment}` : "Pengajuan telah ditolak",
+      );
       handleCloseModal();
     }
   };
