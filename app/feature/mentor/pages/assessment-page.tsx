@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -82,18 +83,21 @@ function AssessmentPage() {
     );
   }
 
+  // Memoize totalScore calculation to avoid duplication
+  const totalScore = useMemo(() => {
+    if (assessments.length === 0) return 0;
+    return assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length;
+  }, [assessments]);
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!selectedMentee) {
-      alert("Mohon pilih mentee terlebih dahulu");
+      toast.error("Mohon pilih mentee terlebih dahulu");
       return;
     }
 
-    const totalScore =
-      assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length;
-
-    alert(
+    toast.success(
       `Penilaian berhasil disimpan!\nMentee: ${MENTEE_LIST.find((m) => m.id === selectedMentee)?.name}\nNilai Rata-rata: ${totalScore.toFixed(1)}`
     );
 
@@ -101,9 +105,6 @@ function AssessmentPage() {
     setFeedback("");
     setAssessments((prev) => prev.map((a) => ({ ...a, score: 0 })));
   }
-
-  const totalScore =
-    assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length;
 
   return (
     <div className="p-6">

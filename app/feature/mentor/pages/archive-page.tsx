@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Card, CardContent } from "~/components/ui/card";
 import { Archive } from "lucide-react";
 
@@ -77,11 +78,11 @@ function ArchivePage() {
   });
 
   function handleDownload(doc: ArchivedDocument) {
-    alert(`Download: ${doc.title}`);
+    toast.success(`Download: ${doc.title}`);
   }
 
   function handleView(doc: ArchivedDocument) {
-    alert(`View: ${doc.title}`);
+    toast.info(`View: ${doc.title}`);
   }
 
   return (

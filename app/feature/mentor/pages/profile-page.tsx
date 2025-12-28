@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -47,6 +48,50 @@ function ProfilePage() {
   const [isDrawing, setIsDrawing] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Handle ESC key to close modal
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape" && showSignatureModal) {
+        setShowSignatureModal(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [showSignatureModal]);
+
+  // Focus trap for modal
+  useEffect(() => {
+    if (showSignatureModal && modalRef.current) {
+      const focusableElements = modalRef.current.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      function handleTabKey(e: KeyboardEvent) {
+        if (e.key !== "Tab") return;
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement?.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement?.focus();
+            e.preventDefault();
+          }
+        }
+      }
+
+      firstElement?.focus();
+      document.addEventListener("keydown", handleTabKey);
+      return () => document.removeEventListener("keydown", handleTabKey);
+    }
+  }, [showSignatureModal]);
 
   function handleInputChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -58,6 +103,20 @@ function ProfilePage() {
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type with allowlist
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("File harus berupa gambar (JPEG, PNG, GIF, atau WebP)!");
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        toast.error("Ukuran file maksimal 5MB!");
+        return;
+      }
+      
       const reader = new FileReader();
       reader.onloadend = () => {
         setEditData((prev) => ({ ...prev, photo: reader.result as string }));
@@ -69,7 +128,7 @@ function ProfilePage() {
   function handleSave() {
     setProfileData(editData);
     setIsEditing(false);
-    alert("Profil berhasil diperbarui!");
+    toast.success("Profil berhasil diperbarui!");
   }
 
   function handleCancel() {
@@ -78,7 +137,30 @@ function ProfilePage() {
   }
 
   // E-Signature functions
-  function startDrawing(e: React.MouseEvent<HTMLCanvasElement>) {
+  function getCoordinates(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    
+    if ('touches' in e) {
+      // Touch event
+      const touch = e.touches[0] || e.changedTouches[0];
+      return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top,
+      };
+    } else {
+      // Mouse event
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      };
+    }
+  }
+
+  function startDrawing(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
+    e.preventDefault();
     setIsDrawing(true);
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -86,12 +168,13 @@ function ProfilePage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
+    const coords = getCoordinates(e);
     ctx.beginPath();
-    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.moveTo(coords.x, coords.y);
   }
 
-  function draw(e: React.MouseEvent<HTMLCanvasElement>) {
+  function draw(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
+    e.preventDefault();
     if (!isDrawing) return;
 
     const canvas = canvasRef.current;
@@ -100,15 +183,16 @@ function ProfilePage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    const coords = getCoordinates(e);
+    ctx.lineTo(coords.x, coords.y);
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.lineCap = "round";
     ctx.stroke();
   }
 
-  function stopDrawing() {
+  function stopDrawing(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
+    e.preventDefault();
     setIsDrawing(false);
   }
 
@@ -129,13 +213,13 @@ function ProfilePage() {
     const signatureData = canvas.toDataURL();
     setEditData((prev) => ({ ...prev, signature: signatureData }));
     setShowSignatureModal(false);
-    alert("Tanda tangan berhasil disimpan!");
+    toast.success("Tanda tangan berhasil disimpan!");
   }
 
   function deleteSignature() {
     setEditData((prev) => ({ ...prev, signature: "" }));
     clearSignature();
-    alert("Tanda tangan berhasil dihapus!");
+    toast.success("Tanda tangan berhasil dihapus!");
   }
 
   return (
@@ -430,10 +514,15 @@ function ProfilePage() {
 
       {/* E-Signature Modal */}
       {showSignatureModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-2xl mx-4">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="signature-modal-title"
+        >
+          <Card className="w-full max-w-2xl mx-4" ref={modalRef}>
             <CardHeader>
-              <CardTitle>Buat Tanda Tangan Digital</CardTitle>
+              <CardTitle id="signature-modal-title">Buat Tanda Tangan Digital</CardTitle>
               <CardDescription>
                 Gambar tanda tangan Anda pada area di bawah ini
               </CardDescription>
@@ -446,10 +535,15 @@ function ProfilePage() {
                     width={600}
                     height={200}
                     className="w-full cursor-crosshair"
+                    aria-label="Area untuk menggambar tanda tangan digital"
                     onMouseDown={startDrawing}
                     onMouseMove={draw}
                     onMouseUp={stopDrawing}
                     onMouseLeave={stopDrawing}
+                    onTouchStart={startDrawing}
+                    onTouchMove={draw}
+                    onTouchEnd={stopDrawing}
+                    onTouchCancel={stopDrawing}
                   />
                 </div>
                 <div className="flex justify-between">

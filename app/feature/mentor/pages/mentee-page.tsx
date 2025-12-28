@@ -39,8 +39,9 @@ const MENTEE_LIST: Mentee[] = [
 ];
 
 function MenteePage() {
+  const totalProgress = MENTEE_LIST.reduce((sum, m) => sum + m.progress, 0);
   const averageProgress =
-    MENTEE_LIST.reduce((sum, m) => sum + m.progress, 0) / MENTEE_LIST.length;
+    MENTEE_LIST.length > 0 ? totalProgress / MENTEE_LIST.length : 0;
   const activeCount = MENTEE_LIST.filter((m) => m.status === "Aktif").length;
 
   return (
