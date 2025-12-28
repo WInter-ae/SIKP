@@ -96,7 +96,7 @@ function SettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="p-6">
       <PageHeader
         title="Pengaturan"
         description="Kelola preferensi dan pengaturan akun Anda"

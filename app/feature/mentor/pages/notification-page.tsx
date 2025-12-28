@@ -55,7 +55,7 @@ function NotificationPage() {
   const unreadCount = NOTIFICATIONS.filter((n) => !n.isRead).length;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="p-6">
       <PageHeader
         title="Notifikasi"
         description="Semua notifikasi dan pembaruan untuk Anda"

@@ -44,7 +44,7 @@ function MenteePage() {
   const activeCount = MENTEE_LIST.filter((m) => m.status === "Aktif").length;
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="p-6">
       <PageHeader
         title="Daftar Mentee"
         description="Mahasiswa yang berada dalam bimbingan Anda"

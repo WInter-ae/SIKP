@@ -85,7 +85,7 @@ function ArchivePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="p-6">
       <PageHeader
         title="Arsip"
         description="Dokumen dan data mentee yang telah selesai"

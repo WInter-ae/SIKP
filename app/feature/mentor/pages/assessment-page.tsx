@@ -106,7 +106,7 @@ function AssessmentPage() {
     assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length;
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
+    <div className="p-6">
       <PageHeader
         title="Penilaian Mentee"
         description="Berikan penilaian untuk mahasiswa bimbingan Anda"
