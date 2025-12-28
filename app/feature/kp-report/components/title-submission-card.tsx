@@ -19,27 +19,27 @@ import {
   Eye,
   Clock,
 } from "lucide-react";
-import type { PengajuanJudul } from "../types/judul";
-import { VerifikasiJudulDialog } from "./verifikasi-judul-dialog";
+import type { PengajuanJudul } from "../types/title";
+import TitleVerificationDialog from "./title-verification-dialog";
 
-interface PengajuanJudulCardProps {
+interface TitleSubmissionCardProps {
   pengajuan: PengajuanJudul;
   onVerifikasi?: (
     id: string,
-    status: "approved" | "rejected" | "revision",
+    status: "disetujui" | "ditolak" | "revisi",
     catatan: string
   ) => void;
 }
 
-export function PengajuanJudulCard({
+function TitleSubmissionCard({
   pengajuan,
   onVerifikasi,
-}: PengajuanJudulCardProps) {
+}: TitleSubmissionCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const handleVerifikasi = (
-    status: "approved" | "rejected" | "revision",
+    status: "disetujui" | "ditolak" | "revisi",
     catatan: string
   ) => {
     onVerifikasi?.(pengajuan.id, status, catatan);
@@ -48,28 +48,28 @@ export function PengajuanJudulCard({
 
   const getStatusBadge = () => {
     switch (pengajuan.status) {
-      case "submitted":
+      case "diajukan":
         return (
           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-300 hover:bg-yellow-100">
             <Clock className="w-3 h-3 mr-1" />
             Menunggu Verifikasi
           </Badge>
         );
-      case "approved":
+      case "disetujui":
         return (
           <Badge className="bg-green-100 text-green-800 border-green-300 hover:bg-green-100">
             <CheckCircle className="w-3 h-3 mr-1" />
             Disetujui
           </Badge>
         );
-      case "rejected":
+      case "ditolak":
         return (
           <Badge className="bg-red-100 text-red-800 border-red-300 hover:bg-red-100">
             <XCircle className="w-3 h-3 mr-1" />
             Ditolak
           </Badge>
         );
-      case "revision":
+      case "revisi":
         return (
           <Badge className="bg-blue-100 text-blue-800 border-blue-300 hover:bg-blue-100">
             <FileText className="w-3 h-3 mr-1" />
@@ -238,16 +238,16 @@ export function PengajuanJudulCard({
           {/* Catatan Verifikasi */}
           {pengajuan.catatanDosen && (
             <div className={`p-4 rounded-lg border-l-4 space-y-2 ${
-              pengajuan.status === 'approved' 
+              pengajuan.status === 'disetujui' 
                 ? 'bg-green-50 border-green-500 dark:bg-green-950' 
-                : pengajuan.status === 'revision'
+                : pengajuan.status === 'revisi'
                 ? 'bg-blue-50 border-blue-500 dark:bg-blue-950'
                 : 'bg-red-50 border-red-500 dark:bg-red-950'
             }`}>
               <p className="text-sm font-semibold flex items-center gap-2">
-                {pengajuan.status === 'approved' ? (
+                {pengajuan.status === 'disetujui' ? (
                   <CheckCircle className="w-4 h-4 text-green-600" />
-                ) : pengajuan.status === 'revision' ? (
+                ) : pengajuan.status === 'revisi' ? (
                   <FileText className="w-4 h-4 text-blue-600" />
                 ) : (
                   <XCircle className="w-4 h-4 text-red-600" />
@@ -277,7 +277,7 @@ export function PengajuanJudulCard({
             {isDetailOpen ? "Sembunyikan" : "Lihat Detail"}
           </Button>
 
-          {pengajuan.status === "submitted" && (
+          {pengajuan.status === "diajukan" && (
             <Button 
               size="sm" 
               onClick={() => setIsDialogOpen(true)}
@@ -289,7 +289,7 @@ export function PengajuanJudulCard({
         </CardFooter>
       </Card>
 
-      <VerifikasiJudulDialog
+      <TitleVerificationDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         pengajuan={pengajuan}
@@ -298,3 +298,5 @@ export function PengajuanJudulCard({
     </>
   );
 }
+
+export default TitleSubmissionCard;

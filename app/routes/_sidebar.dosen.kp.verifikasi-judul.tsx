@@ -1,5 +1,5 @@
 import type { Route } from "./+types/_sidebar.dosen.kp.verifikasi-judul";
-import VerifikasiJudulDosenPage from "~/feature/kp-report/pages/verifikasi-judul-dosen-page";
+import LecturerTitleVerificationPage from "~/feature/kp-report/pages/lecturer-title-verification-page";
 
 export function meta() {
   return [
@@ -9,5 +9,5 @@ export function meta() {
 }
 
 export default function VerifikasiJudulDosen() {
-  return <VerifikasiJudulDosenPage />;
+  return <LecturerTitleVerificationPage />;
 }

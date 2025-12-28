@@ -10,7 +10,7 @@ import { CheckCircle2, XCircle, Clock, AlertCircle, FileText, Plus, X } from "lu
 
 interface TitleSubmissionFormProps {
   currentTitle?: string;
-  titleStatus?: "draft" | "diajukan" | "disetujui" | "ditolak" | "revision";
+  titleStatus?: "draft" | "diajukan" | "disetujui" | "ditolak" | "revisi";
   onSubmit: (data: {
     judulLaporan: string;
     judulInggris: string;
@@ -90,7 +90,7 @@ function TitleSubmissionForm({
             </AlertDescription>
           </Alert>
         );
-      case "revision":
+      case "revisi":
         return (
           <Alert className="mb-4 border-l-4 border-blue-500 bg-blue-50">
             <FileText className="h-4 w-4 text-blue-600" />
@@ -139,7 +139,7 @@ function TitleSubmissionForm({
   };
 
   const isFormDisabled = disabled || titleStatus === "disetujui";
-  const canSubmit = titleStatus === "draft" || titleStatus === "ditolak" || titleStatus === "revision";
+  const canSubmit = titleStatus === "draft" || titleStatus === "ditolak" || titleStatus === "revisi";
 
   return (
     <Card>
@@ -288,7 +288,7 @@ function TitleSubmissionForm({
                 className="w-full"
                 size="lg"
               >
-                {titleStatus === "revision" 
+                {titleStatus === "revisi" 
                   ? "Ajukan Revisi Judul"
                   : titleStatus === "ditolak"
                   ? "Ajukan Judul Baru"

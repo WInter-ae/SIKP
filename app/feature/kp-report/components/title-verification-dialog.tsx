@@ -17,26 +17,26 @@ import {
   FileEdit,
   AlertCircle,
 } from "lucide-react";
-import type { PengajuanJudul } from "../types/judul";
+import type { PengajuanJudul } from "../types/title";
 
-interface VerifikasiJudulDialogProps {
+interface TitleVerificationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pengajuan: PengajuanJudul;
   onSubmit: (
-    status: "approved" | "rejected" | "revision",
+    status: "disetujui" | "ditolak" | "revisi",
     catatan: string
   ) => void;
 }
 
-export function VerifikasiJudulDialog({
+function TitleVerificationDialog({
   open,
   onOpenChange,
   pengajuan,
   onSubmit,
-}: VerifikasiJudulDialogProps) {
+}: TitleVerificationDialogProps) {
   const [selectedStatus, setSelectedStatus] = useState<
-    "approved" | "rejected" | "revision" | null
+    "disetujui" | "ditolak" | "revisi" | null
   >(null);
   const [catatan, setCatatan] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -164,16 +164,16 @@ export function VerifikasiJudulDialog({
             <div className="grid grid-cols-1 gap-2">
               {/* Setuju */}
               <button
-                onClick={() => setSelectedStatus("approved")}
+                onClick={() => setSelectedStatus("disetujui")}
                 className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
-                  selectedStatus === "approved"
+                  selectedStatus === "disetujui"
                     ? "border-green-500 bg-green-50"
                     : "border-border hover:border-green-300"
                 }`}
               >
                 <CheckCircle
                   className={`w-5 h-5 ${
-                    selectedStatus === "approved"
+                    selectedStatus === "disetujui"
                       ? "text-green-600"
                       : "text-muted-foreground"
                   }`}
@@ -188,16 +188,16 @@ export function VerifikasiJudulDialog({
 
               {/* Revisi */}
               <button
-                onClick={() => setSelectedStatus("revision")}
+                onClick={() => setSelectedStatus("revisi")}
                 className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
-                  selectedStatus === "revision"
+                  selectedStatus === "revisi"
                     ? "border-blue-500 bg-blue-50"
                     : "border-border hover:border-blue-300"
                 }`}
               >
                 <FileEdit
                   className={`w-5 h-5 ${
-                    selectedStatus === "revision"
+                    selectedStatus === "revisi"
                       ? "text-blue-600"
                       : "text-muted-foreground"
                   }`}
@@ -212,16 +212,16 @@ export function VerifikasiJudulDialog({
 
               {/* Tolak */}
               <button
-                onClick={() => setSelectedStatus("rejected")}
+                onClick={() => setSelectedStatus("ditolak")}
                 className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
-                  selectedStatus === "rejected"
+                  selectedStatus === "ditolak"
                     ? "border-red-500 bg-red-50"
                     : "border-border hover:border-red-300"
                 }`}
               >
                 <XCircle
                   className={`w-5 h-5 ${
-                    selectedStatus === "rejected"
+                    selectedStatus === "ditolak"
                       ? "text-red-600"
                       : "text-muted-foreground"
                   }`}
@@ -245,11 +245,11 @@ export function VerifikasiJudulDialog({
             <Textarea
               id="catatan"
               placeholder={
-                selectedStatus === "approved"
+                selectedStatus === "disetujui"
                   ? "Berikan apresiasi dan saran untuk pengembangan laporan..."
-                  : selectedStatus === "revision"
+                  : selectedStatus === "revisi"
                   ? "Jelaskan bagian mana yang perlu diperbaiki dan bagaimana seharusnya..."
-                  : selectedStatus === "rejected"
+                  : selectedStatus === "ditolak"
                   ? "Jelaskan alasan penolakan dan arahan untuk judul yang baru..."
                   : "Pilih status verifikasi terlebih dahulu..."
               }
@@ -292,3 +292,5 @@ export function VerifikasiJudulDialog({
     </Dialog>
   );
 }
+
+export default TitleVerificationDialog;
