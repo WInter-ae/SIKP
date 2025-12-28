@@ -1,8 +1,11 @@
-import type { Mentee } from "../types";
+// Components
 import PageHeader from "../components/page-header";
 import StatsCard from "../components/stats-card";
 import BackButton from "../components/back-button";
 import MenteeCard from "../components/mentee-card";
+
+// Types
+import type { Mentee } from "../types";
 
 // Mock data - should be fetched from API in real implementation
 const MENTEE_LIST: Mentee[] = [

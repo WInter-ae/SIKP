@@ -1,3 +1,7 @@
+// External dependencies
+import { Search, Filter, Calendar } from "lucide-react";
+
+// Components
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import {
@@ -7,7 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Search, Filter, Calendar } from "lucide-react";
 
 interface DocumentFilterProps {
   searchQuery: string;

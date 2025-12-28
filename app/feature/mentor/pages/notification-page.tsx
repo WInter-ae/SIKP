@@ -1,11 +1,15 @@
-import { Card, CardContent } from "~/components/ui/card";
+// External dependencies
 import { Bell } from "lucide-react";
 
-import type { Notification } from "../types";
+// Components
+import { Card, CardContent } from "~/components/ui/card";
 import PageHeader from "../components/page-header";
 import StatsCard from "../components/stats-card";
 import BackButton from "../components/back-button";
 import NotificationCard from "../components/notification-card";
+
+// Types
+import type { Notification } from "../types";
 
 // Mock data - should be fetched from API in real implementation
 const NOTIFICATIONS: Notification[] = [

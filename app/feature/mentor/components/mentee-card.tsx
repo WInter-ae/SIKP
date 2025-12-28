@@ -1,4 +1,8 @@
+// External dependencies
 import { Link } from "react-router";
+import { Mail, Phone, Building2, Award } from "lucide-react";
+
+// Components
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -7,7 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Mail, Phone, Building2, Award } from "lucide-react";
+
+// Types
 import type { Mentee } from "../types";
 
 interface MenteeCardProps {
