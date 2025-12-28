@@ -4,6 +4,10 @@ import { UserPlus, CheckCircle, Copy, User } from "lucide-react";
 import { toast } from "sonner";
 import type { FieldMentor, MentorRequest } from "../types";
 
+const MENTOR_CODE_TIMESTAMP_LENGTH = 6;
+const MENTOR_CODE_RANDOM_LENGTH = 4;
+const MENTOR_CODE_RANDOM_MAX = 10000;
+
 function FieldMentorPage() {
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [mentorRequest, setMentorRequest] = useState<MentorRequest>({
@@ -29,8 +33,8 @@ function FieldMentorPage() {
 
     // Generate unique mentor code with better collision resistance
     const timestamp = Date.now();
-    const random = Math.floor(Math.random() * 10000);
-    const generatedCode = `MNT-${timestamp.toString().slice(-6)}-${random.toString().padStart(4, '0')}`;
+    const random = Math.floor(Math.random() * MENTOR_CODE_RANDOM_MAX);
+    const generatedCode = `MNT-${timestamp.toString().slice(-MENTOR_CODE_TIMESTAMP_LENGTH)}-${random.toString().padStart(MENTOR_CODE_RANDOM_LENGTH, '0')}`;
 
     const newMentor: FieldMentor = {
       id: Date.now().toString(),

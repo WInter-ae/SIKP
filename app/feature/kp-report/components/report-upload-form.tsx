@@ -5,6 +5,9 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Upload, FileText, X, Eye, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
+const URL_CLEANUP_DELAY = 1000; // 1 second
+const FALLBACK_CLEANUP_DELAY = 60000; // 60 seconds
+
 interface ReportUploadFormProps {
   currentReport?: {
     namaFile: string;
@@ -94,9 +97,6 @@ export default function ReportUploadForm({
   const handlePreview = (file: File) => {
     const fileURL = URL.createObjectURL(file);
     const newWindow = window.open(fileURL, "_blank");
-    
-    const URL_CLEANUP_DELAY = 1000; // 1 second
-    const FALLBACK_CLEANUP_DELAY = 60000; // 60 seconds
     
     // Cleanup after a reasonable delay to ensure the window has loaded
     if (newWindow) {
