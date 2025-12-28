@@ -103,7 +103,7 @@ function DetailDialog({
           >
             Tutup
           </Button>
-          {student && (
+          {student && student.status !== "Disetujui" && student.status !== "Ditolak" && (
             <Button onClick={handleApproveClick} className="flex-1">
               Setujui
             </Button>
