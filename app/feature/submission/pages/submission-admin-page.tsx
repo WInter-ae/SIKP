@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import {
   CheckCircle,
   Clock,
-  Download,
   Filter,
   ListOrdered,
   Search,
@@ -276,31 +275,76 @@ function SubmissionAdminPage() {
     setSelectedApplication(null);
   };
 
-  const handleApprove = () => {
-    alert("Pengajuan telah disetujui dan surat pengantar akan dibuat!");
+  const handleApprove = (
+    docReviews: Record<string, "approved" | "rejected">,
+  ) => {
+    if (selectedApplication) {
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === selectedApplication.id
+            ? {
+                ...app,
+                status: "approved" as const,
+                documentReviews: docReviews,
+              }
+            : app,
+        ),
+      );
+      alert(
+        "Pengajuan telah disetujui dan surat pengantar berhasil dibuat dan dikirimkan!",
+      );
+      handleCloseModal();
+    }
   };
 
-  const handleReject = (comment: string) => {
-    alert(`Pengajuan telah ditolak dengan komentar: ${comment}`);
+  const handleReject = (
+    comment: string,
+    docReviews: Record<string, "approved" | "rejected">,
+  ) => {
+    if (selectedApplication) {
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === selectedApplication.id
+            ? {
+                ...app,
+                status: "rejected" as const,
+                rejectionComment: comment,
+                documentReviews: docReviews,
+              }
+            : app,
+        ),
+      );
+      alert(`Pengajuan telah ditolak dengan komentar: ${comment}`);
+      handleCloseModal();
+    }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30">
+          <Badge
+            variant="outline"
+            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+          >
             Menunggu Review
           </Badge>
         );
       case "approved":
         return (
-          <Badge variant="outline" className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30">
+          <Badge
+            variant="outline"
+            className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
+          >
             Disetujui
           </Badge>
         );
       case "rejected":
         return (
-          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
+          <Badge
+            variant="outline"
+            className="bg-destructive/10 text-destructive border-destructive/30"
+          >
             Ditolak
           </Badge>
         );
@@ -317,10 +361,6 @@ function SubmissionAdminPage() {
           <h1 className="text-3xl font-bold text-foreground">
             Penerimaan Pengajuan Surat Pengantar
           </h1>
-          <Button>
-            <Download className="w-4 h-4 mr-2" />
-            Export Data
-          </Button>
         </div>
 
         {/* Statistics Cards */}
