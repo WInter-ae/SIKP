@@ -1,14 +1,18 @@
+// External dependencies
 import { useState } from "react";
 import { toast } from "sonner";
-import { Card, CardContent } from "~/components/ui/card";
 import { Archive } from "lucide-react";
 
-import type { ArchivedDocument } from "../types";
+// Components
+import { Card, CardContent } from "~/components/ui/card";
 import PageHeader from "../components/page-header";
 import StatsCard from "../components/stats-card";
 import BackButton from "../components/back-button";
 import DocumentFilter from "../components/document-filter";
 import DocumentCard from "../components/document-card";
+
+// Types
+import type { ArchivedDocument } from "../types";
 
 // Mock data - should be fetched from API in real implementation
 const ARCHIVED_DOCUMENTS: ArchivedDocument[] = [

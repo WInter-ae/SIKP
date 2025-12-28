@@ -1,6 +1,9 @@
+// External dependencies
 import { Link } from "react-router";
-import { Button } from "~/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+
+// Components
+import { Button } from "~/components/ui/button";
 
 interface BackButtonProps {
   to?: string;

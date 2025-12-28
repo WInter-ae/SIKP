@@ -1,10 +1,15 @@
+// External dependencies
+import { CheckCircle, AlertCircle, Info, Clock } from "lucide-react";
+
+// Components
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { CheckCircle, AlertCircle, Info, Clock } from "lucide-react";
+
+// Types
 import type { Notification } from "../types";
 
 interface NotificationCardProps {

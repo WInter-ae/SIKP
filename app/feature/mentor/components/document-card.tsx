@@ -1,3 +1,7 @@
+// External dependencies
+import { Eye, Download, FileText, Calendar, User } from "lucide-react";
+
+// Components
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -5,7 +9,8 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { Eye, Download, FileText, Calendar, User } from "lucide-react";
+
+// Types
 import type { ArchivedDocument } from "../types";
 
 interface DocumentCardProps {

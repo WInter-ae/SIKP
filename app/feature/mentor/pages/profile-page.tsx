@@ -1,16 +1,6 @@
+// External dependencies
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
 import {
   Save,
   User,
@@ -24,9 +14,23 @@ import {
   Trash2,
 } from "lucide-react";
 
-import type { ProfileData } from "../types";
+// Components
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
 import PageHeader from "../components/page-header";
 import BackButton from "../components/back-button";
+
+// Types
+import type { ProfileData } from "../types";
 
 const DEFAULT_PROFILE: ProfileData = {
   name: "Budi Santoso, S.T., M.T.",

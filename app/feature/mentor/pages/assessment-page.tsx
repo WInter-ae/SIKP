@@ -1,5 +1,9 @@
+// External dependencies
 import { useState, useMemo } from "react";
 import { toast } from "sonner";
+import { Save } from "lucide-react";
+
+// Components
 import {
   Card,
   CardContent,
@@ -18,11 +22,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Save } from "lucide-react";
-
-import type { AssessmentCriteria, MenteeOption } from "../types";
 import PageHeader from "../components/page-header";
 import BackButton from "../components/back-button";
+
+// Types
+import type { AssessmentCriteria, MenteeOption } from "../types";
 
 const DEFAULT_ASSESSMENTS: AssessmentCriteria[] = [
   {

@@ -1,5 +1,9 @@
+// External dependencies
 import { useState } from "react";
 import { toast } from "sonner";
+import { Save, Bell, Lock, Globe, Moon, Sun, Monitor } from "lucide-react";
+
+// Components
 import {
   Card,
   CardContent,
@@ -17,11 +21,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { Save, Bell, Lock, Globe, Moon, Sun, Monitor } from "lucide-react";
-
-import type { Settings } from "../types";
+import { Switch } from "~/components/ui/switch";
 import PageHeader from "../components/page-header";
 import BackButton from "../components/back-button";
+
+// Types
+import type { Settings } from "../types";
 
 const DEFAULT_SETTINGS: Settings = {
   theme: "light",
@@ -37,14 +42,11 @@ const DEFAULT_SETTINGS: Settings = {
 function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
-  function handleInputChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) {
-    const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
     setSettings((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   }
 
@@ -187,13 +189,12 @@ function SettingsPage() {
                 Terima notifikasi melalui email
               </p>
             </div>
-            <input
-              type="checkbox"
+            <Switch
               id="emailNotifications"
-              name="emailNotifications"
               checked={settings.emailNotifications}
-              onChange={handleInputChange}
-              className="h-4 w-4"
+              onCheckedChange={(checked) =>
+                setSettings((prev) => ({ ...prev, emailNotifications: checked }))
+              }
             />
           </div>
 
@@ -204,13 +205,12 @@ function SettingsPage() {
                 Terima notifikasi push di browser
               </p>
             </div>
-            <input
-              type="checkbox"
+            <Switch
               id="pushNotifications"
-              name="pushNotifications"
               checked={settings.pushNotifications}
-              onChange={handleInputChange}
-              className="h-4 w-4"
+              onCheckedChange={(checked) =>
+                setSettings((prev) => ({ ...prev, pushNotifications: checked }))
+              }
             />
           </div>
 
@@ -221,13 +221,12 @@ function SettingsPage() {
                 Terima ringkasan aktivitas setiap minggu
               </p>
             </div>
-            <input
-              type="checkbox"
+            <Switch
               id="weeklyReport"
-              name="weeklyReport"
               checked={settings.weeklyReport}
-              onChange={handleInputChange}
-              className="h-4 w-4"
+              onCheckedChange={(checked) =>
+                setSettings((prev) => ({ ...prev, weeklyReport: checked }))
+              }
             />
           </div>
         </CardContent>
