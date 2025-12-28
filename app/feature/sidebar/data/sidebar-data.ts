@@ -118,7 +118,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Pengantar",
-        url: "#",
+        url: "/admin/pengajuan-surat-pengantar",
       },
     ],
   },
@@ -129,7 +129,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Balasan",
-        url: "#",
+        url: "/admin/surat-balasan",
       },
     ],
   },
