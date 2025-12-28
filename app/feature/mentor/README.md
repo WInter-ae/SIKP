@@ -15,12 +15,12 @@ mentor/
 │   ├── page-header.tsx          # Header halaman
 │   └── stats-card.tsx           # Card statistik
 ├── pages/                # Page components
-│   ├── arsip-page.tsx           # Halaman arsip dokumen
+│   ├── archive-page.tsx         # Halaman arsip dokumen
 │   ├── mentee-page.tsx          # Halaman daftar mentee
-│   ├── notifikasi-page.tsx      # Halaman notifikasi
-│   ├── pengaturan-page.tsx      # Halaman pengaturan
-│   ├── penilaian-page.tsx       # Halaman penilaian mentee
-│   └── profil-page.tsx          # Halaman profil mentor
+│   ├── notification-page.tsx    # Halaman notifikasi
+│   ├── settings-page.tsx        # Halaman pengaturan
+│   ├── assessment-page.tsx      # Halaman penilaian mentee
+│   └── profile-page.tsx         # Halaman profil mentor
 ├── types/                # Type definitions
 │   └── index.d.ts               # Interface dan type definitions
 ├── index.ts              # Export module
@@ -33,10 +33,10 @@ mentor/
 
 ```tsx
 // Import page dari feature module
-import { ArsipPage } from "~/feature/mentor";
+import { ArchivePage } from "~/feature/mentor";
 
 export default function ArsipRoute() {
-  return <ArsipPage />;
+  return <ArchivePage />;
 }
 ```
 
@@ -64,9 +64,9 @@ import { BackButton, StatsCard, PageHeader } from "~/feature/mentor";
 
 ## Halaman yang Tersedia
 
-1. **ArsipPage** - Menampilkan dokumen yang telah diarsipkan (penilaian, logbook, laporan)
+1. **ArchivePage** - Menampilkan dokumen yang telah diarsipkan (penilaian, logbook, laporan)
 2. **MenteePage** - Daftar mentee yang dibimbing
-3. **NotifikasiPage** - Notifikasi untuk mentor
-4. **PengaturanPage** - Pengaturan tampilan, notifikasi, dan password
-5. **PenilaianPage** - Form penilaian untuk mentee
-6. **ProfilPage** - Profil mentor dengan fitur tanda tangan digital
+3. **NotificationPage** - Notifikasi untuk mentor
+4. **SettingsPage** - Pengaturan tampilan, notifikasi, dan password
+5. **AssessmentPage** - Form penilaian untuk mentee
+6. **ProfilePage** - Profil mentor dengan fitur tanda tangan digital

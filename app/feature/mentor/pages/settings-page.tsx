@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -52,7 +53,7 @@ function SettingsPage() {
   }
 
   function handleSaveSettings() {
-    alert("Pengaturan berhasil disimpan!");
+    toast.success("Pengaturan berhasil disimpan!");
   }
 
   function handleChangePassword() {
@@ -61,21 +62,21 @@ function SettingsPage() {
       !settings.newPassword ||
       !settings.confirmPassword
     ) {
-      alert("Mohon lengkapi semua field password!");
+      toast.error("Mohon lengkapi semua field password!");
       return;
     }
 
     if (settings.newPassword !== settings.confirmPassword) {
-      alert("Password baru dan konfirmasi password tidak cocok!");
+      toast.error("Password baru dan konfirmasi password tidak cocok!");
       return;
     }
 
     if (settings.newPassword.length < 8) {
-      alert("Password minimal 8 karakter!");
+      toast.error("Password minimal 8 karakter!");
       return;
     }
 
-    alert("Password berhasil diubah!");
+    toast.success("Password berhasil diubah!");
     setSettings((prev) => ({
       ...prev,
       oldPassword: "",
