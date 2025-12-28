@@ -24,7 +24,7 @@ export interface PengajuanJudul {
     metodologi?: string;
     teknologi?: string[];
   };
-  status: "submitted" | "approved" | "rejected" | "revision";
+  status: "submitted" | "diajukan" | "approved" | "rejected" | "revision";
   tanggalPengajuan: string;
   tanggalVerifikasi?: string;
   catatanDosen?: string;
