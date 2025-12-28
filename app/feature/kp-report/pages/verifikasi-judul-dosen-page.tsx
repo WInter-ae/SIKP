@@ -13,7 +13,7 @@ import {
   FileEdit,
 } from "lucide-react";
 import type { PengajuanJudul } from "../types/judul";
-import { PengajuanJudulCard } from "../components/pengajuan-judul-card";
+import PengajuanJudulCard from "../components/pengajuan-judul-card";
 import { mockPengajuanList } from "../data/mock-pengajuan";
 
 function VerifikasiJudulDosenPage() {
@@ -41,14 +41,14 @@ function VerifikasiJudulDosenPage() {
 
   const handleVerifikasi = (
     id: string,
-    status: "approved" | "rejected" | "revision",
+    status: "disetujui" | "ditolak" | "revisi",
     catatan: string
   ) => {
     setPengajuanList((prev) =>
       prev.map((p) => {
         if (p.id === id) {
           const newRevisi =
-            status === "revision"
+            status === "revisi"
               ? {
                   count: (p.revisi?.count || 0) + 1,
                   history: [
@@ -75,17 +75,17 @@ function VerifikasiJudulDosenPage() {
 
     // Show notification
     const notificationMap = {
-      approved: {
+      disetujui: {
         title: "✅ Judul Disetujui",
         description:
           "Judul laporan telah disetujui. Mahasiswa akan menerima notifikasi.",
       },
-      rejected: {
+      ditolak: {
         title: "❌ Judul Ditolak",
         description:
           "Judul laporan ditolak. Mahasiswa diminta untuk mengajukan judul baru.",
       },
-      revision: {
+      revisi: {
         title: "📝 Revisi Diperlukan",
         description:
           "Mahasiswa diminta untuk merevisi judul sesuai catatan yang diberikan.",
@@ -98,13 +98,13 @@ function VerifikasiJudulDosenPage() {
 
   // Filter pengajuan berdasarkan status
   const pengajuanMenunggu = pengajuanList.filter(
-    (p) => p.status === "submitted"
+    (p) => p.status === "diajukan"
   );
   const pengajuanDisetujui = pengajuanList.filter(
-    (p) => p.status === "approved"
+    (p) => p.status === "disetujui"
   );
-  const pengajuanRevisi = pengajuanList.filter((p) => p.status === "revision");
-  const pengajuanDitolak = pengajuanList.filter((p) => p.status === "rejected");
+  const pengajuanRevisi = pengajuanList.filter((p) => p.status === "revisi");
+  const pengajuanDitolak = pengajuanList.filter((p) => p.status === "ditolak");
 
   // Filter berdasarkan search query
   const filterBySearch = (list: PengajuanJudul[]) => {

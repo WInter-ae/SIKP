@@ -32,7 +32,7 @@ export const mockPengajuanList: PengajuanJudul[] = [
         "Pengembangan menggunakan metode Agile dengan sprint 2 minggu. Teknologi: React, TypeScript, Node.js, PostgreSQL, dan Docker untuk deployment.",
       teknologi: ["React", "TypeScript", "Node.js", "Express", "PostgreSQL", "Docker"],
     },
-    status: "submitted",
+    status: "diajukan",
     tanggalPengajuan: "2024-11-20T09:30:00",
   },
   {
@@ -55,7 +55,7 @@ export const mockPengajuanList: PengajuanJudul[] = [
         "Pengembangan aplikasi e-commerce mobile yang memanfaatkan teknologi AR untuk membantu customer memvisualisasikan produk furniture sebelum membeli. Aplikasi akan dibangun menggunakan React Native dan ARCore.",
       teknologi: ["React Native", "ARCore", "Firebase", "Redux"],
     },
-    status: "submitted",
+    status: "diajukan",
     tanggalPengajuan: "2024-11-21T14:20:00",
   },
   {
@@ -78,7 +78,7 @@ export const mockPengajuanList: PengajuanJudul[] = [
         "Implementasi sistem prediksi cuaca menggunakan machine learning untuk meningkatkan akurasi peramalan. Data historis cuaca akan dianalisis dan digunakan untuk melatih model Random Forest.",
       teknologi: ["Python", "Scikit-learn", "Pandas", "Flask", "PostgreSQL"],
     },
-    status: "submitted",
+    status: "diajukan",
     tanggalPengajuan: "2024-11-19T10:00:00",
   },
   {
@@ -101,7 +101,7 @@ export const mockPengajuanList: PengajuanJudul[] = [
         "Membangun dashboard analytics real-time untuk memonitor berbagai metrik performa website e-learning seperti jumlah user aktif, engagement rate, dan conversion rate.",
       teknologi: ["Vue.js", "D3.js", "Node.js", "MongoDB", "Redis"],
     },
-    status: "approved",
+    status: "disetujui",
     tanggalPengajuan: "2024-11-15T08:30:00",
     tanggalVerifikasi: "2024-11-18T10:00:00",
     catatanDosen:
@@ -126,7 +126,7 @@ export const mockPengajuanList: PengajuanJudul[] = [
         "Pengembangan chatbot AI untuk menangani pertanyaan customer service secara otomatis menggunakan natural language processing.",
       teknologi: ["Python", "TensorFlow", "FastAPI", "React"],
     },
-    status: "revision",
+    status: "revisi",
     tanggalPengajuan: "2024-11-17T13:00:00",
     tanggalVerifikasi: "2024-11-22T09:00:00",
     catatanDosen:
@@ -161,7 +161,7 @@ export const mockPengajuanList: PengajuanJudul[] = [
         "Membuat website untuk pemesanan tiket pesawat dan hotel secara online dengan integrasi payment gateway.",
       teknologi: ["PHP", "Laravel", "MySQL", "Bootstrap"],
     },
-    status: "rejected",
+    status: "ditolak",
     tanggalPengajuan: "2024-11-16T11:00:00",
     tanggalVerifikasi: "2024-11-20T14:00:00",
     catatanDosen:
