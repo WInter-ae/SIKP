@@ -17,9 +17,9 @@ import {
   FileEdit,
   AlertCircle,
 } from "lucide-react";
-import type { PengajuanJudul } from "../types/judul";
+import type { PengajuanJudul } from "../types/title";
 
-interface VerifikasiJudulDialogProps {
+interface TitleVerificationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   pengajuan: PengajuanJudul;
@@ -29,12 +29,12 @@ interface VerifikasiJudulDialogProps {
   ) => void;
 }
 
-function VerifikasiJudulDialog({
+function TitleVerificationDialog({
   open,
   onOpenChange,
   pengajuan,
   onSubmit,
-}: VerifikasiJudulDialogProps) {
+}: TitleVerificationDialogProps) {
   const [selectedStatus, setSelectedStatus] = useState<
     "disetujui" | "ditolak" | "revisi" | null
   >(null);
@@ -293,4 +293,4 @@ function VerifikasiJudulDialog({
   );
 }
 
-export default VerifikasiJudulDialog;
+export default TitleVerificationDialog;

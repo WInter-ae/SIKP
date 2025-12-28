@@ -12,11 +12,11 @@ import {
   XCircle,
   FileEdit,
 } from "lucide-react";
-import type { PengajuanJudul } from "../types/judul";
-import PengajuanJudulCard from "../components/pengajuan-judul-card";
-import { mockPengajuanList } from "../data/mock-pengajuan";
+import type { PengajuanJudul } from "../types/title";
+import TitleSubmissionCard from "../components/title-submission-card";
+import { mockPengajuanList } from "../data/mock-submissions";
 
-function VerifikasiJudulDosenPage() {
+function LecturerTitleVerificationPage() {
   const [pengajuanList, setPengajuanList] = useState<PengajuanJudul[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("menunggu");
@@ -332,7 +332,7 @@ function VerifikasiJudulDosenPage() {
                   Menampilkan {filteredMenunggu.length} pengajuan
                 </div>
                 {filteredMenunggu.map((pengajuan) => (
-                  <PengajuanJudulCard
+                  <TitleSubmissionCard
                     key={pengajuan.id}
                     pengajuan={pengajuan}
                     onVerifikasi={handleVerifikasi}
@@ -365,7 +365,7 @@ function VerifikasiJudulDosenPage() {
                   Menampilkan {filteredDisetujui.length} pengajuan
                 </div>
                 {filteredDisetujui.map((pengajuan) => (
-                  <PengajuanJudulCard key={pengajuan.id} pengajuan={pengajuan} />
+                  <TitleSubmissionCard key={pengajuan.id} pengajuan={pengajuan} />
                 ))}
               </>
             )}
@@ -394,7 +394,7 @@ function VerifikasiJudulDosenPage() {
                   Menampilkan {filteredRevisi.length} pengajuan
                 </div>
                 {filteredRevisi.map((pengajuan) => (
-                  <PengajuanJudulCard key={pengajuan.id} pengajuan={pengajuan} />
+                  <TitleSubmissionCard key={pengajuan.id} pengajuan={pengajuan} />
                 ))}
               </>
             )}
@@ -423,7 +423,7 @@ function VerifikasiJudulDosenPage() {
                   Menampilkan {filteredDitolak.length} pengajuan
                 </div>
                 {filteredDitolak.map((pengajuan) => (
-                  <PengajuanJudulCard key={pengajuan.id} pengajuan={pengajuan} />
+                  <TitleSubmissionCard key={pengajuan.id} pengajuan={pengajuan} />
                 ))}
               </>
             )}
@@ -434,4 +434,4 @@ function VerifikasiJudulDosenPage() {
   );
 }
 
-export default VerifikasiJudulDosenPage;
+export default LecturerTitleVerificationPage;

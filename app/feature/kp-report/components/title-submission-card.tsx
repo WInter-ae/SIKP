@@ -19,10 +19,10 @@ import {
   Eye,
   Clock,
 } from "lucide-react";
-import type { PengajuanJudul } from "../types/judul";
-import VerifikasiJudulDialog from "./verifikasi-judul-dialog";
+import type { PengajuanJudul } from "../types/title";
+import TitleVerificationDialog from "./title-verification-dialog";
 
-interface PengajuanJudulCardProps {
+interface TitleSubmissionCardProps {
   pengajuan: PengajuanJudul;
   onVerifikasi?: (
     id: string,
@@ -31,10 +31,10 @@ interface PengajuanJudulCardProps {
   ) => void;
 }
 
-function PengajuanJudulCard({
+function TitleSubmissionCard({
   pengajuan,
   onVerifikasi,
-}: PengajuanJudulCardProps) {
+}: TitleSubmissionCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
@@ -289,7 +289,7 @@ function PengajuanJudulCard({
         </CardFooter>
       </Card>
 
-      <VerifikasiJudulDialog
+      <TitleVerificationDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         pengajuan={pengajuan}
@@ -299,4 +299,4 @@ function PengajuanJudulCard({
   );
 }
 
-export default PengajuanJudulCard;
+export default TitleSubmissionCard;

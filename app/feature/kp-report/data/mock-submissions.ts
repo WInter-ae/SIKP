@@ -1,4 +1,4 @@
-import type { PengajuanJudul } from "../types/judul";
+import type { PengajuanJudul } from "../types/title";
 
 // Mock data pengajuan judul dari mahasiswa
 export const mockPengajuanList: PengajuanJudul[] = [
