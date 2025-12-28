@@ -1,3 +1,3 @@
-import { PenilaianPage } from "~/feature/mentor";
+import { AssessmentPage } from "~/feature/mentor";
 
-export default PenilaianPage;
+export default AssessmentPage;

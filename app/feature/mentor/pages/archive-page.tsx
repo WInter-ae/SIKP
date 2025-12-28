@@ -60,7 +60,7 @@ const ARCHIVED_DOCUMENTS: ArchivedDocument[] = [
 
 const SEMESTERS = ["Ganjil 2024/2025", "Genap 2023/2024", "Ganjil 2023/2024"];
 
-function ArsipPage() {
+function ArchivePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterSemester, setFilterSemester] = useState<string>("all");
@@ -153,4 +153,4 @@ function ArsipPage() {
   );
 }
 
-export default ArsipPage;
+export default ArchivePage;

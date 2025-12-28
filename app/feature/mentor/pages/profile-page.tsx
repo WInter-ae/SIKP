@@ -40,7 +40,7 @@ const DEFAULT_PROFILE: ProfileData = {
   signature: "",
 };
 
-function ProfilPage() {
+function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>(DEFAULT_PROFILE);
   const [editData, setEditData] = useState<ProfileData>(profileData);
@@ -140,10 +140,7 @@ function ProfilPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <PageHeader
-        title="Profil"
-        description="Kelola informasi profil Anda"
-      />
+      <PageHeader title="Profil" description="Kelola informasi profil Anda" />
 
       {/* Profile Card */}
       <Card className="mb-8">
@@ -492,4 +489,4 @@ function ProfilPage() {
   );
 }
 
-export default ProfilPage;
+export default ProfilePage;

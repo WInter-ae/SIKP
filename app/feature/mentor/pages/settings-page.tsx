@@ -33,7 +33,7 @@ const DEFAULT_SETTINGS: Settings = {
   confirmPassword: "",
 };
 
-function PengaturanPage() {
+function SettingsPage() {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
 
   function handleInputChange(
@@ -306,4 +306,4 @@ function PengaturanPage() {
   );
 }
 
-export default PengaturanPage;
+export default SettingsPage;

@@ -1,3 +1,3 @@
-import { ArsipPage } from "~/feature/mentor";
+import { ArchivePage } from "~/feature/mentor";
 
-export default ArsipPage;
+export default ArchivePage;

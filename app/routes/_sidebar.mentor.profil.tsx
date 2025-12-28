@@ -1,3 +1,3 @@
-import { ProfilPage } from "~/feature/mentor";
+import { ProfilePage } from "~/feature/mentor";
 
-export default ProfilPage;
+export default ProfilePage;

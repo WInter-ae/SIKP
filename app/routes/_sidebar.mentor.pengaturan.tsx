@@ -1,3 +1,3 @@
-import { PengaturanPage } from "~/feature/mentor";
+import { SettingsPage } from "~/feature/mentor";
 
-export default PengaturanPage;
+export default SettingsPage;

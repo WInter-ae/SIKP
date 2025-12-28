@@ -8,12 +8,12 @@ export { default as PageHeader } from "./components/page-header";
 export { default as StatsCard } from "./components/stats-card";
 
 // Pages
-export { default as ArsipPage } from "./pages/arsip-page";
+export { default as ArchivePage } from "./pages/archive-page";
 export { default as MenteePage } from "./pages/mentee-page";
-export { default as NotifikasiPage } from "./pages/notifikasi-page";
-export { default as PengaturanPage } from "./pages/pengaturan-page";
-export { default as PenilaianPage } from "./pages/penilaian-page";
-export { default as ProfilPage } from "./pages/profil-page";
+export { default as NotificationPage } from "./pages/notification-page";
+export { default as SettingsPage } from "./pages/settings-page";
+export { default as AssessmentPage } from "./pages/assessment-page";
+export { default as ProfilePage } from "./pages/profile-page";
 
 // Types
 export type {

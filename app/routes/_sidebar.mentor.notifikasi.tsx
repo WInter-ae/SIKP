@@ -1,3 +1,3 @@
-import { NotifikasiPage } from "~/feature/mentor";
+import { NotificationPage } from "~/feature/mentor";
 
-export default NotifikasiPage;
+export default NotificationPage;

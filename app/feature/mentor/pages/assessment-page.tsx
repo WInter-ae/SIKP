@@ -67,7 +67,7 @@ const MENTEE_LIST: MenteeOption[] = [
   { id: "3", name: "Budi Santoso", nim: "12250111003" },
 ];
 
-function PenilaianPage() {
+function AssessmentPage() {
   const [selectedMentee, setSelectedMentee] = useState("");
   const [feedback, setFeedback] = useState("");
   const [assessments, setAssessments] =
@@ -224,4 +224,4 @@ function PenilaianPage() {
   );
 }
 
-export default PenilaianPage;
+export default AssessmentPage;

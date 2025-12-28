@@ -51,7 +51,7 @@ const NOTIFICATIONS: Notification[] = [
   },
 ];
 
-function NotifikasiPage() {
+function NotificationPage() {
   const unreadCount = NOTIFICATIONS.filter((n) => !n.isRead).length;
 
   return (
@@ -91,4 +91,4 @@ function NotifikasiPage() {
   );
 }
 
-export default NotifikasiPage;
+export default NotificationPage;
