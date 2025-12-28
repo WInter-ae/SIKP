@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
@@ -24,31 +25,31 @@ import DetailDialog from "../components/detail-dialog";
 import type { Student } from "../types";
 
 function AdminResponseLetterPage() {
-  const [students] = useState<Student[]>([
+  const [students, setStudents] = useState<Student[]>([
     {
       id: 1,
-      name: "A",
+      name: "Ahmad Rizki",
       role: "Tim",
       tanggal: "20/07/2025",
       status: "Disetujui",
     },
     {
       id: 2,
-      name: "B",
+      name: "Budi Santoso",
       role: "Individu",
       tanggal: "20/07/2025",
       status: "Ditolak",
     },
     {
       id: 3,
-      name: "C",
+      name: "Citra Dewi",
       role: "Tim",
       tanggal: "20/07/2025",
       status: "Ditolak",
     },
     {
       id: 4,
-      name: "D",
+      name: "Dewi Lestari",
       role: "Individu",
       tanggal: "20/07/2025",
       status: "Disetujui",
@@ -70,9 +71,17 @@ function AdminResponseLetterPage() {
   };
 
   const handleSubmitAction = () => {
-    alert(`Surat balasan ${selectedStudent?.name} berhasil disetujui!`);
-    setShowApproveDialog(false);
-    setSelectedStudent(null);
+    if (selectedStudent) {
+      // Update student status
+      setStudents((prevStudents) =>
+        prevStudents.map((s) =>
+          s.id === selectedStudent.id ? { ...s, status: "Disetujui" } : s,
+        ),
+      );
+      toast.success(`Surat balasan ${selectedStudent.name} berhasil disetujui!`);
+      setShowApproveDialog(false);
+      setSelectedStudent(null);
+    }
   };
 
   return (
@@ -147,14 +156,19 @@ function AdminResponseLetterPage() {
                       >
                         Lihat
                       </Button>
-                      <span className="text-muted-foreground">|</span>
-                      <Button
-                        variant="link"
-                        className="p-0 h-auto text-primary hover:text-primary/80"
-                        onClick={() => handleApprove(student)}
-                      >
-                        Setujui
-                      </Button>
+                      {student.status !== "Disetujui" &&
+                        student.status !== "Ditolak" && (
+                          <>
+                            <span className="text-muted-foreground">|</span>
+                            <Button
+                              variant="link"
+                              className="p-0 h-auto text-primary hover:text-primary/80"
+                              onClick={() => handleApprove(student)}
+                            >
+                              Setujui
+                            </Button>
+                          </>
+                        )}
                     </div>
                   </TableCell>
                 </TableRow>
