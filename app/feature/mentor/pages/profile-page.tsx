@@ -103,9 +103,10 @@ function ProfilePage() {
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error("File harus berupa gambar!");
+      // Validate file type with allowlist
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error("File harus berupa gambar (JPEG, PNG, GIF, atau WebP)!");
         return;
       }
       

@@ -85,6 +85,7 @@ function AssessmentPage() {
 
   // Memoize totalScore calculation to avoid duplication
   const totalScore = useMemo(() => {
+    if (assessments.length === 0) return 0;
     return assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length;
   }, [assessments]);
 
