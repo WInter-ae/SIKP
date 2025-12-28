@@ -86,7 +86,9 @@ function LogbookPage() {
       ? dayMap[workPeriod.endDay.toLowerCase()]
       : 5; // Default Jumat
 
-    for (let d = new Date(start); d <= end; d = new Date(d.getTime() + 24 * 60 * 60 * 1000)) {
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+    
+    for (let d = new Date(start); d <= end; d = new Date(d.getTime() + MS_PER_DAY)) {
       const currentDay = d.getDay();
       
       // Cek apakah hari ini termasuk dalam hari kerja

@@ -35,7 +35,7 @@ export default function KPReportPage() {
   } | undefined>(undefined);
 
   // Mock lecturer data from team
-  const currentLecturer: DosenPembimbing | undefined = {
+  const currentLecturer: DosenPembimbing = {
     id: "1",
     nama: "Dr. Ir. Ahmad Suhendra, M.Kom",
     nip: "197801012005011001",

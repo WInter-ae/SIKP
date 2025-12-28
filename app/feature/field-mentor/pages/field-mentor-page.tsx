@@ -30,7 +30,7 @@ function FieldMentorPage() {
     // Generate unique mentor code with better collision resistance
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 10000);
-    const generatedCode = `MNT-${timestamp.toString().slice(-6)}${random.toString().padStart(4, '0')}`;
+    const generatedCode = `MNT-${timestamp.toString().slice(-6)}-${random.toString().padStart(4, '0')}`;
 
     const newMentor: FieldMentor = {
       id: Date.now().toString(),

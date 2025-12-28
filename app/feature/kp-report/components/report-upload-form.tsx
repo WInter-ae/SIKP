@@ -95,14 +95,17 @@ export default function ReportUploadForm({
     const fileURL = URL.createObjectURL(file);
     const newWindow = window.open(fileURL, "_blank");
     
+    const URL_CLEANUP_DELAY = 1000; // 1 second
+    const FALLBACK_CLEANUP_DELAY = 60000; // 60 seconds
+    
     // Cleanup after a reasonable delay to ensure the window has loaded
     if (newWindow) {
       newWindow.addEventListener("load", () => {
-        setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
+        setTimeout(() => URL.revokeObjectURL(fileURL), URL_CLEANUP_DELAY);
       });
     } else {
       // Fallback if popup is blocked
-      setTimeout(() => URL.revokeObjectURL(fileURL), 60000);
+      setTimeout(() => URL.revokeObjectURL(fileURL), FALLBACK_CLEANUP_DELAY);
     }
   };
 
