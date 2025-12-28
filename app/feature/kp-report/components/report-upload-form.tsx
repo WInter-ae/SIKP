@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Upload, FileText, X, Eye, CheckCircle2, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface ReportUploadFormProps {
   currentReport?: {
@@ -53,14 +53,14 @@ export default function ReportUploadForm({
   const handleFileChange = (file: File) => {
     // Validate file type (PDF only)
     if (file.type !== "application/pdf") {
-      alert("Hanya file PDF yang diperbolehkan");
+      toast.error("Hanya file PDF yang diperbolehkan");
       return;
     }
 
     // Validate file size (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      alert("Ukuran file maksimal 10MB");
+      toast.error("Ukuran file maksimal 10MB");
       return;
     }
 
@@ -93,8 +93,17 @@ export default function ReportUploadForm({
 
   const handlePreview = (file: File) => {
     const fileURL = URL.createObjectURL(file);
-    window.open(fileURL, "_blank");
-    setTimeout(() => URL.revokeObjectURL(fileURL), 100);
+    const newWindow = window.open(fileURL, "_blank");
+    
+    // Cleanup after a reasonable delay to ensure the window has loaded
+    if (newWindow) {
+      newWindow.addEventListener("load", () => {
+        setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
+      });
+    } else {
+      // Fallback if popup is blocked
+      setTimeout(() => URL.revokeObjectURL(fileURL), 60000);
+    }
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -102,7 +111,7 @@ export default function ReportUploadForm({
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   const getStatusBadge = (status: string) => {
@@ -174,7 +183,7 @@ export default function ReportUploadForm({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => alert("Preview file (implementasi backend diperlukan)")}
+                  onClick={() => toast.info("Preview file (implementasi backend diperlukan)")}
                 >
                   <Eye className="w-4 h-4" />
                 </Button>

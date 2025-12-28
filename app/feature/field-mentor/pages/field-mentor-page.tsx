@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { UserPlus, CheckCircle, Copy, User } from "lucide-react";
+import { toast } from "sonner";
 import type { FieldMentor, MentorRequest } from "../types";
 
 function FieldMentorPage() {
@@ -26,8 +27,10 @@ function FieldMentorPage() {
   const handleSubmitRequest = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Simulasi generate kode mentor
-    const generatedCode = `MNT-${Date.now().toString().slice(-6)}`;
+    // Generate unique mentor code with better collision resistance
+    const timestamp = Date.now();
+    const random = Math.floor(Math.random() * 10000);
+    const generatedCode = `MNT-${timestamp.toString().slice(-6)}${random.toString().padStart(4, '0')}`;
 
     const newMentor: FieldMentor = {
       id: Date.now().toString(),
@@ -56,12 +59,12 @@ function FieldMentorPage() {
       address: "",
     });
 
-    alert("Request mentor berhasil! Kode mentor telah digenerate.");
+    toast.success("Request mentor berhasil! Kode mentor telah digenerate.");
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Kode berhasil disalin!");
+    toast.success("Kode berhasil disalin!");
   };
 
   return (
@@ -348,7 +351,7 @@ function FieldMentorPage() {
               <strong>Status: Menunggu Mentor Registrasi</strong> - Berikan kode kepada mentor untuk registrasi
             </li>
             <li>
-              <strong>Mentor Registrasi</strong> - Mentor menggunakan kode untuk membuat akun dan <span className="text-red-600">wajib</span> melengkapi data (foto profil opsional & NIP/NIK wajib)
+              <strong>Mentor Registrasi</strong> - Mentor menggunakan kode untuk membuat akun dan melengkapi data profil (foto profil dan NIP/NIK jika tersedia)
             </li>
             <li>
               <strong>Status: Menunggu Persetujuan Admin</strong> - Setelah mentor registrasi, data lengkap akan muncul di sini dan menunggu admin approve

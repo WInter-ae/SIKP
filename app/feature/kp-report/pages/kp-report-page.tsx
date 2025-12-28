@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Separator } from "~/components/ui/separator";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Info, FileText, User, Edit, Upload } from "lucide-react";
+import { toast } from "sonner";
 
 import TitleSubmissionForm from "../components/title-submission-form";
 import TitleChangeForm from "../components/title-change-form";
@@ -69,15 +70,21 @@ export default function KPReportPage() {
     },
   ];
 
-  const handleTitleSubmit = (judul: string) => {
-    console.log("Submitting title:", judul);
+  const handleTitleSubmit = (data: {
+    judulLaporan: string;
+    judulInggris: string;
+    deskripsi: string;
+    metodologi: string;
+    teknologi: string[];
+  }) => {
+    console.log("Submitting title:", data);
     setReportData({
       ...reportData,
-      judul,
+      judul: data.judulLaporan,
       statusJudul: "diajukan",
       tanggalPengajuan: new Date().toLocaleDateString("id-ID"),
     });
-    alert("Judul berhasil diajukan!");
+    toast.success("Judul berhasil diajukan!");
   };
 
   const handleTitleChange = (judulBaru: string, alasan: string) => {
@@ -88,7 +95,7 @@ export default function KPReportPage() {
       alasanPerubahan: alasan,
     });
     setTitleChangeStatus("diajukan");
-    alert("Perubahan judul berhasil diajukan!");
+    toast.success("Perubahan judul berhasil diajukan!");
   };
 
   const handleLecturerSelect = (lecturerId: string) => {
@@ -99,7 +106,7 @@ export default function KPReportPage() {
         ...reportData,
         dosenPembimbing: lecturer.id,
       });
-      alert(`Dosen pembimbing ${lecturer.nama} berhasil dipilih!`);
+      toast.success(`Dosen pembimbing ${lecturer.nama} berhasil dipilih!`);
     }
   };
 
@@ -111,13 +118,13 @@ export default function KPReportPage() {
       ukuranFile: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
       status: "disubmit",
     });
-    alert("Laporan berhasil diupload!");
+    toast.success("Laporan berhasil diupload!");
   };
 
   const handleReportRemove = () => {
     console.log("Removing report");
     setCurrentReport(undefined);
-    alert("Laporan berhasil dihapus!");
+    toast.success("Laporan berhasil dihapus!");
   };
 
   // Check if title is approved
@@ -318,7 +325,7 @@ export default function KPReportPage() {
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Dosen Pembimbing:</span>
               <span className="font-medium">
-                {currentLecturer ? currentLecturer.nama : "Belum Ditentukan"}
+                {currentLecturer.nama}
               </span>
             </div>
             <Separator />

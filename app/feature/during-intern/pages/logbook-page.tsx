@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { toast } from "sonner";
 
 interface LogbookEntry {
   id: string;
@@ -22,16 +23,26 @@ function LogbookPage() {
   const [generatedDates, setGeneratedDates] = useState<string[]>([]);
 
   const handleSubmitPeriod = () => {
-    if (workPeriod.startDate && workPeriod.endDate) {
-      alert("Periode berhasil disimpan!");
-    } else {
-      alert("Mohon lengkapi periode kerja praktik!");
+    if (!workPeriod.startDate || !workPeriod.endDate) {
+      toast.error("Mohon lengkapi periode kerja praktik!");
+      return;
     }
+    
+    // Validate that end date is after start date
+    const start = new Date(workPeriod.startDate);
+    const end = new Date(workPeriod.endDate);
+    
+    if (end < start) {
+      toast.error("Tanggal selesai harus setelah atau sama dengan tanggal mulai!");
+      return;
+    }
+    
+    toast.success("Periode berhasil disimpan!");
   };
 
   const handleAddLogbook = () => {
     if (!selectedDate || !description.trim()) {
-      alert("Mohon lengkapi tanggal dan deskripsi!");
+      toast.error("Mohon lengkapi tanggal dan deskripsi!");
       return;
     }
 
@@ -44,12 +55,12 @@ function LogbookPage() {
     setLogbookEntries([...logbookEntries, newEntry]);
     setSelectedDate("");
     setDescription("");
-    alert("Logbook berhasil ditambahkan!");
+    toast.success("Logbook berhasil ditambahkan!");
   };
 
   const handleGenerate = () => {
     if (!workPeriod.startDate || !workPeriod.endDate) {
-      alert("Mohon set periode kerja praktik terlebih dahulu!");
+      toast.error("Mohon set periode kerja praktik terlebih dahulu!");
       return;
     }
 
@@ -75,7 +86,7 @@ function LogbookPage() {
       ? dayMap[workPeriod.endDay.toLowerCase()]
       : 5; // Default Jumat
 
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    for (let d = new Date(start); d <= end; d = new Date(d.getTime() + 24 * 60 * 60 * 1000)) {
       const currentDay = d.getDay();
       
       // Cek apakah hari ini termasuk dalam hari kerja
@@ -338,7 +349,7 @@ function LogbookPage() {
                           {entry?.description || "-"}
                         </td>
                         <td className="border border-gray-300 p-3 text-center">
-                          
+                          -
                         </td>
                       </tr>
                     );
