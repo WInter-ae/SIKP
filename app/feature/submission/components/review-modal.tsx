@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { toast } from "sonner";
 import {
   AlertCircle,
   Building,
@@ -127,17 +128,25 @@ function ReviewModal({
 
   const handleRejectApplication = () => {
     if (hasRejectedDocs && !comment.trim()) {
-      alert(
+      toast.error(
         "Karena ada dokumen yang ditolak, Anda wajib memberikan catatan review.",
       );
       return;
     }
     if (!comment.trim()) {
-      if (
-        !confirm(
+      if (!comment.trim()) {
+        toast(
           "Apakah Anda yakin ingin menolak tanpa catatan? (Disarankan memberikan alasan)",
-        )
-      ) {
+          {
+            action: {
+              label: "Tolak tanpa catatan",
+              onClick: () => {
+                onReject("", docReviews);
+                resetState();
+              },
+            },
+          },
+        );
         return;
       }
     }
@@ -147,17 +156,17 @@ function ReviewModal({
 
   const handleApproveApplication = () => {
     if (hasRejectedDocs) {
-      alert(
+      toast.error(
         "Tidak dapat menyetujui pengajuan karena terdapat dokumen yang ditolak. Silakan tolak pengajuan untuk meminta revisi.",
       );
       return;
     }
     if (hasMissingDocs) {
-      alert("Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.");
+      toast.error("Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.");
       return;
     }
     if (!allDocsReviewed) {
-      alert("Harap review semua dokumen yang diupload terlebih dahulu.");
+      toast.error("Harap review semua dokumen yang diupload terlebih dahulu.");
       return;
     }
     onApprove(docReviews);

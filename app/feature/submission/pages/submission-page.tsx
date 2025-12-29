@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
+import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
@@ -174,7 +175,7 @@ function SubmissionPage() {
         );
       } catch (e) {
         if (e instanceof DOMException && e.name === "QuotaExceededError") {
-          alert(
+          toast.error(
             "Gagal menyimpan: Ukuran file terlalu besar. Coba kurangi ukuran file.",
           );
           return;
@@ -185,7 +186,7 @@ function SubmissionPage() {
       navigate("/mahasiswa/kp/surat-pengantar");
       setIsConfirmDialogOpen(false);
     } catch {
-      alert("Terjadi kesalahan saat memproses pengajuan.");
+      toast.error("Terjadi kesalahan saat memproses pengajuan.");
     }
   };
 
@@ -196,7 +197,7 @@ function SubmissionPage() {
         window.open(fileURL, "_blank");
         setTimeout(() => URL.revokeObjectURL(fileURL), 100);
       } catch {
-        alert("Tidak dapat menampilkan pratinjau file.");
+        toast.error("Tidak dapat menampilkan pratinjau file.");
       }
     }
   };
