@@ -33,6 +33,8 @@ export interface Application {
   id: number;
   date: string;
   status: "pending" | "approved" | "rejected";
+  rejectionComment?: string;
+  documentReviews?: Record<string, "approved" | "rejected">;
   
   // Team Info
   members: Member[];
