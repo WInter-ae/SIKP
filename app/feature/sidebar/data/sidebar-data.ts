@@ -1,8 +1,6 @@
 import {
   Archive,
   Bell,
-  BookOpen,
-  Building2,
   ClipboardCheck,
   FileText,
   FolderKanban,
@@ -12,10 +10,8 @@ import {
   UserCircle,
   Users,
   FileCheck,
-  Mail,
   ClipboardList,
   BookMarked,
-  type LucideIcon,
 } from "lucide-react"
 import type { NavItem, UserRole } from "../types"
 
