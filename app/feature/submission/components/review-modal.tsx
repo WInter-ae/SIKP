@@ -128,7 +128,7 @@ function ReviewModal({
 
   const handleRejectApplication = () => {
     if (hasRejectedDocs && !comment.trim()) {
-      toast.error(
+      toast.warning(
         "Karena ada dokumen yang ditolak, Anda wajib memberikan catatan review.",
       );
       return;
@@ -156,17 +156,17 @@ function ReviewModal({
 
   const handleApproveApplication = () => {
     if (hasRejectedDocs) {
-      toast.error(
+      toast.warning(
         "Tidak dapat menyetujui pengajuan karena terdapat dokumen yang ditolak. Silakan tolak pengajuan untuk meminta revisi.",
       );
       return;
     }
     if (hasMissingDocs) {
-      toast.error("Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.");
+      toast.warning("Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.");
       return;
     }
     if (!allDocsReviewed) {
-      toast.error("Harap review semua dokumen yang diupload terlebih dahulu.");
+      toast.warning("Harap review semua dokumen yang diupload terlebih dahulu.");
       return;
     }
     onApprove(docReviews);
@@ -558,8 +558,8 @@ function ReviewModal({
                         variant="outline"
                         className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                       >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Unduh Surat Pengantar
+                        <Eye className="w-4 h-4 mr-2" />
+                        Lihat Surat Pengantar
                       </Button>
                     </div>
                   </div>

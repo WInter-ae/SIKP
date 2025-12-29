@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { toast } from "sonner";
 import {
   CheckCircle,
   Clock,
@@ -290,7 +291,7 @@ function SubmissionAdminPage() {
             : app,
         ),
       );
-      alert(
+      toast.success(
         "Pengajuan telah disetujui dan surat pengantar berhasil dibuat dan dikirimkan!",
       );
       handleCloseModal();
@@ -314,7 +315,9 @@ function SubmissionAdminPage() {
             : app,
         ),
       );
-      alert(`Pengajuan telah ditolak dengan komentar: ${comment}`);
+      toast.error(
+        comment ? `Pengajuan ditolak: ${comment}` : "Pengajuan telah ditolak",
+      );
       handleCloseModal();
     }
   };
@@ -358,9 +361,14 @@ function SubmissionAdminPage() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Page Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-foreground">
-            Penerimaan Pengajuan Surat Pengantar
-          </h1>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Penerimaan Pengajuan Surat Pengantar
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Kelola dan review pengajuan surat pengantar dari mahasiswa
+            </p>
+          </div>
         </div>
 
         {/* Statistics Cards */}
