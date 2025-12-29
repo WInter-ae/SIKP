@@ -134,11 +134,19 @@ function ReviewModal({
       return;
     }
     if (!comment.trim()) {
-      if (
-        !confirm(
+      if (!comment.trim()) {
+        toast(
           "Apakah Anda yakin ingin menolak tanpa catatan? (Disarankan memberikan alasan)",
-        )
-      ) {
+          {
+            action: {
+              label: "Tolak tanpa catatan",
+              onClick: () => {
+                onReject("", docReviews);
+                resetState();
+              },
+            },
+          },
+        );
         return;
       }
     }
