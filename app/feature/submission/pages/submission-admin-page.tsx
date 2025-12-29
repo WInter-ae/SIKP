@@ -361,9 +361,14 @@ function SubmissionAdminPage() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Page Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-foreground">
-            Penerimaan Pengajuan Surat Pengantar
-          </h1>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">
+              Penerimaan Pengajuan Surat Pengantar
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Kelola dan review pengajuan surat pengantar dari mahasiswa
+            </p>
+          </div>
         </div>
 
         {/* Statistics Cards */}

@@ -20,7 +20,7 @@ function StatCard({ title, value, icon: Icon, iconBgColor }: StatCardProps) {
         </div>
         <div>
           <h3 className="text-2xl font-bold text-foreground">{value}</h3>
-          <p className="text-muted-foreground">{title}</p>
+          <p className="text-muted-foreground text-md">{title}</p>
         </div>
       </CardContent>
     </Card>
