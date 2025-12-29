@@ -1,8 +1,6 @@
 import {
   Archive,
   Bell,
-  BookOpen,
-  Building2,
   ClipboardCheck,
   FileText,
   FolderKanban,
@@ -12,10 +10,8 @@ import {
   UserCircle,
   Users,
   FileCheck,
-  Mail,
   ClipboardList,
   BookMarked,
-  type LucideIcon,
 } from "lucide-react"
 import type { NavItem, UserRole } from "../types"
 
@@ -84,12 +80,12 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Mentor Lapangan",
-    url: "#",
+    url: "/mahasiswa/mentor-lapangan",
     icon: UserCircle,
   },
   {
     title: "Laporan KP",
-    url: "#",
+    url: "/mahasiswa/kp/laporan",
     icon: BookMarked,
   },
   {
@@ -129,7 +125,11 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Balasan",
-        url: "#",
+        url: "/admin/surat-balasan",
+      },
+      {
+        title: "Persetujuan Pembimbing",
+        url: "/admin/persetujuan-pembimbing",
       },
     ],
   },
@@ -185,6 +185,10 @@ const dosenMenu: NavItem[] = [
     isActive: true,
     items: [
       {
+        title: "Verifikasi Judul",
+        url: "/dosen/kp/verifikasi-judul",
+      },
+      {
         title: "Verifikasi Sidang",
         url: "/dosen/kp/verifikasi-sidang",
       },
@@ -237,17 +241,17 @@ const mentorMenu: NavItem[] = [
   },
   {
     title: "Arsip",
-    url: "#",
+    url: "/mentor/arsip",
     icon: Archive,
   },
   {
     title: "Profil",
-    url: "#",
+    url: "/mentor/profil",
     icon: UserCircle,
   },
   {
     title: "Pengaturan",
-    url: "#",
+    url: "/mentor/pengaturan",
     icon: Settings,
   },
 ]
