@@ -72,7 +72,7 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Repositori",
-    url: "#",
+    url: "/mahasiswa/repositori",
     icon: FolderKanban,
   },
   {
