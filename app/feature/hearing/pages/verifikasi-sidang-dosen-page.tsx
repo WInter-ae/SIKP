@@ -138,12 +138,12 @@ export default function VerifikasiSidangDosenPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen bg-background">
         <div className="container max-w-7xl mx-auto p-6">
           <div className="flex items-center justify-center py-20">
             <div className="text-center space-y-4">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-700 mx-auto"></div>
-              <p className="text-gray-600 dark:text-gray-400 text-lg">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto"></div>
+              <p className="text-muted-foreground text-lg">
                 Memuat data pengajuan...
               </p>
             </div>
@@ -154,14 +154,14 @@ export default function VerifikasiSidangDosenPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold">
             Verifikasi Acara Sidang
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-muted-foreground mt-1">
             Kelola dan verifikasi pengajuan sidang dari mahasiswa
           </p>
         </div>
@@ -181,7 +181,7 @@ export default function VerifikasiSidangDosenPage() {
 
         {/* Tabs untuk filter status */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-12 bg-white dark:bg-gray-800 shadow-md">
+          <TabsList className="grid w-full grid-cols-3 h-12 bg-card shadow-md">
             <TabsTrigger value="menunggu" className="gap-2 font-semibold">
               Menunggu
               {pengajuanMenunggu.length > 0 && (
@@ -223,11 +223,11 @@ export default function VerifikasiSidangDosenPage() {
               <Card className="shadow-md">
                 <CardContent className="py-12">
                   <div className="text-center space-y-3">
-                    <Filter className="h-12 w-12 text-gray-400 mx-auto" />
-                    <p className="text-gray-600 dark:text-gray-400 font-medium">
+                    <Filter className="h-12 w-12 text-muted-foreground mx-auto" />
+                    <p className="text-muted-foreground font-medium">
                       Tidak ada pengajuan yang menunggu verifikasi
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Semua pengajuan telah diverifikasi
                     </p>
                   </div>
@@ -252,8 +252,8 @@ export default function VerifikasiSidangDosenPage() {
               <Card className="shadow-md">
                 <CardContent className="py-12">
                   <div className="text-center space-y-3">
-                    <Info className="h-12 w-12 text-gray-400 mx-auto" />
-                    <p className="text-gray-600 dark:text-gray-400 font-medium">
+                    <Info className="h-12 w-12 text-muted-foreground mx-auto" />
+                    <p className="text-muted-foreground font-medium">
                       Belum ada pengajuan yang disetujui
                     </p>
                   </div>
@@ -264,14 +264,14 @@ export default function VerifikasiSidangDosenPage() {
                 {pengajuanDisetujui.map((pengajuan) => (
                   <Card
                     key={pengajuan.id}
-                    className="shadow-md border-2 border-green-200 dark:border-green-800"
+                    className="shadow-md border-2 border-primary/30"
                   >
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <Badge className="bg-green-700">Disetujui</Badge>
-                            <span className="text-sm text-gray-500">
+                            <Badge>Disetujui</Badge>
+                            <span className="text-sm text-muted-foreground">
                               {pengajuan.mahasiswa.nama} (
                               {pengajuan.mahasiswa.nim})
                             </span>
@@ -280,15 +280,15 @@ export default function VerifikasiSidangDosenPage() {
                             {pengajuan.data.judulLaporan}
                           </p>
                           {pengajuan.nilaiAkhir && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-muted-foreground">
                               Nilai:{" "}
-                              <span className="font-bold text-green-700">
+                              <span className="font-bold text-primary">
                                 {pengajuan.nilaiAkhir}
                               </span>
                             </p>
                           )}
                           {pengajuan.catatanDosen && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                               Catatan: {pengajuan.catatanDosen}
                             </p>
                           )}
@@ -307,8 +307,8 @@ export default function VerifikasiSidangDosenPage() {
               <Card className="shadow-md">
                 <CardContent className="py-12">
                   <div className="text-center space-y-3">
-                    <Info className="h-12 w-12 text-gray-400 mx-auto" />
-                    <p className="text-gray-600 dark:text-gray-400 font-medium">
+                    <Info className="h-12 w-12 text-muted-foreground mx-auto" />
+                    <p className="text-muted-foreground font-medium">
                       Tidak ada pengajuan yang ditolak
                     </p>
                   </div>
@@ -319,14 +319,14 @@ export default function VerifikasiSidangDosenPage() {
                 {pengajuanDitolak.map((pengajuan) => (
                   <Card
                     key={pengajuan.id}
-                    className="shadow-md border-2 border-red-200 dark:border-red-800"
+                    className="shadow-md border-2 border-destructive/30"
                   >
                     <CardContent className="pt-6">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
                             <Badge variant="destructive">Ditolak</Badge>
-                            <span className="text-sm text-gray-500">
+                            <span className="text-sm text-muted-foreground">
                               {pengajuan.mahasiswa.nama} (
                               {pengajuan.mahasiswa.nim})
                             </span>
@@ -335,7 +335,7 @@ export default function VerifikasiSidangDosenPage() {
                             {pengajuan.data.judulLaporan}
                           </p>
                           {pengajuan.catatanDosen && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                            <p className="text-sm text-muted-foreground">
                               Alasan: {pengajuan.catatanDosen}
                             </p>
                           )}
