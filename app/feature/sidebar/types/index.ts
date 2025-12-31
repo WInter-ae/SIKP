@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react"
 
-export type UserRole = "mahasiswa" | "dosen" | "admin"
+export type UserRole = "mahasiswa" | "dosen" | "admin" | "mentor"
 
 export interface User {
   name: string

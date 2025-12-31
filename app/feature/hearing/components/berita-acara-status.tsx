@@ -84,26 +84,26 @@ export function BeritaAcaraStatus({
       <CardContent className="space-y-6 pt-6">
         {/* Detail Sidang */}
         <div className="space-y-4">
-          <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-            <div className="h-1 w-1 rounded-full bg-green-600"></div>
+          <h3 className="font-bold text-lg flex items-center gap-2">
+            <div className="h-1 w-1 rounded-full bg-primary"></div>
             Detail Sidang
           </h3>
-          <div className="grid gap-4 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+          <div className="grid gap-4 bg-muted p-4 rounded-lg">
             <div className="flex flex-col space-y-1.5">
-              <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+              <span className="text-sm font-semibold text-muted-foreground">
                 Judul Laporan
               </span>
               <span className="font-medium text-base">{beritaAcara.judulLaporan}</span>
             </div>
             <div className="flex flex-col space-y-1.5">
-              <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+              <span className="text-sm font-semibold text-muted-foreground">
                 Tempat Pelaksanaan
               </span>
               <span className="font-medium text-base">{beritaAcara.tempatPelaksanaan}</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col space-y-1.5">
-                <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                <span className="text-sm font-semibold text-muted-foreground">
                   Tanggal
                 </span>
                 <span className="font-medium text-base">
@@ -111,13 +111,13 @@ export function BeritaAcaraStatus({
                 </span>
               </div>
               <div className="flex flex-col space-y-1.5">
-                <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                <span className="text-sm font-semibold text-muted-foreground">
                   Waktu Mulai
                 </span>
                 <span className="font-medium text-base">{formatTime(beritaAcara.waktuMulai)}</span>
               </div>
               <div className="flex flex-col space-y-1.5">
-                <span className="text-sm font-semibold text-gray-600 dark:text-gray-400">
+                <span className="text-sm font-semibold text-muted-foreground">
                   Waktu Selesai
                 </span>
                 <span className="font-medium text-base">{formatTime(beritaAcara.waktuSelesai)}</span>
@@ -132,19 +132,19 @@ export function BeritaAcaraStatus({
         {dosenPenguji && dosenPenguji.length > 0 && (
           <>
             <div className="space-y-4">
-              <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-                <div className="h-1 w-1 rounded-full bg-green-600"></div>
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <div className="h-1 w-1 rounded-full bg-primary"></div>
                 Dosen Penguji
               </h3>
               <div className="space-y-3">
                 {dosenPenguji.map((dosen) => (
                   <div
                     key={dosen.id}
-                    className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow"
+                    className="flex items-center justify-between p-4 bg-muted rounded-lg border hover:shadow-md transition-shadow"
                   >
                     <div>
                       <p className="font-semibold text-base">{dosen.nama}</p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">NIP: {dosen.nip}</p>
+                      <p className="text-sm text-muted-foreground">NIP: {dosen.nip}</p>
                     </div>
                     <Badge variant="outline" className="capitalize font-semibold">
                       {dosen.jabatan}
@@ -161,25 +161,25 @@ export function BeritaAcaraStatus({
         {beritaAcara.status === "approved" && beritaAcara.nilaiAkhir && (
           <>
             <div className="space-y-4">
-              <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-                <div className="h-1 w-1 rounded-full bg-green-600"></div>
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <div className="h-1 w-1 rounded-full bg-primary"></div>
                 Hasil Penilaian
               </h3>
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950 border-2 border-green-300 dark:border-green-700 rounded-lg p-5 shadow-md">
+              <div className="bg-gradient-to-br from-primary/5 to-primary/10 border-2 border-primary/30 rounded-lg p-5 shadow-md">
                 <div className="flex items-center justify-between">
-                  <span className="text-base font-semibold text-green-800 dark:text-green-200">
+                  <span className="text-base font-semibold text-primary">
                     Nilai Akhir:
                   </span>
-                  <span className="text-3xl font-bold text-green-700 dark:text-green-400">
+                  <span className="text-3xl font-bold text-primary">
                     {beritaAcara.nilaiAkhir}
                   </span>
                 </div>
                 {beritaAcara.catatanDosen && (
-                  <div className="mt-4 pt-4 border-t-2 border-green-200 dark:border-green-800">
-                    <p className="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">
+                  <div className="mt-4 pt-4 border-t-2 border-primary/20">
+                    <p className="text-sm font-semibold text-primary mb-2">
                       Catatan Dosen:
                     </p>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">{beritaAcara.catatanDosen}</p>
+                    <p className="text-sm text-muted-foreground">{beritaAcara.catatanDosen}</p>
                   </div>
                 )}
               </div>
@@ -192,12 +192,12 @@ export function BeritaAcaraStatus({
         {beritaAcara.status === "rejected" && beritaAcara.catatanDosen && (
           <>
             <div className="space-y-4">
-              <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800 dark:text-gray-100">
-                <div className="h-1 w-1 rounded-full bg-red-600"></div>
+              <h3 className="font-bold text-lg flex items-center gap-2">
+                <div className="h-1 w-1 rounded-full bg-destructive"></div>
                 Alasan Penolakan
               </h3>
-              <div className="bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950 dark:to-orange-950 border-2 border-red-300 dark:border-red-700 rounded-lg p-5 shadow-md">
-                <p className="text-sm text-gray-700 dark:text-gray-300">{beritaAcara.catatanDosen}</p>
+              <div className="bg-gradient-to-br from-destructive/5 to-destructive/10 border-2 border-destructive/30 rounded-lg p-5 shadow-md">
+                <p className="text-sm text-muted-foreground">{beritaAcara.catatanDosen}</p>
               </div>
             </div>
             <Separator />
@@ -214,7 +214,7 @@ export function BeritaAcaraStatus({
           {beritaAcara.status === "approved" && onGenerateSurat && (
             <Button
               onClick={onGenerateSurat}
-              className="w-full sm:w-auto bg-green-700 hover:bg-green-800 h-11 font-semibold shadow-md hover:shadow-lg transition-shadow"
+              className="w-full sm:w-auto h-11 font-semibold shadow-md hover:shadow-lg transition-shadow"
             >
               <FileText className="h-5 w-5 mr-2" />
               Generate Surat Berita Acara
