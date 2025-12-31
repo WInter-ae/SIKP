@@ -13,17 +13,17 @@ import type { FilterSectionProps } from "../types";
 export function FilterSection({
   filters,
   onFilterChange,
-  tahunOptions,
-  kategoriOptions,
+  yearOptions,
+  categoryOptions,
 }: FilterSectionProps) {
-  const periodeOptions = ["Semua", "Ganjil", "Genap"];
+  const semesterOptions = ["Semua", "Ganjil", "Genap"];
   const statusOptions = ["Semua", "draft", "review", "approved", "published"];
   const sortOptions = [
-    { value: "terbaru", label: "Terbaru" },
-    { value: "terlama", label: "Terlama" },
-    { value: "terpopuler", label: "Terpopuler" },
-    { value: "judulAZ", label: "Judul A-Z" },
-    { value: "judulZA", label: "Judul Z-A" },
+    { value: "newest", label: "Terbaru" },
+    { value: "oldest", label: "Terlama" },
+    { value: "popular", label: "Terpopuler" },
+    { value: "titleAZ", label: "Judul A-Z" },
+    { value: "titleZA", label: "Judul Z-A" },
   ];
 
   const handleReset = () => {
@@ -39,17 +39,17 @@ export function FilterSection({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {/* Tahun */}
+          {/* Year */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">
               Tahun
             </label>
             <Select
-              value={filters.tahun?.toString() || "all"}
+              value={filters.year?.toString() || "all"}
               onValueChange={(value) =>
                 onFilterChange({
                   ...filters,
-                  tahun: value === "all" ? undefined : parseInt(value),
+                  year: value === "all" ? undefined : parseInt(value),
                 })
               }
             >
@@ -58,26 +58,26 @@ export function FilterSection({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Tahun</SelectItem>
-                {tahunOptions.map((tahun) => (
-                  <SelectItem key={tahun} value={tahun.toString()}>
-                    {tahun}
+                {yearOptions.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Periode */}
+          {/* Semester */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">
               Periode
             </label>
             <Select
-              value={filters.periode || "Semua"}
+              value={filters.semester || "Semua"}
               onValueChange={(value) =>
                 onFilterChange({
                   ...filters,
-                  periode: value === "Semua" ? undefined : value,
+                  semester: value === "Semua" ? undefined : value,
                 })
               }
             >
@@ -85,26 +85,26 @@ export function FilterSection({
                 <SelectValue placeholder="Semua Periode" />
               </SelectTrigger>
               <SelectContent>
-                {periodeOptions.map((periode) => (
-                  <SelectItem key={periode} value={periode}>
-                    {periode}
+                {semesterOptions.map((semester) => (
+                  <SelectItem key={semester} value={semester}>
+                    {semester}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Kategori */}
+          {/* Category */}
           <div>
             <label className="text-sm font-medium text-gray-700 mb-1 block">
               Kategori
             </label>
             <Select
-              value={filters.kategori || "Semua"}
+              value={filters.category || "Semua"}
               onValueChange={(value) =>
                 onFilterChange({
                   ...filters,
-                  kategori: value === "Semua" ? undefined : value,
+                  category: value === "Semua" ? undefined : value,
                 })
               }
             >
@@ -113,9 +113,9 @@ export function FilterSection({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Semua">Semua Kategori</SelectItem>
-                {kategoriOptions.map((kategori) => (
-                  <SelectItem key={kategori} value={kategori}>
-                    {kategori}
+                {categoryOptions.map((category) => (
+                  <SelectItem key={category} value={category}>
+                    {category}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -155,16 +155,16 @@ export function FilterSection({
               Urutkan
             </label>
             <Select
-              value={filters.sortBy || "terbaru"}
+              value={filters.sortBy || "newest"}
               onValueChange={(value) =>
                 onFilterChange({
                   ...filters,
                   sortBy: value as
-                    | "terbaru"
-                    | "terlama"
-                    | "terpopuler"
-                    | "judulAZ"
-                    | "judulZA",
+                    | "newest"
+                    | "oldest"
+                    | "popular"
+                    | "titleAZ"
+                    | "titleZA",
                 })
               }
             >

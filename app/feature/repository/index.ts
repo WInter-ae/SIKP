@@ -1,16 +1,18 @@
 export { default as RepositoryPage } from "./pages/repository-page";
-export { default as DetailLaporanPage } from "./pages/detail-laporan-page";
+export { default as ReportDetailPage } from "./pages/report-detail-page";
 
 export { SearchBar } from "./components/search-bar";
 export { FilterSection } from "./components/filter-section";
-export { LaporanCard } from "./components/laporan-card";
-export { LaporanList } from "./components/laporan-list";
+export { ReportCard } from "./components/report-card";
+export { ReportList } from "./components/report-list";
+
+export { MOCK_REPORTS } from "./data/mock-reports";
 
 export type {
-  LaporanKP,
+  Report,
   FilterOptions,
   SearchBarProps,
   FilterSectionProps,
-  LaporanCardProps,
-  LaporanListProps,
+  ReportCardProps,
+  ReportListProps,
 } from "./types";

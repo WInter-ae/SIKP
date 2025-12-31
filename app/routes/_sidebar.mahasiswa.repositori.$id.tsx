@@ -1,3 +1,3 @@
-import DetailLaporanPage from "~/feature/repository/pages/detail-laporan-page";
+import ReportDetailPage from "~/feature/repository/pages/report-detail-page";
 
-export default DetailLaporanPage;
+export default ReportDetailPage;

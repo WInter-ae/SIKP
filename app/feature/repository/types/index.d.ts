@@ -1,23 +1,23 @@
-export interface LaporanKP {
+export interface Report {
   id: string;
-  judul: string;
-  mahasiswa: {
-    nama: string;
-    nim: string;
-    foto?: string;
+  title: string;
+  student: {
+    name: string;
+    studentId: string;
+    photo?: string;
   };
-  perusahaan: string;
-  tahun: number;
-  periode: string; // "Ganjil" | "Genap"
-  kategori: string; // "Web Development", "Mobile", "Data Science", etc.
-  pembimbing: {
-    nama: string;
+  company: string;
+  year: number;
+  semester: string; // "Ganjil" | "Genap"
+  category: string; // "Web Development", "Mobile", "Data Science", etc.
+  supervisor: {
+    name: string;
     nidn: string;
   };
   status: "draft" | "review" | "approved" | "published";
-  tanggalUpload: string;
-  tanggalPublish?: string;
-  abstrak: string;
+  uploadDate: string;
+  publishDate?: string;
+  abstract: string;
   fileUrl?: string;
   thumbnailUrl?: string;
   downloadCount: number;
@@ -26,11 +26,11 @@ export interface LaporanKP {
 }
 
 export interface FilterOptions {
-  tahun?: number;
-  periode?: string;
-  kategori?: string;
+  year?: number;
+  semester?: string;
+  category?: string;
   status?: string;
-  sortBy?: "terbaru" | "terlama" | "terpopuler" | "judulAZ" | "judulZA";
+  sortBy?: "newest" | "oldest" | "popular" | "titleAZ" | "titleZA";
 }
 
 export interface SearchBarProps {
@@ -42,17 +42,17 @@ export interface SearchBarProps {
 export interface FilterSectionProps {
   filters: FilterOptions;
   onFilterChange: (filters: FilterOptions) => void;
-  tahunOptions: number[];
-  kategoriOptions: string[];
+  yearOptions: number[];
+  categoryOptions: string[];
 }
 
-export interface LaporanCardProps {
-  laporan: LaporanKP;
+export interface ReportCardProps {
+  report: Report;
   onClick: (id: string) => void;
 }
 
-export interface LaporanListProps {
-  laporan: LaporanKP[];
+export interface ReportListProps {
+  reports: Report[];
   isLoading?: boolean;
-  onLaporanClick: (id: string) => void;
+  onReportClick: (id: string) => void;
 }

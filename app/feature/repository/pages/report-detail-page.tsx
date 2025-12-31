@@ -15,75 +15,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
-import type { LaporanKP } from "../types";
+import { MOCK_REPORTS } from "../data/mock-reports";
 
-// Data dummy - sesuaikan dengan data dari repository-page
-const DUMMY_LAPORAN: LaporanKP[] = [
-  {
-    id: "1",
-    judul:
-      "Implementasi Sistem Informasi Manajemen Inventori Berbasis Web pada PT. Teknologi Maju",
-    mahasiswa: {
-      nama: "Ahmad Rizki Pratama",
-      nim: "20011001",
-      foto: "https://api.dicebear.com/7.x/avataaars/svg?seed=Ahmad",
-    },
-    perusahaan: "PT. Teknologi Maju",
-    tahun: 2024,
-    periode: "Ganjil",
-    kategori: "Web Development",
-    pembimbing: {
-      nama: "Dr. Budi Santoso, M.Kom",
-      nidn: "0012345678",
-    },
-    status: "published",
-    tanggalUpload: "2024-12-15",
-    tanggalPublish: "2024-12-20",
-    abstrak:
-      "Penelitian ini membahas tentang implementasi sistem informasi manajemen inventori berbasis web yang bertujuan untuk meningkatkan efisiensi pengelolaan stok barang di PT. Teknologi Maju. Sistem dikembangkan menggunakan framework Laravel dan database MySQL dengan fitur-fitur seperti pencatatan stok masuk/keluar, laporan inventori real-time, notifikasi stok minimum, dan dashboard analitik. Hasil implementasi menunjukkan peningkatan efisiensi sebesar 40% dalam proses pengelolaan inventori.",
-    fileUrl: "/files/laporan-1.pdf",
-    thumbnailUrl: "https://picsum.photos/seed/1/400/300",
-    downloadCount: 45,
-    viewCount: 120,
-    tags: ["Laravel", "MySQL", "Inventori", "Web"],
-  },
-  {
-    id: "2",
-    judul: "Pengembangan Aplikasi Mobile E-Commerce Menggunakan React Native",
-    mahasiswa: {
-      nama: "Siti Nurhaliza",
-      nim: "20011002",
-      foto: "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
-    },
-    perusahaan: "CV. Digital Kreatif",
-    tahun: 2024,
-    periode: "Ganjil",
-    kategori: "Mobile Development",
-    pembimbing: {
-      nama: "Prof. Dr. Ir. Andi Wijaya, M.T.",
-      nidn: "0023456789",
-    },
-    status: "approved",
-    tanggalUpload: "2024-11-20",
-    abstrak:
-      "Aplikasi mobile e-commerce dikembangkan untuk memudahkan pelanggan dalam berbelanja online. Fitur-fitur yang diimplementasikan meliputi katalog produk, keranjang belanja, payment gateway, dan tracking pengiriman.",
-    fileUrl: "/files/laporan-2.pdf",
-    thumbnailUrl: "https://picsum.photos/seed/2/400/300",
-    downloadCount: 32,
-    viewCount: 89,
-    tags: ["React Native", "E-Commerce", "Mobile"],
-  },
-  // ... data lainnya bisa ditambahkan
-];
-
-export default function DetailLaporanPage() {
+export default function ReportDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Cari laporan berdasarkan ID
-  const laporan = DUMMY_LAPORAN.find((l) => l.id === id);
+  // Find report by ID
+  const report = MOCK_REPORTS.find((r) => r.id === id);
 
-  if (!laporan) {
+  if (!report) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md w-full">
@@ -120,18 +61,16 @@ export default function DetailLaporanPage() {
   };
 
   const handleDownload = () => {
-    // Implementasi download file
-    if (laporan.fileUrl) {
-      window.open(laporan.fileUrl, "_blank");
+    if (report.fileUrl) {
+      window.open(report.fileUrl, "_blank");
     }
   };
 
   const handleShare = () => {
-    // Implementasi share
     if (navigator.share) {
       navigator.share({
-        title: laporan.judul,
-        text: laporan.abstrak,
+        title: report.title,
+        text: report.abstract,
         url: window.location.href,
       });
     }
@@ -155,25 +94,23 @@ export default function DetailLaporanPage() {
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <Badge
-                  className={`mb-3 ${getStatusBadgeColor(laporan.status)}`}
-                >
-                  {laporan.status}
+                <Badge className={`mb-3 ${getStatusBadgeColor(report.status)}`}>
+                  {report.status}
                 </Badge>
-                <CardTitle className="text-3xl mb-4">{laporan.judul}</CardTitle>
+                <CardTitle className="text-3xl mb-4">{report.title}</CardTitle>
                 <div className="flex flex-wrap gap-2">
-                  {laporan.tags?.map((tag) => (
+                  {report.tags?.map((tag) => (
                     <Badge key={tag} variant="outline">
                       {tag}
                     </Badge>
                   ))}
                 </div>
               </div>
-              {laporan.thumbnailUrl && (
+              {report.thumbnailUrl && (
                 <div className="w-48 h-32 rounded-lg overflow-hidden flex-shrink-0">
                   <img
-                    src={laporan.thumbnailUrl}
-                    alt={laporan.judul}
+                    src={report.thumbnailUrl}
+                    alt={report.title}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -186,16 +123,16 @@ export default function DetailLaporanPage() {
             <div className="flex items-center gap-6 text-sm text-gray-600 pb-4 border-b">
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
-                <span>{laporan.viewCount} views</span>
+                <span>{report.viewCount} views</span>
               </div>
               <div className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
-                <span>{laporan.downloadCount} downloads</span>
+                <span>{report.downloadCount} downloads</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 <span>
-                  {new Date(laporan.tanggalUpload).toLocaleDateString("id-ID", {
+                  {new Date(report.uploadDate).toLocaleDateString("id-ID", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -206,7 +143,7 @@ export default function DetailLaporanPage() {
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              {laporan.fileUrl && (
+              {report.fileUrl && (
                 <Button onClick={handleDownload} className="flex-1">
                   <Download className="h-4 w-4 mr-2" />
                   Download Laporan
@@ -224,7 +161,7 @@ export default function DetailLaporanPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Details */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Abstrak */}
+            {/* Abstract */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -234,12 +171,12 @@ export default function DetailLaporanPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-700 leading-relaxed text-justify">
-                  {laporan.abstrak}
+                  {report.abstract}
                 </p>
               </CardContent>
             </Card>
 
-            {/* Informasi Tambahan */}
+            {/* Additional Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Informasi Detail</CardTitle>
@@ -250,7 +187,7 @@ export default function DetailLaporanPage() {
                     Tahun & Periode
                   </h4>
                   <p className="text-gray-900">
-                    {laporan.tahun} - Semester {laporan.periode}
+                    {report.year} - Semester {report.semester}
                   </p>
                 </div>
 
@@ -260,7 +197,7 @@ export default function DetailLaporanPage() {
                   <h4 className="text-sm font-medium text-gray-500 mb-1">
                     Kategori
                   </h4>
-                  <p className="text-gray-900">{laporan.kategori}</p>
+                  <p className="text-gray-900">{report.category}</p>
                 </div>
 
                 <Separator />
@@ -270,19 +207,16 @@ export default function DetailLaporanPage() {
                     Tanggal Upload
                   </h4>
                   <p className="text-gray-900">
-                    {new Date(laporan.tanggalUpload).toLocaleDateString(
-                      "id-ID",
-                      {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      },
-                    )}
+                    {new Date(report.uploadDate).toLocaleDateString("id-ID", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
                   </p>
                 </div>
 
-                {laporan.tanggalPublish && (
+                {report.publishDate && (
                   <>
                     <Separator />
                     <div>
@@ -290,7 +224,7 @@ export default function DetailLaporanPage() {
                         Tanggal Publish
                       </h4>
                       <p className="text-gray-900">
-                        {new Date(laporan.tanggalPublish).toLocaleDateString(
+                        {new Date(report.publishDate).toLocaleDateString(
                           "id-ID",
                           {
                             weekday: "long",
@@ -309,7 +243,7 @@ export default function DetailLaporanPage() {
 
           {/* Right Column - Sidebar */}
           <div className="space-y-6">
-            {/* Mahasiswa */}
+            {/* Student */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Mahasiswa</CardTitle>
@@ -318,11 +252,11 @@ export default function DetailLaporanPage() {
                 <div className="flex items-start gap-3">
                   <Avatar className="h-12 w-12">
                     <AvatarImage
-                      src={laporan.mahasiswa.foto}
-                      alt={laporan.mahasiswa.nama}
+                      src={report.student.photo}
+                      alt={report.student.name}
                     />
                     <AvatarFallback>
-                      {laporan.mahasiswa.nama
+                      {report.student.name
                         .split(" ")
                         .map((n) => n[0])
                         .join("")}
@@ -330,17 +264,17 @@ export default function DetailLaporanPage() {
                   </Avatar>
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">
-                      {laporan.mahasiswa.nama}
+                      {report.student.name}
                     </p>
                     <p className="text-sm text-gray-600">
-                      {laporan.mahasiswa.nim}
+                      {report.student.studentId}
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Perusahaan */}
+            {/* Company */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -349,13 +283,11 @@ export default function DetailLaporanPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-900 font-medium">
-                  {laporan.perusahaan}
-                </p>
+                <p className="text-gray-900 font-medium">{report.company}</p>
               </CardContent>
             </Card>
 
-            {/* Pembimbing */}
+            {/* Supervisor */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -365,10 +297,10 @@ export default function DetailLaporanPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-900 font-medium">
-                  {laporan.pembimbing.nama}
+                  {report.supervisor.name}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  NIDN: {laporan.pembimbing.nidn}
+                  NIDN: {report.supervisor.nidn}
                 </p>
               </CardContent>
             </Card>

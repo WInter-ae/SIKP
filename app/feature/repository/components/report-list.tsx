@@ -1,14 +1,14 @@
-import { LaporanCard } from "./laporan-card";
+import { ReportCard } from "./report-card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import type { LaporanListProps } from "../types";
+import type { ReportListProps } from "../types";
 
-export function LaporanList({
-  laporan,
+export function ReportList({
+  reports,
   isLoading = false,
-  onLaporanClick,
-}: LaporanListProps) {
+  onReportClick,
+}: ReportListProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -23,7 +23,7 @@ export function LaporanList({
     );
   }
 
-  if (laporan.length === 0) {
+  if (reports.length === 0) {
     return (
       <Alert>
         <AlertCircle className="h-4 w-4" />
@@ -37,8 +37,8 @@ export function LaporanList({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {laporan.map((item) => (
-        <LaporanCard key={item.id} laporan={item} onClick={onLaporanClick} />
+      {reports.map((item) => (
+        <ReportCard key={item.id} report={item} onClick={onReportClick} />
       ))}
     </div>
   );
