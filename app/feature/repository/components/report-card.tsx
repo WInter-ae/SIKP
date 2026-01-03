@@ -28,20 +28,12 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
     }
   };
 
-  const handleClick = () => {
-    onClick(report.id);
-  };
-
   return (
     <Card className="hover:shadow-lg transition-shadow group dark:bg-gray-800 dark:border-gray-700">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <Link
-              to={`/mahasiswa/repositori/${report.id}`}
-              className="block"
-              onClick={(e) => e.stopPropagation()}
-            >
+            <Link to={`/mahasiswa/repositori/${report.id}`} className="block">
               <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-400 hover:text-green-700 dark:hover:text-green-400 transition-colors line-clamp-2 cursor-pointer">
                 {report.title}
               </h3>
