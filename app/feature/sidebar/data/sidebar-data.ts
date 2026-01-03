@@ -12,6 +12,7 @@ import {
   FileCheck,
   ClipboardList,
   BookMarked,
+  Award,
 } from "lucide-react"
 import type { NavItem, UserRole } from "../types"
 
@@ -70,7 +71,7 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Repositori",
-    url: "#",
+    url: "/mahasiswa/repositori",
     icon: FolderKanban,
   },
   {
@@ -160,6 +161,11 @@ const adminMenu: NavItem[] = [
     ],
   },
   {
+    title: "Penilaian",
+    url: "/admin/penilaian",
+    icon: Award,
+  },
+  {
     title: "Profil",
     url: "#",
     icon: UserCircle,
@@ -193,6 +199,11 @@ const dosenMenu: NavItem[] = [
         url: "/dosen/kp/verifikasi-sidang",
       },
     ],
+  },
+  {
+    title: "Penilaian KP",
+    url: "/dosen/penilaian",
+    icon: Award,
   },
   {
     title: "Verifikasi",
