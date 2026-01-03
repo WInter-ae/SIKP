@@ -22,12 +22,10 @@ export function GradingForm({
   isSubmitting = false,
 }: GradingFormProps) {
   const [formData, setFormData] = useState<GradingFormData>({
-    reportSystematics: initialData?.reportSystematics || 0,
-    reportContent: initialData?.reportContent || 0,
-    reportAnalysis: initialData?.reportAnalysis || 0,
-    presentationDelivery: initialData?.presentationDelivery || 0,
-    presentationMastery: initialData?.presentationMastery || 0,
-    presentationQA: initialData?.presentationQA || 0,
+    reportFormat: initialData?.reportFormat || 0,
+    materialMastery: initialData?.materialMastery || 0,
+    analysisDesign: initialData?.analysisDesign || 0,
+    attitudeEthics: initialData?.attitudeEthics || 0,
     notes: initialData?.notes || "",
   });
 
@@ -51,32 +49,18 @@ export function GradingForm({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Validate report scores
-    if (formData.reportSystematics < 0 || formData.reportSystematics > 100) {
-      newErrors.reportSystematics = "Nilai harus antara 0-100";
+    // Validate all scores
+    if (formData.reportFormat < 0 || formData.reportFormat > 100) {
+      newErrors.reportFormat = "Nilai harus antara 0-100";
     }
-    if (formData.reportContent < 0 || formData.reportContent > 100) {
-      newErrors.reportContent = "Nilai harus antara 0-100";
+    if (formData.materialMastery < 0 || formData.materialMastery > 100) {
+      newErrors.materialMastery = "Nilai harus antara 0-100";
     }
-    if (formData.reportAnalysis < 0 || formData.reportAnalysis > 100) {
-      newErrors.reportAnalysis = "Nilai harus antara 0-100";
+    if (formData.analysisDesign < 0 || formData.analysisDesign > 100) {
+      newErrors.analysisDesign = "Nilai harus antara 0-100";
     }
-
-    // Validate presentation scores
-    if (
-      formData.presentationDelivery < 0 ||
-      formData.presentationDelivery > 100
-    ) {
-      newErrors.presentationDelivery = "Nilai harus antara 0-100";
-    }
-    if (
-      formData.presentationMastery < 0 ||
-      formData.presentationMastery > 100
-    ) {
-      newErrors.presentationMastery = "Nilai harus antara 0-100";
-    }
-    if (formData.presentationQA < 0 || formData.presentationQA > 100) {
-      newErrors.presentationQA = "Nilai harus antara 0-100";
+    if (formData.attitudeEthics < 0 || formData.attitudeEthics > 100) {
+      newErrors.attitudeEthics = "Nilai harus antara 0-100";
     }
 
     setErrors(newErrors);
@@ -90,184 +74,127 @@ export function GradingForm({
     }
   };
 
-  // Calculate weighted scores
-  const reportScore =
-    formData.reportSystematics * 0.2 +
-    formData.reportContent * 0.4 +
-    formData.reportAnalysis * 0.4;
-
-  const presentationScore =
-    formData.presentationDelivery * 0.3 +
-    formData.presentationMastery * 0.5 +
-    formData.presentationQA * 0.2;
-
-  const totalScore = (reportScore + presentationScore) / 2;
+  // Calculate weighted total score
+  const totalScore =
+    formData.reportFormat * 0.3 +
+    formData.materialMastery * 0.3 +
+    formData.analysisDesign * 0.3 +
+    formData.attitudeEthics * 0.1;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Report Section */}
+      {/* Grading Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Penilaian Laporan Kerja Praktik</CardTitle>
+          <CardTitle>Penilaian Dosen Pembimbing</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              Bobot: Sistematika (20%), Isi & Pembahasan (40%), Analisis (40%)
+              Bobot: Kesesuaian Laporan (30%), Penguasaan Materi (30%), Analisis
+              & Perancangan (30%), Sikap & Etika (10%)
             </AlertDescription>
           </Alert>
 
           <div className="space-y-2">
-            <Label htmlFor="reportSystematics">
-              Sistematika Penulisan (0-100)
+            <Label htmlFor="reportFormat">
+              Kesesuaian Laporan dengan Format (0-100)
+              <span className="text-sm text-muted-foreground ml-2">
+                Bobot: 30%
+              </span>
             </Label>
             <Input
-              id="reportSystematics"
+              id="reportFormat"
               type="number"
               min="0"
               max="100"
-              value={formData.reportSystematics}
+              value={formData.reportFormat}
               onChange={(e) =>
-                handleInputChange("reportSystematics", Number(e.target.value))
+                handleInputChange("reportFormat", Number(e.target.value))
               }
-              className={errors.reportSystematics ? "border-red-500" : ""}
+              className={errors.reportFormat ? "border-red-500" : ""}
             />
-            {errors.reportSystematics && (
-              <p className="text-sm text-red-500">{errors.reportSystematics}</p>
+            {errors.reportFormat && (
+              <p className="text-sm text-red-500">{errors.reportFormat}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reportContent">Isi dan Pembahasan (0-100)</Label>
+            <Label htmlFor="materialMastery">
+              Penguasaan Materi KP (0-100)
+              <span className="text-sm text-muted-foreground ml-2">
+                Bobot: 30%
+              </span>
+            </Label>
             <Input
-              id="reportContent"
+              id="materialMastery"
               type="number"
               min="0"
               max="100"
-              value={formData.reportContent}
+              value={formData.materialMastery}
               onChange={(e) =>
-                handleInputChange("reportContent", Number(e.target.value))
+                handleInputChange("materialMastery", Number(e.target.value))
               }
-              className={errors.reportContent ? "border-red-500" : ""}
+              className={errors.materialMastery ? "border-red-500" : ""}
             />
-            {errors.reportContent && (
-              <p className="text-sm text-red-500">{errors.reportContent}</p>
+            {errors.materialMastery && (
+              <p className="text-sm text-red-500">{errors.materialMastery}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="reportAnalysis">
-              Analisis dan Kesimpulan (0-100)
+            <Label htmlFor="analysisDesign">
+              Analisis dan Perancangan (0-100)
+              <span className="text-sm text-muted-foreground ml-2">
+                Bobot: 30%
+              </span>
             </Label>
             <Input
-              id="reportAnalysis"
+              id="analysisDesign"
               type="number"
               min="0"
               max="100"
-              value={formData.reportAnalysis}
+              value={formData.analysisDesign}
               onChange={(e) =>
-                handleInputChange("reportAnalysis", Number(e.target.value))
+                handleInputChange("analysisDesign", Number(e.target.value))
               }
-              className={errors.reportAnalysis ? "border-red-500" : ""}
+              className={errors.analysisDesign ? "border-red-500" : ""}
             />
-            {errors.reportAnalysis && (
-              <p className="text-sm text-red-500">{errors.reportAnalysis}</p>
+            {errors.analysisDesign && (
+              <p className="text-sm text-red-500">{errors.analysisDesign}</p>
             )}
           </div>
 
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="text-sm text-blue-600 mb-1">Nilai Laporan</div>
-            <div className="text-2xl font-bold text-blue-700">
-              {reportScore.toFixed(2)}
+          <div className="space-y-2">
+            <Label htmlFor="attitudeEthics">
+              Sikap dan Etika (0-100)
+              <span className="text-sm text-muted-foreground ml-2">
+                Bobot: 10%
+              </span>
+            </Label>
+            <Input
+              id="attitudeEthics"
+              type="number"
+              min="0"
+              max="100"
+              value={formData.attitudeEthics}
+              onChange={(e) =>
+                handleInputChange("attitudeEthics", Number(e.target.value))
+              }
+              className={errors.attitudeEthics ? "border-red-500" : ""}
+            />
+            {errors.attitudeEthics && (
+              <p className="text-sm text-red-500">{errors.attitudeEthics}</p>
+            )}
+          </div>
+
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-2 border-blue-500">
+            <div className="text-sm text-blue-600 dark:text-blue-400 mb-1">
+              Total Nilai Dosen Pembimbing
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Presentation Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Penilaian Presentasi & Ujian</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              Bobot: Penyampaian (30%), Penguasaan Materi (50%), Kemampuan
-              Menjawab (20%)
-            </AlertDescription>
-          </Alert>
-
-          <div className="space-y-2">
-            <Label htmlFor="presentationDelivery">
-              Penyampaian Materi (0-100)
-            </Label>
-            <Input
-              id="presentationDelivery"
-              type="number"
-              min="0"
-              max="100"
-              value={formData.presentationDelivery}
-              onChange={(e) =>
-                handleInputChange(
-                  "presentationDelivery",
-                  Number(e.target.value),
-                )
-              }
-              className={errors.presentationDelivery ? "border-red-500" : ""}
-            />
-            {errors.presentationDelivery && (
-              <p className="text-sm text-red-500">
-                {errors.presentationDelivery}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="presentationMastery">
-              Penguasaan Materi (0-100)
-            </Label>
-            <Input
-              id="presentationMastery"
-              type="number"
-              min="0"
-              max="100"
-              value={formData.presentationMastery}
-              onChange={(e) =>
-                handleInputChange("presentationMastery", Number(e.target.value))
-              }
-              className={errors.presentationMastery ? "border-red-500" : ""}
-            />
-            {errors.presentationMastery && (
-              <p className="text-sm text-red-500">
-                {errors.presentationMastery}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="presentationQA">Kemampuan Menjawab (0-100)</Label>
-            <Input
-              id="presentationQA"
-              type="number"
-              min="0"
-              max="100"
-              value={formData.presentationQA}
-              onChange={(e) =>
-                handleInputChange("presentationQA", Number(e.target.value))
-              }
-              className={errors.presentationQA ? "border-red-500" : ""}
-            />
-            {errors.presentationQA && (
-              <p className="text-sm text-red-500">{errors.presentationQA}</p>
-            )}
-          </div>
-
-          <div className="bg-purple-50 p-4 rounded-lg">
-            <div className="text-sm text-purple-600 mb-1">Nilai Presentasi</div>
-            <div className="text-2xl font-bold text-purple-700">
-              {presentationScore.toFixed(2)}
+            <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+              {totalScore.toFixed(2)}
             </div>
           </div>
         </CardContent>
@@ -288,48 +215,15 @@ export function GradingForm({
         </CardContent>
       </Card>
 
-      {/* Total Score Summary */}
-      <Card className="border-2 border-green-200">
-        <CardHeader>
-          <CardTitle className="text-green-800">
-            Ringkasan Nilai Akhir
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4 mb-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <div className="text-sm text-blue-600 mb-1">Nilai Laporan</div>
-              <div className="text-xl font-bold text-blue-700">
-                {reportScore.toFixed(2)}
-              </div>
-            </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <div className="text-sm text-purple-600 mb-1">
-                Nilai Presentasi
-              </div>
-              <div className="text-xl font-bold text-purple-700">
-                {presentationScore.toFixed(2)}
-              </div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg border-2 border-green-500">
-              <div className="text-sm text-green-600 mb-1">
-                Total Nilai Dosen
-              </div>
-              <div className="text-2xl font-bold text-green-700">
-                {totalScore.toFixed(2)}
-              </div>
-            </div>
-          </div>
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              Total nilai dosen merupakan rata-rata dari nilai laporan dan
-              presentasi. Nilai akhir akan dihitung bersama dengan nilai
-              pembimbing lapangan.
-            </AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+      {/* Summary Alert */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          Nilai akhir mahasiswa akan dihitung dari kombinasi nilai dosen
+          pembimbing dan nilai pembimbing lapangan dengan bobot masing-masing
+          50%.
+        </AlertDescription>
+      </Alert>
 
       {/* Action Buttons */}
       <div className="flex gap-4 justify-end">

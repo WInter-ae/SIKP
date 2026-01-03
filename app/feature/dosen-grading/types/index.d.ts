@@ -40,15 +40,11 @@ export interface FieldSupervisorGrade {
 
 // Form data for grading input
 export interface GradingFormData {
-  // Laporan KP
-  reportSystematics: number; // Sistematika Penulisan (20%)
-  reportContent: number; // Isi dan Pembahasan (40%)
-  reportAnalysis: number; // Analisis dan Kesimpulan (40%)
-
-  // Presentasi & Ujian
-  presentationDelivery: number; // Penyampaian Materi (30%)
-  presentationMastery: number; // Penguasaan Materi (50%)
-  presentationQA: number; // Kemampuan Menjawab (20%)
+  // Penilaian Dosen Pembimbing
+  reportFormat: number; // Kesesuaian Laporan dengan Format (30%)
+  materialMastery: number; // Penguasaan Materi KP (30%)
+  analysisDesign: number; // Analisis dan Perancangan (30%)
+  attitudeEthics: number; // Sikap dan Etika (10%)
 
   notes?: string; // Catatan penilaian
 }
