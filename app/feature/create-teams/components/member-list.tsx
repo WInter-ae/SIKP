@@ -1,4 +1,9 @@
+import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { Button } from "~/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+
 import type { MemberListProps } from "../types";
+import { Users, Check, X, LogOut, XCircle } from "lucide-react";
 
 function MemberList({
   title,
@@ -11,30 +16,32 @@ function MemberList({
   onCancel,
 }: MemberListProps) {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-      <div className="bg-gray-100 px-6 py-3 font-semibold text-gray-800 border-b">
-        {title}
-      </div>
-      <div className="p-6">
+    <Card className="mb-6">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
         {members.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <i className="fa fa-users text-4xl mb-3 text-gray-300"></i>
+          <div className="text-center py-8 text-muted-foreground">
+            <Users className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
             <p>Tidak ada anggota</p>
           </div>
         ) : (
-          <ul>
+          <ul className="space-y-3">
             {members.map((member) => (
               <li
                 key={member.id}
                 className="flex justify-between items-center py-3 border-b last:border-b-0"
               >
                 <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-green-700 text-white flex items-center justify-center font-bold mr-4">
-                    {member.name.charAt(0)}
-                  </div>
+                  <Avatar className="h-10 w-10 mr-4">
+                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                      {member.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
-                    <div className="font-medium">{member.name}</div>
-                    <div className="text-sm text-gray-600">
+                    <div className="font-medium text-foreground">{member.name}</div>
+                    <div className="text-sm text-muted-foreground">
                       {member.role}
                       {member.nim && ` • ${member.nim}`}
                     </div>
@@ -42,45 +49,52 @@ function MemberList({
                 </div>
 
                 {showActions && (
-                  <div className="flex space-x-2">
-                    <button
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
                       onClick={() => onAccept?.(member.id)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm transition"
                     >
+                      <Check className="h-4 w-4 mr-1" />
                       Terima
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => onReject?.(member.id)}
-                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition"
                     >
+                      <X className="h-4 w-4 mr-1" />
                       Tolak
-                    </button>
+                    </Button>
                   </div>
                 )}
 
                 {showCancel && (
-                  <button
+                  <Button
+                    size="sm"
+                    variant="secondary"
                     onClick={() => onCancel?.(member.id)}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition"
                   >
+                    <XCircle className="h-4 w-4 mr-1" />
                     Batalkan
-                  </button>
+                  </Button>
                 )}
 
                 {!showActions && !showCancel && !member.isLeader && (
-                  <button
+                  <Button
+                    size="sm"
+                    variant="destructive"
                     onClick={() => onRemove?.(member.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm transition"
                   >
+                    <LogOut className="h-4 w-4 mr-1" />
                     Keluarkan
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}
           </ul>
         )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 

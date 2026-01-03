@@ -1,4 +1,17 @@
+// 1. External dependencies
+import { useState } from "react"
+import { Link, useNavigate } from "react-router"
+import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import * as z from "zod"
+import { Github } from "lucide-react"
+import { toast } from "sonner"
+
+// 2. Internal utilities
 import { cn } from "~/lib/utils"
+import { authClient } from "~/lib/auth-client"
+
+// 3. Components
 import { Button } from "~/components/ui/button"
 import {
   Field,
@@ -9,13 +22,6 @@ import {
   FieldSeparator,
 } from "~/components/ui/field"
 import { Input } from "~/components/ui/input"
-import { Github } from "lucide-react"
-import { Link, useNavigate } from "react-router"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { authClient } from "~/lib/auth-client"
-import { useState } from "react"
 
 // Schema validasi untuk form register
 const registerSchema = z
@@ -60,7 +66,7 @@ export function RegisterForm({
       password: "",
       confirmPassword: "",
     },
-    mode: "onBlur", // Validasi saat blur
+    mode: "onBlur",
   })
 
   const onSubmit = async (data: RegisterFormData) => {

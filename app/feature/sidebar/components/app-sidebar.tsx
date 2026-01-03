@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { GraduationCap } from "lucide-react"
+import { useLocation } from "react-router"
 
 import { NavMain } from "./nav-main"
 import { NavUser } from "./nav-user"
@@ -12,8 +13,8 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "~/components/ui/sidebar"
-import { getSidebarMenuByRole } from "../data/sidebar-data"
-import type { User } from "../types"
+import { getSidebarMenuByUrl } from "../data/sidebar-data"
+import type { User, UserRole } from "../types"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: User
@@ -29,8 +30,10 @@ const defaultUser: User = {
 }
 
 export function AppSidebar({ user = defaultUser, ...props }: AppSidebarProps) {
-  // Get menu items based on user role
-  const navItems = React.useMemo(() => getSidebarMenuByRole(user.role), [user.role])
+  const location = useLocation()
+  
+  // Get menu items based on current URL path
+  const navItems = React.useMemo(() => getSidebarMenuByUrl(location.pathname), [location.pathname])
 
   return (
     <Sidebar collapsible="icon" {...props}>

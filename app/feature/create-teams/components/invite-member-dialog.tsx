@@ -83,16 +83,16 @@ export function InviteMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl text-gray-900">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-gray-900">Undang Anggota Tim</DialogTitle>
-          <DialogDescription className="text-gray-700">
+          <DialogTitle>Undang Anggota Tim</DialogTitle>
+          <DialogDescription>
             Cari mahasiswa berdasarkan nama, NIM, atau email untuk diundang ke tim Anda.
           </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">
-          <Label htmlFor="search" className="text-gray-900">Cari Mahasiswa</Label>
+          <Label htmlFor="search">Cari Mahasiswa</Label>
           <div className="flex gap-2 mt-2">
             <Input
               id="search"
@@ -112,24 +112,24 @@ export function InviteMemberDialog({
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="mt-4 max-h-96 overflow-y-auto border rounded-lg">
-              <div className="bg-gray-50 px-4 py-2 font-semibold text-sm text-gray-700 border-b">
+              <div className="bg-muted px-4 py-2 font-semibold text-sm text-muted-foreground border-b">
                 Hasil Pencarian ({searchResults.length})
               </div>
               <ul className="divide-y">
                 {searchResults.map((student) => (
                   <li
                     key={student.id}
-                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-50"
+                    className="flex items-center justify-between px-4 py-3 hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">
+                      <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
                         {student.name.charAt(0)}
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-foreground">
                           {student.name}
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-muted-foreground">
                           {student.nim} • {student.email}
                         </div>
                       </div>
@@ -137,7 +137,6 @@ export function InviteMemberDialog({
                     <Button
                       size="sm"
                       onClick={() => handleInvite(student)}
-                      className="bg-green-600 hover:bg-green-700"
                     >
                       Undang
                     </Button>
@@ -148,14 +147,14 @@ export function InviteMemberDialog({
           )}
 
           {searchQuery.trim() && searchResults.length === 0 && !isSearching && (
-            <div className="mt-4 text-center py-8 text-gray-500">
+            <div className="mt-4 text-center py-8 text-muted-foreground">
               <p>Tidak ada mahasiswa ditemukan.</p>
               <p className="text-sm mt-1">Coba kata kunci lain.</p>
             </div>
           )}
 
           {!searchQuery.trim() && searchResults.length === 0 && (
-            <div className="mt-4 text-center py-8 text-gray-400">
+            <div className="mt-4 text-center py-8 text-muted-foreground">
               <p className="text-sm">
                 Masukkan nama, NIM, atau email untuk mencari mahasiswa
               </p>

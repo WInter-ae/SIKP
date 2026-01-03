@@ -1,7 +1,7 @@
 import {
   Archive,
-  BookOpen,
-  Building2,
+  Bell,
+  ClipboardCheck,
   FileText,
   FolderKanban,
   GraduationCap,
@@ -10,11 +10,9 @@ import {
   UserCircle,
   Users,
   FileCheck,
-  Mail,
   ClipboardList,
   BookMarked,
   Award,
-  type LucideIcon,
 } from "lucide-react"
 import type { NavItem, UserRole } from "../types"
 
@@ -83,12 +81,12 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Mentor Lapangan",
-    url: "#",
+    url: "/mahasiswa/mentor-lapangan",
     icon: UserCircle,
   },
   {
     title: "Laporan KP",
-    url: "#",
+    url: "/mahasiswa/kp/laporan",
     icon: BookMarked,
   },
   {
@@ -117,7 +115,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Pengantar",
-        url: "#",
+        url: "/admin/pengajuan-surat-pengantar",
       },
     ],
   },
@@ -128,7 +126,11 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Surat Balasan",
-        url: "#",
+        url: "/admin/surat-balasan",
+      },
+      {
+        title: "Persetujuan Pembimbing",
+        url: "/admin/persetujuan-pembimbing",
       },
     ],
   },
@@ -189,6 +191,10 @@ const dosenMenu: NavItem[] = [
     isActive: true,
     items: [
       {
+        title: "Verifikasi Judul",
+        url: "/dosen/kp/verifikasi-judul",
+      },
+      {
         title: "Verifikasi Sidang",
         url: "/dosen/kp/verifikasi-sidang",
       },
@@ -222,6 +228,45 @@ const dosenMenu: NavItem[] = [
   },
 ]
 
+// Menu untuk Pembimbing Lapangan (Mentor)
+const mentorMenu: NavItem[] = [
+  {
+    title: "Dashboard",
+    url: "/mentor",
+    icon: Home,
+  },
+  {
+    title: "Mentee",
+    url: "/mentor/mentee",
+    icon: Users,
+  },
+  {
+    title: "Penilaian",
+    url: "/mentor/penilaian",
+    icon: ClipboardCheck,
+  },
+  {
+    title: "Notifikasi",
+    url: "/mentor/notifikasi",
+    icon: Bell,
+  },
+  {
+    title: "Arsip",
+    url: "/mentor/arsip",
+    icon: Archive,
+  },
+  {
+    title: "Profil",
+    url: "/mentor/profil",
+    icon: UserCircle,
+  },
+  {
+    title: "Pengaturan",
+    url: "/mentor/pengaturan",
+    icon: Settings,
+  },
+]
+
 export function getSidebarMenuByRole(role: UserRole): NavItem[] {
   switch (role) {
     case "mahasiswa":
@@ -230,7 +275,26 @@ export function getSidebarMenuByRole(role: UserRole): NavItem[] {
       return adminMenu
     case "dosen":
       return dosenMenu
+    case "mentor":
+      return mentorMenu
     default:
       return mahasiswaMenu
   }
+}
+
+export function getSidebarMenuByUrl(pathname: string): NavItem[] {
+  if (pathname.startsWith("/admin")) {
+    return adminMenu
+  }
+  if (pathname.startsWith("/dosen")) {
+    return dosenMenu
+  }
+  if (pathname.startsWith("/mentor")) {
+    return mentorMenu
+  }
+  if (pathname.startsWith("/mahasiswa")) {
+    return mahasiswaMenu
+  }
+  // Default ke mahasiswa jika tidak ada yang cocok
+  return mahasiswaMenu
 }

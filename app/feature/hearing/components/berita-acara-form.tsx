@@ -60,7 +60,7 @@ export function BeritaAcaraForm({
 
   return (
     <Card className="shadow-lg border-2">
-      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950 dark:to-emerald-950">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
         <CardTitle className="text-2xl">Form Berita Acara Sidang</CardTitle>
         <CardDescription className="text-base">
           Lengkapi data berita acara untuk pengujian sidang Kerja Praktik
@@ -182,7 +182,7 @@ export function BeritaAcaraForm({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full sm:flex-1 bg-green-700 hover:bg-green-800 h-11"
+              className="w-full sm:flex-1 h-11"
             >
               {isSubmitting ? (
                 <>
