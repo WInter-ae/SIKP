@@ -92,20 +92,20 @@ export default function RepositoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Repositori Laporan KP
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Temukan dan pelajari laporan Kerja Praktik dari mahasiswa
           </p>
         </div>
 
         {/* Search */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
@@ -119,7 +119,7 @@ export default function RepositoryPage() {
 
         {/* Results Count */}
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Menampilkan{" "}
             <span className="font-semibold">{filteredReports.length}</span> dari{" "}
             <span className="font-semibold">{MOCK_REPORTS.length}</span>{" "}
