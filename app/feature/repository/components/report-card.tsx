@@ -15,27 +15,27 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "draft":
-        return "bg-gray-200 text-gray-700";
+        return "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
       case "review":
-        return "bg-yellow-200 text-yellow-800";
+        return "bg-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
       case "approved":
-        return "bg-blue-200 text-blue-800";
+        return "bg-blue-200 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
       case "published":
-        return "bg-green-200 text-green-800";
+        return "bg-green-200 text-green-800 dark:bg-green-900/30 dark:text-green-400";
       default:
-        return "bg-gray-200 text-gray-700";
+        return "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
     }
   };
 
   return (
     <Card
-      className="hover:shadow-lg transition-shadow cursor-pointer group"
+      className="hover:shadow-lg transition-shadow cursor-pointer group dark:bg-gray-800 dark:border-gray-700"
       onClick={() => onClick(report.id)}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <h3 className="font-semibold text-lg text-gray-900 group-hover:text-green-700 transition-colors line-clamp-2">
+            <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors line-clamp-2">
               {report.title}
             </h3>
             <Badge className={`mt-2 ${getStatusBadgeColor(report.status)}`}>
@@ -59,7 +59,7 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
         <div className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
             <AvatarImage src={report.student.photo} alt={report.student.name} />
-            <AvatarFallback className="text-xs">
+            <AvatarFallback className="text-xs dark:bg-gray-700 dark:text-gray-200">
               {report.student.name
                 .split(" ")
                 .map((n) => n[0])
@@ -67,27 +67,27 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
               {report.student.name}
             </p>
-            <p className="text-xs text-gray-500">{report.student.studentId}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{report.student.studentId}</p>
           </div>
         </div>
 
         {/* Company */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <Building2 className="h-4 w-4 flex-shrink-0" />
           <span className="truncate">{report.company}</span>
         </div>
 
         {/* Supervisor */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <User className="h-4 w-4 flex-shrink-0" />
           <span className="truncate">{report.supervisor.name}</span>
         </div>
 
         {/* Year & Semester */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
+        <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
           <Calendar className="h-4 w-4 flex-shrink-0" />
           <span>
             {report.year} - {report.semester}
@@ -112,11 +112,11 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
         </div>
 
         {/* Abstract */}
-        <p className="text-sm text-gray-600 line-clamp-2">{report.abstract}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{report.abstract}</p>
 
         {/* Stats */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center gap-4 text-xs text-gray-500">
+        <div className="flex items-center justify-between pt-2 border-t dark:border-gray-700">
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1">
               <Eye className="h-3.5 w-3.5" />
               <span>{report.viewCount}</span>
@@ -127,7 +127,7 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
             </div>
           </div>
           {report.fileUrl && (
-            <div className="flex items-center gap-1 text-xs text-green-700">
+            <div className="flex items-center gap-1 text-xs text-green-700 dark:text-green-400">
               <FileText className="h-3.5 w-3.5" />
               <span>PDF</span>
             </div>

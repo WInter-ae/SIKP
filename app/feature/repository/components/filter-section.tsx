@@ -31,17 +31,17 @@ export function FilterSection({
   };
 
   return (
-    <Card>
+    <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardContent className="p-4">
         <div className="flex items-center gap-2 mb-4">
-          <Filter className="h-5 w-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-700">Filter & Urutkan</h3>
+          <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+          <h3 className="font-semibold text-gray-700 dark:text-gray-300">Filter & Urutkan</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Year */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
               Tahun
             </label>
             <Select
@@ -53,7 +53,7 @@ export function FilterSection({
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                 <SelectValue placeholder="Semua Tahun" />
               </SelectTrigger>
               <SelectContent>
@@ -69,7 +69,7 @@ export function FilterSection({
 
           {/* Semester */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
               Periode
             </label>
             <Select
@@ -81,10 +81,10 @@ export function FilterSection({
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                 <SelectValue placeholder="Semua Periode" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                 {semesterOptions.map((semester) => (
                   <SelectItem key={semester} value={semester}>
                     {semester}
@@ -96,7 +96,7 @@ export function FilterSection({
 
           {/* Category */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
               Kategori
             </label>
             <Select
@@ -108,10 +108,10 @@ export function FilterSection({
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                 <SelectValue placeholder="Semua Kategori" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                 <SelectItem value="Semua">Semua Kategori</SelectItem>
                 {categoryOptions.map((category) => (
                   <SelectItem key={category} value={category}>
@@ -124,7 +124,7 @@ export function FilterSection({
 
           {/* Status */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
               Status
             </label>
             <Select
@@ -136,10 +136,10 @@ export function FilterSection({
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                 <SelectValue placeholder="Semua Status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                 {statusOptions.map((status) => (
                   <SelectItem key={status} value={status}>
                     {status === "Semua" ? "Semua Status" : status}
@@ -151,7 +151,7 @@ export function FilterSection({
 
           {/* Sort By */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
               Urutkan
             </label>
             <Select
@@ -168,10 +168,10 @@ export function FilterSection({
                 })
               }
             >
-              <SelectTrigger>
+              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                 <SelectValue placeholder="Urutkan" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
                 {sortOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
