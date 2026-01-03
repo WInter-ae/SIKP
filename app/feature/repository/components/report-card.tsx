@@ -6,6 +6,7 @@ import {
   Download,
   FileText,
 } from "lucide-react";
+import { Link } from "react-router";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -27,17 +28,24 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
     }
   };
 
+  const handleClick = () => {
+    onClick(report.id);
+  };
+
   return (
-    <Card
-      className="hover:shadow-lg transition-shadow cursor-pointer group dark:bg-gray-800 dark:border-gray-700"
-      onClick={() => onClick(report.id)}
-    >
+    <Card className="hover:shadow-lg transition-shadow group dark:bg-gray-800 dark:border-gray-700">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">
-            <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors line-clamp-2">
-              {report.title}
-            </h3>
+            <Link
+              to={`/mahasiswa/repositori/${report.id}`}
+              className="block"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-400 hover:text-green-700 dark:hover:text-green-400 transition-colors line-clamp-2 cursor-pointer">
+                {report.title}
+              </h3>
+            </Link>
             <Badge className={`mt-2 ${getStatusBadgeColor(report.status)}`}>
               {report.status}
             </Badge>
