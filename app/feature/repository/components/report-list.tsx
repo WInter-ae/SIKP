@@ -1,14 +1,20 @@
-import { ReportCard } from "./report-card";
+import { InternReportCard } from "./report-card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import type { ReportListProps } from "../types";
+import type { Report } from "../types";
 
-export function ReportList({
+interface InternReportListProps {
+  reports: Report[];
+  isLoading?: boolean;
+  onReportClick: (id: string) => void;
+}
+
+function InternReportList({
   reports,
   isLoading = false,
   onReportClick,
-}: ReportListProps) {
+}: InternReportListProps) {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -38,8 +44,10 @@ export function ReportList({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {reports.map((item) => (
-        <ReportCard key={item.id} report={item} onClick={onReportClick} />
+        <InternReportCard key={item.id} report={item} onClick={onReportClick} />
       ))}
     </div>
   );
 }
+
+export { InternReportList };

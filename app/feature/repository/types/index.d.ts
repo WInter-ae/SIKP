@@ -32,27 +32,3 @@ export interface FilterOptions {
   status?: string;
   sortBy?: "newest" | "oldest" | "popular" | "titleAZ" | "titleZA";
 }
-
-export interface SearchBarProps {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}
-
-export interface FilterSectionProps {
-  filters: FilterOptions;
-  onFilterChange: (filters: FilterOptions) => void;
-  yearOptions: number[];
-  categoryOptions: string[];
-}
-
-export interface ReportCardProps {
-  report: Report;
-  onClick: (id: string) => void;
-}
-
-export interface ReportListProps {
-  reports: Report[];
-  isLoading?: boolean;
-  onReportClick: (id: string) => void;
-}

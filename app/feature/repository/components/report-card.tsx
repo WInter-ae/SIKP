@@ -10,9 +10,14 @@ import { Link } from "react-router";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import type { ReportCardProps } from "../types";
+import type { Report } from "../types";
 
-export function ReportCard({ report, onClick }: ReportCardProps) {
+interface InternReportCardProps {
+  report: Report;
+  onClick: (id: string) => void;
+}
+
+export function InternReportCard({ report, onClick }: InternReportCardProps) {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "draft":
@@ -29,7 +34,7 @@ export function ReportCard({ report, onClick }: ReportCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow group dark:bg-gray-800 dark:border-gray-700">
+    <Card className="hover:shadow-lg transition-shadow group bg-card">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1">

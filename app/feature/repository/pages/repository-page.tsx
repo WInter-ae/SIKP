@@ -2,9 +2,10 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { SearchBar } from "../components/search-bar";
 import { FilterSection } from "../components/filter-section";
-import { ReportList } from "../components/report-list";
+import { InternReportList } from "../components/report-list";
 import { MOCK_REPORTS } from "../data/mock-reports";
 import type { FilterOptions } from "../types";
+import { Card } from "~/components/ui/card";
 
 export default function RepositoryPage() {
   const navigate = useNavigate();
@@ -92,22 +93,22 @@ export default function RepositoryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <Card className="p-6">
+          <h1 className="text-3xl font-bold mb-2">
             Repositori Laporan KP
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p>
             Temukan dan pelajari laporan Kerja Praktik dari mahasiswa
           </p>
-        </div>
+        </Card>
 
         {/* Search */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+        <Card className="p-6">
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
+        </Card>
 
         {/* Filters */}
         <FilterSection
@@ -119,7 +120,7 @@ export default function RepositoryPage() {
 
         {/* Results Count */}
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm">
             Menampilkan{" "}
             <span className="font-semibold">{filteredReports.length}</span> dari{" "}
             <span className="font-semibold">{MOCK_REPORTS.length}</span>{" "}
@@ -128,7 +129,7 @@ export default function RepositoryPage() {
         </div>
 
         {/* Reports List */}
-        <ReportList reports={filteredReports} onReportClick={handleReportClick} />
+        <InternReportList reports={filteredReports} onReportClick={handleReportClick} />
       </div>
     </div>
   );
