@@ -42,7 +42,7 @@ export default function LecturerSelectionForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Dosen Pembimbing KP</CardTitle>
+        <CardTitle>Pengesahan Dosen Pembimbing KP</CardTitle>
       </CardHeader>
       <CardContent>
         {isFromTeam && currentLecturer ? (
@@ -56,7 +56,7 @@ export default function LecturerSelectionForm({
           <Alert className="mb-4 border-l-4 border-blue-500 bg-blue-50">
             <Info className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              Pilih dosen pembimbing untuk membimbing laporan KP Anda (Opsional)
+              Pilih dosen pembimbing untuk pengesahan laporan KP Anda (Opsional)
             </AlertDescription>
           </Alert>
         )}
