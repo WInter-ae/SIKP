@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -27,21 +28,13 @@ import {
   Building2,
   Calendar,
   AlertCircle,
-  Pencil,
+  Eye,
 } from "lucide-react";
-import { toast } from "sonner";
 
-import SignLogbookDialog from "../components/sign-logbook-dialog";
 import type { LogbookEntry, Student } from "../types/logbook";
 
-export default function MentorLogbookPage() {
-  const [selectedLogbook, setSelectedLogbook] = useState<LogbookEntry | null>(
-    null
-  );
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  // Mock data - mahasiswa yang sedang magang di PT ini
-  const students: Student[] = [
+// Mock data - mahasiswa yang sedang magang di PT ini
+const MOCK_STUDENTS: Student[] = [
     {
       id: "1",
       name: "Adam Ramadhan",
@@ -64,140 +57,145 @@ export default function MentorLogbookPage() {
     },
   ];
 
-  // Mock data - logbook entries yang perlu diparaf
-  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([
+// Mock data - logbook entries yang perlu diparaf
+const MOCK_LOGBOOK_ENTRIES: LogbookEntry[] = [
     {
       id: "1",
       studentId: "1",
       studentName: "Adam Ramadhan",
-      date: "2024-01-15",
-      description: "Minggu Pertama",
+      date: "2024-01-02",
+      description: "Hari Pertama - Orientasi",
       activities:
-        "Mempelajari struktur database sistem inventory\nMelakukan analisis kebutuhan sistem\nDiskusi dengan tim developer",
-      createdAt: "2024-01-15T10:00:00",
+        "Orientasi kantor dan pengenalan tim\nSetup workstation dan akun email\nMempelajari struktur organisasi perusahaan",
+      createdAt: "2024-01-02T10:00:00",
+      mentorSignature: {
+        signedAt: "2024-01-03T14:30:00",
+        signedBy: "mentor1",
+        mentorName: "Budi Santoso",
+        mentorPosition: "Senior Developer",
+        status: "approved",
+        notes: "Orientasi berjalan baik",
+      },
     },
     {
       id: "2",
       studentId: "1",
       studentName: "Adam Ramadhan",
-      date: "2024-01-22",
-      description: "Minggu Kedua",
+      date: "2024-01-03",
+      description: "Setup Development Environment",
       activities:
-        "Implementasi fitur login dan autentikasi\nPembuatan UI dashboard admin\nTesting fitur yang sudah dibuat",
-      createdAt: "2024-01-22T10:00:00",
+        "Install tools development (VS Code, Git, Node.js)\nSetup database lokal\nClone repository project",
+      createdAt: "2024-01-03T10:00:00",
       mentorSignature: {
-        signedAt: "2024-01-23T14:30:00",
+        signedAt: "2024-01-04T09:00:00",
         signedBy: "mentor1",
         mentorName: "Budi Santoso",
         mentorPosition: "Senior Developer",
         status: "approved",
-        notes: "Pekerjaan bagus, lanjutkan!",
+        notes: "Setup berhasil dilakukan",
       },
     },
     {
       id: "3",
-      studentId: "2",
-      studentName: "Robin Setiawan",
-      date: "2024-01-15",
-      description: "Minggu Pertama",
+      studentId: "1",
+      studentName: "Adam Ramadhan",
+      date: "2024-01-04",
+      description: "Mempelajari Codebase",
       activities:
-        "Orientasi kantor dan pengenalan tim\nSetup development environment\nMempelajari tech stack yang digunakan",
-      createdAt: "2024-01-15T09:00:00",
+        "Membaca dokumentasi project\nMempelajari struktur folder dan arsitektur\nMemahami flow aplikasi",
+      createdAt: "2024-01-04T10:00:00",
     },
     {
       id: "4",
       studentId: "1",
       studentName: "Adam Ramadhan",
-      date: "2024-01-29",
-      description: "Minggu Ketiga",
+      date: "2024-01-08",
+      description: "Implementasi Fitur Login",
       activities:
-        "Integrasi API payment gateway\nBug fixing fitur checkout\nCode review dengan senior developer",
-      createdAt: "2024-01-29T10:00:00",
+        "Membuat form login UI\nImplementasi validasi form\nIntegrasi dengan API backend",
+      createdAt: "2024-01-08T10:00:00",
       mentorSignature: {
-        signedAt: "2024-01-30T09:15:00",
+        signedAt: "2024-01-09T11:00:00",
         signedBy: "mentor1",
         mentorName: "Budi Santoso",
         mentorPosition: "Senior Developer",
         status: "revision",
-        notes: "Perlu perbaikan pada error handling di API integration",
+        notes: "Perlu perbaikan pada error handling",
       },
     },
-  ]);
+    {
+      id: "5",
+      studentId: "1",
+      studentName: "Adam Ramadhan",
+      date: "2024-01-09",
+      description: "Revisi Fitur Login",
+      activities:
+        "Memperbaiki error handling sesuai feedback\nMenambahkan loading state\nTesting berbagai skenario error",
+      createdAt: "2024-01-09T10:00:00",
+      mentorSignature: {
+        signedAt: "2024-01-10T14:00:00",
+        signedBy: "mentor1",
+        mentorName: "Budi Santoso",
+        mentorPosition: "Senior Developer",
+        status: "approved",
+        notes: "Sudah bagus, approved!",
+      },
+    },
+    {
+      id: "6",
+      studentId: "2",
+      studentName: "Robin Setiawan",
+      date: "2024-01-02",
+      description: "Orientasi Perusahaan",
+      activities:
+        "Tour kantor\nPengenalan dengan tim\nPenjelasan budaya kerja perusahaan",
+      createdAt: "2024-01-02T09:00:00",
+      mentorSignature: {
+        signedAt: "2024-01-03T10:00:00",
+        signedBy: "mentor1",
+        mentorName: "Budi Santoso",
+        mentorPosition: "Senior Developer",
+        status: "approved",
+      },
+    },
+    {
+      id: "7",
+      studentId: "2",
+      studentName: "Robin Setiawan",
+      date: "2024-01-03",
+      description: "Setup & Training",
+      activities:
+        "Setup development tools\nTraining penggunaan version control\nMempelajari workflow tim",
+      createdAt: "2024-01-03T09:00:00",
+    },
+    {
+      id: "8",
+      studentId: "1",
+      studentName: "Adam Ramadhan",
+      date: "2024-01-15",
+      description: "Dashboard UI Development",
+      activities:
+        "Membuat layout dashboard\nImplementasi navigation sidebar\nMenambahkan chart components",
+      createdAt: "2024-01-15T10:00:00",
+    },
+  ];
 
-  const handleSignLogbook = (
-    logbookId: string,
-    status: "approved" | "revision" | "rejected",
-    notes: string
-  ) => {
-    const signature = {
-      signedAt: new Date().toISOString(),
-      signedBy: "mentor1",
-      mentorName: "Budi Santoso",
-      mentorPosition: "Senior Developer",
-      status,
-      notes: notes || undefined,
-    };
+export default function MentorLogbookPage() {
+  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>(MOCK_LOGBOOK_ENTRIES);
 
-    setLogbookEntries((prev) =>
-      prev.map((entry) =>
-        entry.id === logbookId
-          ? { ...entry, mentorSignature: signature }
-          : entry
-      )
-    );
+  // Calculate statistics per student
+  const getStudentStats = (studentId: string) => {
+    const studentEntries = logbookEntries.filter((e) => e.studentId === studentId);
+    const total = studentEntries.length;
+    const approved = studentEntries.filter((e) => e.mentorSignature?.status === "approved").length;
+    const pending = studentEntries.filter((e) => !e.mentorSignature).length;
+    const revision = studentEntries.filter((e) => e.mentorSignature?.status === "revision").length;
 
-    const statusText =
-      status === "approved"
-        ? "disetujui"
-        : status === "revision"
-          ? "diminta revisi"
-          : "ditolak";
-    toast.success(`Logbook berhasil ${statusText}!`);
+    return { total, approved, pending, revision };
   };
 
-  const handleOpenDialog = (logbook: LogbookEntry) => {
-    setSelectedLogbook(logbook);
-    setIsDialogOpen(true);
-  };
-
-  const getStatusBadge = (entry: LogbookEntry) => {
-    if (!entry.mentorSignature) {
-      return (
-        <Badge variant="outline" className="bg-gray-50">
-          <Clock className="w-3 h-3 mr-1" />
-          Menunggu Paraf
-        </Badge>
-      );
-    }
-
-    switch (entry.mentorSignature.status) {
-      case "approved":
-        return (
-          <Badge className="bg-green-500">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Disetujui
-          </Badge>
-        );
-      case "revision":
-        return (
-          <Badge className="bg-yellow-500">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Perlu Revisi
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge variant="destructive">
-            <XCircle className="w-3 h-3 mr-1" />
-            Ditolak
-          </Badge>
-        );
-    }
-  };
-
-  const pendingCount = logbookEntries.filter(
-    (entry) => !entry.mentorSignature
-  ).length;
+  // Calculate global statistics
+  const pendingCount = logbookEntries.filter((entry) => !entry.mentorSignature).length;
   const approvedCount = logbookEntries.filter(
     (entry) => entry.mentorSignature?.status === "approved"
   ).length;
@@ -258,7 +256,7 @@ export default function MentorLogbookPage() {
                     <p className="text-sm text-muted-foreground">
                       Total Mahasiswa
                     </p>
-                    <p className="text-3xl font-bold">{students.length}</p>
+                    <p className="text-3xl font-bold">{MOCK_STUDENTS.length}</p>
                   </div>
                   <User className="h-8 w-8 text-blue-500" />
                 </div>
@@ -304,47 +302,117 @@ export default function MentorLogbookPage() {
             </Card>
           </div>
 
-          {/* Students List */}
+          {/* Students List with Logbook Table */}
           <Card>
             <CardHeader>
-              <CardTitle>Mahasiswa Aktif</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Tabel Mahasiswa & Logbook
+              </CardTitle>
               <CardDescription>
-                Daftar mahasiswa yang sedang magang di perusahaan ini
+                Daftar mahasiswa dengan statistik logbook mereka
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {students.map((student) => (
-                  <div
-                    key={student.id}
-                    className="flex items-center gap-4 p-4 border rounded-lg"
-                  >
-                    <Avatar>
-                      <AvatarImage src={student.photo} />
-                      <AvatarFallback>
-                        {student.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="font-medium">{student.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {student.nim} • {student.major}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-muted-foreground">
-                        Periode Magang
-                      </p>
-                      <p className="text-sm font-medium">
-                        {new Date(student.startDate).toLocaleDateString("id-ID")}{" "}
-                        - {new Date(student.endDate).toLocaleDateString("id-ID")}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <div className="border rounded-lg overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Mahasiswa</TableHead>
+                      <TableHead>NIM</TableHead>
+                      <TableHead>Program Studi</TableHead>
+                      <TableHead>Periode Magang</TableHead>
+                      <TableHead className="text-center">Total Logbook</TableHead>
+                      <TableHead className="text-center">Disetujui</TableHead>
+                      <TableHead className="text-center">Menunggu</TableHead>
+                      <TableHead className="text-center">Revisi</TableHead>
+                      <TableHead className="text-center">Aksi</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {MOCK_STUDENTS.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8">
+                          <User className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-muted-foreground">
+                            Belum ada mahasiswa yang terdaftar
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      MOCK_STUDENTS.map((student) => {
+                        const stats = getStudentStats(student.id);
+                        return (
+                          <TableRow key={student.id}>
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar>
+                                  <AvatarImage src={student.photo} />
+                                  <AvatarFallback>
+                                    {student.name
+                                      .split(" ")
+                                      .map((n) => n[0])
+                                      .join("")}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium">{student.name}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {student.university}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-sm">
+                              {student.nim}
+                            </TableCell>
+                            <TableCell className="text-sm">{student.major}</TableCell>
+                            <TableCell className="text-sm">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                  <p>{new Date(student.startDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short" })}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    s/d {new Date(student.endDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline">{stats.total}</Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge className="bg-green-500">
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                                {stats.approved}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline" className="bg-yellow-50">
+                                <Clock className="w-3 h-3 mr-1" />
+                                {stats.pending}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge className="bg-yellow-500">
+                                <AlertCircle className="w-3 h-3 mr-1" />
+                                {stats.revision}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Button variant="outline" size="sm" asChild>
+                                <Link to={`/mentor/logbook-detail/${student.id}`}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  Detail
+                                </Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
@@ -358,156 +426,8 @@ export default function MentorLogbookPage() {
               </AlertDescription>
             </Alert>
           )}
-
-          {/* Logbook Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Daftar Logbook
-              </CardTitle>
-              <CardDescription>
-                Berikan paraf dan catatan untuk setiap logbook mahasiswa
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Tanggal</TableHead>
-                    <TableHead>Mahasiswa</TableHead>
-                    <TableHead>Deskripsi</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logbookEntries.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
-                        <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                        <p className="text-muted-foreground">
-                          Belum ada logbook yang disubmit
-                        </p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    logbookEntries.map((entry) => (
-                      <TableRow key={entry.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {new Date(entry.date).toLocaleDateString("id-ID")}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{entry.studentName}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {entry.description}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm line-clamp-2 max-w-xs">
-                            {entry.activities}
-                          </p>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(entry)}</TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant={
-                              entry.mentorSignature ? "outline" : "default"
-                            }
-                            onClick={() => handleOpenDialog(entry)}
-                          >
-                            <Pencil className="h-4 w-4 mr-1" />
-                            {entry.mentorSignature ? "Edit Paraf" : "Beri Paraf"}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Recent Activity */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Aktivitas Terkini</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {logbookEntries
-                  .filter((entry) => entry.mentorSignature)
-                  .slice(0, 5)
-                  .map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-start gap-3 text-sm"
-                    >
-                      <div
-                        className={`mt-0.5 ${
-                          entry.mentorSignature?.status === "approved"
-                            ? "text-green-500"
-                            : entry.mentorSignature?.status === "revision"
-                              ? "text-yellow-500"
-                              : "text-red-500"
-                        }`}
-                      >
-                        {entry.mentorSignature?.status === "approved" ? (
-                          <CheckCircle className="h-5 w-5" />
-                        ) : entry.mentorSignature?.status === "revision" ? (
-                          <AlertCircle className="h-5 w-5" />
-                        ) : (
-                          <XCircle className="h-5 w-5" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">
-                          Logbook {entry.studentName} -{" "}
-                          {new Date(entry.date).toLocaleDateString("id-ID")}
-                        </p>
-                        <p className="text-muted-foreground">
-                          {entry.mentorSignature?.status === "approved"
-                            ? "Disetujui"
-                            : entry.mentorSignature?.status === "revision"
-                              ? "Diminta revisi"
-                              : "Ditolak"}
-                          {entry.mentorSignature?.notes &&
-                            ` - ${entry.mentorSignature.notes}`}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {entry.mentorSignature &&
-                            new Date(
-                              entry.mentorSignature.signedAt
-                            ).toLocaleString("id-ID")}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                {logbookEntries.filter((entry) => entry.mentorSignature)
-                  .length === 0 && (
-                  <p className="text-center text-muted-foreground py-4">
-                    Belum ada aktivitas
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
-
-      {/* Sign Dialog */}
-      <SignLogbookDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        logbook={selectedLogbook}
-        onSign={handleSignLogbook}
-      />
     </>
   );
 }
