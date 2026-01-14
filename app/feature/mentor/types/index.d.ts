@@ -31,6 +31,7 @@ export interface Notification {
   message: string;
   timestamp: string;
   isRead: boolean;
+  link?: string; // Optional link to navigate to related page
 }
 
 // Penilaian Page Types

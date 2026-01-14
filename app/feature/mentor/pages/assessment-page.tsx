@@ -97,12 +97,12 @@ function AssessmentPage() {
     e.preventDefault();
 
     if (!selectedMentee) {
-      toast.error("Mohon pilih mentee terlebih dahulu");
+      toast.error("Mohon pilih mahasiswa terlebih dahulu");
       return;
     }
 
     toast.success(
-      `Penilaian berhasil disimpan!\nMentee: ${MENTEE_LIST.find((m) => m.id === selectedMentee)?.name}\nNilai Rata-rata: ${totalScore.toFixed(1)}`
+      `Penilaian berhasil disimpan!\nMahasiswa: ${MENTEE_LIST.find((m) => m.id === selectedMentee)?.name}\nNilai Rata-rata: ${totalScore.toFixed(1)}`
     );
 
     setSelectedMentee("");
@@ -113,14 +113,14 @@ function AssessmentPage() {
   return (
     <div className="p-6">
       <PageHeader
-        title="Penilaian Mentee"
-        description="Berikan penilaian untuk mahasiswa bimbingan Anda"
+        title="Penilaian Mahasiswa Magang"
+        description="Berikan penilaian untuk mahasiswa yang magang di perusahaan Anda"
       />
 
       <form onSubmit={handleSubmit}>
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Pilih Mentee</CardTitle>
+            <CardTitle>Pilih Mahasiswa</CardTitle>
             <CardDescription>Pilih mahasiswa yang akan dinilai</CardDescription>
           </CardHeader>
           <CardContent>
@@ -128,7 +128,7 @@ function AssessmentPage() {
               <Label htmlFor="mentee">Mahasiswa</Label>
               <Select value={selectedMentee} onValueChange={setSelectedMentee}>
                 <SelectTrigger id="mentee">
-                  <SelectValue placeholder="Pilih mentee" />
+                  <SelectValue placeholder="Pilih mahasiswa" />
                 </SelectTrigger>
                 <SelectContent>
                   {MENTEE_LIST.map((mentee) => (

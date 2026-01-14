@@ -21,14 +21,13 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   CheckCircle,
-  XCircle,
   Clock,
   FileText,
   User,
   Building2,
   Calendar,
-  AlertCircle,
   Eye,
+  AlertCircle,
 } from "lucide-react";
 
 import type { LogbookEntry, Student } from "../types/logbook";
@@ -199,9 +198,6 @@ export default function MentorLogbookPage() {
   const approvedCount = logbookEntries.filter(
     (entry) => entry.mentorSignature?.status === "approved"
   ).length;
-  const revisionCount = logbookEntries.filter(
-    (entry) => entry.mentorSignature?.status === "revision"
-  ).length;
 
   return (
     <>
@@ -248,7 +244,7 @@ export default function MentorLogbookPage() {
           </Card>
 
           {/* Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Card>
               <CardContent className="pt-6">
                 <div className="flex items-center justify-between">
@@ -272,7 +268,7 @@ export default function MentorLogbookPage() {
                     </p>
                     <p className="text-3xl font-bold">{pendingCount}</p>
                   </div>
-                  <Clock className="h-8 w-8 text-gray-500" />
+                  <Clock className="h-8 w-8 text-yellow-500" />
                 </div>
               </CardContent>
             </Card>
@@ -285,18 +281,6 @@ export default function MentorLogbookPage() {
                     <p className="text-3xl font-bold">{approvedCount}</p>
                   </div>
                   <CheckCircle className="h-8 w-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Perlu Revisi</p>
-                    <p className="text-3xl font-bold">{revisionCount}</p>
-                  </div>
-                  <AlertCircle className="h-8 w-8 text-yellow-500" />
                 </div>
               </CardContent>
             </Card>

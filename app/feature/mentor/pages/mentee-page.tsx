@@ -50,12 +50,12 @@ function MenteePage() {
   return (
     <div className="p-6">
       <PageHeader
-        title="Daftar Mentee"
-        description="Mahasiswa yang berada dalam bimbingan Anda"
+        title="Mahasiswa Magang"
+        description="Daftar mahasiswa yang magang di perusahaan Anda"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <StatsCard title="Total Mentee" value={MENTEE_LIST.length} />
+        <StatsCard title="Total Mahasiswa" value={MENTEE_LIST.length} />
         <StatsCard
           title="Rata-rata Progress"
           value={`${averageProgress.toFixed(1)}%`}

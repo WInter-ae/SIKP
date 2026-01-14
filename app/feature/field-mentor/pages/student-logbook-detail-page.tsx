@@ -412,7 +412,7 @@ function StudentLogbookDetailPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Detail Logbook Mahasiswa</h1>
             <p className="text-muted-foreground mt-1">
-              Periode logbook lengkap dari{" "}
+              Periode magang dari{" "}
               {new Date(mockWorkPeriod.startDate).toLocaleDateString("id-ID")} hingga{" "}
               {new Date(mockWorkPeriod.endDate).toLocaleDateString("id-ID")}
             </p>

@@ -16,10 +16,11 @@ const NOTIFICATIONS: Notification[] = [
   {
     id: "1",
     type: "info",
-    title: "Mentee Baru Ditambahkan",
-    message: "Ahmad Fauzi telah ditambahkan sebagai mentee Anda",
+    title: "Mahasiswa Magang Baru",
+    message: "Ahmad Fauzi telah ditambahkan sebagai mahasiswa magang Anda",
     timestamp: "2 jam yang lalu",
     isRead: false,
+    link: "/mentor/mentee/1",
   },
   {
     id: "2",
@@ -28,6 +29,7 @@ const NOTIFICATIONS: Notification[] = [
     message: "Penilaian untuk Siti Aminah berhasil disimpan ke sistem",
     timestamp: "5 jam yang lalu",
     isRead: false,
+    link: "/mentor/mentee/2",
   },
   {
     id: "3",
@@ -36,14 +38,16 @@ const NOTIFICATIONS: Notification[] = [
     message: "Terdapat 3 logbook dari Budi Santoso yang perlu diverifikasi",
     timestamp: "1 hari yang lalu",
     isRead: true,
+    link: "/mentor/logbook-detail/3",
   },
   {
     id: "4",
     type: "info",
     title: "Permintaan Pertemuan",
-    message: "Ahmad Fauzi meminta jadwal pertemuan untuk bimbingan",
+    message: "Ahmad Fauzi meminta jadwal pertemuan untuk diskusi progress magang",
     timestamp: "2 hari yang lalu",
     isRead: true,
+    link: "/mentor/mentee/1",
   },
   {
     id: "5",
@@ -52,6 +56,7 @@ const NOTIFICATIONS: Notification[] = [
     message: "Logbook minggu ke-4 dari Siti Aminah telah disetujui",
     timestamp: "3 hari yang lalu",
     isRead: true,
+    link: "/mentor/logbook-detail/2",
   },
 ];
 
