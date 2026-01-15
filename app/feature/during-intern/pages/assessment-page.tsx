@@ -32,10 +32,11 @@ function AssessmentPage() {
   const assessments = [
     {
       id: 1,
-      category: "Kedisiplinan",
+      category: "Kehadiran",
       score: 85,
       maxScore: 100,
-      description: "Kehadiran dan ketepatan waktu",
+      weight: 20,
+      description: "Tingkat kehadiran dan ketepatan waktu",
       icon: Clock,
     },
     {
@@ -43,24 +44,36 @@ function AssessmentPage() {
       category: "Kerjasama",
       score: 90,
       maxScore: 100,
+      weight: 30,
       description: "Kemampuan bekerja dalam tim",
       icon: Users,
     },
     {
       id: 3,
-      category: "Inisiatif",
-      score: 80,
+      category: "Sikap, Etika dan Tingkah Laku",
+      score: 88,
       maxScore: 100,
-      description: "Kemampuan mengambil inisiatif dalam pekerjaan",
-      icon: Lightbulb,
+      weight: 20,
+      description: "Sikap profesional, etika kerja, dan perilaku di tempat kerja",
+      icon: Users,
     },
     {
       id: 4,
-      category: "Kualitas Kerja",
-      score: 88,
+      category: "Prestasi Kerja",
+      score: 87,
       maxScore: 100,
-      description: "Hasil kerja sesuai standar yang ditetapkan",
+      weight: 20,
+      description: "Kualitas dan hasil kerja yang dicapai",
       icon: CheckCircle2,
+    },
+    {
+      id: 5,
+      category: "Kreatifitas",
+      score: 82,
+      maxScore: 100,
+      weight: 10,
+      description: "Kemampuan berpikir kreatif dan inovatif",
+      icon: Lightbulb,
     },
   ];
 
@@ -70,8 +83,10 @@ function AssessmentPage() {
     company: "PT. Teknologi Indonesia",
   };
 
-  const totalScore =
-    assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length;
+  // Hitung weighted average
+  const totalScore = assessments.reduce((sum, a) => {
+    return sum + (a.score * a.weight) / 100;
+  }, 0);
 
   const getScoreColor = (score: number) => {
     if (score >= 85) return "text-green-600";
@@ -233,7 +248,12 @@ function AssessmentPage() {
                         <Icon className="h-5 w-5 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className="text-base">{assessment.category}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-base">{assessment.category}</CardTitle>
+                          <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                            {assessment.weight}%
+                          </span>
+                        </div>
                         <CardDescription className="text-sm">
                           {assessment.description}
                         </CardDescription>
@@ -250,8 +270,8 @@ function AssessmentPage() {
                 <CardContent>
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">{percentage.toFixed(0)}%</span>
+                      <span className="text-muted-foreground">Nilai</span>
+                      <span className="font-medium">{assessment.score} / {assessment.maxScore}</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
                       <div
@@ -275,15 +295,9 @@ function AssessmentPage() {
               Penilaian terakhir diperbarui pada{" "}
               <span className="font-medium">28 Desember 2025</span>
             </p>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => alert("Generate data penilaian")}>
-                <Download className="mr-2 h-4 w-4" />
-                Unduh Laporan
-              </Button>
-              <Button onClick={() => alert("Generate data penilaian")}>
-                Generate Penilaian
-              </Button>
-            </div>
+            <Button onClick={() => alert("Generate data penilaian")}>
+              Generate Penilaian
+            </Button>
           </div>
         </CardContent>
       </Card>

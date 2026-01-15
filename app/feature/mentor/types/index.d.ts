@@ -40,6 +40,7 @@ export interface AssessmentCriteria {
   category: string;
   score: number;
   maxScore: number;
+  weight: number; // Bobot penilaian dalam persen
   description: string;
 }
 

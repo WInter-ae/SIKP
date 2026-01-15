@@ -31,38 +31,43 @@ import type { AssessmentCriteria, MenteeOption } from "../types";
 const DEFAULT_ASSESSMENTS: AssessmentCriteria[] = [
   {
     id: "1",
-    category: "Kedisiplinan",
+    category: "Kehadiran",
     score: 0,
     maxScore: 100,
-    description: "Kehadiran dan ketepatan waktu",
+    weight: 20,
+    description: "Tingkat kehadiran dan ketepatan waktu",
   },
   {
     id: "2",
     category: "Kerjasama",
     score: 0,
     maxScore: 100,
+    weight: 30,
     description: "Kemampuan bekerja dalam tim",
   },
   {
     id: "3",
-    category: "Inisiatif",
+    category: "Sikap, Etika dan Tingkah Laku",
     score: 0,
     maxScore: 100,
-    description: "Kemampuan mengambil inisiatif dalam pekerjaan",
+    weight: 20,
+    description: "Sikap profesional, etika kerja, dan perilaku di tempat kerja",
   },
   {
     id: "4",
-    category: "Kualitas Kerja",
+    category: "Prestasi Kerja",
     score: 0,
     maxScore: 100,
-    description: "Hasil kerja sesuai standar yang ditetapkan",
+    weight: 20,
+    description: "Kualitas dan hasil kerja yang dicapai",
   },
   {
     id: "5",
-    category: "Komunikasi",
+    category: "Kreatifitas",
     score: 0,
     maxScore: 100,
-    description: "Kemampuan berkomunikasi dengan baik",
+    weight: 10,
+    description: "Kemampuan berpikir kreatif dan inovatif",
   },
 ];
 
@@ -87,10 +92,11 @@ function AssessmentPage() {
     );
   }
 
-  // Memoize totalScore calculation to avoid duplication
+  // Memoize totalScore calculation dengan weighted average
   const totalScore = useMemo(() => {
     if (assessments.length === 0) return 0;
-    return assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length;
+    // Hitung weighted average: (score * weight) / 100
+    return assessments.reduce((sum, a) => sum + (a.score * a.weight) / 100, 0);
   }, [assessments]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -162,10 +168,17 @@ function AssessmentPage() {
               {assessments.map((assessment) => (
                 <Card key={assessment.id}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">
-                      {assessment.category}
-                    </CardTitle>
-                    <CardDescription>{assessment.description}</CardDescription>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-base">
+                          {assessment.category}
+                        </CardTitle>
+                        <CardDescription>{assessment.description}</CardDescription>
+                      </div>
+                      <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {assessment.weight}%
+                      </span>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
