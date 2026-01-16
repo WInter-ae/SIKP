@@ -6,16 +6,9 @@ interface MahasiswaData {
   programStudi: string;
 }
 
-interface DosenPengujiData {
-  no: number;
-  nama: string;
-  status: string;
-}
-
 export const generateBeritaAcaraDOCX = async (
   beritaAcara: BeritaAcara,
-  mahasiswa: MahasiswaData,
-  dosenPenguji: DosenPengujiData[]
+  mahasiswa: MahasiswaData
 ) => {
   // Dynamic import untuk menghindari SSR issues
   const [PizZip, { saveAs }] = await Promise.all([
@@ -25,7 +18,7 @@ export const generateBeritaAcaraDOCX = async (
 
   try {
     // Buat template DOCX
-    const template = createBeritaAcaraDocxTemplate(beritaAcara, mahasiswa, dosenPenguji, PizZip);
+    const template = createBeritaAcaraDocxTemplate(beritaAcara, mahasiswa, PizZip);
     
     const zip = new PizZip(template);
     
@@ -44,7 +37,6 @@ export const generateBeritaAcaraDOCX = async (
 function createBeritaAcaraDocxTemplate(
   beritaAcara: BeritaAcara,
   mahasiswa: MahasiswaData,
-  dosenPenguji: DosenPengujiData[],
   PizZip: any
 ): ArrayBuffer {
   const tanggalObj = new Date(beritaAcara.tanggalSidang);
@@ -53,10 +45,55 @@ function createBeritaAcaraDocxTemplate(
   const bulan = tanggalObj.toLocaleDateString("id-ID", { month: "long" });
   const tahun = tanggalObj.getFullYear();
 
-  // Generate table rows untuk penguji
-  const pengujiRows = dosenPenguji
+  // Load profil dosen untuk nama dan NIP
+  let dosenProfile = null;
+  if (typeof window !== 'undefined') {
+    try {
+      const savedProfile = localStorage.getItem("dosen-profile");
+      if (savedProfile) {
+        dosenProfile = JSON.parse(savedProfile);
+      }
+    } catch (e) {
+      console.error("Error loading dosen profile:", e);
+    }
+  }
+
+  // Generate table rows untuk penguji dari beritaAcara.dosenPenguji
+  // Fallback ke array kosong jika dosenPenguji tidak ada (data lama)
+  const dosenPengujiList = beritaAcara.dosenPenguji || [];
+  
+  // Jika tidak ada data dosen (data lama), gunakan data dari profil dosen
+  const finalDosenList = dosenPengujiList.length > 0 
+    ? dosenPengujiList 
+    : [
+        {
+          id: '1',
+          nama: dosenProfile?.nama || 'Dosen Pembimbing',
+          nip: dosenProfile?.nip || '-',
+          jabatan: 'pembimbing' as const
+        }
+      ];
+  
+  const pengujiRows = finalDosenList
     .map(
-      (penguji) => `
+      (dosenData, index) => {
+        // Hitung nomor urut berdasarkan jabatan
+        let displayNumber = index + 1;
+        let displayStatus = '';
+        
+        if (dosenData.jabatan === 'pembimbing') {
+          displayNumber = 1;
+          displayStatus = 'Dosen Pembimbing KP';
+        } else {
+          // Hitung berapa banyak penguji sebelum dosen ini
+          const previousPengujiCount = finalDosenList
+            .slice(0, index)
+            .filter(d => d.jabatan === 'penguji').length;
+          displayNumber = index + 1;
+          displayStatus = `Penguji ${previousPengujiCount + 1}`;
+        }
+        
+        return `
     <w:tr>
       <w:tc>
         <w:tcPr>
@@ -69,7 +106,7 @@ function createBeritaAcaraDocxTemplate(
         </w:tcPr>
         <w:p>
           <w:pPr><w:jc w:val="center"/></w:pPr>
-          <w:r><w:t>${penguji.no}</w:t></w:r>
+          <w:r><w:t>${displayNumber}</w:t></w:r>
         </w:p>
       </w:tc>
       <w:tc>
@@ -82,7 +119,7 @@ function createBeritaAcaraDocxTemplate(
           </w:tcBorders>
         </w:tcPr>
         <w:p>
-          <w:r><w:t>${penguji.nama}</w:t></w:r>
+          <w:r><w:t>${dosenData.nama}</w:t></w:r>
         </w:p>
       </w:tc>
       <w:tc>
@@ -96,7 +133,7 @@ function createBeritaAcaraDocxTemplate(
         </w:tcPr>
         <w:p>
           <w:pPr><w:jc w:val="center"/></w:pPr>
-          <w:r><w:t>${penguji.status}</w:t></w:r>
+          <w:r><w:t>${displayStatus}</w:t></w:r>
         </w:p>
       </w:tc>
       <w:tc>
@@ -111,7 +148,8 @@ function createBeritaAcaraDocxTemplate(
         <w:p><w:r><w:t></w:t></w:r></w:p>
       </w:tc>
     </w:tr>
-  `
+  `;
+      }
     )
     .join("");
 
@@ -173,17 +211,15 @@ function createBeritaAcaraDocxTemplate(
     <w:p>
       <w:r><w:t>Dosen Pembimbing</w:t></w:r>
       <w:r><w:tab/></w:r>
-      <w:r><w:t>: ${beritaAcara.dosenSignature?.nama || dosenPenguji.find(d => d.status === "Dosen Pembimbing KP")?.nama || "-"}</w:t></w:r>
+      <w:r><w:t>: ${beritaAcara.dosenSignature?.nama || finalDosenList.find(d => d.jabatan === "pembimbing")?.nama || "-"}</w:t></w:r>
     </w:p>
 
-    ${beritaAcara.dosenSignature?.nip ? `
     <!-- NIP Pembimbing -->
     <w:p>
       <w:r><w:t>NIP Pembimbing</w:t></w:r>
       <w:r><w:tab/></w:r>
-      <w:r><w:t>: ${beritaAcara.dosenSignature.nip}</w:t></w:r>
+      <w:r><w:t>: ${beritaAcara.dosenSignature?.nip || finalDosenList.find(d => d.jabatan === "pembimbing")?.nip || "-"}</w:t></w:r>
     </w:p>
-    ` : ''}
 
     <!-- Pembimbing Lapangan -->
     <w:p>
@@ -312,13 +348,13 @@ function createBeritaAcaraDocxTemplate(
       <w:pPr><w:jc w:val="right"/></w:pPr>
       <w:r>
         <w:rPr><w:b/></w:rPr>
-        <w:t>${beritaAcara.dosenSignature?.nama || dosenPenguji.find(d => d.status === "Dosen Pembimbing KP")?.nama || "-"}</w:t>
+        <w:t>${beritaAcara.dosenSignature?.nama || finalDosenList.find(d => d.jabatan === "pembimbing")?.nama || "-"}</w:t>
       </w:r>
     </w:p>
     
     <w:p>
       <w:pPr><w:jc w:val="right"/></w:pPr>
-      <w:r><w:t>NIP: ${beritaAcara.dosenSignature?.nip || "-"}</w:t></w:r>
+      <w:r><w:t>NIP: ${beritaAcara.dosenSignature?.nip || finalDosenList.find(d => d.jabatan === "pembimbing")?.nip || "-"}</w:t></w:r>
     </w:p>
 
   </w:body>

@@ -517,12 +517,7 @@ export default function VerifikasiSidangDosenPage() {
                                               nama: pengajuan.mahasiswa.nama,
                                               nim: pengajuan.mahasiswa.nim,
                                               programStudi: pengajuan.mahasiswa.prodi,
-                                            },
-                                            [
-                                              { no: 1, nama: beritaAcara.dosenSignature?.nama || "Dr. Ahmad Santoso, M.Kom", status: "Dosen Pembimbing KP" },
-                                              { no: 2, nama: "Dr. Budi Pratama, M.T", status: "Penguji 1" },
-                                              { no: 3, nama: "Dr. Citra Dewi, M.Kom", status: "Penguji 2" }
-                                            ]
+                                            }
                                           );
                                         });
                                       }

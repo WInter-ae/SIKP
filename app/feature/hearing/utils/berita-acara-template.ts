@@ -6,13 +6,6 @@ interface MahasiswaData {
   programStudi: string;
 }
 
-interface DosenPengujiData {
-  no: number;
-  nama: string;
-  status: string;
-  tandaTangan?: string;
-}
-
 export interface BeritaAcaraTemplateData {
   hari: string;
   tanggal: string;
@@ -25,7 +18,6 @@ export interface BeritaAcaraTemplateData {
   dosenPembimbing: string;
   nipPembimbing: string;
   pembimbingLapangan: string;
-  penguji: DosenPengujiData[];
   tempat: string;
   tanggalPenandatanganan: string;
   namaDosen: string;
@@ -34,8 +26,7 @@ export interface BeritaAcaraTemplateData {
 
 export const generateBeritaAcaraHTML = (
   beritaAcara: BeritaAcara,
-  mahasiswa: MahasiswaData,
-  dosenPenguji: DosenPengujiData[]
+  mahasiswa: MahasiswaData
 ): string => {
   const tanggalObj = new Date(beritaAcara.tanggalSidang);
   const hari = tanggalObj.toLocaleDateString("id-ID", { weekday: "long" });
@@ -43,16 +34,89 @@ export const generateBeritaAcaraHTML = (
   const bulan = tanggalObj.toLocaleDateString("id-ID", { month: "long" });
   const tahun = tanggalObj.getFullYear();
 
-  const pengujiRows = dosenPenguji
+  // Load e-signature dosen dari localStorage (dari profil dosen)
+  let dosenESignature = null;
+  let dosenProfile = null;
+  if (typeof window !== 'undefined') {
+    try {
+      const savedSignature = localStorage.getItem("dosen-esignature");
+      if (savedSignature) {
+        dosenESignature = JSON.parse(savedSignature);
+      }
+      
+      // Load profil dosen untuk nama dan NIP
+      const savedProfile = localStorage.getItem("dosen-profile");
+      if (savedProfile) {
+        dosenProfile = JSON.parse(savedProfile);
+      }
+    } catch (e) {
+      console.error("Error loading dosen data:", e);
+    }
+  }
+
+  // Generate table rows untuk penguji dengan tanda tangan
+  // Fallback ke array kosong jika dosenPenguji tidak ada (data lama)
+  const dosenPengujiList = beritaAcara.dosenPenguji || [];
+  
+  // Jika tidak ada data dosen (data lama), gunakan data dari profil dosen
+  const finalDosenList = dosenPengujiList.length > 0 
+    ? dosenPengujiList 
+    : [
+        {
+          id: '1',
+          nama: dosenProfile?.nama || 'Dosen Pembimbing',
+          nip: dosenProfile?.nip || '-',
+          jabatan: 'pembimbing' as const
+        }
+      ];
+  
+  const pengujiRows = finalDosenList
     .map(
-      (penguji) => `
+      (dosenData, index) => {
+        // Hitung nomor urut berdasarkan jabatan
+        let displayNumber = index + 1;
+        let displayStatus = '';
+        
+        if (dosenData.jabatan === 'pembimbing') {
+          displayNumber = 1;
+          displayStatus = 'Dosen Pembimbing KP';
+        } else {
+          // Hitung berapa banyak penguji sebelum dosen ini
+          const previousPengujiCount = finalDosenList
+            .slice(0, index)
+            .filter(d => d.jabatan === 'penguji').length;
+          displayNumber = index + 1;
+          displayStatus = `Penguji ${previousPengujiCount + 1}`;
+        }
+        
+        // Cari e-signature untuk dosen ini
+        let signatureImage = '';
+        
+        // Untuk dosen pembimbing, gunakan signature yang tersedia
+        if (dosenData.jabatan === 'pembimbing') {
+          // Prioritas: gunakan signature dari beritaAcara.dosenSignature (hasil approve)
+          if (beritaAcara.dosenSignature?.signatureImage) {
+            signatureImage = `<img src="${beritaAcara.dosenSignature.signatureImage}" alt="Signature" style="max-width: 120px; max-height: 60px; display: block; margin: 5px auto;"/>`;
+          } 
+          // Jika belum ada, gunakan dari profil dosen (localStorage)
+          else if (dosenESignature?.signatureImage) {
+            signatureImage = `<img src="${dosenESignature.signatureImage}" alt="Signature" style="max-width: 120px; max-height: 60px; display: block; margin: 5px auto;"/>`;
+          }
+        }
+        // Untuk penguji lain, kosongkan dulu (akan diisi setelah mereka approve)
+        // Di masa depan bisa ditambahkan logic untuk load signature penguji dari database
+        
+        return `
     <tr>
-      <td style="border: 1px solid black; padding: 8px; text-align: center;">${penguji.no}</td>
-      <td style="border: 1px solid black; padding: 8px;">${penguji.nama}</td>
-      <td style="border: 1px solid black; padding: 8px; text-align: center;">${penguji.status}</td>
-      <td style="border: 1px solid black; padding: 8px;"></td>
+      <td style="border: 1px solid black; padding: 8px; text-align: center;">${displayNumber}</td>
+      <td style="border: 1px solid black; padding: 8px;">${dosenData.nama}</td>
+      <td style="border: 1px solid black; padding: 8px; text-align: center;">${displayStatus}</td>
+      <td style="border: 1px solid black; padding: 8px; text-align: center; min-height: 80px;">
+        ${signatureImage || '<div style="height: 60px;"></div>'}
+      </td>
     </tr>
-  `
+  `;
+      }
     )
     .join("");
 
@@ -152,11 +216,11 @@ export const generateBeritaAcaraHTML = (
     </div>
     <br>
     <div class="field">
-      <span class="field-label">Dosen Pembimbing</span> : ${beritaAcara.dosenSignature?.nama || dosenPenguji.find(d => d.status === "Dosen Pembimbing KP")?.nama || "-"}
+      <span class="field-label">Dosen Pembimbing</span> : ${beritaAcara.dosenSignature?.nama || finalDosenList.find(d => d.jabatan === "pembimbing")?.nama || "-"}
     </div>
-    ${beritaAcara.dosenSignature?.nip ? `<div class="field">
-      <span class="field-label">NIP Pembimbing</span> : ${beritaAcara.dosenSignature.nip}
-    </div>` : ''}
+    <div class="field">
+      <span class="field-label">NIP Pembimbing</span> : ${beritaAcara.dosenSignature?.nip || finalDosenList.find(d => d.jabatan === "pembimbing")?.nip || "-"}
+    </div>
     <div class="field">
       <span class="field-label">Pembimbing Lapangan</span> : ${beritaAcara.tempatPelaksanaan}
     </div>
@@ -189,11 +253,13 @@ export const generateBeritaAcaraHTML = (
         ${
           beritaAcara.dosenSignature?.signatureImage
             ? `<img src="${beritaAcara.dosenSignature.signatureImage}" alt="Signature" style="max-width: 200px; max-height: 100px; margin-bottom: 5px;"/>`
-            : '<div class="signature-line"></div>'
+            : (dosenESignature?.signatureImage 
+                ? `<img src="${dosenESignature.signatureImage}" alt="Signature" style="max-width: 200px; max-height: 100px; margin-bottom: 5px;"/>`
+                : '<div class="signature-line"></div>')
         }
-        <p style="margin-top: ${beritaAcara.dosenSignature?.signatureImage ? '5px' : '10px'};">
-          <strong>${beritaAcara.dosenSignature?.nama || dosenPenguji.find(d => d.status === "Dosen Pembimbing KP")?.nama || "-"}</strong><br>
-          NIP: ${beritaAcara.dosenSignature?.nip || "-"}
+        <p style="margin-top: ${beritaAcara.dosenSignature?.signatureImage || dosenESignature?.signatureImage ? '5px' : '10px'};">
+          <strong>${beritaAcara.dosenSignature?.nama || finalDosenList.find(d => d.jabatan === "pembimbing")?.nama || "-"}</strong><br>
+          NIP: ${beritaAcara.dosenSignature?.nip || finalDosenList.find(d => d.jabatan === "pembimbing")?.nip || "-"}
         </p>
       </div>
     </div>
@@ -206,10 +272,9 @@ export const generateBeritaAcaraHTML = (
 // Fungsi untuk download sebagai HTML (untuk preview atau print to PDF)
 export const downloadBeritaAcaraHTML = (
   beritaAcara: BeritaAcara,
-  mahasiswa: MahasiswaData,
-  dosenPenguji: DosenPengujiData[]
+  mahasiswa: MahasiswaData
 ) => {
-  const html = generateBeritaAcaraHTML(beritaAcara, mahasiswa, dosenPenguji);
+  const html = generateBeritaAcaraHTML(beritaAcara, mahasiswa);
   const blob = new Blob([html], { type: "text/html" });
   const url = URL.createObjectURL(blob);
   

@@ -190,7 +190,7 @@ export function DosenProfilPage() {
   };
 
   return (
-    <div className="space-y-6 p-6 max-w-5xl mx-auto">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -235,8 +235,8 @@ export function DosenProfilPage() {
           <div className="grid md:grid-cols-2 gap-4">
             {/* Nama Lengkap */}
             <div className="space-y-2">
-              <Label htmlFor="nama" className="flex items-center gap-2">
-                <User className="h-4 w-4" />
+              <Label htmlFor="nama" className="flex items-center gap-2 text-base font-bold">
+                <User className="h-5 w-5" />
                 Nama Lengkap
               </Label>
               {isEditing ? (
@@ -253,8 +253,8 @@ export function DosenProfilPage() {
 
             {/* NIP */}
             <div className="space-y-2">
-              <Label htmlFor="nip" className="flex items-center gap-2">
-                <IdCard className="h-4 w-4" />
+              <Label htmlFor="nip" className="flex items-center gap-2 text-base font-bold">
+                <IdCard className="h-5 w-5" />
                 NIP
               </Label>
               {isEditing ? (
@@ -271,8 +271,8 @@ export function DosenProfilPage() {
 
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
+              <Label htmlFor="email" className="flex items-center gap-2 text-base font-bold">
+                <Mail className="h-5 w-5" />
                 Email
               </Label>
               {isEditing ? (
@@ -290,8 +290,8 @@ export function DosenProfilPage() {
 
             {/* Telepon */}
             <div className="space-y-2">
-              <Label htmlFor="telepon" className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
+              <Label htmlFor="telepon" className="flex items-center gap-2 text-base font-bold">
+                <Phone className="h-5 w-5" />
                 Telepon
               </Label>
               {isEditing ? (
@@ -308,8 +308,8 @@ export function DosenProfilPage() {
 
             {/* Jabatan */}
             <div className="space-y-2">
-              <Label htmlFor="jabatan" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
+              <Label htmlFor="jabatan" className="flex items-center gap-2 text-base font-bold">
+                <Building2 className="h-5 w-5" />
                 Jabatan
               </Label>
               {isEditing ? (
@@ -326,8 +326,8 @@ export function DosenProfilPage() {
 
             {/* Fakultas */}
             <div className="space-y-2">
-              <Label htmlFor="fakultas" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
+              <Label htmlFor="fakultas" className="flex items-center gap-2 text-base font-bold">
+                <Building2 className="h-5 w-5" />
                 Fakultas
               </Label>
               {isEditing ? (
@@ -344,8 +344,8 @@ export function DosenProfilPage() {
 
             {/* Program Studi */}
             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="programStudi" className="flex items-center gap-2">
-                <Building2 className="h-4 w-4" />
+              <Label htmlFor="programStudi" className="flex items-center gap-2 text-base font-bold">
+                <Building2 className="h-5 w-5" />
                 Program Studi
               </Label>
               {isEditing ? (

@@ -218,7 +218,7 @@ const dosenMenu: NavItem[] = [
   },
   {
     title: "Profil",
-    url: "#",
+    url: "/dosen/profil",
     icon: UserCircle,
   },
   {

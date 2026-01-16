@@ -5,6 +5,7 @@ export interface BeritaAcara {
   tanggalSidang: string;
   waktuMulai: string;
   waktuSelesai: string;
+  dosenPenguji?: DosenPenguji[];
   nilaiAkhir?: number;
   catatanDosen?: string;
   status: "draft" | "submitted" | "approved" | "rejected" | "jadwal_approved";
