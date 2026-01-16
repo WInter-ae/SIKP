@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Info, Filter } from "lucide-react";
+import { Info, Filter, Clock, CheckCircle, XCircle, Download, Eye } from "lucide-react";
 import type { PengajuanSidang } from "../types/dosen";
+import type { DosenESignature } from "../types/esignature";
 import { PengajuanCard } from "../components/pengajuan-card";
 
 // Mock data pengajuan dari mahasiswa
@@ -66,22 +69,53 @@ const mockPengajuanList: PengajuanSidang[] = [
 ];
 
 export default function VerifikasiSidangDosenPage() {
+  const navigate = useNavigate();
   const [pengajuanList, setPengajuanList] = useState<PengajuanSidang[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("menunggu");
+  const [dosenESignature, setDosenESignature] = useState<DosenESignature | null>(null);
   const [notification, setNotification] = useState<{
     title: string;
     description: string;
     variant?: "default" | "destructive";
   } | null>(null);
 
-  // Load data pengajuan
+  // Load data pengajuan dan e-signature
   useEffect(() => {
     // Simulasi load data dari API
     const loadData = async () => {
       setIsLoading(true);
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      setPengajuanList(mockPengajuanList);
+      
+      // Load pengajuan dari localStorage (dari mahasiswa)
+      if (typeof window !== "undefined") {
+        const savedPengajuan = localStorage.getItem("pengajuan-sidang-list");
+        console.log("📥 DOSEN: Loading pengajuan list from localStorage");
+        
+        if (savedPengajuan) {
+          try {
+            const pengajuanFromStorage = JSON.parse(savedPengajuan);
+            console.log("📋 DOSEN: Found", pengajuanFromStorage.length, "pengajuan(s)");
+            console.log("📋 DOSEN: Pengajuan IDs:", pengajuanFromStorage.map((p: any) => p.id));
+            setPengajuanList(pengajuanFromStorage);
+          } catch (error) {
+            console.error("❌ DOSEN: Error parsing pengajuan list:", error);
+            setPengajuanList(mockPengajuanList);
+          }
+        } else {
+          console.log("⚠️ DOSEN: No pengajuan in localStorage, using mock data");
+          setPengajuanList(mockPengajuanList);
+        }
+        
+        // Load e-signature dari localStorage
+        const savedSignature = localStorage.getItem("dosen-esignature");
+        if (savedSignature) {
+          setDosenESignature(JSON.parse(savedSignature));
+        }
+      } else {
+        setPengajuanList(mockPengajuanList);
+      }
+      
       setIsLoading(false);
     };
 
@@ -94,34 +128,179 @@ export default function VerifikasiSidangDosenPage() {
     catatan: string,
     nilai?: number,
   ) => {
-    // Update status pengajuan
+    console.log("🔵 DOSEN: handleVerifikasi called", { id, status, hasSig: !!dosenESignature });
+    
+    // Jika approval, cek e-signature dulu
+    if (status === "approved") {
+      if (!dosenESignature) {
+        setPendingApprovalId(id);
+        setShowESignatureDialog(true);
+        setNotification({
+          title: "⚠️ E-Signature Belum Dibuat",
+          description: "Anda perlu membuat e-signature terlebih dahulu untuk menyetujui pengajuan.",
+          variant: "destructive",
+        });
+        setTimeout(() => setNotification(null), 4000);
+        return;
+      }
+
+      // Proses approval dengan e-signature
+      processApprovalWithSignature(id, catatan, nilai);
+    } else {
+      // Proses rejection tanpa e-signature
+      processRejection(id, catatan);
+    }
+  };
+
+  const processApprovalWithSignature = (
+    id: string,
+    catatan: string,
+    nilai?: number,
+  ) => {
+    console.log("🟢 DOSEN: processApprovalWithSignature started", { id, catatan, nilai });
+    
+    // Update status pengajuan jadwal sidang (BUKAN berita acara)
     setPengajuanList((prev) =>
       prev.map((p) =>
         p.id === id
           ? {
               ...p,
-              status,
+              status: "approved",
               tanggalVerifikasi: new Date().toISOString(),
               catatanDosen: catatan,
-              nilaiAkhir: nilai,
             }
           : p,
       ),
     );
 
-    // Show notification
+    console.log("🔍 DOSEN: Finding pengajuan with id:", id);
+    const pengajuan = pengajuanList.find((p) => p.id === id);
+    if (pengajuan) {
+      console.log("✅ DOSEN: Jadwal sidang approved for:", pengajuan.mahasiswa.nama);
+      
+      // Update status pengajuan di localStorage untuk mahasiswa
+      // HANYA update status jadwal, BELUM buat berita acara
+      const jadwalApproved = {
+        id: pengajuan.id,
+        judulLaporan: pengajuan.data.judulLaporan,
+        tempatPelaksanaan: pengajuan.data.tempatPelaksanaan,
+        tanggalSidang: pengajuan.data.tanggalSidang,
+        waktuMulai: pengajuan.data.waktuMulai,
+        waktuSelesai: pengajuan.data.waktuSelesai,
+        status: "jadwal_approved", // Status baru: jadwal disetujui, belum sidang
+        catatanDosen: catatan,
+        createdAt: pengajuan.tanggalPengajuan,
+        updatedAt: new Date().toISOString(),
+        tanggalApproval: new Date().toISOString(),
+      };
+      
+      console.log("💾 DOSEN: Saving jadwal approval to localStorage");
+      console.log("📋 DOSEN: Jadwal Data:", {
+        id: jadwalApproved.id,
+        status: jadwalApproved.status,
+        tanggalSidang: jadwalApproved.tanggalSidang
+      });
+      
+      // Simpan ke localStorage mahasiswa (di production akan lewat API ke database)
+      const jsonString = JSON.stringify(jadwalApproved);
+      localStorage.setItem("berita-acara-draft", jsonString);
+      
+      // Update list pengajuan juga
+      localStorage.setItem("pengajuan-sidang-list", JSON.stringify(pengajuanList));
+      
+      // Verify save
+      const verified = localStorage.getItem("berita-acara-draft");
+      console.log("✔️ DOSEN: Verified localStorage save:", verified === jsonString);
+      
+      // Trigger storage event manually untuk same-tab update
+      console.log("📢 DOSEN: Dispatching storage event...");
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'berita-acara-draft',
+        newValue: jsonString,
+        storageArea: localStorage,
+        url: window.location.href
+      }));
+      
+      console.log("✅ DOSEN: Jadwal sidang approved and event dispatched successfully!");
+    }
+
+    // Show success notification
     setNotification({
-      title:
-        status === "approved"
-          ? "✅ Pengajuan Disetujui"
-          : "❌ Pengajuan Ditolak",
-      description:
-        status === "approved"
-          ? `Pengajuan sidang telah disetujui. Mahasiswa akan menerima notifikasi.`
-          : `Pengajuan sidang ditolak. Mahasiswa diminta untuk melakukan perbaikan.`,
+      title: "✅ Jadwal Sidang Disetujui",
+      description: `Jadwal sidang telah disetujui. Mahasiswa akan menerima notifikasi.`,
     });
 
-    // Auto hide notification after 4 seconds
+    setTimeout(() => setNotification(null), 4000);
+  };
+
+  const processRejection = (id: string, catatan: string) => {
+    console.log("🔴 DOSEN: processRejection started", { id, catatan });
+    
+    setPengajuanList((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              status: "rejected",
+              tanggalVerifikasi: new Date().toISOString(),
+              catatanDosen: catatan,
+            }
+          : p,
+      ),
+    );
+
+    // Update status di localStorage untuk mahasiswa
+    console.log("🔍 DOSEN: Finding pengajuan with id:", id);
+    const pengajuan = pengajuanList.find((p) => p.id === id);
+    if (pengajuan) {
+      console.log("❌ DOSEN: Jadwal sidang rejected for:", pengajuan.mahasiswa.nama);
+      
+      const jadwalRejected = {
+        id: pengajuan.id,
+        judulLaporan: pengajuan.data.judulLaporan,
+        tempatPelaksanaan: pengajuan.data.tempatPelaksanaan,
+        tanggalSidang: pengajuan.data.tanggalSidang,
+        waktuMulai: pengajuan.data.waktuMulai,
+        waktuSelesai: pengajuan.data.waktuSelesai,
+        status: "rejected",
+        catatanDosen: catatan,
+        createdAt: pengajuan.tanggalPengajuan,
+        updatedAt: new Date().toISOString(),
+        tanggalVerifikasi: new Date().toISOString(),
+      };
+      
+      console.log("💾 DOSEN: Saving rejection to localStorage");
+      console.log("📋 DOSEN: Rejection Data:", {
+        id: jadwalRejected.id,
+        status: jadwalRejected.status,
+        catatan: jadwalRejected.catatanDosen
+      });
+      
+      const jsonString = JSON.stringify(jadwalRejected);
+      localStorage.setItem("berita-acara-draft", jsonString);
+      localStorage.setItem("pengajuan-sidang-list", JSON.stringify(pengajuanList));
+      
+      // Verify save
+      const verified = localStorage.getItem("berita-acara-draft");
+      console.log("✔️ DOSEN: Verified localStorage save:", verified === jsonString);
+      
+      // Trigger storage event
+      console.log("📢 DOSEN: Dispatching storage event for rejection...");
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'berita-acara-draft',
+        newValue: jsonString,
+        storageArea: localStorage,
+        url: window.location.href
+      }));
+      
+      console.log("✅ DOSEN: Rejection saved and event dispatched!");
+    }
+
+    setNotification({
+      title: "❌ Pengajuan Ditolak",
+      description: `Pengajuan sidang ditolak. Mahasiswa diminta untuk melakukan perbaikan.`,
+    });
+
     setTimeout(() => setNotification(null), 4000);
   };
 
@@ -157,13 +336,15 @@ export default function VerifikasiSidangDosenPage() {
     <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">
-            Verifikasi Acara Sidang
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Kelola dan verifikasi pengajuan sidang dari mahasiswa
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">
+              Verifikasi Acara Sidang
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Kelola dan verifikasi pengajuan sidang dari mahasiswa
+            </p>
+          </div>
         </div>
 
         {/* Notification */}
@@ -264,34 +445,111 @@ export default function VerifikasiSidangDosenPage() {
                 {pengajuanDisetujui.map((pengajuan) => (
                   <Card
                     key={pengajuan.id}
-                    className="shadow-md border-2 border-primary/30"
+                    className="shadow-md border-2 border-green-300 bg-green-50/30 dark:bg-green-950/10"
                   >
                     <CardContent className="pt-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge>Disetujui</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {pengajuan.mahasiswa.nama} (
-                              {pengajuan.mahasiswa.nim})
-                            </span>
-                          </div>
-                          <p className="font-semibold mb-2">
-                            {pengajuan.data.judulLaporan}
-                          </p>
-                          {pengajuan.nilaiAkhir && (
-                            <p className="text-sm text-muted-foreground">
-                              Nilai:{" "}
-                              <span className="font-bold text-primary">
-                                {pengajuan.nilaiAkhir}
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-green-600">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Disetujui
+                              </Badge>
+                              <span className="text-sm font-medium">
+                                {pengajuan.mahasiswa.nama}
                               </span>
+                              <span className="text-sm text-muted-foreground">
+                                ({pengajuan.mahasiswa.nim})
+                              </span>
+                            </div>
+                            <p className="font-semibold mb-2">
+                              {pengajuan.data.judulLaporan}
                             </p>
-                          )}
-                          {pengajuan.catatanDosen && (
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Catatan: {pengajuan.catatanDosen}
-                            </p>
-                          )}
+                            
+                            {/* Tanggal dan Jam Verifikasi */}
+                            {pengajuan.tanggalVerifikasi && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/60 p-2 rounded border border-green-200">
+                                <Clock className="h-4 w-4" />
+                                <span className="font-medium">Disetujui pada:</span>
+                                <span>
+                                  {new Date(pengajuan.tanggalVerifikasi).toLocaleString("id-ID", {
+                                    weekday: "long",
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                              </div>
+                            )}
+                            
+                            <div className="mt-3 space-y-2">
+                              {pengajuan.nilaiAkhir && (
+                                <p className="text-sm text-muted-foreground">
+                                  Nilai:{" "}
+                                  <span className="font-bold text-green-700">
+                                    {pengajuan.nilaiAkhir}
+                                  </span>
+                                </p>
+                              )}
+                              {pengajuan.catatanDosen && (
+                                <p className="text-sm text-muted-foreground">
+                                  Catatan: {pengajuan.catatanDosen}
+                                </p>
+                              )}
+                              
+                              {/* Tombol Download/Lihat Berita Acara */}
+                              <div className="flex gap-2 mt-4 pt-3 border-t">
+                                <Button
+                                  onClick={() => {
+                                    // Load berita acara dari localStorage
+                                    const savedDraft = localStorage.getItem("berita-acara-draft");
+                                    if (savedDraft) {
+                                      const beritaAcara = JSON.parse(savedDraft);
+                                      if (beritaAcara.status === "approved" && beritaAcara.id === pengajuan.id) {
+                                        // Generate and download PDF
+                                        import("~/feature/hearing/utils/berita-acara-template").then(({ downloadBeritaAcaraHTML }) => {
+                                          downloadBeritaAcaraHTML(
+                                            beritaAcara,
+                                            {
+                                              nama: pengajuan.mahasiswa.nama,
+                                              nim: pengajuan.mahasiswa.nim,
+                                              programStudi: pengajuan.mahasiswa.prodi,
+                                            },
+                                            [
+                                              { no: 1, nama: beritaAcara.dosenSignature?.nama || "Dr. Ahmad Santoso, M.Kom", status: "Dosen Pembimbing KP" },
+                                              { no: 2, nama: "Dr. Budi Pratama, M.T", status: "Penguji 1" },
+                                              { no: 3, nama: "Dr. Citra Dewi, M.Kom", status: "Penguji 2" }
+                                            ]
+                                          );
+                                        });
+                                      }
+                                    }
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-2"
+                                >
+                                  <Download className="h-4 w-4" />
+                                  Download PDF
+                                </Button>
+                                <Button
+                                  onClick={() => {
+                                    // Navigate to preview berita acara
+                                    window.open(`/dosen/kp/berita-acara/${pengajuan.id}`, '_blank');
+                                  }}
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-2"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                  Lihat Detail
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -319,26 +577,54 @@ export default function VerifikasiSidangDosenPage() {
                 {pengajuanDitolak.map((pengajuan) => (
                   <Card
                     key={pengajuan.id}
-                    className="shadow-md border-2 border-destructive/30"
+                    className="shadow-md border-2 border-red-300 bg-red-50/30 dark:bg-red-950/10"
                   >
                     <CardContent className="pt-6">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="destructive">Ditolak</Badge>
-                            <span className="text-sm text-muted-foreground">
-                              {pengajuan.mahasiswa.nama} (
-                              {pengajuan.mahasiswa.nim})
-                            </span>
-                          </div>
-                          <p className="font-semibold mb-2">
-                            {pengajuan.data.judulLaporan}
-                          </p>
-                          {pengajuan.catatanDosen && (
-                            <p className="text-sm text-muted-foreground">
-                              Alasan: {pengajuan.catatanDosen}
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="destructive">
+                                <XCircle className="h-3 w-3 mr-1" />
+                                Ditolak
+                              </Badge>
+                              <span className="text-sm font-medium">
+                                {pengajuan.mahasiswa.nama}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                ({pengajuan.mahasiswa.nim})
+                              </span>
+                            </div>
+                            <p className="font-semibold mb-2">
+                              {pengajuan.data.judulLaporan}
                             </p>
-                          )}
+                            
+                            {/* Tanggal dan Jam Verifikasi */}
+                            {pengajuan.tanggalVerifikasi && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/60 p-2 rounded border border-red-200">
+                                <Clock className="h-4 w-4" />
+                                <span className="font-medium">Ditolak pada:</span>
+                                <span>
+                                  {new Date(pengajuan.tanggalVerifikasi).toLocaleString("id-ID", {
+                                    weekday: "long",
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                              </div>
+                            )}
+                            
+                            <div className="mt-3">
+                              {pengajuan.catatanDosen && (
+                                <p className="text-sm text-muted-foreground">
+                                  <span className="font-medium">Alasan:</span> {pengajuan.catatanDosen}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </CardContent>

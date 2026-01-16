@@ -7,9 +7,19 @@ export interface BeritaAcara {
   waktuSelesai: string;
   nilaiAkhir?: number;
   catatanDosen?: string;
-  status: "draft" | "submitted" | "approved" | "rejected";
+  status: "draft" | "submitted" | "approved" | "rejected" | "jadwal_approved";
   createdAt?: string;
   updatedAt?: string;
+  tanggalVerifikasi?: string;
+  tanggalApproval?: string;
+  // E-signature fields
+  dosenSignature?: {
+    nama: string;
+    nip: string;
+    signatureImage: string;
+    signedAt: string;
+  };
+  documentUrl?: string;
 }
 
 export interface DosenPenguji {

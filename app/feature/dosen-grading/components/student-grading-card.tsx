@@ -5,6 +5,9 @@ import {
   Award,
   CheckCircle2,
   Clock,
+  FileCheck,
+  FileX,
+  RefreshCw,
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
@@ -23,7 +26,7 @@ export function StudentGradingCard({
   onGiveGrade,
   onViewDetail,
 }: StudentGradingCardProps) {
-  const { student, gradingStatus, summary } = studentInfo;
+  const { student, gradingStatus, summary, revisionStatus } = studentInfo;
 
   const getStatusBadge = () => {
     switch (gradingStatus) {
@@ -46,6 +49,34 @@ export function StudentGradingCard({
           <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400">
             <Clock className="h-3 w-3 mr-1" />
             Belum Dinilai
+          </Badge>
+        );
+    }
+  };
+
+  const getRevisionBadge = () => {
+    if (!revisionStatus) return null;
+    
+    switch (revisionStatus) {
+      case "sudah-direvisi":
+        return (
+          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+            <FileCheck className="h-3 w-3 mr-1" />
+            Sudah Direvisi
+          </Badge>
+        );
+      case "proses":
+        return (
+          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+            <RefreshCw className="h-3 w-3 mr-1" />
+            Proses
+          </Badge>
+        );
+      case "belum-direvisi":
+        return (
+          <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+            <FileX className="h-3 w-3 mr-1" />
+            Belum Direvisi
           </Badge>
         );
     }
@@ -87,7 +118,10 @@ export function StudentGradingCard({
                 <h3 className="font-semibold text-lg dark:text-gray-100">{student.name}</h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{student.studentId}</p>
               </div>
-              {getStatusBadge()}
+              <div className="flex flex-col gap-1 items-end">
+                {getStatusBadge()}
+                {getRevisionBadge()}
+              </div>
             </div>
             {gradingStatus === "graded" && summary && (
               <div className="flex items-center gap-2 mt-2">

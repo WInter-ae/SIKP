@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { BeritaAcaraForm } from "../components/berita-acara-form";
 import { BeritaAcaraStatus } from "../components/berita-acara-status";
+import { BeritaAcaraDownload } from "../components/berita-acara-download";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import {
   AlertDialog,
@@ -14,7 +15,9 @@ import {
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
-import { ArrowLeft, Info } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { ArrowLeft, Info, FileText, Clock, Edit, Trash2, RefreshCw, CheckCircle2 } from "lucide-react";
 import type { BeritaAcara, DosenPenguji } from "../types";
 
 // Mock data - nanti akan diganti dengan data dari API/backend
@@ -31,10 +34,25 @@ const mockDosenPenguji: DosenPenguji[] = [
     nip: "198705152012101001",
     jabatan: "penguji",
   },
+  {
+    id: 3,
+    nama: "Dr. Citra Dewi, M.Kom",
+    nip: "198805202015041002",
+    jabatan: "penguji",
+  },
 ];
+
+// Mock data mahasiswa - akan diganti dengan data dari session/auth
+const mockMahasiswa = {
+  nama: "Budi Santoso",
+  nim: "12345001",
+  programStudi: "Teknik Informatika",
+};
 
 export default function PengujianSidangPage() {
   const navigate = useNavigate();
+  
+  console.log("🚀 PengujianSidangPage Component Mounted");
   
   // State untuk berita acara
   const [beritaAcara, setBeritaAcara] = useState<BeritaAcara | null>(null);
@@ -42,6 +60,9 @@ export default function PengujianSidangPage() {
   const [showForm, setShowForm] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [showResetDialog, setShowResetDialog] = useState(false);
+  const [showDeleteDraftDialog, setShowDeleteDraftDialog] = useState(false);
+  const [lastChecked, setLastChecked] = useState<Date>(new Date());
+  const [approvalNotificationShown, setApprovalNotificationShown] = useState(false);
   const [notification, setNotification] = useState<{
     title: string;
     description: string;
@@ -52,31 +73,107 @@ export default function PengujianSidangPage() {
   useEffect(() => {
     // Cek apakah ada draft tersimpan di localStorage
     if (typeof window !== "undefined") {
-      const savedDraft = localStorage.getItem("berita-acara-draft");
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft);
-          setBeritaAcara(parsed);
-          setShowForm(
-            !parsed || 
-            parsed.status === "draft" || 
-            parsed.status === "rejected"
-          );
-        } catch (error) {
-          console.error("Error parsing saved draft:", error);
+      const loadBeritaAcara = () => {
+        const savedDraft = localStorage.getItem("berita-acara-draft");
+        console.log("🔄 MAHASISWA: Checking localStorage for updates...", savedDraft ? "Data found" : "No data");
+        setLastChecked(new Date());
+        
+        if (savedDraft) {
+          try {
+            const parsed = JSON.parse(savedDraft);
+            console.log("📄 MAHASISWA: Berita Acara Data:", {
+              status: parsed.status,
+              hasSignature: !!parsed.dosenSignature,
+              signedAt: parsed.dosenSignature?.signedAt,
+              updatedAt: parsed.updatedAt
+            });
+            
+            // Update state dengan data terbaru
+            setBeritaAcara((prev) => {
+              // Cek apakah ada perubahan status
+              if (prev?.status !== parsed.status) {
+                console.log(`✨ MAHASISWA: Status changed: ${prev?.status} → ${parsed.status}`);
+              }
+              return parsed;
+            });
+            
+            // Update form visibility
+            if (parsed.status === "draft") {
+              setShowForm(false);
+            } else if (parsed.status === "rejected") {
+              setShowForm(true);
+            } else {
+              setShowForm(false);
+            }
+          } catch (error) {
+            console.error("Error parsing saved draft:", error);
+          }
         }
-      }
-      setIsLoading(false);
+        setIsLoading(false);
+      };
+
+      // Load pertama kali
+      loadBeritaAcara();
+
+      // Polling setiap 2 detik untuk cek update dari dosen (lebih cepat)
+      const intervalId = setInterval(() => {
+        loadBeritaAcara();
+      }, 2000);
+
+      // Listen untuk storage event (perubahan localStorage dari tab/window lain)
+      const handleStorageChange = (e: StorageEvent) => {
+        console.log("🔔 MAHASISWA: Storage event detected:", e.key);
+        if (e.key === "berita-acara-draft" && e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            console.log("📥 MAHASISWA: Storage update received:", {
+              status: parsed.status,
+              hasSignature: !!parsed.dosenSignature
+            });
+            setBeritaAcara(parsed);
+          } catch (error) {
+            console.error("Error parsing storage event:", error);
+          }
+        }
+      };
+
+      window.addEventListener("storage", handleStorageChange);
+
+      // Cleanup interval dan event listener saat component unmount
+      return () => {
+        clearInterval(intervalId);
+        window.removeEventListener("storage", handleStorageChange);
+      };
     }
   }, []);
 
   // Update showForm ketika beritaAcara berubah
   useEffect(() => {
     if (beritaAcara) {
-      setShowForm(
-        beritaAcara.status === "draft" || 
-        beritaAcara.status === "rejected"
-      );
+      // Jika draft, jangan auto-show form (user pilih lanjutkan/hapus)
+      // Jika submitted, jangan show form (hanya show status dengan tombol edit)
+      // Jika rejected, show form untuk edit
+      // Jika approved, show download view
+      if (beritaAcara.status === "draft" || beritaAcara.status === "submitted") {
+        setShowForm(false);
+      } else {
+        setShowForm(beritaAcara.status === "rejected");
+      }
+
+      // Tampilkan notifikasi hanya sekali saat status berubah menjadi approved
+      if (beritaAcara.status === "approved" && beritaAcara.dosenSignature && !approvalNotificationShown) {
+        setApprovalNotificationShown(true);
+        setNotification({
+          title: "✅ Berita Acara Disetujui!",
+          description: "Berita acara Anda telah disetujui oleh dosen. Silakan unduh dokumen.",
+        });
+        setTimeout(() => setNotification(null), 5000);
+      }
+      
+      // Reset flag jika status kembali ke submitted/draft/rejected
+      if (beritaAcara.status !== "approved" && approvalNotificationShown) {
+        setApprovalNotificationShown(false);
+      }
     }
   }, [beritaAcara]);
 
@@ -112,7 +209,7 @@ export default function PengujianSidangPage() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       const submitted: BeritaAcara = {
-        id: beritaAcara?.id || `BA-${Date.now()}`,
+        id: beritaAcara?.id || `PGJ-${Date.now()}`,
         ...data,
         status: "submitted",
         createdAt: beritaAcara?.createdAt || new Date().toISOString(),
@@ -122,14 +219,58 @@ export default function PengujianSidangPage() {
       setBeritaAcara(submitted);
       setShowForm(false);
       
-      // Hapus draft dari localStorage hanya di client-side
+      // Simpan berita acara mahasiswa ke localStorage
       if (typeof window !== "undefined") {
-        localStorage.removeItem("berita-acara-draft");
+        localStorage.setItem("berita-acara-draft", JSON.stringify(submitted));
+        
+        console.log("📤 MAHASISWA: Sending to dosen list with ID:", submitted.id);
+        
+        // Kirim ke list pengajuan dosen
+        const existingPengajuan = localStorage.getItem("pengajuan-sidang-list");
+        let pengajuanList = existingPengajuan ? JSON.parse(existingPengajuan) : [];
+        
+        console.log("📋 MAHASISWA: Current pengajuan list length:", pengajuanList.length);
+        
+        // Cek apakah pengajuan ini sudah ada (untuk edit)
+        const existingIndex = pengajuanList.findIndex((p: any) => p.id === submitted.id);
+        
+        const pengajuanData = {
+          id: submitted.id,
+          mahasiswa: {
+            id: "MHS-001", // Di production dari session/auth
+            nama: "Budi Santoso",
+            nim: "12345001",
+            prodi: "Teknik Informatika",
+          },
+          data: {
+            judulLaporan: submitted.judulLaporan,
+            tempatPelaksanaan: submitted.tempatPelaksanaan,
+            tanggalSidang: submitted.tanggalSidang,
+            waktuMulai: submitted.waktuMulai,
+            waktuSelesai: submitted.waktuSelesai,
+          },
+          status: "submitted",
+          tanggalPengajuan: submitted.createdAt,
+          tanggalUpdate: new Date().toISOString(),
+        };
+        
+        if (existingIndex >= 0) {
+          // Update pengajuan yang sudah ada (untuk edit)
+          pengajuanList[existingIndex] = pengajuanData;
+          console.log("🔄 MAHASISWA: Updated existing pengajuan at index:", existingIndex);
+        } else {
+          // Tambahkan pengajuan baru
+          pengajuanList.push(pengajuanData);
+          console.log("➕ MAHASISWA: Added new pengajuan, total now:", pengajuanList.length);
+        }
+        
+        localStorage.setItem("pengajuan-sidang-list", JSON.stringify(pengajuanList));
+        console.log("✅ MAHASISWA: Successfully saved to pengajuan-sidang-list");
       }
 
       setNotification({
         title: "✅ Berhasil diajukan",
-        description: "Berita acara telah diajukan ke dosen pembimbing.",
+        description: "Berita acara telah diajukan dan terkirim ke dosen pembimbing.",
       });
       setTimeout(() => setNotification(null), 3000);
     } catch (error) {
@@ -179,25 +320,41 @@ export default function PengujianSidangPage() {
     setShowForm(true);
   };
 
-  // Simulasi perubahan status untuk testing (akan dihapus di production)
-  const simulateStatusChange = (newStatus: BeritaAcara["status"]) => {
-    if (!beritaAcara) return;
+  // Handler untuk melanjutkan draft
+  const handleContinueDraft = () => {
+    setShowForm(true);
+  };
 
-    const updated: BeritaAcara = {
-      ...beritaAcara,
-      status: newStatus,
-      updatedAt: new Date().toISOString(),
-      ...(newStatus === "approved" && {
-        nilaiAkhir: 85,
-        catatanDosen: "Presentasi baik, laporan lengkap dan terstruktur. Pertahankan!",
-      }),
-      ...(newStatus === "rejected" && {
-        catatanDosen: "Beberapa data masih kurang lengkap. Mohon dilengkapi terlebih dahulu.",
-      }),
-    };
+  // Handler untuk hapus draft
+  const handleDeleteDraft = () => {
+    setShowDeleteDraftDialog(true);
+  };
 
-    setBeritaAcara(updated);
-    setShowForm(newStatus === "rejected");
+  const confirmDeleteDraft = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("berita-acara-draft");
+    }
+    setBeritaAcara(null);
+    setShowForm(false);
+    setShowDeleteDraftDialog(false);
+    
+    setNotification({
+      title: "✅ Draft berhasil dihapus",
+      description: "Draft berita acara telah dihapus dari sistem.",
+    });
+    setTimeout(() => setNotification(null), 3000);
+  };
+
+  // Format tanggal untuk tampilan
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   // Tampilkan loading state saat sedang load data dari localStorage
@@ -237,6 +394,36 @@ export default function PengujianSidangPage() {
               Ajukan berita acara sidang dan dapatkan surat setelah disetujui dosen
             </p>
           </div>
+          <div className="flex gap-2">
+            {beritaAcara && beritaAcara.status === "submitted" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.reload()}
+                className="gap-2"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh Status
+              </Button>
+            )}
+            {beritaAcara && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (confirm("Reset semua data? (untuk testing)")) {
+                    localStorage.removeItem("berita-acara-draft");
+                    localStorage.removeItem("pengajuan-sidang-list");
+                    window.location.reload();
+                  }
+                }}
+                className="gap-2 border-red-300 text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+                Reset Data
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Notification */}
@@ -252,74 +439,476 @@ export default function PengujianSidangPage() {
           </Alert>
         )}
 
-        {/* Testing Controls (hanya untuk development) */}
-        {beritaAcara && process.env.NODE_ENV === "development" && (
-          <Alert className="border-dashed border-2 border-yellow-400 bg-yellow-50 dark:bg-yellow-950 shadow-md">
-            <Info className="h-5 w-5 text-yellow-700 dark:text-yellow-300" />
-            <AlertDescription>
-              <div className="space-y-3">
-                <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">
-                  🧪 Kontrol Pengujian (Hanya untuk Development)
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => simulateStatusChange("submitted")}
-                    className="h-8"
-                  >
-                    Ubah ke Diajukan
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => simulateStatusChange("approved")}
-                    className="h-8"
-                  >
-                    Ubah ke Disetujui
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => simulateStatusChange("rejected")}
-                    className="h-8"
-                  >
-                    Ubah ke Ditolak
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowResetDialog(true)}
-                    className="h-8"
-                  >
-                    Reset Data
-                  </Button>
-                </div>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Form atau Status */}
         <div className="space-y-6">
-          {showForm ? (
+          {/* Draft Card - Tampilkan jika ada draft dan form tidak ditampilkan */}
+          {beritaAcara && beritaAcara.status === "draft" && !showForm && (
+            <Card className="shadow-md border-2 border-yellow-400 bg-yellow-50/50 dark:bg-yellow-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-6 w-6 text-yellow-600" />
+                    <div>
+                      <CardTitle className="text-xl">Draft Berita Acara</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Anda memiliki draft yang belum diajukan
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-yellow-600 text-yellow-700 dark:text-yellow-400">
+                    Draft
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Preview Draft */}
+                <div className="bg-background rounded-lg p-4 space-y-3 border">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Judul Laporan</p>
+                    <p className="font-medium">{beritaAcara.judulLaporan || "-"}</p>
+                  </div>
+                  
+                  {beritaAcara.tempatPelaksanaan && (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Tempat Pelaksanaan</p>
+                      <p className="font-medium">{beritaAcara.tempatPelaksanaan}</p>
+                    </div>
+                  )}
+                  
+                  {beritaAcara.tanggalSidang && (
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Tanggal</p>
+                        <p className="font-medium">
+                          {new Date(beritaAcara.tanggalSidang).toLocaleDateString("id-ID")}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Waktu Mulai</p>
+                        <p className="font-medium">{beritaAcara.waktuMulai || "-"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Waktu Selesai</p>
+                        <p className="font-medium">{beritaAcara.waktuSelesai || "-"}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
+                    <Clock className="h-4 w-4" />
+                    <span>Terakhir disimpan: {formatDateTime(beritaAcara.updatedAt)}</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    onClick={handleContinueDraft}
+                    className="flex-1 h-11 font-semibold gap-2"
+                  >
+                    <Edit className="h-5 w-5" />
+                    Lanjutkan Mengisi
+                  </Button>
+                  <Button
+                    onClick={handleDeleteDraft}
+                    variant="outline"
+                    className="sm:w-auto h-11 font-semibold gap-2 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                    Hapus Draft
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Rejected Card - Tampilkan jika ditolak oleh dosen */}
+          {beritaAcara && beritaAcara.status === "rejected" && !showForm && (
+            <Card className="shadow-md border-2 border-red-400 bg-red-50/50 dark:bg-red-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-red-100 rounded-full">
+                      <FileText className="h-6 w-6 text-red-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">Pengajuan Ditolak</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Mohon perbaiki pengajuan Anda sesuai catatan dosen
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-red-600 text-red-700 dark:text-red-400">
+                    Ditolak
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Alasan Penolakan */}
+                {beritaAcara.catatanDosen && (
+                  <Alert className="border-red-200 bg-red-50">
+                    <Info className="h-5 w-5 text-red-600" />
+                    <AlertDescription className="text-red-800">
+                      <p className="font-semibold mb-1">Alasan Penolakan:</p>
+                      <p className="text-sm">{beritaAcara.catatanDosen}</p>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Preview Data yang Ditolak */}
+                <div className="bg-background rounded-lg p-4 space-y-3 border border-red-200">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Judul Laporan</p>
+                    <p className="font-medium">{beritaAcara.judulLaporan}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Tempat Pelaksanaan</p>
+                    <p className="font-medium">{beritaAcara.tempatPelaksanaan}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Tanggal</p>
+                      <p className="font-medium">
+                        {new Date(beritaAcara.tanggalSidang).toLocaleDateString("id-ID")}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Waktu Mulai</p>
+                      <p className="font-medium">{beritaAcara.waktuMulai}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Waktu Selesai</p>
+                      <p className="font-medium">{beritaAcara.waktuSelesai}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
+                    <Clock className="h-4 w-4" />
+                    <span>Ditolak pada: {formatDateTime(beritaAcara.tanggalVerifikasi || beritaAcara.updatedAt)}</span>
+                  </div>
+                </div>
+
+                {/* Action Button */}
+                <Button
+                  onClick={handleEdit}
+                  className="w-full h-11 font-semibold gap-2 bg-red-600 hover:bg-red-700"
+                >
+                  <Edit className="h-5 w-5" />
+                  Perbaiki Pengajuan
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Submitted Card - Tampilkan jika sudah submitted dan menunggu approval jadwal */}
+          {beritaAcara && beritaAcara.status === "submitted" && !showForm && (
+            <Card className="shadow-md border-2 border-blue-400 bg-blue-50/50 dark:bg-blue-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-6 w-6 text-blue-600" />
+                    <div>
+                      <CardTitle className="text-xl">Jadwal Sidang Telah Diajukan</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Menunggu persetujuan jadwal dari dosen pembimbing
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-blue-600 text-blue-700 dark:text-blue-400">
+                    Menunggu Verifikasi
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Preview Jadwal Sidang */}
+                <div className="bg-background rounded-lg p-4 space-y-3 border">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Judul Laporan</p>
+                    <p className="font-medium">{beritaAcara.judulLaporan}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Tempat Pelaksanaan</p>
+                    <p className="font-medium">{beritaAcara.tempatPelaksanaan}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Tanggal</p>
+                      <p className="font-medium">
+                        {new Date(beritaAcara.tanggalSidang).toLocaleDateString("id-ID")}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Waktu Mulai</p>
+                      <p className="font-medium">{beritaAcara.waktuMulai}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Waktu Selesai</p>
+                      <p className="font-medium">{beritaAcara.waktuSelesai}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
+                    <Clock className="h-4 w-4" />
+                    <span>Diajukan pada: {formatDateTime(beritaAcara.updatedAt)}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    <span>Auto-checking... Terakhir dicek: {lastChecked.toLocaleTimeString("id-ID")}</span>
+                  </div>
+                </div>
+
+                {/* Info Alert */}
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Info className="h-5 w-5 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    <p className="font-semibold">Pengajuan Jadwal Sidang Anda sedang diproses</p>
+                    <p className="text-sm mt-1">
+                      Dosen pembimbing akan meninjau jadwal sidang Anda. Status akan otomatis terupdate setiap 2 detik.
+                    </p>
+                    <p className="text-xs mt-2 opacity-75">
+                      💡 Tip: Biarkan halaman ini terbuka untuk menerima update otomatis saat disetujui.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleEdit}
+                    variant="outline"
+                    className="flex-1 h-11 font-semibold gap-2"
+                  >
+                    <Edit className="h-5 w-5" />
+                    Edit Pengajuan
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      console.log("🔄 Manual refresh triggered");
+                      const data = localStorage.getItem("berita-acara-draft");
+                      console.log("📦 Raw localStorage data:", data);
+                      if (data) {
+                        const parsed = JSON.parse(data);
+                        console.log("📄 Parsed data:", parsed);
+                        setBeritaAcara(parsed);
+                        setNotification({
+                          title: "🔄 Data Refreshed",
+                          description: `Status: ${parsed.status}`,
+                        });
+                        setTimeout(() => setNotification(null), 3000);
+                      }
+                    }}
+                    variant="secondary"
+                    className="h-11 gap-2"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Debug Sync
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Jadwal Approved Card - Jadwal disetujui, menunggu sidang dilaksanakan */}
+          {beritaAcara && beritaAcara.status === "jadwal_approved" && !showForm && (
+            <Card className="shadow-md border-2 border-green-400 bg-green-50/50 dark:bg-green-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    <div>
+                      <CardTitle className="text-xl">Jadwal Sidang Telah Disetujui</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Silakan laksanakan sidang sesuai jadwal yang telah ditentukan
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="border-green-600 text-green-700 dark:text-green-400">
+                    Jadwal Disetujui
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Preview Jadwal Sidang */}
+                <div className="bg-background rounded-lg p-4 space-y-3 border border-green-200">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Judul Laporan</p>
+                    <p className="font-medium">{beritaAcara.judulLaporan}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Tempat Pelaksanaan</p>
+                    <p className="font-medium">{beritaAcara.tempatPelaksanaan}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Tanggal Sidang</p>
+                      <p className="font-medium text-green-600">
+                        {new Date(beritaAcara.tanggalSidang).toLocaleDateString("id-ID", {
+                          weekday: 'long',
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Waktu Mulai</p>
+                      <p className="font-medium text-green-600">{beritaAcara.waktuMulai} WIB</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Waktu Selesai</p>
+                      <p className="font-medium text-green-600">{beritaAcara.waktuSelesai} WIB</p>
+                    </div>
+                  </div>
+                  
+                  {beritaAcara.catatanDosen && (
+                    <div className="pt-3 border-t">
+                      <p className="text-sm text-muted-foreground mb-1">Catatan Dosen</p>
+                      <p className="text-sm">{beritaAcara.catatanDosen}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <span>Disetujui pada: {formatDateTime(beritaAcara.tanggalApproval)}</span>
+                  </div>
+                </div>
+
+                {/* Info Alert */}
+                <Alert className="border-green-200 bg-green-50">
+                  <Info className="h-5 w-5 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <p className="font-semibold">Jadwal Sidang Telah Dikonfirmasi</p>
+                    <p className="text-sm mt-1">
+                      Setelah sidang dilaksanakan, Anda akan diminta untuk mengisi Berita Acara Sidang.
+                    </p>
+                    <p className="text-xs mt-2 opacity-75">
+                      📋 Berita Acara akan tersedia untuk diisi setelah tanggal sidang.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+
+                {/* Tombol Testing - Skip ke Approve */}
+<div className="pt-2 border-t">
+                  <p className="text-xs text-muted-foreground mb-2">Testing: Simulasi workflow lengkap</p>
+                  <Button
+                    onClick={() => {
+                      if (confirm("Simulasi: Skip ke status 'Berita Acara Disetujui'?\n\nIni akan menambahkan signature dosen sehingga dokumen bisa diunduh.")) {
+                        // Load e-signature dosen dari localStorage
+                        const dosenSignatureData = localStorage.getItem("dosen-esignature");
+                        let signatureImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+                        
+                        if (dosenSignatureData) {
+                          try {
+                            const parsed = JSON.parse(dosenSignatureData);
+                            console.log("📝 MAHASISWA: Loaded dosen signature:", parsed);
+                            signatureImage = parsed.signatureImage || signatureImage;
+                          } catch (e) {
+                            console.error("Error parsing dosen signature:", e);
+                          }
+                        } else {
+                          console.warn("⚠️ MAHASISWA: No dosen signature found in localStorage");
+                        }
+                        
+                        const updatedData = {
+                          ...beritaAcara,
+                          status: "approved",
+                          dosenSignature: {
+                            nama: "Dr. Ahmad Santoso, M.Kom",
+                            nip: "198501012010121001",
+                            signatureImage: signatureImage,
+                            signedAt: new Date().toISOString(),
+                          },
+                          tanggalApproval: new Date().toISOString(),
+                        };
+                        localStorage.setItem("berita-acara-draft", JSON.stringify(updatedData));
+                        setBeritaAcara(updatedData);
+                        setNotification({
+                          title: "✅ Simulasi Berhasil",
+                          description: "Status diubah ke 'approved'. Dokumen sekarang bisa diunduh.",
+                        });
+                        setTimeout(() => setNotification(null), 3000);
+                      }
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-purple-300 text-purple-600 hover:bg-purple-50"
+                  >
+                    <CheckCircle2 className="h-4 w-4" />
+                    Simulasi Approve Berita Acara (Testing)
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Approved Card - Berita Acara Sudah Disetujui dan Ditandatangani */}
+          {beritaAcara && beritaAcara.status === "approved" && !showForm && (
+            <Card className="shadow-md border-2 border-green-500 bg-green-50/50 dark:bg-green-950/20">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle2 className="h-6 w-6 text-green-600" />
+                    <div>
+                      <CardTitle className="text-xl">Berita Acara Disetujui</CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Dokumen telah ditandatangani dan siap diunduh
+                      </p>
+                    </div>
+                  </div>
+                  <Badge className="bg-green-600 hover:bg-green-700">
+                    Selesai
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Download Section */}
+                <BeritaAcaraDownload 
+                  beritaAcara={beritaAcara}
+                  mahasiswa={mockMahasiswa}
+                  dosenPenguji={mockDosenPenguji.map((dosen, index) => ({
+                    no: index + 1,
+                    nama: dosen.nama,
+                    status: dosen.jabatan === "pembimbing" ? "Dosen Pembimbing KP" : `Penguji ${index}`
+                  }))}
+                />
+
+                {/* Success Alert */}
+                <Alert className="border-green-200 bg-green-50">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    <p className="font-semibold">Proses Sidang Selesai</p>
+                    <p className="text-sm mt-1">
+                      Berita Acara telah disetujui oleh dosen pembimbing. Anda dapat mengunduh dokumen di atas.
+                    </p>
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <span>Disetujui pada: {formatDateTime(beritaAcara.tanggalApproval)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Form untuk input jadwal sidang */}
+          {showForm && (
             <BeritaAcaraForm
               onSubmit={handleSubmit}
               onSaveDraft={handleSaveDraft}
               initialData={beritaAcara || undefined}
               isSubmitting={isSubmitting}
             />
-          ) : null}
-
-          {beritaAcara && !showForm && (
-            <BeritaAcaraStatus
-              beritaAcara={beritaAcara}
-              dosenPenguji={mockDosenPenguji}
-              onGenerateSurat={handleGenerateSurat}
-              onEdit={beritaAcara.status === "rejected" ? handleEdit : undefined}
-            />
           )}
 
+          {/* Empty state - Belum ada jadwal */}
           {!beritaAcara && !showForm && (
             <Alert className="shadow-md">
               <Info className="h-5 w-5" />
@@ -366,6 +955,28 @@ export default function PengujianSidangPage() {
                 className="bg-red-600 hover:bg-red-700"
               >
                 Ya, Reset
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Draft Confirmation Dialog */}
+        <AlertDialog open={showDeleteDraftDialog} onOpenChange={setShowDeleteDraftDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hapus Draft Berita Acara?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Draft yang tersimpan akan dihapus secara permanen.
+                Anda harus membuat berita acara baru dari awal.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmDeleteDraft}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Ya, Hapus Draft
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

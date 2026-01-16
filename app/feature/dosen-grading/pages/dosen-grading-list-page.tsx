@@ -30,6 +30,7 @@ export default function DosenGradingListPage() {
   const students = MOCK_STUDENTS_FOR_GRADING;
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [revisionFilter, setRevisionFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   // Filter students based on search and status
@@ -48,9 +49,13 @@ export default function DosenGradingListPage() {
       const matchesStatus =
         statusFilter === "all" || student.gradingStatus === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      // Revision filter
+      const matchesRevision =
+        revisionFilter === "all" || student.revisionStatus === revisionFilter;
+
+      return matchesSearch && matchesStatus && matchesRevision;
     });
-  }, [students, searchQuery, statusFilter]);
+  }, [students, searchQuery, statusFilter, revisionFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
@@ -205,6 +210,25 @@ export default function DosenGradingListPage() {
                   <SelectItem value="all">Semua Status</SelectItem>
                   <SelectItem value="graded">Sudah Dinilai</SelectItem>
                   <SelectItem value="not-graded">Belum Dinilai</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Revision Filter */}
+              <Select
+                value={revisionFilter}
+                onValueChange={(value) => {
+                  setRevisionFilter(value);
+                  handleFilterChange();
+                }}
+              >
+                <SelectTrigger className="w-full md:w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                  <SelectValue placeholder="Status Revisi" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectItem value="all">Semua Revisi</SelectItem>
+                  <SelectItem value="sudah-direvisi">Sudah Direvisi</SelectItem>
+                  <SelectItem value="proses">Proses</SelectItem>
+                  <SelectItem value="belum-direvisi">Belum Direvisi</SelectItem>
                 </SelectContent>
               </Select>
             </div>

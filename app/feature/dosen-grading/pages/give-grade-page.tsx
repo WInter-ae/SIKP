@@ -1,10 +1,14 @@
 import { useParams, useNavigate } from "react-router";
-import { useState } from "react";
-import { ArrowLeft, User } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, User, CheckCircle, Lock } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Badge } from "~/components/ui/badge";
+import { Alert, AlertDescription } from "~/components/ui/alert";
 import { GradingForm } from "../components/grading-form";
+import { RevisionReviewSection } from "../components/revision-review-section";
 import { MOCK_STUDENTS_FOR_GRADING } from "../data/mock-students";
 import type { GradingFormData } from "../types";
 
@@ -12,6 +16,10 @@ export default function GiveGradePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("revisi");
+  
+  // Track revision approvals - will check if all revisions are approved
+  const [allRevisionsApproved, setAllRevisionsApproved] = useState(false);
 
   const studentInfo = MOCK_STUDENTS_FOR_GRADING.find(
     (s) => s.student.id === id,
@@ -93,6 +101,14 @@ export default function GiveGradePage() {
     navigate("/dosen/penilaian");
   };
 
+  const handleAllRevisionsApproved = (approved: boolean) => {
+    setAllRevisionsApproved(approved);
+    if (approved) {
+      // Automatically switch to penilaian tab when all revisions approved
+      setActiveTab("penilaian");
+    }
+  };
+
   const isEditing = studentInfo.gradingStatus === "graded";
 
   return (
@@ -158,13 +174,79 @@ export default function GiveGradePage() {
           </CardContent>
         </Card>
 
-        {/* Grading Form */}
-        <GradingForm
-          initialData={getInitialFormData()}
-          onSubmit={handleSubmit}
-          onCancel={handleCancel}
-          isSubmitting={isSubmitting}
-        />
+        {/* Revision Status Alert */}
+        {allRevisionsApproved && (
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>Semua revisi telah disetujui.</strong> Anda dapat memberikan penilaian final pada mahasiswa ini.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Tabs for Revisi and Penilaian */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="revisi" className="gap-2">
+              Revisi
+              {allRevisionsApproved && (
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              )}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="penilaian" 
+              disabled={!allRevisionsApproved}
+              className="gap-2"
+            >
+              Penilaian
+              {!allRevisionsApproved && (
+                <Lock className="h-4 w-4" />
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Revisi Tab */}
+          <TabsContent value="revisi" className="mt-6">
+            <RevisionReviewSection
+              studentId={id!}
+              onAllRevisionsApproved={handleAllRevisionsApproved}
+            />
+          </TabsContent>
+
+          {/* Penilaian Tab */}
+          <TabsContent value="penilaian" className="mt-6">
+            {allRevisionsApproved ? (
+              <GradingForm
+                initialData={getInitialFormData()}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                isSubmitting={isSubmitting}
+              />
+            ) : (
+              <Card>
+                <CardContent className="py-12">
+                  <div className="text-center space-y-4">
+                    <Lock className="h-16 w-16 text-gray-400 mx-auto" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Penilaian Terkunci
+                      </h3>
+                      <p className="text-gray-600">
+                        Anda harus menyetujui revisi terlebih dahulu sebelum dapat memberikan penilaian.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setActiveTab("revisi")}
+                    >
+                      Kembali ke Revisi
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

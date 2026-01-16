@@ -99,21 +99,23 @@ export const MOCK_STUDENTS_FOR_GRADING: StudentGradingInfo[] = [
     notes:
       "Mahasiswa menunjukkan kinerja yang sangat baik selama masa magang. Laporan disusun dengan baik dan presentasi cukup memuaskan.",
     gradedAt: "2024-10-15T10:30:00Z",
+    revisionStatus: "sudah-direvisi",
   },
   {
     student: {
       id: "std-002",
-      name: "Siti Nurhaliza",
-      studentId: "1234567891",
-      photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
-      company: "PT. Digital Indonesia",
-      fieldSupervisor: "Dewi Kartika",
+      name: "Rizki Maulana",
+      studentId: "1234567892",
+      photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rizki",
+      company: "PT. Inovasi Teknologi",
+      fieldSupervisor: "Andi Wijaya",
       internPeriod: {
         start: "2024-07-01",
         end: "2024-09-30",
       },
     },
     gradingStatus: "graded",
+    revisionStatus: "sudah-direvisi",
     academicGrades: [
       {
         category: "Penilaian Dosen Pembimbing",
@@ -213,6 +215,7 @@ export const MOCK_STUDENTS_FOR_GRADING: StudentGradingInfo[] = [
       },
     },
     gradingStatus: "not-graded",
+    revisionStatus: "belum-direvisi",
     fieldSupervisorGrades: [
       {
         category: "Penilaian Pembimbing Lapangan",

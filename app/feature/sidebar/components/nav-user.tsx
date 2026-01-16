@@ -4,6 +4,7 @@ import {
   ChevronsUpDown,
   LogOut,
 } from "lucide-react"
+import { Link } from "react-router"
 
 import {
   Avatar,
@@ -70,9 +71,11 @@ export function NavUser({ user }: { user: User }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Profil
+              <DropdownMenuItem asChild>
+                <Link to={user.role === "dosen" ? "/dosen/profil" : "/mahasiswa/profil"} className="cursor-pointer">
+                  <BadgeCheck />
+                  Profil
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />

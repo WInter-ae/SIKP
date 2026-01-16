@@ -52,10 +52,14 @@ export interface GradingFormData {
 // Grading status
 export type GradingStatus = "graded" | "not-graded" | "pending";
 
+// Revision status
+export type RevisionStatus = "sudah-direvisi" | "proses" | "belum-direvisi";
+
 // Student with grading status
 export interface StudentGradingInfo {
   student: StudentForGrading;
   gradingStatus: GradingStatus;
+  revisionStatus?: RevisionStatus;
   academicGrades?: AcademicGradeCategory[];
   fieldSupervisorGrades?: FieldSupervisorGrade[];
   summary?: {
