@@ -1,5 +1,5 @@
 export interface Member {
-  id: number;
+  id: string; // keep invitation/team member ids as-is (may include suffixes)
   name: string;
   role: string;
   isLeader?: boolean;
@@ -12,23 +12,23 @@ export interface MemberListProps {
   members: Member[];
   showActions?: boolean;
   showCancel?: boolean;
-  onAccept?: (memberId: number) => void;
-  onReject?: (memberId: number) => void;
-  onRemove?: (memberId: number) => void;
-  onCancel?: (memberId: number) => void;
+  onAccept?: (memberId: string) => void;
+  onReject?: (memberId: string) => void;
+  onRemove?: (memberId: string) => void;
+  onCancel?: (memberId: string) => void;
 }
 
 export interface Team {
   id: string;
   name: string;
   code: string;
-  leaderId: number;
+  leaderId: string;
   members: Member[];
   maxMembers: number;
 }
 
 export interface SearchResult {
-  id: number;
+  id: string;
   name: string;
   nim: string;
   email: string;
