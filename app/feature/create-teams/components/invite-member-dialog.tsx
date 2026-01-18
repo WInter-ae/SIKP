@@ -12,32 +12,24 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Card } from "~/components/ui/card";
 import { Loader2, Search, Mail } from "lucide-react";
+import { searchMahasiswa } from "../services/team-api";
 
-interface SearchResult {
-  id: number;
+// Define type locally to avoid export issues
+type MahasiswaSearchResult = {
+  id: string;
   name: string;
   nim: string;
   email: string;
-}
+  prodi?: string;
+  fakultas?: string;
+};
 
 interface InviteMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInviteMember: (member: SearchResult) => void;
-  currentMemberIds: number[];
+  onInviteMember: (member: MahasiswaSearchResult) => void;
+  currentMemberIds: string[];
 }
-
-// Mock data - nanti bisa diganti dengan API call
-const mockStudents: SearchResult[] = [
-  { id: 5, name: "Budi Santoso", nim: "2021001", email: "budi@email.com" },
-  { id: 6, name: "Siti Nurhaliza", nim: "2021002", email: "siti@email.com" },
-  { id: 7, name: "Ahmad Dahlan", nim: "2021003", email: "ahmad@email.com" },
-  { id: 8, name: "Rina Kartika", nim: "2021004", email: "rina@email.com" },
-  { id: 9, name: "Dewi Sartika", nim: "2021005", email: "dewi@email.com" },
-  { id: 10, name: "Fajar Sidik", nim: "2021006", email: "fajar@email.com" },
-  { id: 11, name: "Lina Marlina", nim: "2021007", email: "lina@email.com" },
-  { id: 12, name: "Rizky Pratama", nim: "2021008", email: "rizky@email.com" },
-];
 
 export function InviteMemberDialog({
   open,
@@ -46,9 +38,10 @@ export function InviteMemberDialog({
   currentMemberIds,
 }: InviteMemberDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<MahasiswaSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Real-time search with debounce
@@ -56,6 +49,7 @@ export function InviteMemberDialog({
     if (searchQuery.trim().length < 2) {
       setSearchResults([]);
       setShowResults(false);
+      setSearchError(null);
       return;
     }
 
@@ -66,21 +60,7 @@ export function InviteMemberDialog({
 
     // Set new timeout for debounced search
     searchTimeoutRef.current = setTimeout(() => {
-      setIsSearching(true);
-
-      // Simulasi API call - nanti ganti dengan real API
-      setTimeout(() => {
-        const results = mockStudents.filter(
-          (student) =>
-            !currentMemberIds.includes(student.id) &&
-            (student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              student.nim.includes(searchQuery) ||
-              student.email.toLowerCase().includes(searchQuery.toLowerCase())),
-        );
-        setSearchResults(results);
-        setShowResults(true);
-        setIsSearching(false);
-      }, 300);
+      performSearch();
     }, 300); // 300ms debounce
 
     return () => {
@@ -90,17 +70,48 @@ export function InviteMemberDialog({
     };
   }, [searchQuery, currentMemberIds]);
 
-  const handleInvite = (member: SearchResult) => {
+  const performSearch = async () => {
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      const result = await searchMahasiswa(searchQuery);
+      
+      if (result.success && result.data) {
+        // Filter out current members
+        const filteredResults = result.data.filter(
+          (student) => !currentMemberIds.includes(student.id)
+        );
+        setSearchResults(filteredResults);
+        setShowResults(true);
+      } else {
+        setSearchError(result.error || "Gagal mencari mahasiswa");
+        setSearchResults([]);
+        setShowResults(true);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      setSearchError("Terjadi kesalahan saat mencari mahasiswa");
+      setSearchResults([]);
+      setShowResults(true);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleInvite = (member: MahasiswaSearchResult) => {
     onInviteMember(member);
     setSearchQuery("");
     setSearchResults([]);
     setShowResults(false);
+    setSearchError(null);
   };
 
   const handleClose = () => {
     setSearchQuery("");
     setSearchResults([]);
     setShowResults(false);
+    setSearchError(null);
     onOpenChange(false);
   };
 
@@ -137,8 +148,18 @@ export function InviteMemberDialog({
               )}
             </div>
 
+            {/* Error message */}
+            {searchError && (
+              <Card className="absolute z-50 w-full mt-1 shadow-lg border border-red-200 bg-red-50">
+                <div className="p-4 text-sm text-red-700">
+                  <p>❌ {searchError}</p>
+                  <p className="text-xs mt-1">Pastikan koneksi internet stabil dan coba lagi</p>
+                </div>
+              </Card>
+            )}
+
             {/* Results Dropdown */}
-            {showResults && searchResults.length > 0 && (
+            {showResults && searchResults.length > 0 && !searchError && (
               <Card className="absolute z-50 w-full mt-1 shadow-lg border">
                 <div className="max-h-[300px] overflow-y-auto">
                   <div className="p-1">
@@ -190,11 +211,12 @@ export function InviteMemberDialog({
             {showResults &&
               !isSearching &&
               searchResults.length === 0 &&
-              searchQuery.trim().length >= 2 && (
+              searchQuery.trim().length >= 2 &&
+              !searchError && (
                 <Card className="absolute z-50 w-full mt-1 shadow-lg border">
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     <p>Tidak ada mahasiswa ditemukan</p>
-                    <p className="text-xs mt-1">Coba kata kunci lain</p>
+                    <p className="text-xs mt-1">Coba kata kunci lain atau periksa NIM/Nama</p>
                   </div>
                 </Card>
               )}

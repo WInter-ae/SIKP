@@ -98,7 +98,41 @@ export async function apiClient<T>(
       },
     });
 
-    const data = await response.json();
+    // Check if response has content
+    const contentType = response.headers.get("content-type");
+    const hasJsonContent = contentType && contentType.includes("application/json");
+    
+    let data;
+    try {
+      // Only parse JSON if content-type is JSON and body is not empty
+      const text = await response.text();
+      
+      if (!text || text.trim() === "") {
+        console.error("❌ Empty response from backend:", {
+          endpoint,
+          status: response.status,
+          statusText: response.statusText
+        });
+        
+        return {
+          success: false,
+          message: `Backend error: Empty response (Status ${response.status})`,
+          data: null,
+        };
+      }
+      
+      data = JSON.parse(text);
+    } catch (jsonError) {
+      console.error("❌ Invalid JSON response:", jsonError);
+      console.error("Response endpoint:", endpoint);
+      console.error("Response status:", response.status);
+      
+      return {
+        success: false,
+        message: `Backend error: Invalid JSON response (Status ${response.status})`,
+        data: null,
+      };
+    }
 
     if (!response.ok) {
       return {

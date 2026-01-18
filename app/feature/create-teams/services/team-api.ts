@@ -51,6 +51,15 @@ export interface MyTeamsResponse {
   }>;
 }
 
+export interface MahasiswaSearchResult {
+  id: string;
+  name: string;
+  nim: string;
+  email: string;
+  prodi?: string;
+  fakultas?: string;
+}
+
 // ==================== API FUNCTIONS ====================
 
 /**
@@ -131,6 +140,24 @@ export async function searchTeams(query: string): Promise<
       leaderName: string;
     }>
   >("/api/teams/search", { query });
+}
+
+/**
+ * Get my pending invitations (undangan yang saya terima)
+ * GET /api/teams/my-invitations
+ */
+export async function getMyInvitations(): Promise<ApiResponse<TeamMember[]>> {
+  return get<TeamMember[]>("/api/teams/my-invitations");
+}
+
+/**
+ * Search mahasiswa by nama or NIM
+ * GET /api/mahasiswa/search?q=xxx
+ */
+export async function searchMahasiswa(
+  query: string,
+): Promise<ApiResponse<MahasiswaSearchResult[]>> {
+  return get<MahasiswaSearchResult[]>("/api/mahasiswa/search", { q: query });
 }
 
 /**
