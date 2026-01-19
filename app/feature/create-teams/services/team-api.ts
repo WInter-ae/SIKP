@@ -174,3 +174,22 @@ export async function deleteTeam(teamId: string): Promise<ApiResponse<{
 }>> {
   return post(`/api/teams/${teamId}/delete`, {});
 }
+
+/**
+ * Finalize team (lock members)
+ * PUT /api/teams/:teamId/finalize
+ * 
+ * Only team leader can finalize
+ * Team must have at least 1 accepted member
+ * After finalize, no more members can be added/removed
+ */
+export async function finalizeTeam(teamId: string): Promise<ApiResponse<{
+  id: string;
+  code: string;
+  status: string;
+  message: string;
+}>> {
+  return post(`/api/teams/${teamId}/finalize`, {});
+}
+
+
