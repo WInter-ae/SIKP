@@ -1,5 +1,6 @@
 // External dependencies
-import { CheckCircle, AlertCircle, Info, Clock } from "lucide-react";
+import { Link } from "react-router";
+import { CheckCircle, AlertCircle, Info, Clock, ChevronRight } from "lucide-react";
 
 // Components
 import {
@@ -43,34 +44,58 @@ function getBgColor(type: string) {
 }
 
 function NotificationCard({ notification }: NotificationCardProps) {
+  const cardContent = (
+    <CardHeader className="pb-3">
+      <div className="flex items-start gap-3">
+        <div className="mt-1">{getIcon(notification.type)}</div>
+        <div className="flex-1">
+          <div className="flex justify-between items-start">
+            <CardTitle className="text-base">
+              {notification.title}
+            </CardTitle>
+            {!notification.isRead && (
+              <span className="px-2 py-1 text-xs rounded-full bg-primary text-primary-foreground">
+                Baru
+              </span>
+            )}
+          </div>
+          <CardDescription className="mt-1">
+            {notification.message}
+          </CardDescription>
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3" />
+              <span>{notification.timestamp}</span>
+            </div>
+            {notification.link && (
+              <div className="flex items-center gap-1 text-xs text-primary">
+                <span>Lihat Detail</span>
+                <ChevronRight className="h-3 w-3" />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </CardHeader>
+  );
+
+  if (notification.link) {
+    return (
+      <Link to={notification.link} className="block">
+        <Card
+          className={`${getBgColor(notification.type)} ${!notification.isRead ? "border-l-4" : ""} hover:shadow-md transition-shadow cursor-pointer`}
+        >
+          {cardContent}
+        </Card>
+      </Link>
+    );
+  }
+
   return (
     <Card
       className={`${getBgColor(notification.type)} ${!notification.isRead ? "border-l-4" : ""}`}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
-          <div className="mt-1">{getIcon(notification.type)}</div>
-          <div className="flex-1">
-            <div className="flex justify-between items-start">
-              <CardTitle className="text-base">
-                {notification.title}
-              </CardTitle>
-              {!notification.isRead && (
-                <span className="px-2 py-1 text-xs rounded-full bg-primary text-primary-foreground">
-                  Baru
-                </span>
-              )}
-            </div>
-            <CardDescription className="mt-1">
-              {notification.message}
-            </CardDescription>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
-              <Clock className="h-3 w-3" />
-              <span>{notification.timestamp}</span>
-            </div>
-          </div>
-        </div>
-      </CardHeader>
+      {cardContent}
     </Card>
   );
 }

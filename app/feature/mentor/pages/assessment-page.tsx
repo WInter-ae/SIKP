@@ -31,38 +31,43 @@ import type { AssessmentCriteria, MenteeOption } from "../types";
 const DEFAULT_ASSESSMENTS: AssessmentCriteria[] = [
   {
     id: "1",
-    category: "Kedisiplinan",
+    category: "Kehadiran",
     score: 0,
     maxScore: 100,
-    description: "Kehadiran dan ketepatan waktu",
+    weight: 20,
+    description: "Tingkat kehadiran dan ketepatan waktu",
   },
   {
     id: "2",
     category: "Kerjasama",
     score: 0,
     maxScore: 100,
+    weight: 30,
     description: "Kemampuan bekerja dalam tim",
   },
   {
     id: "3",
-    category: "Inisiatif",
+    category: "Sikap, Etika dan Tingkah Laku",
     score: 0,
     maxScore: 100,
-    description: "Kemampuan mengambil inisiatif dalam pekerjaan",
+    weight: 20,
+    description: "Sikap profesional, etika kerja, dan perilaku di tempat kerja",
   },
   {
     id: "4",
-    category: "Kualitas Kerja",
+    category: "Prestasi Kerja",
     score: 0,
     maxScore: 100,
-    description: "Hasil kerja sesuai standar yang ditetapkan",
+    weight: 20,
+    description: "Kualitas dan hasil kerja yang dicapai",
   },
   {
     id: "5",
-    category: "Komunikasi",
+    category: "Kreatifitas",
     score: 0,
     maxScore: 100,
-    description: "Kemampuan berkomunikasi dengan baik",
+    weight: 10,
+    description: "Kemampuan berpikir kreatif dan inovatif",
   },
 ];
 
@@ -87,22 +92,23 @@ function AssessmentPage() {
     );
   }
 
-  // Memoize totalScore calculation to avoid duplication
+  // Memoize totalScore calculation dengan weighted average
   const totalScore = useMemo(() => {
     if (assessments.length === 0) return 0;
-    return assessments.reduce((sum, a) => sum + a.score, 0) / assessments.length;
+    // Hitung weighted average: (score * weight) / 100
+    return assessments.reduce((sum, a) => sum + (a.score * a.weight) / 100, 0);
   }, [assessments]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!selectedMentee) {
-      toast.error("Mohon pilih mentee terlebih dahulu");
+      toast.error("Mohon pilih mahasiswa terlebih dahulu");
       return;
     }
 
     toast.success(
-      `Penilaian berhasil disimpan!\nMentee: ${MENTEE_LIST.find((m) => m.id === selectedMentee)?.name}\nNilai Rata-rata: ${totalScore.toFixed(1)}`
+      `Penilaian berhasil disimpan!\nMahasiswa: ${MENTEE_LIST.find((m) => m.id === selectedMentee)?.name}\nNilai Rata-rata: ${totalScore.toFixed(1)}`
     );
 
     setSelectedMentee("");
@@ -113,14 +119,14 @@ function AssessmentPage() {
   return (
     <div className="p-6">
       <PageHeader
-        title="Penilaian Mentee"
-        description="Berikan penilaian untuk mahasiswa bimbingan Anda"
+        title="Penilaian Mahasiswa Magang"
+        description="Berikan penilaian untuk mahasiswa yang magang di perusahaan Anda"
       />
 
       <form onSubmit={handleSubmit}>
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Pilih Mentee</CardTitle>
+            <CardTitle>Pilih Mahasiswa</CardTitle>
             <CardDescription>Pilih mahasiswa yang akan dinilai</CardDescription>
           </CardHeader>
           <CardContent>
@@ -128,7 +134,7 @@ function AssessmentPage() {
               <Label htmlFor="mentee">Mahasiswa</Label>
               <Select value={selectedMentee} onValueChange={setSelectedMentee}>
                 <SelectTrigger id="mentee">
-                  <SelectValue placeholder="Pilih mentee" />
+                  <SelectValue placeholder="Pilih mahasiswa" />
                 </SelectTrigger>
                 <SelectContent>
                   {MENTEE_LIST.map((mentee) => (
@@ -162,10 +168,17 @@ function AssessmentPage() {
               {assessments.map((assessment) => (
                 <Card key={assessment.id}>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base">
-                      {assessment.category}
-                    </CardTitle>
-                    <CardDescription>{assessment.description}</CardDescription>
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <CardTitle className="text-base">
+                          {assessment.category}
+                        </CardTitle>
+                        <CardDescription>{assessment.description}</CardDescription>
+                      </div>
+                      <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-1 rounded-full">
+                        {assessment.weight}%
+                      </span>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">

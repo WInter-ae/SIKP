@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+import { Button } from "~/components/ui/button";
 import {
   Card,
   CardContent,
@@ -18,10 +20,10 @@ import {
 export default function MentorDashboard() {
   const stats = [
     {
-      title: "Total Mentee",
+      title: "Mahasiswa Magang",
       value: "8",
       icon: Users,
-      description: "Mahasiswa dalam bimbingan",
+      description: "Total mahasiswa yang dibimbing",
     },
     {
       title: "Penilaian Pending",
@@ -39,7 +41,7 @@ export default function MentorDashboard() {
       title: "Rata-rata Nilai",
       value: "85.5",
       icon: TrendingUp,
-      description: "Dari semua mentee",
+      description: "Dari semua mahasiswa magang",
     },
   ];
 
@@ -132,9 +134,9 @@ export default function MentorDashboard() {
         {/* Mentee Overview */}
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Daftar Mentee</CardTitle>
+            <CardTitle>Mahasiswa Magang</CardTitle>
             <CardDescription>
-              Progress dan aktivitas mentee terbaru
+              Progress dan aktivitas mahasiswa magang terbaru
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -237,22 +239,22 @@ export default function MentorDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-4">
-            <button className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted">
+            <Link to="/mentor/penilaian" className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted">
               <ClipboardCheck className="h-5 w-5 text-primary" />
               <span className="font-medium">Beri Penilaian</span>
-            </button>
-            <button className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted">
+            </Link>
+            <Link to="/mentor/mentee" className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted">
               <Users className="h-5 w-5 text-primary" />
-              <span className="font-medium">Lihat Mentee</span>
-            </button>
-            <button className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted">
+              <span className="font-medium">Lihat Mahasiswa</span>
+            </Link>
+            <Link to="/mentor/notifikasi" className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted">
               <Bell className="h-5 w-5 text-primary" />
               <span className="font-medium">Notifikasi</span>
-            </button>
-            <button className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted">
+            </Link>
+            <Link to="/mentor/logbook" className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted">
               <TrendingUp className="h-5 w-5 text-primary" />
-              <span className="font-medium">Lihat Statistik</span>
-            </button>
+              <span className="font-medium">Lihat Logbook</span>
+            </Link>
           </div>
         </CardContent>
       </Card>

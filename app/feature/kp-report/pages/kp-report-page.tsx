@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import TitleSubmissionForm from "../components/title-submission-form";
 import TitleChangeForm from "../components/title-change-form";
-import LecturerSelectionForm from "../components/lecturer-selection-form";
+import ApprovalForm from "../components/approval-form";
 import ReportUploadForm from "../components/report-upload-form";
 
 import type { DosenPembimbing, LaporanKPData } from "../types";
@@ -127,6 +127,11 @@ export default function KPReportPage() {
     toast.success("Laporan berhasil dihapus!");
   };
 
+  const handleGenerateApprovalLetter = () => {
+    // Redirect to external website for approval letter generation
+    window.open("https://ols.ilkom.unsri.ac.id/login", "_blank");
+  };
+
   // Check if title is approved
   const isTitleApproved = reportData.statusJudul === "disetujui";
 
@@ -156,22 +161,14 @@ export default function KPReportPage() {
         <CardHeader className="pb-3 sm:pb-6">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <User className="h-4 w-4 sm:h-5 sm:w-5" />
-            Informasi Tim KP
+            Informasi Kerja Praktik
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-1">
-              <p className="text-xs sm:text-sm text-muted-foreground">Nama Tim</p>
-              <p className="text-sm sm:text-base font-medium">Tim KP Informatika 2024</p>
-            </div>
-            <div className="space-y-1">
               <p className="text-xs sm:text-sm text-muted-foreground">Tempat KP</p>
               <p className="text-sm sm:text-base font-medium">PT. Teknologi Digital Indonesia</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs sm:text-sm text-muted-foreground">Anggota Tim</p>
-              <p className="text-sm sm:text-base font-medium">Adam Ramadhan (Ketua), Robin Setiawan, Raihan Pratama</p>
             </div>
             <div className="space-y-1">
               <p className="text-xs sm:text-sm text-muted-foreground">Periode</p>
@@ -194,7 +191,7 @@ export default function KPReportPage() {
           </TabsTrigger>
           <TabsTrigger value="dosen" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
             <User className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            <span className="hidden xs:inline sm:inline">Dosen</span>
+            <span className="hidden xs:inline sm:inline">Pengesahan</span>
           </TabsTrigger>
           <TabsTrigger value="upload" className="flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:py-2.5 text-xs sm:text-sm">
             <Upload className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -232,11 +229,12 @@ export default function KPReportPage() {
         </TabsContent>
 
         <TabsContent value="dosen" className="space-y-6">
-          <LecturerSelectionForm
-            currentLecturer={currentLecturer}
-            availableLecturers={availableLecturers}
-            onSubmit={handleLecturerSelect}
-            isFromTeam={true}
+          <ApprovalForm
+            reportTitle={reportData.judul}
+            titleStatus={reportData.statusJudul}
+            approvedDate={reportData.tanggalDisetujui}
+            lecturerName={currentLecturer.nama}
+            onGenerateLetter={handleGenerateApprovalLetter}
           />
         </TabsContent>
 

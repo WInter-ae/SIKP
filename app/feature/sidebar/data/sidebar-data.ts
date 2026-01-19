@@ -236,9 +236,14 @@ const mentorMenu: NavItem[] = [
     icon: Home,
   },
   {
-    title: "Mentee",
+    title: "Mahasiswa Magang",
     url: "/mentor/mentee",
     icon: Users,
+  },
+  {
+    title: "Logbook",
+    url: "/mentor/logbook",
+    icon: BookMarked,
   },
   {
     title: "Penilaian",

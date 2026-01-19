@@ -1,6 +1,6 @@
 // External dependencies
 import { Link } from "react-router";
-import { Mail, Phone, Building2, Award } from "lucide-react";
+import { Mail, Phone, Building2, Award, BookOpen, User } from "lucide-react";
 
 // Components
 import { Button } from "~/components/ui/button";
@@ -51,7 +51,7 @@ function MenteeCard({ mentee }: MenteeCardProps) {
 
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Progress KP</span>
+            <span className="text-muted-foreground">Progress Magang</span>
             <span className="font-medium">{mentee.progress}%</span>
           </div>
           <div className="w-full bg-muted rounded-full h-2">
@@ -62,7 +62,19 @@ function MenteeCard({ mentee }: MenteeCardProps) {
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-2 mt-4 flex-wrap">
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/mentor/logbook-detail/${mentee.id}`}>
+              <BookOpen className="h-4 w-4 mr-2" />
+              Logbook
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link to={`/mentor/mentee/${mentee.id}`}>
+              <User className="h-4 w-4 mr-2" />
+              Detail Mahasiswa
+            </Link>
+          </Button>
           <Button variant="outline" size="sm" asChild>
             <Link to={`/mentor/penilaian?mentee=${mentee.id}`}>
               <Award className="h-4 w-4 mr-2" />

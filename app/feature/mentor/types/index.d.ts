@@ -31,6 +31,7 @@ export interface Notification {
   message: string;
   timestamp: string;
   isRead: boolean;
+  link?: string; // Optional link to navigate to related page
 }
 
 // Penilaian Page Types
@@ -39,6 +40,7 @@ export interface AssessmentCriteria {
   category: string;
   score: number;
   maxScore: number;
+  weight: number; // Bobot penilaian dalam persen
   description: string;
 }
 
