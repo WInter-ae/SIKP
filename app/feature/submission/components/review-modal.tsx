@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { toast } from "sonner";
 import {
   AlertCircle,
   Building,
@@ -37,8 +38,8 @@ interface ReviewModalProps {
   application: Application | null;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: () => void;
-  onReject: (comment: string) => void;
+  onApprove: (docReviews: Record<string, "approved" | "rejected">) => void;
+  onReject: (comment: string, docReviews: Record<string, "approved" | "rejected">) => void;
 }
 
 function ReviewModal({
@@ -52,6 +53,15 @@ function ReviewModal({
   const [docReviews, setDocReviews] = useState<
     Record<string, "approved" | "rejected">
   >({});
+
+  // Initialize docReviews from saved reviews if application is already reviewed
+  useEffect(() => {
+    if (application?.documentReviews) {
+      setDocReviews(application.documentReviews);
+    } else {
+      setDocReviews({});
+    }
+  }, [application?.id, application?.documentReviews]);
 
   // Group documents by title
   const groupedDocuments = useMemo<Record<string, DocumentFile[]>>(() => {
@@ -118,40 +128,48 @@ function ReviewModal({
 
   const handleRejectApplication = () => {
     if (hasRejectedDocs && !comment.trim()) {
-      alert(
+      toast.warning(
         "Karena ada dokumen yang ditolak, Anda wajib memberikan catatan review.",
       );
       return;
     }
     if (!comment.trim()) {
-      if (
-        !confirm(
+      if (!comment.trim()) {
+        toast(
           "Apakah Anda yakin ingin menolak tanpa catatan? (Disarankan memberikan alasan)",
-        )
-      ) {
+          {
+            action: {
+              label: "Tolak tanpa catatan",
+              onClick: () => {
+                onReject("", docReviews);
+                resetState();
+              },
+            },
+          },
+        );
         return;
       }
     }
-    onReject(comment);
+    onReject(comment, docReviews);
     resetState();
   };
 
   const handleApproveApplication = () => {
     if (hasRejectedDocs) {
-      alert(
+      toast.warning(
         "Tidak dapat menyetujui pengajuan karena terdapat dokumen yang ditolak. Silakan tolak pengajuan untuk meminta revisi.",
       );
       return;
     }
     if (hasMissingDocs) {
-      alert("Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.");
+      toast.warning("Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.");
       return;
     }
     if (!allDocsReviewed) {
-      alert("Harap review semua dokumen yang diupload terlebih dahulu.");
+      toast.warning("Harap review semua dokumen yang diupload terlebih dahulu.");
       return;
     }
-    onApprove();
+    onApprove(docReviews);
     resetState();
   };
 
@@ -168,6 +186,7 @@ function ReviewModal({
   // Helper function to render document item
   const renderDocItem = (doc: DocumentFile) => {
     const status = docReviews[doc.id];
+    const isEditable = application && application.status === "pending";
     return (
       <div
         key={doc.id}
@@ -202,33 +221,64 @@ function ReviewModal({
             <Eye className="w-4 h-4" />
           </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDocAction(doc.id, "approved")}
-            className={`h-8 w-8 ${
-              status === "approved"
-                ? "bg-green-600 text-white hover:bg-green-700"
-                : "text-muted-foreground hover:text-green-600 hover:bg-green-500/10"
-            }`}
-            title="Setujui Dokumen"
-          >
-            <Check className="w-4 h-4" />
-          </Button>
+          {isEditable && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDocAction(doc.id, "approved")}
+                className={`h-8 w-8 ${
+                  status === "approved"
+                    ? "bg-green-600 text-white hover:bg-green-700"
+                    : "text-muted-foreground hover:text-green-600 hover:bg-green-500/10"
+                }`}
+                title="Setujui Dokumen"
+              >
+                <Check className="w-4 h-4" />
+              </Button>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleDocAction(doc.id, "rejected")}
-            className={`h-8 w-8 ${
-              status === "rejected"
-                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-            }`}
-            title="Tolak Dokumen"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDocAction(doc.id, "rejected")}
+                className={`h-8 w-8 ${
+                  status === "rejected"
+                    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                }`}
+                title="Tolak Dokumen"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+
+          {!isEditable && status && (
+            <>
+              {status === "approved" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled
+                  className="h-8 w-8 bg-green-600 text-white"
+                  title="Dokumen Disetujui"
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+              )}
+              {status === "rejected" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled
+                  className="h-8 w-8 bg-destructive text-destructive-foreground"
+                  title="Dokumen Ditolak"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </>
+          )}
         </div>
       </div>
     );
@@ -304,7 +354,9 @@ function ReviewModal({
                       </Badge>
                     </div>
                     <p className="font-bold text-foreground">{member.name}</p>
-                    <p className="text-sm text-muted-foreground">{member.nim}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {member.nim}
+                    </p>
                     <p className="text-sm text-muted-foreground/80">
                       {member.prodi}
                     </p>
@@ -433,71 +485,146 @@ function ReviewModal({
           </Card>
 
           {/* 4. Review Pengajuan */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center">
-                <ClipboardCheck className="w-5 h-5 mr-2 text-primary" />
-                Review Pengajuan
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {hasRejectedDocs && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Terdapat dokumen yang ditolak. Anda <strong>wajib</strong>{" "}
-                    memberikan catatan review untuk menjelaskan alasan penolakan
-                    kepada mahasiswa.
-                  </AlertDescription>
-                </Alert>
-              )}
+          {application.status === "pending" && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <ClipboardCheck className="w-5 h-5 mr-2 text-primary" />
+                  Review Pengajuan
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {hasRejectedDocs && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Terdapat dokumen yang ditolak. Anda <strong>wajib</strong>{" "}
+                      memberikan catatan review untuk menjelaskan alasan penolakan
+                      kepada mahasiswa.
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-              <div className="space-y-2">
-                <Label>
-                  Catatan Review{" "}
-                  {hasRejectedDocs && (
-                    <span className="text-destructive">*</span>
-                  )}
-                </Label>
-                <Textarea
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className={
-                    hasRejectedDocs && !comment
-                      ? "border-destructive focus-visible:ring-destructive"
-                      : ""
-                  }
-                  rows={4}
-                  placeholder={
-                    hasRejectedDocs
-                      ? "Jelaskan alasan penolakan dokumen..."
-                      : "Tambahkan catatan untuk mahasiswa (opsional)..."
-                  }
-                />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <Label>
+                    Catatan Review{" "}
+                    {hasRejectedDocs && (
+                      <span className="text-destructive">*</span>
+                    )}
+                  </Label>
+                  <Textarea
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className={
+                      hasRejectedDocs && !comment
+                        ? "border-destructive focus-visible:ring-destructive"
+                        : ""
+                    }
+                    rows={4}
+                    placeholder={
+                      hasRejectedDocs
+                        ? "Jelaskan alasan penolakan dokumen..."
+                        : "Tambahkan catatan untuk mahasiswa (opsional)..."
+                    }
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 5. Surat Pengantar (hanya tampil jika status approved) */}
+          {application.status === "approved" && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-green-600" />
+                  Surat Pengantar Kerja Praktik
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-green-600 text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Check className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
+                        Surat Pengantar Telah Disetujui
+                      </p>
+                      <p className="text-sm text-green-800 dark:text-green-200 mb-4">
+                        Surat pengantar kerja praktik telah berhasil dibuat dan dapat diunduh oleh mahasiswa.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Lihat Surat Pengantar
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 6. Komentar Penolakan (hanya tampil jika status rejected) */}
+          {application.status === "rejected" && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <X className="w-5 h-5 mr-2 text-destructive" />
+                  Komentar Penolakan
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/30">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 bg-destructive text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                      <AlertCircle className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-destructive mb-2">
+                        Pengajuan Ditolak
+                      </p>
+                      <p className="text-sm text-destructive/90 whitespace-pre-wrap">
+                        {application.rejectionComment || "Tidak ada komentar"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="flex-shrink-0 border-t border-border pt-4">
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
             <Button variant="outline" onClick={handleClose}>
-              Batal
+              {application.status === "approved" || application.status === "rejected"
+                ? "Tutup"
+                : "Batal"}
             </Button>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button variant="destructive" onClick={handleRejectApplication}>
-                <X className="w-4 h-4 mr-2" />
-                Tolak Pengajuan
-              </Button>
-              <Button
-                onClick={handleApproveApplication}
-                disabled={hasRejectedDocs || hasMissingDocs || !allDocsReviewed}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Check className="w-4 h-4 mr-2" />
-                Setujui & Generate Surat
-              </Button>
-            </div>
+            {application.status === "pending" && (
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  variant="destructive"
+                  onClick={handleRejectApplication}
+                  disabled={!allDocsReviewed}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Tolak Pengajuan
+                </Button>
+                <Button
+                  onClick={handleApproveApplication}
+                  disabled={hasRejectedDocs || hasMissingDocs || !allDocsReviewed}
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Check className="w-4 h-4 mr-2" />
+                  Setujui & Generate Surat
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>

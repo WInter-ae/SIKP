@@ -35,7 +35,7 @@ const mockDosenPenguji: DosenPenguji[] = [
 
 export default function PengujianSidangPage() {
   const navigate = useNavigate();
-  
+
   // State untuk berita acara
   const [beritaAcara, setBeritaAcara] = useState<BeritaAcara | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,9 +58,9 @@ export default function PengujianSidangPage() {
           const parsed = JSON.parse(savedDraft);
           setBeritaAcara(parsed);
           setShowForm(
-            !parsed || 
-            parsed.status === "draft" || 
-            parsed.status === "rejected"
+            !parsed ||
+              parsed.status === "draft" ||
+              parsed.status === "rejected",
           );
         } catch (error) {
           console.error("Error parsing saved draft:", error);
@@ -74,8 +74,7 @@ export default function PengujianSidangPage() {
   useEffect(() => {
     if (beritaAcara) {
       setShowForm(
-        beritaAcara.status === "draft" || 
-        beritaAcara.status === "rejected"
+        beritaAcara.status === "draft" || beritaAcara.status === "rejected",
       );
     }
   }, [beritaAcara]);
@@ -90,12 +89,12 @@ export default function PengujianSidangPage() {
     } as BeritaAcara;
 
     setBeritaAcara(draft);
-    
+
     // Simpan ke localStorage hanya di client-side
     if (typeof window !== "undefined") {
       localStorage.setItem("berita-acara-draft", JSON.stringify(draft));
     }
-    
+
     setNotification({
       title: "✅ Draft berhasil disimpan",
       description: "Data berita acara Anda telah tersimpan sebagai draft.",
@@ -121,7 +120,7 @@ export default function PengujianSidangPage() {
 
       setBeritaAcara(submitted);
       setShowForm(false);
-      
+
       // Hapus draft dari localStorage hanya di client-side
       if (typeof window !== "undefined") {
         localStorage.removeItem("berita-acara-draft");
@@ -158,14 +157,18 @@ export default function PengujianSidangPage() {
     }
 
     // Simulasi generate surat
-    const nomorSurat = `BA/KP/${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(4, "0")}`;
-    
+    const nomorSurat = `BA/KP/${new Date().getFullYear()}/${Math.floor(
+      Math.random() * 1000,
+    )
+      .toString()
+      .padStart(4, "0")}`;
+
     setNotification({
       title: "✅ Surat berhasil digenerate",
       description: `Nomor Surat: ${nomorSurat}. Surat dapat diunduh dari menu Arsip.`,
     });
     setTimeout(() => setNotification(null), 3000);
-    
+
     // Di production, ini akan trigger download PDF atau redirect ke halaman preview surat
     console.log("Generate surat dengan data:", {
       nomorSurat,
@@ -189,10 +192,12 @@ export default function PengujianSidangPage() {
       updatedAt: new Date().toISOString(),
       ...(newStatus === "approved" && {
         nilaiAkhir: 85,
-        catatanDosen: "Presentasi baik, laporan lengkap dan terstruktur. Pertahankan!",
+        catatanDosen:
+          "Presentasi baik, laporan lengkap dan terstruktur. Pertahankan!",
       }),
       ...(newStatus === "rejected" && {
-        catatanDosen: "Beberapa data masih kurang lengkap. Mohon dilengkapi terlebih dahulu.",
+        catatanDosen:
+          "Beberapa data masih kurang lengkap. Mohon dilengkapi terlebih dahulu.",
       }),
     };
 
@@ -234,7 +239,8 @@ export default function PengujianSidangPage() {
               Pengujian Sidang Kerja Praktik
             </h1>
             <p className="text-muted-foreground mt-1">
-              Ajukan berita acara sidang dan dapatkan surat setelah disetujui dosen
+              Ajukan berita acara sidang dan dapatkan surat setelah disetujui
+              dosen
             </p>
           </div>
         </div>
@@ -316,7 +322,9 @@ export default function PengujianSidangPage() {
               beritaAcara={beritaAcara}
               dosenPenguji={mockDosenPenguji}
               onGenerateSurat={handleGenerateSurat}
-              onEdit={beritaAcara.status === "rejected" ? handleEdit : undefined}
+              onEdit={
+                beritaAcara.status === "rejected" ? handleEdit : undefined
+              }
             />
           )}
 
@@ -325,7 +333,9 @@ export default function PengujianSidangPage() {
               <Info className="h-5 w-5" />
               <AlertDescription>
                 <div className="space-y-4">
-                  <p className="font-medium">Belum ada berita acara yang dibuat</p>
+                  <p className="font-medium">
+                    Belum ada berita acara yang dibuat
+                  </p>
                   <Button
                     onClick={() => setShowForm(true)}
                     className="bg-green-700 hover:bg-green-800 h-11"
@@ -344,8 +354,9 @@ export default function PengujianSidangPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Reset Data Berita Acara?</AlertDialogTitle>
               <AlertDialogDescription>
-                Tindakan ini akan menghapus semua data berita acara dan draft yang tersimpan.
-                Data yang sudah dihapus tidak dapat dikembalikan.
+                Tindakan ini akan menghapus semua data berita acara dan draft
+                yang tersimpan. Data yang sudah dihapus tidak dapat
+                dikembalikan.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

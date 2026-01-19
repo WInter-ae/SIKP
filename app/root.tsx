@@ -11,6 +11,7 @@ import { Toaster } from "~/components/ui/sonner";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { ThemeProvider } from "./contexts/theme-context";
+import { UserProvider } from "./contexts/user-context";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -35,8 +36,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
-        <Toaster position="top-right" />
+        <ThemeProvider>
+          <UserProvider>
+            {children}
+            <Toaster position="top-right" />
+          </UserProvider>
+        </ThemeProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -76,3 +81,4 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     </main>
   );
 }
+

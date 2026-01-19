@@ -1,9 +1,10 @@
 import { Avatar, AvatarFallback } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
 
 import type { MemberListProps } from "../types";
-import { Users, Check, X, LogOut, XCircle } from "lucide-react";
+import { Users, Check, X, LogOut, XCircle, Crown } from "lucide-react";
 
 function MemberList({
   title,
@@ -15,10 +16,28 @@ function MemberList({
   onRemove,
   onCancel,
 }: MemberListProps) {
+  console.log("🔄 MemberList rendering:", {
+    title,
+    memberCount: members.length,
+    members: members.map(m => ({ name: m.name, role: m.role }))
+  });
+
+  // Sort members: leader first, then by index
+  const sortedMembers = [...members].sort((a, b) => {
+    if (a.isLeader) return -1;
+    if (b.isLeader) return 1;
+    return 0;
+  });
+
   return (
     <Card className="mb-6">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-base font-semibold">{title}</CardTitle>
+          <Badge variant="outline" className="ml-2">
+            {members.length}/3
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         {members.length === 0 ? (
@@ -27,23 +46,43 @@ function MemberList({
             <p>Tidak ada anggota</p>
           </div>
         ) : (
-          <ul className="space-y-3">
-            {members.map((member) => (
-              <li
+          <div className="space-y-3">
+            {sortedMembers.map((member, index) => (
+              <div
                 key={member.id}
-                className="flex justify-between items-center py-3 border-b last:border-b-0"
+                className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
               >
-                <div className="flex items-center">
-                  <Avatar className="h-10 w-10 mr-4">
-                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                      {member.name.charAt(0)}
+                <div className="flex items-center gap-3 flex-1">
+                  {/* Member Number Badge */}
+                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-muted font-semibold text-sm">
+                    {index + 1}/3
+                  </div>
+
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback
+                      className={`font-bold ${
+                        member.isLeader
+                          ? "bg-yellow-500 text-white"
+                          : "bg-primary text-primary-foreground"
+                      }`}
+                    >
+                      {member.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <div className="font-medium text-foreground">{member.name}</div>
+
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="font-medium text-foreground">
+                        {member.name}
+                      </div>
+                      {member.isLeader && (
+                        <Crown className="h-4 w-4 text-yellow-500" />
+                      )}
+                    </div>
                     <div className="text-sm text-muted-foreground">
-                      {member.role}
-                      {member.nim && ` • ${member.nim}`}
+                      <span>{member.role}</span>
+                      {member.nim && <span> • {member.nim}</span>}
+                      {member.email && <span> • {member.email}</span>}
                     </div>
                   </div>
                 </div>
@@ -52,6 +91,7 @@ function MemberList({
                   <div className="flex gap-2">
                     <Button
                       size="sm"
+                      className="bg-green-600 hover:bg-green-700"
                       onClick={() => onAccept?.(member.id)}
                     >
                       <Check className="h-4 w-4 mr-1" />
@@ -89,9 +129,9 @@ function MemberList({
                     Keluarkan
                   </Button>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </CardContent>
     </Card>
