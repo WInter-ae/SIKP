@@ -215,7 +215,7 @@ export const MOCK_STUDENTS_FOR_GRADING: StudentGradingInfo[] = [
       },
     },
     gradingStatus: "not-graded",
-    revisionStatus: "belum-direvisi",
+    revisionStatus: "proses",
     fieldSupervisorGrades: [
       {
         category: "Penilaian Pembimbing Lapangan",
@@ -254,6 +254,62 @@ export const MOCK_STUDENTS_FOR_GRADING: StudentGradingInfo[] = [
         totalScore: 85.2,
         maxScore: 100,
         percentage: 85.2,
+      },
+    ],
+  },
+  {
+    student: {
+      id: "std-004",
+      name: "Siti Nurhaliza",
+      studentId: "1234567893",
+      photo: "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti",
+      company: "PT. Digital Indonesia",
+      fieldSupervisor: "Dewi Lestari",
+      internPeriod: {
+        start: "2024-08-01",
+        end: "2024-11-01",
+      },
+    },
+    gradingStatus: "not-graded",
+    revisionStatus: "belum-direvisi",
+    fieldSupervisorGrades: [
+      {
+        category: "Penilaian Pembimbing Lapangan",
+        components: [
+          {
+            name: "Kehadiran",
+            score: 92,
+            maxScore: 100,
+            weight: 20,
+          },
+          {
+            name: "Kerjasama",
+            score: 90,
+            maxScore: 100,
+            weight: 30,
+          },
+          {
+            name: "Sikap, Etika dan Tingkah Laku",
+            score: 91,
+            maxScore: 100,
+            weight: 20,
+          },
+          {
+            name: "Prestasi Kerja",
+            score: 88,
+            maxScore: 100,
+            weight: 20,
+          },
+          {
+            name: "Kreatifitas",
+            score: 85,
+            maxScore: 100,
+            weight: 10,
+          },
+        ],
+        totalScore: 89.7,
+        maxScore: 100,
+        percentage: 89.7,
       },
     ],
   },

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
@@ -21,6 +22,7 @@ export function GradingForm({
   onCancel,
   isSubmitting = false,
 }: GradingFormProps) {
+  const { id } = useParams();
   const [formData, setFormData] = useState<GradingFormData>({
     reportFormat: initialData?.reportFormat || 0,
     materialMastery: initialData?.materialMastery || 0,
@@ -30,6 +32,17 @@ export function GradingForm({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Auto-save to localStorage when form data changes
+  useEffect(() => {
+    if (!id) return;
+    
+    const timer = setTimeout(() => {
+      localStorage.setItem(`grading-draft-${id}`, JSON.stringify(formData));
+    }, 500); // Debounce 500ms
+
+    return () => clearTimeout(timer);
+  }, [formData, id]);
 
   const handleInputChange = (
     field: keyof GradingFormData,
@@ -70,6 +83,10 @@ export function GradingForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
+      // Clear draft from localStorage after successful submission
+      if (id) {
+        localStorage.removeItem(`grading-draft-${id}`);
+      }
       onSubmit(formData);
     }
   };

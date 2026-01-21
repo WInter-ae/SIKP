@@ -4,22 +4,15 @@ import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Textarea } from "~/components/ui/textarea";
 import { Label } from "~/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "~/components/ui/dialog";
+import { Alert, AlertDescription } from "~/components/ui/alert";
 import { 
   FileText, 
   CheckCircle, 
   XCircle, 
-  Clock,
+  AlertCircle,
   Download,
-  Eye
+  Eye,
+  Send
 } from "lucide-react";
 
 interface RevisionReviewSectionProps {
@@ -27,47 +20,94 @@ interface RevisionReviewSectionProps {
   onAllRevisionsApproved: (approved: boolean) => void;
 }
 
-interface Revision {
-  id: string;
-  type: string;
+type RevisionDecision = "undecided" | "needs-revision" | "no-revision";
+
+interface LaporanRevision {
   fileName: string;
   fileSize: string;
   submittedAt: string;
   version: number;
-  status: "pending" | "approved" | "rejected";
-  rejectReason?: string;
+  revisionMessage?: string;
+  revisionHistory: Array<{
+    version: number;
+    message: string;
+    submittedAt: string;
+    status: "pending" | "revised";
+  }>;
 }
 
 export function RevisionReviewSection({
   studentId,
   onAllRevisionsApproved,
 }: RevisionReviewSectionProps) {
-  const [activeTab, setActiveTab] = useState("menunggu");
-  const [rejectReason, setRejectReason] = useState("");
-  const [selectedRevisionId, setSelectedRevisionId] = useState<string | null>(null);
-  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [decision, setDecision] = useState<RevisionDecision>("undecided");
+  const [revisionMessage, setRevisionMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasLaporan, setHasLaporan] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Mock data - replace with real API data
-  const [revisions, setRevisions] = useState<Revision[]>([
-    {
-      id: "rev-1",
-      type: "Laporan KP",
-      fileName: "Laporan_KP_RizkiMaulana_Final.pdf",
-      fileSize: "2.5 MB",
-      submittedAt: "2026-01-10T14:30:00",
-      version: 3,
-      status: "pending",
-    },
-    {
-      id: "rev-2",
-      type: "Slide Presentasi",
-      fileName: "Presentasi_KP_RizkiMaulana.pptx",
-      fileSize: "1.8 MB",
-      submittedAt: "2026-01-10T14:35:00",
-      version: 2,
-      status: "pending",
-    },
-  ]);
+  // Load laporan from localStorage (uploaded by mahasiswa)
+  const [laporan, setLaporan] = useState<LaporanRevision>({
+    fileName: "",
+    fileSize: "0 MB",
+    submittedAt: "",
+    version: 1,
+    revisionHistory: [],
+  });
+
+  // Load data when component mounts
+  useEffect(() => {
+    if (typeof window !== "undefined" && !isInitialized) {
+      const savedLaporan = localStorage.getItem("laporan-kp");
+      
+      if (savedLaporan) {
+        const laporanData = JSON.parse(savedLaporan);
+        
+        // Check if mahasiswa has uploaded a file
+        if (laporanData.fileName && laporanData.status !== "belum_upload") {
+          setHasLaporan(true);
+          
+          // Convert to revision format
+          const fileSize = laporanData.fileSize 
+            ? `${(laporanData.fileSize / (1024 * 1024)).toFixed(2)} MB`
+            : "0 MB";
+          
+          setLaporan({
+            fileName: laporanData.fileName || "Laporan_KP.pdf",
+            fileSize: fileSize,
+            submittedAt: laporanData.uploadedAt || new Date().toISOString(),
+            version: 1,
+            revisionHistory: [],
+          });
+          
+          // Check if dosen already made decision
+          const savedDecision = localStorage.getItem(`revision-decision-${studentId}`);
+          if (savedDecision) {
+            setDecision(savedDecision as RevisionDecision);
+            
+            // If decision is no-revision, immediately notify parent
+            if (savedDecision === "no-revision") {
+              onAllRevisionsApproved(true);
+            }
+          }
+          
+          // Load revision message if exists
+          const savedRevisionMsg = localStorage.getItem(`revision-message-${studentId}`);
+          if (savedRevisionMsg) {
+            setRevisionMessage(savedRevisionMsg);
+          }
+        } else {
+          // No laporan uploaded yet
+          setHasLaporan(false);
+        }
+      } else {
+        // No laporan data at all
+        setHasLaporan(false);
+      }
+      
+      setIsInitialized(true);
+    }
+  }, [studentId, onAllRevisionsApproved, isInitialized]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -80,368 +120,444 @@ export function RevisionReviewSection({
     });
   };
 
-  // Check if all revisions are approved whenever revisions change
+  // Update parent when decision changes (only after initialization)
   useEffect(() => {
-    const allApproved = revisions.every((rev) => rev.status === "approved");
-    const hasRejected = revisions.some((rev) => rev.status === "rejected");
-    
-    // Only trigger callback if all are approved, or if any is rejected (unlock becomes false)
-    onAllRevisionsApproved(allApproved && !hasRejected);
-  }, [revisions, onAllRevisionsApproved]);
+    if (isInitialized) {
+      if (decision === "no-revision") {
+        onAllRevisionsApproved(true);
+      } else {
+        onAllRevisionsApproved(false);
+      }
+    }
+  }, [decision, onAllRevisionsApproved, isInitialized]);
 
-  const handleApproveRevision = (revisionId: string) => {
-    if (confirm("Apakah Anda yakin ingin menyetujui revisi ini?")) {
-      setRevisions((prev) =>
-        prev.map((rev) =>
-          rev.id === revisionId ? { ...rev, status: "approved" as const } : rev
-        )
-      );
+  const handleDecideNeedsRevision = () => {
+    setDecision("needs-revision");
+  };
+
+  const handleDecideNoRevision = () => {
+    if (confirm("Apakah Anda yakin dokumen sudah sempurna dan tidak memerlukan revisi?")) {
+      setDecision("no-revision");
+      
+      // Save decision to localStorage
+      localStorage.setItem(`revision-decision-${studentId}`, "no-revision");
+      
+      // Update laporan status in mahasiswa's data
+      const savedLaporan = localStorage.getItem("laporan-kp");
+      if (savedLaporan) {
+        const laporanData = JSON.parse(savedLaporan);
+        laporanData.status = "disetujui";
+        laporanData.reviewedAt = new Date().toISOString();
+        laporanData.reviewedBy = "Dosen Pembimbing";
+        localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
+        
+        // Update revision history - mark latest as approved
+        const savedHistory = localStorage.getItem("revision-history-kp");
+        if (savedHistory) {
+          const historyData = JSON.parse(savedHistory);
+          if (historyData.length > 0) {
+            // Update latest item in history
+            const latestIndex = historyData.length - 1;
+            historyData[latestIndex] = {
+              ...historyData[latestIndex],
+              status: "disetujui",
+              reviewedAt: new Date().toISOString(),
+              reviewedBy: "Dosen Pembimbing"
+            };
+            localStorage.setItem("revision-history-kp", JSON.stringify(historyData));
+          }
+        }
+      }
     }
   };
 
-  const handleRejectRevision = (revisionId: string) => {
-    setSelectedRevisionId(revisionId);
-    setShowRejectDialog(true);
-  };
-
-  const handleRejectSubmit = () => {
-    if (!rejectReason.trim()) {
-      alert("Mohon berikan alasan penolakan");
+  const handleSendRevisionMessage = async () => {
+    if (!revisionMessage.trim()) {
+      alert("Mohon tulis pesan revisi untuk mahasiswa");
       return;
     }
+
+    setIsSubmitting(true);
     
-    if (selectedRevisionId) {
-      setRevisions((prev) =>
-        prev.map((rev) =>
-          rev.id === selectedRevisionId
-            ? { ...rev, status: "rejected" as const, rejectReason: rejectReason }
-            : rev
-        )
-      );
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    // Add to history and reset
+    setLaporan(prev => ({
+      ...prev,
+      revisionHistory: [
+        ...prev.revisionHistory,
+        {
+          version: prev.version,
+          message: revisionMessage,
+          submittedAt: new Date().toISOString(),
+          status: "pending",
+        }
+      ],
+      revisionMessage: revisionMessage,
+    }));
+    
+    // Save decision and message to localStorage
+    localStorage.setItem(`revision-decision-${studentId}`, "needs-revision");
+    localStorage.setItem(`revision-message-${studentId}`, revisionMessage);
+    
+    // Update laporan status in mahasiswa's data
+    const savedLaporan = localStorage.getItem("laporan-kp");
+    if (savedLaporan) {
+      const laporanData = JSON.parse(savedLaporan);
+      laporanData.status = "perlu_revisi";
+      laporanData.revisionMessage = revisionMessage;
+      laporanData.reviewedAt = new Date().toISOString();
+      laporanData.reviewedBy = "Dosen Pembimbing";
+      localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
+      
+      // Update revision history - add revision info to latest version
+      const savedHistory = localStorage.getItem("revision-history-kp");
+      if (savedHistory) {
+        const historyData = JSON.parse(savedHistory);
+        if (historyData.length > 0) {
+          // Update latest item in history with revision info
+          const latestIndex = historyData.length - 1;
+          historyData[latestIndex] = {
+            ...historyData[latestIndex],
+            status: "perlu_revisi",
+            revisionMessage: revisionMessage,
+            reviewedAt: new Date().toISOString(),
+            reviewedBy: "Dosen Pembimbing"
+          };
+          localStorage.setItem("revision-history-kp", JSON.stringify(historyData));
+        }
+      }
     }
     
-    setShowRejectDialog(false);
-    setRejectReason("");
-    setSelectedRevisionId(null);
+    alert("Pesan revisi berhasil dikirim ke mahasiswa");
+    setRevisionMessage("");
+    setIsSubmitting(false);
   };
 
-  const pendingRevisions = revisions.filter((r) => r.status === "pending");
-  const approvedRevisions = revisions.filter((r) => r.status === "approved");
-  const rejectedRevisions = revisions.filter((r) => r.status === "rejected");
-
-  const allApproved = revisions.every((rev) => rev.status === "approved");
-  const hasRejected = revisions.some((rev) => rev.status === "rejected");
+  const handleResetDecision = () => {
+    if (confirm("Apakah Anda yakin ingin mereset keputusan revisi? Mahasiswa perlu upload ulang.")) {
+      setDecision("undecided");
+      setRevisionMessage("");
+      
+      // Clear localStorage
+      localStorage.removeItem(`revision-decision-${studentId}`);
+      localStorage.removeItem(`revision-message-${studentId}`);
+      
+      // Reset laporan status in mahasiswa's data
+      const savedLaporan = localStorage.getItem("laporan-kp");
+      if (savedLaporan) {
+        const laporanData = JSON.parse(savedLaporan);
+        laporanData.status = "belum_upload";
+        delete laporanData.revisionMessage;
+        delete laporanData.reviewedAt;
+        delete laporanData.reviewedBy;
+        localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
+      }
+      
+      // Clear revision history
+      localStorage.removeItem("revision-history-kp");
+    }
+  };
 
   return (
     <div className="space-y-6">
-      {/* Status Overview */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Status Revisi</CardTitle>
-            {pendingRevisions.length > 0 && !hasRejected && (
-              <Badge variant="secondary" className="gap-1">
-                <Clock className="h-3 w-3" />
-                Menunggu Review
-              </Badge>
-            )}
-            {allApproved && (
-              <Badge className="gap-1 bg-green-600">
-                <CheckCircle className="h-3 w-3" />
-                Semua Disetujui
-              </Badge>
-            )}
-            {hasRejected && (
-              <Badge variant="destructive" className="gap-1">
-                <XCircle className="h-3 w-3" />
-                Ada yang Ditolak
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">
-              {pendingRevisions.length > 0 && !hasRejected && 
-                "Review dan setujui semua dokumen revisi mahasiswa untuk melanjutkan ke tahap penilaian."}
-              {allApproved && 
-                "Semua revisi telah disetujui. Anda dapat melanjutkan ke tab Penilaian untuk memberikan nilai."}
-              {hasRejected && 
-                "Ada revisi yang ditolak. Mahasiswa perlu melakukan perbaikan sesuai catatan Anda."}
+      {/* Alert if no laporan uploaded yet */}
+      {!hasLaporan && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertCircle className="h-5 w-5 text-orange-600" />
+          <AlertDescription className="text-orange-800">
+            <strong>Belum Ada Laporan</strong>
+            <p className="mt-1">
+              Mahasiswa belum mengupload Laporan Kerja Praktik. Halaman revisi akan aktif setelah mahasiswa mengupload laporan.
             </p>
-            {/* Progress indicator */}
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex-1 bg-gray-200 rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all ${allApproved ? 'bg-green-600' : hasRejected ? 'bg-red-600' : 'bg-blue-600'}`}
-                  style={{ width: `${(approvedRevisions.length / revisions.length) * 100}%` }}
-                />
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Decision Stage: Undecided */}
+      {hasLaporan && decision === "undecided" && (
+        <>
+          <Alert className="border-blue-200 bg-blue-50">
+            <AlertCircle className="h-5 w-5 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <strong>Tidak Ada Revisi Diperlukan</strong>
+              <p className="mt-1">
+                Jika dokumen mahasiswa sudah sempurna dan tidak memerlukan revisi, 
+                aktifkan opsi ini untuk langsung memberikan penilaian.
+              </p>
+            </AlertDescription>
+          </Alert>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Pilih Keputusan Revisi</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600">
+                Mahasiswa telah mengirimkan laporan Kerja Praktik. Silakan tentukan apakah dokumen memerlukan revisi atau tidak.
+              </p>
+
+              {/* Laporan Info */}
+              <Card className="border-2">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-blue-50 rounded-lg">
+                      <FileText className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline">Laporan KP</Badge>
+                        <Badge variant="secondary">Versi {laporan.version}</Badge>
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-1">
+                        {laporan.fileName}
+                      </h4>
+                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <span>{laporan.fileSize}</span>
+                        <span>•</span>
+                        <span>Diunggah: {formatDate(laporan.submittedAt)}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Eye className="h-4 w-4" />
+                        Lihat
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Download className="h-4 w-4" />
+                        Unduh
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Revision History */}
+              {laporan.revisionHistory.length > 0 && (
+                <Card className="bg-gray-50">
+                  <CardHeader className="pb-3">
+                    <h4 className="font-medium text-sm text-gray-700">Riwayat Revisi</h4>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {laporan.revisionHistory.map((history, index) => (
+                      <div key={index} className="bg-white rounded-lg p-3 text-sm">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="text-xs">
+                            Versi {history.version}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {formatDate(history.submittedAt)}
+                          </span>
+                        </div>
+                        <p className="text-gray-700">{history.message}</p>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Decision Buttons */}
+              <div className="grid grid-cols-2 gap-4 pt-4">
+                <Button
+                  onClick={handleDecideNeedsRevision}
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2 border-2 hover:border-orange-500 hover:bg-orange-50"
+                >
+                  <XCircle className="h-6 w-6 text-orange-600" />
+                  <span className="font-semibold">Perlu Revisi</span>
+                  <span className="text-xs text-gray-600 font-normal">
+                    Dokumen perlu diperbaiki
+                  </span>
+                </Button>
+                <Button
+                  onClick={handleDecideNoRevision}
+                  variant="outline"
+                  className="h-auto py-4 flex-col gap-2 border-2 hover:border-green-500 hover:bg-green-50"
+                >
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  <span className="font-semibold">Tidak Perlu Revisi</span>
+                  <span className="text-xs text-gray-600 font-normal">
+                    Dokumen sudah sempurna
+                  </span>
+                </Button>
               </div>
-              <span className="text-xs font-medium text-gray-600">
-                {approvedRevisions.length}/{revisions.length} Disetujui
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="menunggu" className="gap-2">
-            Menunggu
-            {pendingRevisions.length > 0 && (
-              <Badge variant="destructive" className="rounded-full px-2 py-0 text-xs">
-                {pendingRevisions.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="disetujui">
-            Disetujui
-          </TabsTrigger>
-          <TabsTrigger value="ditolak">
-            Ditolak
-          </TabsTrigger>
-        </TabsList>
+      {/* Decision Stage: Needs Revision */}
+      {hasLaporan && decision === "needs-revision" && (
+        <>
+          <Alert className="border-orange-200 bg-orange-50">
+            <AlertCircle className="h-5 w-5 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <strong>Dokumen Memerlukan Revisi</strong>
+              <p className="mt-1">
+                Review dokumen dan berikan pesan revisi yang jelas kepada mahasiswa. 
+                Mahasiswa akan memperbaiki dan mengirim ulang dokumen.
+              </p>
+            </AlertDescription>
+          </Alert>
 
-        {/* Menunggu Tab */}
-        <TabsContent value="menunggu" className="mt-6 space-y-4">
-          {pendingRevisions.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-600">Tidak ada revisi yang menunggu review</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              {pendingRevisions.map((revision) => (
-                <Card key={revision.id}>
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className="p-3 bg-blue-50 rounded-lg">
-                            <FileText className="h-6 w-6 text-blue-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline">{revision.type}</Badge>
-                              <Badge variant="secondary">Versi {revision.version}</Badge>
-                            </div>
-                            <h4 className="font-semibold text-gray-900 mb-1">
-                              {revision.fileName}
-                            </h4>
-                            <div className="flex items-center gap-3 text-sm text-gray-600">
-                              <span>{revision.fileSize}</span>
-                              <span>•</span>
-                              <span>Diunggah: {formatDate(revision.submittedAt)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Eye className="h-4 w-4" />
-                            Lihat
-                          </Button>
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Download className="h-4 w-4" />
-                            Unduh
-                          </Button>
-                        </div>
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Review Laporan KP</CardTitle>
+                <Button variant="ghost" size="sm" onClick={handleResetDecision}>
+                  Ubah Keputusan
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Document Preview */}
+              <Card className="border-2 border-orange-200">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-orange-50 rounded-lg">
+                      <FileText className="h-8 w-8 text-orange-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant="outline" className="border-orange-600 text-orange-700">
+                          Laporan KP
+                        </Badge>
+                        <Badge variant="secondary">Versi {laporan.version}</Badge>
                       </div>
-                      
-                      {/* Action Buttons per Document */}
-                      <div className="flex gap-2 pt-2 border-t">
-                        <Button
-                          onClick={() => handleApproveRevision(revision.id)}
-                          className="flex-1 gap-2"
-                          size="sm"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                          Setujui Revisi
-                        </Button>
-                        <Button
-                          onClick={() => handleRejectRevision(revision.id)}
-                          variant="destructive"
-                          className="flex-1 gap-2"
-                          size="sm"
-                        >
-                          <XCircle className="h-4 w-4" />
-                          Tolak Revisi
-                        </Button>
+                      <h4 className="font-semibold text-gray-900 mb-1">
+                        {laporan.fileName}
+                      </h4>
+                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <span>{laporan.fileSize}</span>
+                        <span>•</span>
+                        <span>Diunggah: {formatDate(laporan.submittedAt)}</span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </>
-          )}
-        </TabsContent>
-
-        {/* Disetujui Tab */}
-        <TabsContent value="disetujui" className="mt-6">
-          {approvedRevisions.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                <p className="text-gray-600">Belum ada revisi yang disetujui</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {approvedRevisions.map((revision) => (
-                <Card key={revision.id} className="border-green-200 bg-green-50/50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-4 flex-1">
-                        <div className="p-3 bg-green-100 rounded-lg">
-                          <FileText className="h-6 w-6 text-green-600" />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="border-green-600 text-green-700">
-                              {revision.type}
-                            </Badge>
-                            <Badge className="bg-green-600">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Disetujui
-                            </Badge>
-                          </div>
-                          <h4 className="font-semibold text-gray-900 mb-1">
-                            {revision.fileName}
-                          </h4>
-                          <div className="flex items-center gap-3 text-sm text-gray-600">
-                            <span>{revision.fileSize}</span>
-                            <span>•</span>
-                            <span>Diunggah: {formatDate(revision.submittedAt)}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <Eye className="h-4 w-4" />
-                          Lihat
-                        </Button>
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <Download className="h-4 w-4" />
-                          Unduh
-                        </Button>
-                      </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Eye className="h-4 w-4" />
+                        Lihat
+                      </Button>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Download className="h-4 w-4" />
+                        Unduh
+                      </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
+                  </div>
+                </CardContent>
+              </Card>
 
-        {/* Ditolak Tab */}
-        <TabsContent value="ditolak" className="mt-6">
-          {rejectedRevisions.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <XCircle className="h-12 w-12 text-red-600 mx-auto mb-3" />
-                <p className="text-gray-600">Belum ada revisi yang ditolak</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {rejectedRevisions.map((revision) => (
-                <Card key={revision.id} className="border-red-200 bg-red-50/50">
-                  <CardContent className="pt-6">
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className="p-3 bg-red-100 rounded-lg">
-                            <FileText className="h-6 w-6 text-red-600" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <Badge variant="outline" className="border-red-600 text-red-700">
-                                {revision.type}
-                              </Badge>
-                              <Badge variant="destructive">
-                                <XCircle className="h-3 w-3 mr-1" />
-                                Ditolak
-                              </Badge>
-                            </div>
-                            <h4 className="font-semibold text-gray-900 mb-1">
-                              {revision.fileName}
-                            </h4>
-                            <div className="flex items-center gap-3 text-sm text-gray-600">
-                              <span>{revision.fileSize}</span>
-                              <span>•</span>
-                              <span>Diunggah: {formatDate(revision.submittedAt)}</span>
-                            </div>
-                          </div>
+              {/* Revision Message Form */}
+              <div className="space-y-3">
+                <Label htmlFor="revision-message" className="text-base font-semibold">
+                  Pesan Revisi <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="revision-message"
+                  value={revisionMessage}
+                  onChange={(e) => setRevisionMessage(e.target.value)}
+                  placeholder="Jelaskan secara detail bagian mana yang perlu diperbaiki mahasiswa..."
+                  className="min-h-[150px]"
+                />
+                <p className="text-sm text-gray-600">
+                  💡 Berikan instruksi yang jelas dan spesifik agar mahasiswa dapat memperbaiki dengan tepat.
+                </p>
+              </div>
+
+              {/* Send Revision Button */}
+              <Button
+                onClick={handleSendRevisionMessage}
+                disabled={isSubmitting || !revisionMessage.trim()}
+                className="w-full gap-2"
+              >
+                <Send className="h-4 w-4" />
+                {isSubmitting ? "Mengirim..." : "Kirim Pesan Revisi"}
+              </Button>
+
+              {/* Revision History */}
+              {laporan.revisionHistory.length > 0 && (
+                <Card className="bg-gray-50 mt-4">
+                  <CardHeader className="pb-3">
+                    <h4 className="font-medium text-sm text-gray-700">Riwayat Revisi Sebelumnya</h4>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {laporan.revisionHistory.map((history, index) => (
+                      <div key={index} className="bg-white rounded-lg p-3 text-sm">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Badge variant="outline" className="text-xs">
+                            Versi {history.version}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {formatDate(history.submittedAt)}
+                          </span>
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Eye className="h-4 w-4" />
-                            Lihat
-                          </Button>
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Download className="h-4 w-4" />
-                            Unduh
-                          </Button>
-                        </div>
+                        <p className="text-gray-700">{history.message}</p>
                       </div>
-                      {revision.rejectReason && (
-                        <div className="bg-white rounded-lg p-3 border border-red-200">
-                          <p className="text-sm font-semibold text-red-800 mb-1">Alasan Penolakan:</p>
-                          <p className="text-sm text-gray-700">{revision.rejectReason}</p>
-                        </div>
-                      )}
-                    </div>
+                    ))}
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-      {/* Reject Dialog */}
-      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Tolak Revisi</DialogTitle>
-            <DialogDescription>
-              Berikan alasan penolakan untuk dokumen ini. Mahasiswa akan menerima catatan Anda.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="reject-reason" className="text-base font-semibold">
-                Alasan Penolakan <span className="text-red-500">*</span>
-              </Label>
-              <Textarea
-                id="reject-reason"
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Jelaskan apa yang perlu diperbaiki mahasiswa..."
-                className="mt-2 min-h-[120px]"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowRejectDialog(false);
-                setRejectReason("");
-                setSelectedRevisionId(null);
-              }}
-            >
-              Batal
-            </Button>
-            <Button variant="destructive" onClick={handleRejectSubmit}>
-              Tolak Revisi
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Decision Stage: No Revision Needed */}
+      {hasLaporan && decision === "no-revision" && (
+        <>
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <AlertDescription className="text-green-800">
+              <strong>Dokumen Disetujui</strong>
+              <p className="mt-1">
+                Dokumen tidak memerlukan revisi. Anda dapat melanjutkan ke tab Penilaian untuk memberikan nilai.
+              </p>
+            </AlertDescription>
+          </Alert>
+
+          <Card className="border-2 border-green-200">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <FileText className="h-8 w-8 text-green-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-green-600">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Disetujui
+                    </Badge>
+                  </div>
+                  <h4 className="font-semibold text-gray-900 mb-1">
+                    {laporan.fileName}
+                  </h4>
+                  <div className="flex items-center gap-3 text-sm text-gray-600">
+                    <span>{laporan.fileSize}</span>
+                    <span>•</span>
+                    <span>Diunggah: {formatDate(laporan.submittedAt)}</span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Eye className="h-4 w-4" />
+                    Lihat
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Unduh
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t">
+                <Button variant="ghost" size="sm" onClick={handleResetDecision}>
+                  Ubah Keputusan
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

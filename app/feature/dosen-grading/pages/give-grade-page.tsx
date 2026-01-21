@@ -18,12 +18,43 @@ export default function GiveGradePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("revisi");
   
-  // Track revision approvals - will check if all revisions are approved
+  // Track revision approvals - will check if revisions are approved
   const [allRevisionsApproved, setAllRevisionsApproved] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const studentInfo = MOCK_STUDENTS_FOR_GRADING.find(
     (s) => s.student.id === id,
   );
+
+  // Load saved grading data and revision status from localStorage on mount
+  useEffect(() => {
+    if (!id) {
+      setIsLoading(false);
+      return;
+    }
+    
+    // Check revision decision first
+    const savedDecision = localStorage.getItem(`revision-decision-${id}`);
+    const savedRevisionStatus = localStorage.getItem(`revision-approved-${id}`);
+    
+    // If revision is approved (no-revision decision), unlock penilaian
+    if (savedDecision === 'no-revision' || savedRevisionStatus === 'true') {
+      setAllRevisionsApproved(true);
+      
+      // Load saved tab preference
+      const savedTab = localStorage.getItem(`active-tab-${id}`);
+      if (savedTab) {
+        setActiveTab(savedTab);
+      }
+      // Note: Don't auto-switch to penilaian, let user decide
+    } else {
+      // Always stay on revisi tab if not approved
+      setActiveTab("revisi");
+      setAllRevisionsApproved(false);
+    }
+    
+    setIsLoading(false);
+  }, [id]);
 
   if (!studentInfo) {
     return (
@@ -48,8 +79,20 @@ export default function GiveGradePage() {
 
   const { student, academicGrades } = studentInfo;
 
-  // Get initial form data if already graded
+  // Get initial form data if already graded or from localStorage
   const getInitialFormData = (): Partial<GradingFormData> | undefined => {
+    // First, check localStorage for saved draft
+    const savedGrading = localStorage.getItem(`grading-draft-${id}`);
+    if (savedGrading) {
+      try {
+        const parsedData = JSON.parse(savedGrading);
+        return parsedData;
+      } catch (e) {
+        console.error("Error parsing saved grading data:", e);
+      }
+    }
+
+    // Otherwise, use existing graded data if available
     if (!academicGrades || academicGrades.length === 0) return undefined;
 
     const reportGrade = academicGrades.find(
@@ -88,11 +131,77 @@ export default function GiveGradePage() {
 
   const handleSubmit = async (data: GradingFormData) => {
     setIsSubmitting(true);
+    
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    // Load e-signature dari profil dosen
+    let eSignatureUrl = "";
+    const savedSignature = localStorage.getItem("dosen-esignature");
+    if (savedSignature) {
+      try {
+        const signatureData = JSON.parse(savedSignature);
+        eSignatureUrl = signatureData.signatureImage;
+      } catch (e) {
+        console.error("Error loading signature:", e);
+      }
+    }
+    
+    // Load dosen profile data
+    let dosenData = {
+      nama: "Dr. Ahmad Santoso, M.Kom",
+      nip: "198501122010121001"
+    };
+    const savedProfile = localStorage.getItem("dosen-profile");
+    if (savedProfile) {
+      try {
+        const profileData = JSON.parse(savedProfile);
+        dosenData.nama = profileData.nama || dosenData.nama;
+        dosenData.nip = profileData.nip || dosenData.nip;
+      } catch (e) {
+        console.error("Error loading profile:", e);
+      }
+    }
+    
+    // Save nilai to localStorage for mahasiswa to generate form
+    // Include complete student data from current student being graded
+    const nilaiData = {
+      // Data Mahasiswa
+      namaMahasiswa: student.name,
+      nim: student.studentId,
+      programStudi: "Teknik Informatika", // TODO: get from student data
+      tempatKP: student.company,
+      judulLaporan: "Sistem Informasi Manajemen Berbasis Web", // TODO: get from submission
+      waktuPelaksanaan: `${new Date(student.internPeriod.start).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })} s.d. ${new Date(student.internPeriod.end).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}`,
+      dosenPembimbing: dosenData.nama,
+      pembimbingLapangan: student.fieldSupervisor,
+      
+      // Nilai
+      kesesuaianLaporan: data.reportFormat,
+      penguasaanMateri: data.materialMastery,
+      analisisPerancangan: data.analysisDesign,
+      sikapEtika: data.attitudeEthics,
+      
+      // Data Dosen
+      dosenPenguji: dosenData.nama,
+      nipDosen: dosenData.nip,
+      eSignatureUrl: eSignatureUrl,
+      tanggalPenilaian: new Date().toISOString(),
+      
+      // Student ID untuk tracking
+      studentId: student.studentId,
+    };
+    
+    // Save dengan key yang spesifik per mahasiswa
+    localStorage.setItem(`nilai-kp-${student.studentId}`, JSON.stringify(nilaiData));
+    // Also save to generic key for backward compatibility
+    localStorage.setItem("nilai-kp", JSON.stringify(nilaiData));
+    
     console.log("Submitting grade data:", data);
+    console.log("Saved nilai data:", nilaiData);
+    
     // Show success message or redirect
-    alert("Nilai berhasil disimpan!");
+    alert("Nilai berhasil disimpan! Mahasiswa dapat mencetak Form Nilai KP.");
     navigate("/dosen/penilaian");
     setIsSubmitting(false);
   };
@@ -102,10 +211,25 @@ export default function GiveGradePage() {
   };
 
   const handleAllRevisionsApproved = (approved: boolean) => {
-    setAllRevisionsApproved(approved);
-    if (approved) {
-      // Automatically switch to penilaian tab when all revisions approved
-      setActiveTab("penilaian");
+    // Only update if the value actually changed
+    if (allRevisionsApproved !== approved) {
+      setAllRevisionsApproved(approved);
+      
+      // Save revision approval status to localStorage
+      if (id) {
+        localStorage.setItem(`revision-approved-${id}`, approved.toString());
+      }
+      
+      // Don't auto-switch tab, let user manually click
+      // User will see the unlock message and can switch when ready
+    }
+  };
+
+  // Save active tab to localStorage when it changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (id) {
+      localStorage.setItem(`active-tab-${id}`, value);
     }
   };
 
@@ -179,13 +303,13 @@ export default function GiveGradePage() {
           <Alert className="border-green-200 bg-green-50">
             <CheckCircle className="h-5 w-5 text-green-600" />
             <AlertDescription className="text-green-800">
-              <strong>Semua revisi telah disetujui.</strong> Anda dapat memberikan penilaian final pada mahasiswa ini.
+              <strong>Dokumen disetujui.</strong> Anda sekarang dapat memberikan penilaian final pada mahasiswa ini. Silakan klik tab <strong>Penilaian</strong> di atas.
             </AlertDescription>
           </Alert>
         )}
 
         {/* Tabs for Revisi and Penilaian */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="revisi" className="gap-2">
               Revisi
@@ -226,18 +350,22 @@ export default function GiveGradePage() {
               <Card>
                 <CardContent className="py-12">
                   <div className="text-center space-y-4">
-                    <Lock className="h-16 w-16 text-gray-400 mx-auto" />
+                    <Lock className="h-16 w-16 text-orange-400 mx-auto" />
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-2">
                         Penilaian Terkunci
                       </h3>
-                      <p className="text-gray-600">
-                        Anda harus menyetujui revisi terlebih dahulu sebelum dapat memberikan penilaian.
+                      <p className="text-gray-600 mb-2">
+                        Anda harus mereview dan menyetujui revisi terlebih dahulu sebelum dapat memberikan penilaian.
+                      </p>
+                      <p className="text-sm text-orange-600 font-medium">
+                        Silakan klik tombol "Tidak Ada Revisi" di tab Revisi untuk membuka tab Penilaian.
                       </p>
                     </div>
                     <Button 
                       variant="outline" 
                       onClick={() => setActiveTab("revisi")}
+                      className="mt-4"
                     >
                       Kembali ke Revisi
                     </Button>

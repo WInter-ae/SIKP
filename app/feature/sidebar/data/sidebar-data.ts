@@ -156,7 +156,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Kelola Template",
-        url: "#",
+        url: "/admin/template",
       },
     ],
   },
