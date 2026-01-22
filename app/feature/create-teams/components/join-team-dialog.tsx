@@ -84,26 +84,44 @@ export function JoinTeamDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedTeamCode) {
-      onJoinTeam(selectedTeamCode);
-      setSearchQuery("");
-      setSelectedTeamCode("");
-      setSuggestions([]);
-      setShowSuggestions(false);
-      onOpenChange(false);
+    const codeToJoin = selectedTeamCode || searchQuery.trim();
+    if (!codeToJoin) {
+      alert("Kode tim tidak boleh kosong");
+      return;
     }
+
+    // Jika user memilih dari hasil pencarian, cegah join ke tim penuh (>=3)
+    const selectedSuggestion = suggestions.find(
+      (s) => s.code === codeToJoin || `${s.leaderNim} - ${s.leaderName}` === codeToJoin,
+    );
+    if (selectedSuggestion && selectedSuggestion.memberCount >= 3) {
+      alert("❌ Tim ini sudah penuh (maksimal 3 anggota)");
+      return;
+    }
+
+    onJoinTeam(codeToJoin);
+    setSearchQuery("");
+    setSelectedTeamCode("");
+    setSuggestions([]);
+    setShowSuggestions(false);
+    onOpenChange(false);
   };
 
   const handleSelectSuggestion = (suggestion: TeamSuggestion) => {
+    if (suggestion.memberCount >= 3) {
+      alert("❌ Tim ini sudah penuh (maksimal 3 anggota)");
+      return;
+    }
     setSearchQuery(`${suggestion.leaderNim} - ${suggestion.leaderName}`);
     setSelectedTeamCode(suggestion.code);
     setShowSuggestions(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-    setSelectedTeamCode(""); // Reset selected team saat user mengetik lagi
-    if (e.target.value.trim().length >= 1) {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setSelectedTeamCode(value.trim()); // Izinkan join langsung pakai kode tim
+    if (value.trim().length >= 1) {
       setShowSuggestions(true);
     }
   };
@@ -115,17 +133,17 @@ export function JoinTeamDialog({
           <DialogHeader>
             <DialogTitle>Gabung Tim</DialogTitle>
             <DialogDescription>
-              Masukkan NIM ketua tim untuk mencari dan bergabung dengan tim.
+              Masukkan kode tim (atau NIM ketua) untuk mencari dan bergabung.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <Label htmlFor="teamCode">NIM Ketua Tim</Label>
+            <Label htmlFor="teamCode">Kode Tim</Label>
             <div className="relative mt-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="teamCode"
-                  placeholder="Ketik NIM ketua tim..."
+                  placeholder="Masukkan kode tim atau NIM ketua..."
                   value={searchQuery}
                   onChange={handleInputChange}
                   className="pl-10 pr-10"
@@ -186,7 +204,7 @@ export function JoinTeamDialog({
                 )}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Contoh: 2021001 atau 202100
+              Contoh: TEAM-MKO4EO2W-VVPI0Z atau 2021001
             </p>
           </div>
           <DialogFooter>

@@ -11,6 +11,8 @@ function MemberList({
   members,
   showActions = false,
   showCancel = false,
+  isLeader = false,
+  currentUserId,
   onAccept,
   onReject,
   onRemove,
@@ -53,11 +55,6 @@ function MemberList({
                 className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex items-center gap-3 flex-1">
-                  {/* Member Number Badge */}
-                  <div className="flex items-center justify-center h-10 w-10 rounded-full bg-muted font-semibold text-sm">
-                    {index + 1}/3
-                  </div>
-
                   <Avatar className="h-10 w-10">
                     <AvatarFallback
                       className={`font-bold ${
@@ -79,10 +76,26 @@ function MemberList({
                         <Crown className="h-4 w-4 text-yellow-500" />
                       )}
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
                       <span>{member.role}</span>
-                      {member.nim && <span> • {member.nim}</span>}
-                      {member.email && <span> • {member.email}</span>}
+                      {member.nim && <span>• {member.nim}</span>}
+                      {member.email && <span>• {member.email}</span>}
+                      {member.status && (!isLeader || member.status !== "PENDING") && (
+                        <Badge
+                          variant="outline"
+                          className={
+                            member.status === "PENDING"
+                              ? "border-amber-200 text-amber-700 bg-amber-50"
+                              : member.status === "REJECTED" || member.status === "DITOLAK"
+                              ? "border-red-200 text-red-700 bg-red-50"
+                              : member.status === "ACCEPTED" || member.status === "DITERIMA"
+                              ? "border-green-200 text-green-700 bg-green-50"
+                              : ""
+                          }
+                        >
+                          {member.status}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -119,14 +132,17 @@ function MemberList({
                   </Button>
                 )}
 
-                {!showActions && !showCancel && !member.isLeader && (
+                {!showActions && !showCancel && !member.isLeader && onRemove && 
+                  (isLeader || member.userId === currentUserId) && (
                   <Button
                     size="sm"
                     variant="destructive"
                     onClick={() => onRemove?.(member.id)}
                   >
                     <LogOut className="h-4 w-4 mr-1" />
-                    Keluarkan
+                    {/* Jika user adalah anggota dan melihat diri sendiri, tampilkan 'Keluar' */}
+                    {/* Jika user adalah ketua dan melihat anggota lain, tampilkan 'Keluarkan' */}
+                    {!isLeader && member.userId === currentUserId ? "Keluar" : "Keluarkan"}
                   </Button>
                 )}
               </div>

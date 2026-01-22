@@ -38,9 +38,12 @@ export interface MyTeamsResponse {
   id: string;
   name: string;
   code: string;
+  leaderId: string;
+  isLeader: boolean;
+  status: string;
   members: Array<{
     id: string;
-    role: string;
+    role: "KETUA" | "ANGGOTA";
     status: string;
     user: {
       id: string;
@@ -58,6 +61,21 @@ export interface MahasiswaSearchResult {
   email: string;
   prodi?: string;
   fakultas?: string;
+}
+
+export interface JoinTeamResponseData {
+  memberId: string;
+  teamId: string;
+  teamCode: string;
+  userId: string;
+  status: string;
+  createdAt: string;
+  team?: {
+    id?: string;
+    code: string;
+    leaderName: string;
+    leaderNim: string;
+  };
 }
 
 // ==================== API FUNCTIONS ====================
@@ -143,6 +161,15 @@ export async function searchTeams(query: string): Promise<
 }
 
 /**
+ * Join a team using team code
+ * POST /api/teams/:teamCode/join
+ */
+export async function joinTeam(teamCode: string): Promise<ApiResponse<JoinTeamResponseData>> {
+  const normalizedCode = encodeURIComponent(teamCode.trim());
+  return post<JoinTeamResponseData>(`/api/teams/${normalizedCode}/join`, {});
+}
+
+/**
  * Get my pending invitations (undangan yang saya terima)
  * GET /api/teams/my-invitations
  */
@@ -161,18 +188,50 @@ export async function searchMahasiswa(
 }
 
 /**
- * Delete/Leave team
+ * Leave team (for team members, not leader)
+ * POST /api/teams/:teamId/leave
+ * 
+ * Only team members (not leader) can leave
+ * Team leader must use deleteTeam instead
+ */
+export async function leaveTeam(teamId: string): Promise<ApiResponse<{
+  success: boolean;
+  message: string;
+  teamId: string;
+}>> {
+  return post(`/api/teams/${teamId}/leave`, {});
+}
+
+/**
+ * Delete team (for team leader only)
  * DELETE /api/teams/:teamId
  * 
- * Used when:
- * - Team leader wants to delete their team
- * - Member accepts invitation from another team (auto-delete old team)
+ * Only team leader can delete the team
+ * All members will be removed when team is deleted
  */
 export async function deleteTeam(teamId: string): Promise<ApiResponse<{
   success: boolean;
   deletedTeamId: string;
+  deletedTeamCode: string;
+  membersAffected: number;
 }>> {
   return post(`/api/teams/${teamId}/delete`, {});
+}
+
+/**
+ * Remove member from team (for team leader)
+ * POST /api/teams/:teamId/members/:memberId/remove
+ * 
+ * Only team leader can remove members
+ * Cannot remove team leader
+ */
+export async function removeMember(teamId: string, memberId: string): Promise<ApiResponse<{
+  success: boolean;
+  message: string;
+  removedMemberId: string;
+  teamId: string;
+}>> {
+  return post(`/api/teams/${teamId}/members/${memberId}/remove`, {});
 }
 
 /**
@@ -190,6 +249,24 @@ export async function finalizeTeam(teamId: string): Promise<ApiResponse<{
   message: string;
 }>> {
   return post(`/api/teams/${teamId}/finalize`, {});
+}
+
+/**
+ * Cancel invitation (for team leader)
+ * POST /api/teams/invitations/:memberId/cancel
+ * 
+ * Only team leader can cancel pending invitations
+ * Cannot cancel accepted or rejected invitations
+ * Cannot cancel team leader invitation
+ */
+export async function cancelInvitation(memberId: string): Promise<ApiResponse<{
+  success: boolean;
+  message: string;
+  cancelledInvitationId: string;
+  cancelledUserId: string;
+  teamId: string;
+}>> {
+  return post(`/api/teams/invitations/${memberId}/cancel`, {});
 }
 
 
