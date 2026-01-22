@@ -4,7 +4,14 @@ import { useNavigate } from "react-router";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "~/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "~/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 import MemberList from "~/feature/create-teams/components/member-list";
@@ -16,7 +23,17 @@ import { TeamCodeDialog } from "~/feature/create-teams/components/team-code-dial
 import { DeleteTeamDialog } from "~/feature/create-teams/components/delete-team-dialog";
 
 import type { Member, Team } from "~/feature/create-teams/types";
-import { Users, UserPlus, Info, Crown, Loader2, Copy, Check, Trash2, AlertCircle } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  Info,
+  Crown,
+  Loader2,
+  Copy,
+  Check,
+  Trash2,
+  AlertCircle,
+} from "lucide-react";
 
 // Import user context untuk akses user data
 import { useUser } from "~/contexts/user-context";
@@ -68,11 +85,11 @@ const TeamCreationPage = () => {
 
   // State untuk delete team dialog
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteReason, setDeleteReason] = useState<"join_other_team" | "manual_delete">(
-    "manual_delete"
-  );
+  const [deleteReason, setDeleteReason] = useState<
+    "join_other_team" | "manual_delete"
+  >("manual_delete");
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
-  
+
   // State untuk menyimpan action yang ditunda setelah delete team
   const [pendingActionAfterDelete, setPendingActionAfterDelete] = useState<{
     type: string;
@@ -123,15 +140,16 @@ const TeamCreationPage = () => {
       // Create timeout promise untuk prevent infinite loading
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => {
-          reject(new Error(`Loading took too long (>${LOAD_TIMEOUT_MS / 1000}s). Backend may be slow.`));
-        }, LOAD_TIMEOUT_MS)
+          reject(
+            new Error(
+              `Loading took too long (>${LOAD_TIMEOUT_MS / 1000}s). Backend may be slow.`,
+            ),
+          );
+        }, LOAD_TIMEOUT_MS),
       );
 
       // Race antara actual request dan timeout
-      const response = await Promise.race([
-        getMyTeams(),
-        timeoutPromise,
-      ]);
+      const response = await Promise.race([getMyTeams(), timeoutPromise]);
 
       const loadTime = Date.now() - startTime;
       console.log(`✅ Teams loaded in ${loadTime}ms`);
@@ -142,7 +160,7 @@ const TeamCreationPage = () => {
         hasData: !!response.data,
         dataType: typeof response.data,
         dataLength: Array.isArray(response.data) ? response.data.length : "N/A",
-        rawResponse: response
+        rawResponse: response,
       });
 
       if (response.success && response.data && response.data.length > 0) {
@@ -155,35 +173,49 @@ const TeamCreationPage = () => {
         console.log("🔍 Raw Team Data from Backend:", {
           teamId: teamData.id,
           teamCode: teamData.code,
-          rawMembers: members.map(m => ({
+          rawMembers: members.map((m) => ({
             id: m.id,
             userId: m.user?.id,
             userName: m.user?.name,
             status: m.status,
-            role: m.role
-          }))
+            role: m.role,
+          })),
         });
 
         // WORKAROUND: If backend members array is too small or missing some members,
         // try fetching from /api/teams/:teamId/members endpoint to get complete list
         // This handles cases where backend my-teams endpoint is incomplete
-        if (members.length < 3) {  // If less than max members, try to get complete list
+        if (members.length < 3) {
+          // If less than max members, try to get complete list
           try {
-            console.log("📡 Fetching complete members list from /api/teams/:teamId/members endpoint...");
+            console.log(
+              "📡 Fetching complete members list from /api/teams/:teamId/members endpoint...",
+            );
             const membersResponse = await getTeamMembers(teamData.id);
-            if (membersResponse.success && Array.isArray(membersResponse.data) && membersResponse.data.length > members.length) {
-              console.log("✅ Got more complete members list from team endpoint:", membersResponse.data.length, "members");
+            if (
+              membersResponse.success &&
+              Array.isArray(membersResponse.data) &&
+              membersResponse.data.length > members.length
+            ) {
+              console.log(
+                "✅ Got more complete members list from team endpoint:",
+                membersResponse.data.length,
+                "members",
+              );
               members = membersResponse.data;
             }
           } catch (err) {
-            console.log("⚠️ Could not fetch from team endpoint, using response from my-teams:", err instanceof Error ? err.message : "Unknown error");
+            console.log(
+              "⚠️ Could not fetch from team endpoint, using response from my-teams:",
+              err instanceof Error ? err.message : "Unknown error",
+            );
           }
         }
 
         // Optimized transformation
         // Filter accepted members for team.members display
         const acceptedMembers = members.filter((m) => m.status === "ACCEPTED");
-        
+
         const transformedTeam: Team = {
           id: teamData.id,
           name: teamData.name || "",
@@ -214,13 +246,13 @@ const TeamCreationPage = () => {
         console.log("📊 Member Filtering Details:", {
           totalMembers: members.length,
           acceptedCount: acceptedMembers.length,
-          acceptedMembers: acceptedMembers.map(m => ({
+          acceptedMembers: acceptedMembers.map((m) => ({
             name: m.user.name,
             role: m.role,
-            status: m.status
+            status: m.status,
           })),
-          rejectedCount: members.filter(m => m.status === "REJECTED").length,
-          pendingCount: members.filter(m => m.status === "PENDING").length
+          rejectedCount: members.filter((m) => m.status === "REJECTED").length,
+          pendingCount: members.filter((m) => m.status === "PENDING").length,
         });
 
         // Jika tidak ada members yang ACCEPTED, tambahkan current user sebagai leader
@@ -243,12 +275,12 @@ const TeamCreationPage = () => {
           teamId: transformedTeam.id,
           teamCode: transformedTeam.code,
           memberCount: transformedTeam.members.length,
-          members: transformedTeam.members.map(m => ({
+          members: transformedTeam.members.map((m) => ({
             id: m.id,
             name: m.name,
             role: m.role,
-            nim: m.nim
-          }))
+            nim: m.nim,
+          })),
         });
 
         // Split PENDING members for leader view:
@@ -259,7 +291,7 @@ const TeamCreationPage = () => {
         const pendingInvitesList = pendingMembers
           .filter((m) => m.invitedBy === teamData.leaderId)
           .map((m) => ({
-            id: m.id,  // ✅ memberId
+            id: m.id, // ✅ memberId
             userId: m.user.id,
             name: m.user.name,
             role: "Mahasiswa",
@@ -279,20 +311,20 @@ const TeamCreationPage = () => {
             email: m.user.email,
             status: m.status,
           }));
-        
+
         console.log("📤 Pending Invites (Sent):", {
           total: members.length,
           pendingCount: pendingInvitesList.length,
-          allStatuses: members.map(m => ({ 
-            memberId: m.id,  // ✅ ID ini yang akan dipakai untuk cancel
-            userId: m.user.id, 
-            name: m.user.name, 
-            status: m.status 
+          allStatuses: members.map((m) => ({
+            memberId: m.id, // ✅ ID ini yang akan dipakai untuk cancel
+            userId: m.user.id,
+            name: m.user.name,
+            status: m.status,
           })),
           pendingInvites: pendingInvitesList,
-          joinRequests: incomingJoinRequests
+          joinRequests: incomingJoinRequests,
         });
-        
+
         setPendingInvites(pendingInvitesList);
 
         // Untuk ketua tim, tampilkan permintaan gabung yang masuk dengan tombol terima/tolak
@@ -304,13 +336,17 @@ const TeamCreationPage = () => {
         console.log("⚠️ No teams found in response:", {
           success: response.success,
           dataEmpty: !response.data || response.data.length === 0,
-          dataLength: Array.isArray(response.data) ? response.data.length : "N/A",
-          message: response.message || "No message"
+          dataLength: Array.isArray(response.data)
+            ? response.data.length
+            : "N/A",
+          message: response.message || "No message",
         });
-        
+
         // FALLBACK: Try to get team info from my-invitations jika user adalah anggota
         // yang sudah menerima undangan
-        console.log("🔄 Trying fallback: fetching my-invitations to find accepted team...");
+        console.log(
+          "🔄 Trying fallback: fetching my-invitations to find accepted team...",
+        );
         try {
           const invitationsResponse = await getMyInvitations();
           console.log("📨 My Invitations Response:", {
@@ -318,87 +354,107 @@ const TeamCreationPage = () => {
             message: invitationsResponse.message,
             dataType: typeof invitationsResponse.data,
             isArray: Array.isArray(invitationsResponse.data),
-            dataLength: Array.isArray(invitationsResponse.data) ? invitationsResponse.data.length : 0,
-            rawData: invitationsResponse.data
+            dataLength: Array.isArray(invitationsResponse.data)
+              ? invitationsResponse.data.length
+              : 0,
+            rawData: invitationsResponse.data,
           });
-          
+
           // Cari invitasi dengan status ACCEPTED
-          if (invitationsResponse.success && Array.isArray(invitationsResponse.data)) {
+          if (
+            invitationsResponse.success &&
+            Array.isArray(invitationsResponse.data)
+          ) {
             const allInvitations = invitationsResponse.data;
             console.log("📋 All invitations status breakdown:", {
               total: allInvitations.length,
               byStatus: {
-                PENDING: allInvitations.filter(i => i.status === "PENDING").length,
-                ACCEPTED: allInvitations.filter(i => i.status === "ACCEPTED").length,
-                REJECTED: allInvitations.filter(i => i.status === "REJECTED").length
+                PENDING: allInvitations.filter((i) => i.status === "PENDING")
+                  .length,
+                ACCEPTED: allInvitations.filter((i) => i.status === "ACCEPTED")
+                  .length,
+                REJECTED: allInvitations.filter((i) => i.status === "REJECTED")
+                  .length,
               },
-              eachInvitation: allInvitations.map(inv => ({
+              eachInvitation: allInvitations.map((inv) => ({
                 id: inv.id,
                 teamId: inv.teamId,
                 role: inv.role,
                 status: inv.status,
-                keys: Object.keys(inv)
-              }))
+                keys: Object.keys(inv),
+              })),
             });
-            
-            const acceptedInvitations = allInvitations.filter(inv => inv.status === "ACCEPTED");
-            
+
+            const acceptedInvitations = allInvitations.filter(
+              (inv) => inv.status === "ACCEPTED",
+            );
+
             if (acceptedInvitations.length > 0) {
               // Get first accepted invitation - ini adalah tim user sebagai anggota
               const firstAccepted = acceptedInvitations[0];
-              
+
               console.log("✅ Found accepted invitation! Team info:", {
                 teamId: firstAccepted.teamId,
                 userId: firstAccepted.userId,
                 role: firstAccepted.role,
                 status: firstAccepted.status,
-                allKeys: Object.keys(firstAccepted)
+                allKeys: Object.keys(firstAccepted),
               });
-              
+
               // Fetch complete team data using the team ID dari invitation
               if (firstAccepted.teamId) {
                 try {
-                  const teamMembers = await getTeamMembers(firstAccepted.teamId);
+                  const teamMembers = await getTeamMembers(
+                    firstAccepted.teamId,
+                  );
                   console.log("🔎 Team Members Response:", {
                     success: teamMembers.success,
                     message: teamMembers.message,
                     dataType: typeof teamMembers.data,
                     isArray: Array.isArray(teamMembers.data),
-                    dataLength: Array.isArray(teamMembers.data) ? teamMembers.data.length : 0,
-                    rawData: teamMembers.data
+                    dataLength: Array.isArray(teamMembers.data)
+                      ? teamMembers.data.length
+                      : 0,
+                    rawData: teamMembers.data,
                   });
-                  
+
                   if (teamMembers.success && Array.isArray(teamMembers.data)) {
-                    console.log("✅ Got team members from /api/teams/:teamId/members:", {
-                      teamId: firstAccepted.teamId,
-                      memberCount: teamMembers.data.length,
-                      members: teamMembers.data.map(m => ({
-                        id: m.id,
-                        userId: m.user?.id,
-                        userName: m.user?.name,
-                        role: m.role,
-                        status: m.status
-                      }))
-                    });
-                    
+                    console.log(
+                      "✅ Got team members from /api/teams/:teamId/members:",
+                      {
+                        teamId: firstAccepted.teamId,
+                        memberCount: teamMembers.data.length,
+                        members: teamMembers.data.map((m) => ({
+                          id: m.id,
+                          userId: m.user?.id,
+                          userName: m.user?.name,
+                          role: m.role,
+                          status: m.status,
+                        })),
+                      },
+                    );
+
                     // Build team object dari members data
                     const members = teamMembers.data;
-                    const acceptedMembers = members.filter(m => m.status === "ACCEPTED");
-                    
+                    const acceptedMembers = members.filter(
+                      (m) => m.status === "ACCEPTED",
+                    );
+
                     console.log("📊 Accepted Members from Team:", {
                       total: members.length,
                       accepted: acceptedMembers.length,
-                      breakdown: acceptedMembers.map(m => ({
+                      breakdown: acceptedMembers.map((m) => ({
                         name: m.user?.name,
-                        role: m.role
-                      }))
+                        role: m.role,
+                      })),
                     });
-                    
+
                     const transformedTeam: Team = {
                       id: firstAccepted.teamId,
                       name: "Tim Kerja Praktik",
                       code: "", // Extract dari members jika tersedia
-                      leaderId: members.find(m => m.role === "KETUA")?.user?.id || "",
+                      leaderId:
+                        members.find((m) => m.role === "KETUA")?.user?.id || "",
                       isLeader: false, // ✅ User is member, not leader (from invitations)
                       status: "PENDING",
                       members: acceptedMembers
@@ -418,40 +474,49 @@ const TeamCreationPage = () => {
                         }),
                       maxMembers: 3,
                     };
-                    
+
                     console.log("✅ Team constructed from fallback:", {
                       teamId: transformedTeam.id,
                       memberCount: transformedTeam.members.length,
-                      members: transformedTeam.members.map(m => ({
+                      members: transformedTeam.members.map((m) => ({
                         name: m.name,
                         role: m.role,
-                        isLeader: m.isLeader
-                      }))
+                        isLeader: m.isLeader,
+                      })),
                     });
-                    
+
                     setTeam(transformedTeam);
                     setPendingInvites([]);
                     return;
                   } else {
-                    console.log("❌ Team members response not successful or not array");
+                    console.log(
+                      "❌ Team members response not successful or not array",
+                    );
                   }
                 } catch (teamErr) {
                   console.error("❌ Error fetching team members:", {
-                    error: teamErr instanceof Error ? teamErr.message : "Unknown error",
-                    teamId: firstAccepted.teamId
+                    error:
+                      teamErr instanceof Error
+                        ? teamErr.message
+                        : "Unknown error",
+                    teamId: firstAccepted.teamId,
                   });
                 }
               }
             } else {
-              console.log("⚠️ No accepted invitations found. Only found these statuses:", 
-                allInvitations.map(i => i.status)
+              console.log(
+                "⚠️ No accepted invitations found. Only found these statuses:",
+                allInvitations.map((i) => i.status),
               );
             }
           }
         } catch (invErr) {
-          console.error("❌ Error fetching my-invitations:", invErr instanceof Error ? invErr.message : "Unknown error");
+          console.error(
+            "❌ Error fetching my-invitations:",
+            invErr instanceof Error ? invErr.message : "Unknown error",
+          );
         }
-        
+
         // Jika semua fallback gagal, set team to null
         setTeam(null);
         setPendingInvites([]);
@@ -466,15 +531,18 @@ const TeamCreationPage = () => {
         // Timeout error - show helpful message
         console.warn(
           "⚠️ PERFORMANCE ISSUE: Backend response is slow (>5s). Possible causes:\n" +
-          "1. Database query not optimized\n" +
-          "2. Network latency too high\n" +
-          "3. Server resources limited"
+            "1. Database query not optimized\n" +
+            "2. Network latency too high\n" +
+            "3. Server resources limited",
         );
-      } else if (errorMsg.includes("userId") || errorMsg.includes("undefined")) {
+      } else if (
+        errorMsg.includes("userId") ||
+        errorMsg.includes("undefined")
+      ) {
         console.error("❌ BACKEND ERROR: Cannot read userId from JWT token");
         alert(
           "Backend error: Cannot read user info from token.\n" +
-          "Please check backend logs and fix JWT handling."
+            "Please check backend logs and fix JWT handling.",
         );
       }
     } finally {
@@ -487,7 +555,9 @@ const TeamCreationPage = () => {
   // Semua field di-generate otomatis oleh backend
   const handleCreateTeam = async () => {
     if (!user || !user.id) {
-      alert("❌ Error: User data tidak tersedia\n\nSilakan logout dan login kembali.");
+      alert(
+        "❌ Error: User data tidak tersedia\n\nSilakan logout dan login kembali.",
+      );
       navigate("/login");
       return;
     }
@@ -498,7 +568,7 @@ const TeamCreationPage = () => {
       console.log("=== CREATE TEAM DEBUG ===");
       console.log("User dari context:", user);
       console.log("Token:", localStorage.getItem("auth_token"));
-      
+
       // POST /teams dengan body kosong
       // Backend akan auto-generate: id, code, leader_id (dari JWT), status (PENDING)
       const response = await createTeamApi();
@@ -510,16 +580,16 @@ const TeamCreationPage = () => {
       if (response.success && response.data) {
         // Simpan kode tim yang baru dibuat
         setNewTeamCode(response.data.code);
-        
+
         // Set flag bahwa ini tim yang baru dibuat
         setIsNewlyCreated(true);
-        
+
         // Tampilkan dialog dengan kode tim
         setShowTeamCodeDialog(true);
 
         // Reload teams to get updated data
         await loadMyTeams();
-        
+
         // Reset flag setelah 5 detik (untuk animation/highlight)
         setTimeout(() => {
           setIsNewlyCreated(false);
@@ -531,35 +601,41 @@ const TeamCreationPage = () => {
           data: response.data,
           fullResponse: response,
         });
-        
+
         // Error message yang lebih detail
         const errorMsg = response.message || "Unknown error";
-        
+
         // Check for specific error types
-        if (errorMsg.includes("Empty response") || errorMsg.includes("Invalid JSON")) {
+        if (
+          errorMsg.includes("Empty response") ||
+          errorMsg.includes("Invalid JSON")
+        ) {
           alert(
             `❌ BACKEND ERROR: Server tidak mengembalikan response yang valid\n\n` +
-            `Pesan: ${errorMsg}\n\n` +
-            `KEMUNGKINAN PENYEBAB:\n` +
-            `1. Backend crash saat membuat tim (error 500)\n` +
-            `2. Error saat set field 'invited_by' untuk team leader\n` +
-            `3. Database constraint violation\n\n` +
-            `SOLUSI BACKEND:\n` +
-            `Periksa file BACKEND_FIX_CREATE_TEAM_ERROR.md untuk fix lengkap!\n\n` +
-            `Detail error ada di console (F12).`
+              `Pesan: ${errorMsg}\n\n` +
+              `KEMUNGKINAN PENYEBAB:\n` +
+              `1. Backend crash saat membuat tim (error 500)\n` +
+              `2. Error saat set field 'invited_by' untuk team leader\n` +
+              `3. Database constraint violation\n\n` +
+              `SOLUSI BACKEND:\n` +
+              `Periksa file BACKEND_FIX_CREATE_TEAM_ERROR.md untuk fix lengkap!\n\n` +
+              `Detail error ada di console (F12).`,
           );
-        } else if (errorMsg.includes("userId") || errorMsg.includes("undefined")) {
+        } else if (
+          errorMsg.includes("userId") ||
+          errorMsg.includes("undefined")
+        ) {
           alert(
             `❌ ERROR BACKEND: JWT Token Issue\n\n` +
-            `Pesan: ${errorMsg}\n\n` +
-            `SOLUSI:\n` +
-            `Backend tidak dapat membaca userId dari JWT token.\n` +
-            `Silakan perbaiki backend sesuai instruksi yang diberikan.\n\n` +
-            `Detail error ada di console (F12).`
+              `Pesan: ${errorMsg}\n\n` +
+              `SOLUSI:\n` +
+              `Backend tidak dapat membaca userId dari JWT token.\n` +
+              `Silakan perbaiki backend sesuai instruksi yang diberikan.\n\n` +
+              `Detail error ada di console (F12).`,
           );
         } else {
           alert(
-            `❌ Gagal membuat tim\n\nPesan: ${errorMsg}\n\nCek console untuk detail.`
+            `❌ Gagal membuat tim\n\nPesan: ${errorMsg}\n\nCek console untuk detail.`,
           );
         }
       }
@@ -567,11 +643,11 @@ const TeamCreationPage = () => {
       console.error("Error creating team:", error);
       alert(
         `❌ Terjadi kesalahan saat membuat tim\n\n` +
-        `Error: ${error}\n\n` +
-        `Kemungkinan:\n` +
-        `1. Backend tidak dapat membaca JWT token\n` +
-        `2. Koneksi ke backend bermasalah\n` +
-        `3. Backend error (cek logs backend)`
+          `Error: ${error}\n\n` +
+          `Kemungkinan:\n` +
+          `1. Backend tidak dapat membaca JWT token\n` +
+          `2. Koneksi ke backend bermasalah\n` +
+          `3. Backend error (cek logs backend)`,
       );
     } finally {
       setIsCreatingTeam(false);
@@ -621,14 +697,15 @@ const TeamCreationPage = () => {
         await loadMyTeams();
         await loadMyInvitations();
       } else {
-        const errorMsg = response.message || "Gagal mengirim permintaan gabung tim";
+        const errorMsg =
+          response.message || "Gagal mengirim permintaan gabung tim";
         alert(`❌ ${errorMsg}`);
       }
     } catch (error) {
       console.error("❌ Error joining team:", error);
       alert(
         `❌ Terjadi kesalahan saat mengirim permintaan gabung tim.\n\n` +
-        `${error instanceof Error ? error.message : String(error)}`
+          `${error instanceof Error ? error.message : String(error)}`,
       );
     } finally {
       setIsLoading(false);
@@ -668,7 +745,7 @@ const TeamCreationPage = () => {
       console.log("📩 My Invitations Response:", {
         success: response.success,
         dataLength: response.data?.length || 0,
-        rawData: response.data
+        rawData: response.data,
       });
 
       // 🔍 DEBUG: Show EXACT backend response structure
@@ -679,7 +756,9 @@ const TeamCreationPage = () => {
 
       if (response.success && response.data) {
         // Transform data untuk display
-        const pendingAll = response.data.filter((inv) => inv.status === "PENDING");
+        const pendingAll = response.data.filter(
+          (inv) => inv.status === "PENDING",
+        );
 
         // Split between invitations received vs join requests sent by me
         const isJoinSentByMe = (inv: any) => {
@@ -687,50 +766,55 @@ const TeamCreationPage = () => {
           return inv.invitedBy === user?.id || inv.inviter?.id === user?.id;
         };
 
-        const invitationsReceivedRaw = pendingAll.filter((inv) => !isJoinSentByMe(inv));
-        const joinRequestsSentRaw = pendingAll.filter((inv) => isJoinSentByMe(inv));
+        const invitationsReceivedRaw = pendingAll.filter(
+          (inv) => !isJoinSentByMe(inv),
+        );
+        const joinRequestsSentRaw = pendingAll.filter((inv) =>
+          isJoinSentByMe(inv),
+        );
 
         const invitations = invitationsReceivedRaw.map((inv) => {
-            // Debug logging
-            console.log("🔍 Invitation data:", {
-              id: inv.id,
-              hasInviter: !!inv.inviter,
-              inviterName: inv.inviter?.name,
-              inviterNim: inv.inviter?.nim,
-              hasUser: !!inv.user,
-              userName: inv.user?.name,
-              hasTeam: !!inv.team,
-              teamCode: inv.team?.code,
-            });
-
-            // Get inviter info (person who invited us)
-            const inviterName = inv.inviter?.name;
-            const inviterNim = inv.inviter?.nim;
-            const teamCode = inv.team?.code;
-
-            // Fallback untuk debug
-            if (!inviterName) {
-              console.warn(
-                "⚠️ WARNING: Inviter name not found in response!",
-                "Backend should return inv.inviter.name"
-              );
-            }
-
-            return {
-              id: inv.id, // member ID untuk respond (string utuh)
-              memberId: inv.id, // Simpan member ID asli (string utuh)
-              name: inviterName && teamCode 
-                ? `${inviterName} (${teamCode})` 
-                : teamCode 
-                  ? `Unknown (${teamCode})` 
-                  : "Unknown (Team)",
-              role: "Undangan dari Tim",
-              nim: inviterNim || "",
-              email: inv.inviter?.email || inv.user?.email || "",
-              teamId: inv.teamId,
-              invitedAt: inv.invitedAt,
-            };
+          // Debug logging
+          console.log("🔍 Invitation data:", {
+            id: inv.id,
+            hasInviter: !!inv.inviter,
+            inviterName: inv.inviter?.name,
+            inviterNim: inv.inviter?.nim,
+            hasUser: !!inv.user,
+            userName: inv.user?.name,
+            hasTeam: !!inv.team,
+            teamCode: inv.team?.code,
           });
+
+          // Get inviter info (person who invited us)
+          const inviterName = inv.inviter?.name;
+          const inviterNim = inv.inviter?.nim;
+          const teamCode = inv.team?.code;
+
+          // Fallback untuk debug
+          if (!inviterName) {
+            console.warn(
+              "⚠️ WARNING: Inviter name not found in response!",
+              "Backend should return inv.inviter.name",
+            );
+          }
+
+          return {
+            id: inv.id, // member ID untuk respond (string utuh)
+            memberId: inv.id, // Simpan member ID asli (string utuh)
+            name:
+              inviterName && teamCode
+                ? `${inviterName} (${teamCode})`
+                : teamCode
+                  ? `Unknown (${teamCode})`
+                  : "Unknown (Team)",
+            role: "Undangan dari Tim",
+            nim: inviterNim || "",
+            email: inv.inviter?.email || inv.user?.email || "",
+            teamId: inv.teamId,
+            invitedAt: inv.invitedAt,
+          };
+        });
 
         // Map join requests sent by current user to display under 'Daftar Permintaan Gabung Tim'
         const myJoinRequests = joinRequestsSentRaw.map((inv) => {
@@ -752,7 +836,11 @@ const TeamCreationPage = () => {
           const leaderNim = inv.team?.leaderNim || "";
           const teamCode = inv.team?.code || "";
 
-          console.log("📋 Parsed leader info:", { leaderName, leaderNim, teamCode });
+          console.log("📋 Parsed leader info:", {
+            leaderName,
+            leaderNim,
+            teamCode,
+          });
 
           return {
             id: inv.id,
@@ -769,28 +857,35 @@ const TeamCreationPage = () => {
 
         console.log(`✅ Found ${invitations.length} pending invitations:`, {
           count: invitations.length,
-          details: invitations.map(inv => ({
+          details: invitations.map((inv) => ({
             name: inv.name,
             role: inv.role,
-            teamId: inv.teamId
-          }))
+            teamId: inv.teamId,
+          })),
         });
 
-        console.log(`✅ Found ${myJoinRequests.length} join requests sent by me:`, {
-          count: myJoinRequests.length,
-          details: myJoinRequests.map(req => ({
-            name: req.name,
-            role: req.role,
-            nim: req.nim,
-            teamId: req.teamId
-          }))
-        });
-        
+        console.log(
+          `✅ Found ${myJoinRequests.length} join requests sent by me:`,
+          {
+            count: myJoinRequests.length,
+            details: myJoinRequests.map((req) => ({
+              name: req.name,
+              role: req.role,
+              nim: req.nim,
+              teamId: req.teamId,
+            })),
+          },
+        );
+
         setInviteRequests(invitations);
         // If user is NOT a leader, show the requests they sent under 'Daftar Permintaan Gabung Tim'
         if (!team || !team.isLeader) {
           setJoinRequests(myJoinRequests);
-          console.log("📌 Setting joinRequests for non-leader user:", myJoinRequests.length, "items");
+          console.log(
+            "📌 Setting joinRequests for non-leader user:",
+            myJoinRequests.length,
+            "items",
+          );
         }
       } else {
         console.warn("⚠️ No invitations found or request failed", {
@@ -802,14 +897,17 @@ const TeamCreationPage = () => {
       }
     } catch (error) {
       console.error("❌ Error loading invitations:", error);
-      console.error("Stack:", error instanceof Error ? error.stack : "No stack");
+      console.error(
+        "Stack:",
+        error instanceof Error ? error.stack : "No stack",
+      );
     }
   };
 
   // Fungsi terima ajakan tim
   const handleAcceptInvite = async (memberId: string) => {
     console.log("🔄 Accept invite clicked for memberId:", memberId);
-    
+
     const invitation = inviteRequests.find((m) => m.id === memberId);
     if (!invitation) {
       console.error("❌ Invitation not found in state:", memberId);
@@ -823,19 +921,72 @@ const TeamCreationPage = () => {
       teamId: invitation.teamId,
     });
 
-    // Jika user sudah memiliki tim, hapus tim lama terlebih dahulu
+    // Jika user sudah memiliki tim
     if (team && team.id) {
-      console.log("⚠️ User already has a team, will delete old team first");
-      // Simpan state untuk diteruskan setelah delete
-      setPendingActionAfterDelete({
-        type: "accept-invite",
-        memberId,
-        memberName: invitation.name,
-      });
-      // Buka dialog delete
-      setShowDeleteDialog(true);
-      setDeleteReason("join_other_team");
-      setConfirmAction(null); // Clear konfirmasi dialog
+      // Kasus 1: User adalah ketua -> harus bubarkan tim terlebih dahulu (flow lama)
+      if (team.isLeader) {
+        console.log("⚠️ User is leader, will delete old team before accepting invite");
+        setPendingActionAfterDelete({
+          type: "accept-invite",
+          memberId,
+          memberName: invitation.name,
+        });
+        setShowDeleteDialog(true);
+        setDeleteReason("join_other_team");
+        setConfirmAction(null); // Clear konfirmasi dialog
+        return;
+      }
+
+      // Kasus 2: User adalah anggota (non-leader) -> auto keluar dari tim lama, lalu accept undangan baru
+      try {
+        setIsLoading(true);
+        console.log("🚪 User is member, leaving current team before accepting new invite", {
+          currentTeamId: team.id,
+          newInvitationTeamId: invitation.teamId,
+        });
+
+        const { leaveTeam } = await import("~/lib/services/team.service");
+        const leaveResponse = await leaveTeam(team.id);
+
+        if (!leaveResponse.success) {
+          const errorMsg = leaveResponse.message || "Unknown error";
+          console.error("❌ Leave team before accept failed:", errorMsg);
+          alert(
+            `❌ Gagal keluar dari tim lama:\n\n${errorMsg}\n\nSilakan coba lagi atau hubungi admin jika masalah berlanjut.`,
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("✅ Left old team, proceeding to accept new invitation");
+
+        const response = await respondToInvitation(memberId, true);
+
+        console.log("📨 Accept response after leaving old team:", {
+          success: response.success,
+          message: response.message,
+        });
+
+        if (response.success) {
+          setInviteRequests(inviteRequests.filter((m) => m.id !== memberId));
+          const teamName = invitation?.name || "Tim";
+          alert(`✅ Berhasil bergabung dengan tim ${teamName}!`);
+          // Refresh data
+          await loadMyTeams();
+          await loadMyInvitations();
+        } else {
+          const errorMsg = response.message || "Unknown error";
+          console.error("❌ Accept invitation failed after leaving old team:", errorMsg);
+          alert(`❌ Gagal menerima undangan: ${errorMsg}`);
+        }
+      } catch (error) {
+        console.error("❌ Error leaving old team or accepting invite:", error);
+        alert(
+          `❌ Terjadi kesalahan saat memproses undangan baru:\n\n${error instanceof Error ? error.message : String(error)}`,
+        );
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       // Jika tidak ada tim lama, langsung proses accept
       try {
@@ -843,9 +994,9 @@ const TeamCreationPage = () => {
         console.log("📤 Request details:", {
           memberId,
           endpoint: `/api/teams/invitations/${memberId}/respond`,
-          body: { accept: true }
+          body: { accept: true },
         });
-        
+
         const response = await respondToInvitation(memberId, true);
 
         console.log("📨 Accept response:", {
@@ -856,9 +1007,7 @@ const TeamCreationPage = () => {
 
         if (response.success) {
           // Remove dari state immediately
-          setInviteRequests(
-            inviteRequests.filter((m) => m.id !== memberId)
-          );
+          setInviteRequests(inviteRequests.filter((m) => m.id !== memberId));
           const teamName = invitation?.name || "Tim";
           alert(`✅ Berhasil bergabung dengan tim ${teamName}!`);
           // Reload teams dan invitations
@@ -867,26 +1016,32 @@ const TeamCreationPage = () => {
         } else {
           const errorMsg = response.message || "Unknown error";
           console.error("❌ Accept invitation failed:", errorMsg);
-          
+
           // Better error message
-          if (errorMsg.includes("not found") || errorMsg.includes("already responded")) {
+          if (
+            errorMsg.includes("not found") ||
+            errorMsg.includes("already responded")
+          ) {
             alert(
               `❌ Undangan tidak valid!\n\n` +
-              `Kemungkinan:\n` +
-              `1. Undangan sudah Anda tanggapi sebelumnya\n` +
-              `2. Data di server sudah terhapus\n` +
-              `3. Silakan refresh halaman dan coba lagi`
+                `Kemungkinan:\n` +
+                `1. Undangan sudah Anda tanggapi sebelumnya\n` +
+                `2. Data di server sudah terhapus\n` +
+                `3. Silakan refresh halaman dan coba lagi`,
             );
-          } else if (errorMsg.includes("Cannot read") || errorMsg.includes("undefined")) {
+          } else if (
+            errorMsg.includes("Cannot read") ||
+            errorMsg.includes("undefined")
+          ) {
             alert(
               `❌ Server error saat memproses undangan\n\n` +
-              `Error: ${errorMsg}\n\n` +
-              `Silakan hubungi administrator jika masalah berlanjut`
+                `Error: ${errorMsg}\n\n` +
+                `Silakan hubungi administrator jika masalah berlanjut`,
             );
             console.error("🔧 Backend error details:", {
               message: response.message,
               data: response.data,
-              fullResponse: response
+              fullResponse: response,
             });
           } else {
             alert(`❌ Gagal menerima undangan: ${errorMsg}`);
@@ -894,9 +1049,12 @@ const TeamCreationPage = () => {
         }
       } catch (error) {
         console.error("❌ Error accepting invitation:", error);
-        console.error("Stack:", error instanceof Error ? error.stack : "No stack");
+        console.error(
+          "Stack:",
+          error instanceof Error ? error.stack : "No stack",
+        );
         alert(
-          `❌ Terjadi kesalahan saat menerima undangan:\n\n${error instanceof Error ? error.message : String(error)}`
+          `❌ Terjadi kesalahan saat menerima undangan:\n\n${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
@@ -905,7 +1063,7 @@ const TeamCreationPage = () => {
   // Fungsi tolak ajakan tim
   const handleRejectInvite = async (memberId: string) => {
     console.log("🔄 Reject invite clicked for memberId:", memberId);
-    
+
     const invitation = inviteRequests.find((m) => m.id === memberId);
     if (!invitation) {
       console.error("❌ Invitation not found in state:", memberId);
@@ -926,34 +1084,38 @@ const TeamCreationPage = () => {
 
       if (response.success) {
         // Remove dari state immediately
-        setInviteRequests(
-          inviteRequests.filter((m) => m.id !== memberId)
-        );
+        setInviteRequests(inviteRequests.filter((m) => m.id !== memberId));
         alert(`✅ Undangan dari ${invitationName} berhasil ditolak`);
         // Reload invitations untuk sync dengan backend
         await loadMyInvitations();
       } else {
         const errorMsg = response.message || "Unknown error";
         console.error("❌ Reject invitation failed:", errorMsg);
-        
-        if (errorMsg.includes("not found") || errorMsg.includes("already responded")) {
+
+        if (
+          errorMsg.includes("not found") ||
+          errorMsg.includes("already responded")
+        ) {
           alert(
             `❌ Undangan tidak valid!\n\n` +
-            `Kemungkinan:\n` +
-            `1. Undangan sudah Anda tanggapi sebelumnya\n` +
-            `2. Data di server sudah terhapus\n` +
-            `3. Silakan refresh halaman dan coba lagi`
+              `Kemungkinan:\n` +
+              `1. Undangan sudah Anda tanggapi sebelumnya\n` +
+              `2. Data di server sudah terhapus\n` +
+              `3. Silakan refresh halaman dan coba lagi`,
           );
-        } else if (errorMsg.includes("Cannot read") || errorMsg.includes("undefined")) {
+        } else if (
+          errorMsg.includes("Cannot read") ||
+          errorMsg.includes("undefined")
+        ) {
           alert(
             `❌ Server error saat memproses undangan\n\n` +
-            `Error: ${errorMsg}\n\n` +
-            `Silakan hubungi administrator jika masalah berlanjut`
+              `Error: ${errorMsg}\n\n` +
+              `Silakan hubungi administrator jika masalah berlanjut`,
           );
           console.error("🔧 Backend error details:", {
             message: response.message,
             data: response.data,
-            fullResponse: response
+            fullResponse: response,
           });
         } else {
           alert(`❌ Gagal menolak undangan: ${errorMsg}`);
@@ -968,47 +1130,47 @@ const TeamCreationPage = () => {
   // Fungsi keluarkan anggota / keluar dari tim
   const handleRemoveMember = async (memberId: string) => {
     if (!team || !user) return;
-    
+
     const member = team.members.find((m) => m.id === memberId);
     if (!member || member.isLeader) return;
 
     // Check apakah user mengeluarkan diri sendiri (anggota keluar) atau ketua mengeluarkan anggota
     const isSelf = member.userId === user.id;
-    
+
     if (isSelf) {
       // Anggota keluar dari tim
       const confirmLeave = confirm(
         `Apakah Anda yakin ingin keluar dari tim ${team.code}?\n\n` +
-        `Anda akan dihapus dari anggota tim ini.`
+          `Anda akan dihapus dari anggota tim ini.`,
       );
-      
+
       if (!confirmLeave) return;
-      
+
       setIsLoading(true);
       try {
         console.log("🚪 Leaving team:", team.id);
         const { leaveTeam } = await import("~/lib/services/team.service");
         const response = await leaveTeam(team.id);
-        
+
         if (response.success) {
           console.log("✅ Successfully left team");
           alert(`✅ Berhasil keluar dari tim ${team.code}`);
-          
+
           // Clear team state
           setTeam(null);
           setPendingInvites([]);
-          
+
           // Reload teams
           await loadMyTeams();
           await loadMyInvitations();
         } else {
           const errorMsg = response.message || "Unknown error";
           console.error("❌ Leave team failed:", errorMsg);
-          
+
           if (errorMsg.includes("leader cannot leave")) {
             alert(
               "❌ Ketua tim tidak bisa keluar dari tim!\n\n" +
-              "Silakan bubarkan tim jika ingin menghapus tim ini."
+                "Silakan bubarkan tim jika ingin menghapus tim ini.",
             );
           } else {
             alert(`❌ Gagal keluar dari tim: ${errorMsg}`);
@@ -1016,15 +1178,17 @@ const TeamCreationPage = () => {
         }
       } catch (error) {
         console.error("❌ Error leaving team:", error);
-        alert(`❌ Terjadi kesalahan: ${error instanceof Error ? error.message : "Unknown error"}`);
+        alert(
+          `❌ Terjadi kesalahan: ${error instanceof Error ? error.message : "Unknown error"}`,
+        );
       } finally {
         setIsLoading(false);
       }
     } else {
-      // Ketua mengeluarkan anggota (future implementation)
+      // Ketua mengeluarkan anggota
       setConfirmAction({
         type: "remove",
-        memberId,
+        memberId: member.userId || memberId, // ✅ Use userId for backend API
         memberName: member.name,
       });
     }
@@ -1042,6 +1206,12 @@ const TeamCreationPage = () => {
       return;
     }
 
+    // Batasi maksimal 3 anggota (termasuk ketua)
+    if (team.members.length >= 3) {
+      alert("❌ Tim sudah penuh (maksimal 3 anggota)");
+      return;
+    }
+
     // Check jika sudah diundang (bandingkan userId)
     if (pendingInvites.some((m) => m.userId === member.id)) {
       alert(`${member.name} sudah diundang sebelumnya!`);
@@ -1055,11 +1225,11 @@ const TeamCreationPage = () => {
     }
 
     // Konfirmasi jika mahasiswa sudah punya tim lain
-    const confirmMessage = 
+    const confirmMessage =
       `Kirim undangan ke ${member.name}?\n\n` +
       `📌 Catatan: Jika ${member.name} sudah memiliki tim lain, ` +
-      `tim lama mereka akan otomatis terhapus saat menerima undangan ini.`;
-    
+      `mereka akan otomatis keluar dari tim lama saat menerima undangan ini.`;
+
     if (!confirm(confirmMessage)) {
       return;
     }
@@ -1081,25 +1251,33 @@ const TeamCreationPage = () => {
           },
         ]);
 
-        alert(`✅ Undangan berhasil dikirim ke ${member.name}!\n\n` +
-              `Mereka akan menerima notifikasi dan dapat bergabung dengan tim Anda.`);
-        
+        alert(
+          `✅ Undangan berhasil dikirim ke ${member.name}!\n\n` +
+            `Mereka akan menerima notifikasi dan dapat bergabung dengan tim Anda.`,
+        );
+
         // Close invite dialog
         setShowInviteDialog(false);
       } else {
         // Handle specific error messages
         const errorMsg = response.message || "";
-        
+
         // Check if error is about team leader permission
-        if (errorMsg.toLowerCase().includes("only team leader") || 
-            errorMsg.toLowerCase().includes("team leader can invite")) {
+        if (
+          errorMsg.toLowerCase().includes("only team leader") ||
+          errorMsg.toLowerCase().includes("team leader can invite")
+        ) {
           console.error("❌ Authorization Error:", errorMsg);
-          console.error("📌 This should not happen - button should only show for team leaders");
-          
-          alert(`❌ Hanya Ketua Tim yang dapat mengundang anggota!\n\n` +
-                `Sepertinya Anda bukan ketua tim. Button undang anggota seharusnya tidak muncul.\n\n` +
-                `💡 Solusi Frontend: Perbaiki kondisi tampilan button "Undang Anggota"`);
-          
+          console.error(
+            "📌 This should not happen - button should only show for team leaders",
+          );
+
+          alert(
+            `❌ Hanya Ketua Tim yang dapat mengundang anggota!\n\n` +
+              `Sepertinya Anda bukan ketua tim. Button undang anggota seharusnya tidak muncul.\n\n` +
+              `💡 Solusi Frontend: Perbaiki kondisi tampilan button "Undang Anggota"`,
+          );
+
           // Reload page to fix inconsistent state
           window.location.reload();
         } else {
@@ -1132,31 +1310,55 @@ const TeamCreationPage = () => {
     switch (confirmAction.type) {
       case "accept-join": {
         if (!confirmAction.memberId) break;
+
+        // Cegah anggota > 3
+        if (team && team.members.length >= 3) {
+          alert("❌ Tim sudah penuh (maksimal 3 anggota)");
+          break;
+        }
+
         setIsLoading(true);
         try {
-          const joinReq = joinRequests.find((m) => m.id === confirmAction.memberId);
+          const joinReq = joinRequests.find(
+            (m) => m.id === confirmAction.memberId,
+          );
           console.log("✅ Accepting join request - DEBUG:", {
             confirmMemberId: confirmAction.memberId,
             foundInList: !!joinReq,
             joinReqData: joinReq,
-            allJoinRequests: joinRequests.map(j => ({ id: j.id, name: j.name, status: j.status })),
+            allJoinRequests: joinRequests.map((j) => ({
+              id: j.id,
+              name: j.name,
+              status: j.status,
+            })),
           });
 
-          const response = await respondToInvitation(confirmAction.memberId, true);
+          const response = await respondToInvitation(
+            confirmAction.memberId,
+            true,
+          );
 
           console.log("📨 Backend response:", response);
 
           if (response.success) {
-            setJoinRequests(joinRequests.filter((m) => m.id !== confirmAction.memberId));
-            alert("✅ Permintaan bergabung telah diterima. Anggota ditambahkan ke tim.");
+            setJoinRequests(
+              joinRequests.filter((m) => m.id !== confirmAction.memberId),
+            );
+            alert(
+              "✅ Permintaan bergabung telah diterima. Anggota ditambahkan ke tim.",
+            );
             await loadMyTeams();
             await loadMyInvitations();
           } else {
-            alert(`❌ Gagal menerima permintaan: ${response.message || "Unknown error"}`);
+            alert(
+              `❌ Gagal menerima permintaan: ${response.message || "Unknown error"}`,
+            );
           }
         } catch (error) {
           console.error("Error accepting join request:", error);
-          alert(`❌ Terjadi kesalahan saat menerima permintaan: ${error instanceof Error ? error.message : String(error)}`);
+          alert(
+            `❌ Terjadi kesalahan saat menerima permintaan: ${error instanceof Error ? error.message : String(error)}`,
+          );
         } finally {
           setIsLoading(false);
         }
@@ -1166,29 +1368,46 @@ const TeamCreationPage = () => {
         if (!confirmAction.memberId) break;
         setIsLoading(true);
         try {
-          const joinReq = joinRequests.find((m) => m.id === confirmAction.memberId);
+          const joinReq = joinRequests.find(
+            (m) => m.id === confirmAction.memberId,
+          );
           console.log("🚫 Rejecting join request - DEBUG:", {
             confirmMemberId: confirmAction.memberId,
             foundInList: !!joinReq,
             joinReqData: joinReq,
-            allJoinRequests: joinRequests.map(j => ({ id: j.id, name: j.name, status: j.status })),
+            allJoinRequests: joinRequests.map((j) => ({
+              id: j.id,
+              name: j.name,
+              status: j.status,
+            })),
           });
 
-          const response = await respondToInvitation(confirmAction.memberId, false);
+          const response = await respondToInvitation(
+            confirmAction.memberId,
+            false,
+          );
 
           console.log("📨 Backend response:", response);
 
           if (response.success) {
-            setJoinRequests(joinRequests.filter((m) => m.id !== confirmAction.memberId));
-            alert(`✅ Permintaan bergabung dari ${confirmAction.memberName} ditolak.`);
+            setJoinRequests(
+              joinRequests.filter((m) => m.id !== confirmAction.memberId),
+            );
+            alert(
+              `✅ Permintaan bergabung dari ${confirmAction.memberName} ditolak.`,
+            );
             await loadMyTeams();
             await loadMyInvitations();
           } else {
-            alert(`❌ Gagal menolak permintaan: ${response.message || "Unknown error"}`);
+            alert(
+              `❌ Gagal menolak permintaan: ${response.message || "Unknown error"}`,
+            );
           }
         } catch (error) {
           console.error("Error rejecting join request:", error);
-          alert(`❌ Terjadi kesalahan saat menolak permintaan: ${error instanceof Error ? error.message : String(error)}`);
+          alert(
+            `❌ Terjadi kesalahan saat menolak permintaan: ${error instanceof Error ? error.message : String(error)}`,
+          );
         } finally {
           setIsLoading(false);
         }
@@ -1197,30 +1416,35 @@ const TeamCreationPage = () => {
       case "remove": {
         // ✅ Ketua mengeluarkan anggota - CALL API BACKEND
         if (!team || !confirmAction.memberId) break;
-        
+
         setIsLoading(true);
         try {
-          console.log("👢 Kicking out member:", confirmAction.memberId);
-          
+          console.log("👢 Removing member (userId):", confirmAction.memberId);
+
           // Import dan call API
-          const { removeMember } = await import("~/feature/create-teams/services/team-api");
+          const { removeMember } = await import(
+            "~/feature/create-teams/services/team-api"
+          );
+          // confirmAction.memberId is now userId (not member.id)
           const response = await removeMember(team.id, confirmAction.memberId);
-          
+
           console.log("Remove member response:", response);
-          
+
           if (response.success) {
             console.log("✅ Member removed from database");
-            
-            // Update local state
+
+            // Update local state - filter by userId
             setTeam({
               ...team,
               members: team.members.filter(
-                (m) => m.id !== confirmAction.memberId,
+                (m) => m.userId !== confirmAction.memberId,
               ),
             });
-            
-            alert(`✅ ${confirmAction.memberName} berhasil dikeluarkan dari tim.`);
-            
+
+            alert(
+              `✅ ${confirmAction.memberName} berhasil dikeluarkan dari tim.`,
+            );
+
             // Reload team data to ensure sync with backend
             await loadMyTeams();
           } else {
@@ -1230,7 +1454,9 @@ const TeamCreationPage = () => {
           }
         } catch (error) {
           console.error("❌ Error removing member:", error);
-          alert(`❌ Terjadi kesalahan saat mengeluarkan anggota: ${error instanceof Error ? error.message : "Unknown error"}`);
+          alert(
+            `❌ Terjadi kesalahan saat mengeluarkan anggota: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
         } finally {
           setIsLoading(false);
         }
@@ -1267,7 +1493,10 @@ const TeamCreationPage = () => {
     }
 
     try {
-      console.log("🔒 Finalizing team...", { teamId: team.id, teamCode: team.code });
+      console.log("🔒 Finalizing team...", {
+        teamId: team.id,
+        teamCode: team.code,
+      });
       setIsLoading(true);
 
       // Call finalize API
@@ -1275,15 +1504,21 @@ const TeamCreationPage = () => {
 
       if (response.success) {
         console.log("✅ Team finalized successfully:", response.data);
-        
-        // Update local team state
-        setTeam(prev => prev ? {
-          ...prev,
-          status: "FIXED"
-        } : null);
 
-        alert(`✅ Tim ${team.code} sudah final dengan ${team.members.length} anggota!`);
-        
+        // Update local team state
+        setTeam((prev) =>
+          prev
+            ? {
+                ...prev,
+                status: "FIXED",
+              }
+            : null,
+        );
+
+        alert(
+          `✅ Tim ${team.code} sudah final dengan ${team.members.length} anggota!`,
+        );
+
         // Navigate to next step
         setTimeout(() => {
           navigate("/mahasiswa/kp/pengajuan");
@@ -1294,7 +1529,9 @@ const TeamCreationPage = () => {
       }
     } catch (error) {
       console.error("❌ Error finalizing team:", error);
-      alert(`❌ Terjadi error: ${error instanceof Error ? error.message : "Unknown error"}`);
+      alert(
+        `❌ Terjadi error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     } finally {
       setIsLoading(false);
       setShowConfirmNext(false);
@@ -1304,7 +1541,7 @@ const TeamCreationPage = () => {
   // Handle copy kode tim
   const handleCopyTeamCode = async () => {
     if (!team) return;
-    
+
     try {
       await navigator.clipboard.writeText(team.code);
       setCopiedCode(true);
@@ -1316,9 +1553,11 @@ const TeamCreationPage = () => {
   };
 
   // Handle delete team
-  const handleDeleteTeam = async (reason: "join_other_team" | "manual_delete" = "manual_delete") => {
+  const handleDeleteTeam = async (
+    reason: "join_other_team" | "manual_delete" = "manual_delete",
+  ) => {
     if (!team) return;
-    
+
     setDeleteReason(reason);
     setShowDeleteDialog(true);
   };
@@ -1326,88 +1565,94 @@ const TeamCreationPage = () => {
   // Confirm delete team
   const confirmDeleteTeam = async () => {
     if (!team) return;
-    
+
     setIsDeletingTeam(true);
     try {
       console.log("🗑️ Deleting team:", team.id, "Reason:", deleteReason);
       const response = await deleteTeamApi(team.id);
-      
+
       if (response.success) {
         console.log("✅ Team deleted successfully");
-        
+
         // If accepting new invitation, do it BEFORE clearing state
         if (deleteReason === "join_other_team" && pendingActionAfterDelete) {
           // Auto-accept invitation after delete
-          if (pendingActionAfterDelete.type === "accept-invite" && pendingActionAfterDelete.memberId) {
+          if (
+            pendingActionAfterDelete.type === "accept-invite" &&
+            pendingActionAfterDelete.memberId
+          ) {
             console.log(
               "🔄 Auto-accepting invitation after team delete:",
-              pendingActionAfterDelete.memberId
+              pendingActionAfterDelete.memberId,
             );
-            
+
             try {
               // Wait a bit before accepting to ensure clean state
-              await new Promise(resolve => setTimeout(resolve, 500));
-              
+              await new Promise((resolve) => setTimeout(resolve, 500));
+
               console.log(
                 "🚀 Sending accept invitation for memberId:",
-                pendingActionAfterDelete.memberId
+                pendingActionAfterDelete.memberId,
               );
               const acceptResponse = await respondToInvitation(
                 pendingActionAfterDelete.memberId,
-                true
+                true,
               );
-              
+
               console.log("📨 Accept response:", {
                 success: acceptResponse.success,
                 message: acceptResponse.message,
               });
-              
+
               if (acceptResponse.success) {
                 console.log("✅ Invitation accepted successfully");
                 alert(
                   `✅ Tim lama berhasil dihapus.\n\n` +
-                  `Anda sekarang bergabung dengan tim ${pendingActionAfterDelete.memberName}!`
+                    `Anda sekarang bergabung dengan tim ${pendingActionAfterDelete.memberName}!`,
                 );
-                
+
                 // Clear pending action
                 setPendingActionAfterDelete(null);
                 setShowDeleteDialog(false);
-                
+
                 // NOW clear all state after successful acceptance
                 setTeam(null);
                 setPendingInvites([]);
                 setJoinRequests([]);
                 setInviteRequests([]);
-                
+
                 // Reload teams and invitations
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 1000));
                 await loadMyTeams();
                 await loadMyInvitations();
               } else {
                 // Failed to accept - show error and keep trying
                 const errorMsg = acceptResponse.message || "Unknown error";
                 console.error("❌ Accept invitation failed:", errorMsg);
-                
+
                 // Clear states anyway since old team is deleted
                 setTeam(null);
                 setPendingInvites([]);
                 setJoinRequests([]);
                 setInviteRequests([]);
-                
-                if (errorMsg.includes("not found") || errorMsg.includes("already responded")) {
+
+                if (
+                  errorMsg.includes("not found") ||
+                  errorMsg.includes("already responded")
+                ) {
                   alert(
                     `❌ Tim lama berhasil dihapus, namun gagal bergabung dengan tim baru.\n\n` +
-                    `Undangan mungkin sudah Anda tanggapi sebelumnya.\n\n` +
-                    `Silakan refresh halaman dan coba lagi.`
+                      `Undangan mungkin sudah Anda tanggapi sebelumnya.\n\n` +
+                      `Silakan refresh halaman dan coba lagi.`,
                   );
                 } else {
                   alert(
                     `❌ Tim lama berhasil dihapus, namun gagal bergabung dengan tim baru.\n\n` +
-                    `Error: ${errorMsg}\n\n` +
-                    `Silakan refresh halaman dan coba lagi.`
+                      `Error: ${errorMsg}\n\n` +
+                      `Silakan refresh halaman dan coba lagi.`,
                   );
                 }
-                
+
                 // Reload to ensure state is consistent
                 setTimeout(() => {
                   window.location.reload();
@@ -1415,34 +1660,39 @@ const TeamCreationPage = () => {
               }
             } catch (error) {
               console.error("Error accepting invitation after delete:", error);
-              
+
               // Clear states since old team is deleted
               setTeam(null);
               setPendingInvites([]);
               setJoinRequests([]);
               setInviteRequests([]);
-              
+
               alert(
                 `❌ Tim lama berhasil dihapus, namun terjadi kesalahan saat bergabung dengan tim baru.\n\n` +
-                `${error instanceof Error ? error.message : String(error)}\n\n` +
-                `Silakan refresh halaman dan coba lagi.`
+                  `${error instanceof Error ? error.message : String(error)}\n\n` +
+                  `Silakan refresh halaman dan coba lagi.`,
               );
-              
+
               setTimeout(() => {
                 window.location.reload();
               }, 2000);
             }
-          } else if (pendingActionAfterDelete.type === "join-team" && pendingActionAfterDelete.teamCode) {
+          } else if (
+            pendingActionAfterDelete.type === "join-team" &&
+            pendingActionAfterDelete.teamCode
+          ) {
             console.log(
               "🔄 Auto-joining new team after delete:",
-              pendingActionAfterDelete.teamCode
+              pendingActionAfterDelete.teamCode,
             );
 
             try {
               // Wait a bit to ensure backend finished deletion
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise((resolve) => setTimeout(resolve, 500));
 
-              const joinResponse = await joinTeamApi(pendingActionAfterDelete.teamCode.trim());
+              const joinResponse = await joinTeamApi(
+                pendingActionAfterDelete.teamCode.trim(),
+              );
 
               console.log("📨 Join response after delete:", joinResponse);
 
@@ -1455,7 +1705,10 @@ const TeamCreationPage = () => {
               if (joinResponse.success) {
                 const teamInfo = joinResponse.data?.team;
                 setJoinSuccess({
-                  teamCode: teamInfo?.code || joinResponse.data?.teamCode || pendingActionAfterDelete.teamCode,
+                  teamCode:
+                    teamInfo?.code ||
+                    joinResponse.data?.teamCode ||
+                    pendingActionAfterDelete.teamCode,
                   leaderName: teamInfo?.leaderName,
                   leaderNim: teamInfo?.leaderNim,
                 });
@@ -1464,15 +1717,17 @@ const TeamCreationPage = () => {
                 setPendingActionAfterDelete(null);
                 setShowDeleteDialog(false);
 
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 1000));
                 await loadMyTeams();
                 await loadMyInvitations();
               } else {
-                const errorMsg = joinResponse.message || "Gagal mengirim permintaan gabung tim";
+                const errorMsg =
+                  joinResponse.message ||
+                  "Gagal mengirim permintaan gabung tim";
                 alert(
                   `❌ Tim lama berhasil dihapus, namun gagal mengirim permintaan gabung tim baru.\n\n` +
-                  `${errorMsg}\n\n` +
-                  `Silakan coba lagi dengan kode tim: ${pendingActionAfterDelete.teamCode}`
+                    `${errorMsg}\n\n` +
+                    `Silakan coba lagi dengan kode tim: ${pendingActionAfterDelete.teamCode}`,
                 );
 
                 setPendingActionAfterDelete(null);
@@ -1489,8 +1744,8 @@ const TeamCreationPage = () => {
 
               alert(
                 `❌ Tim lama berhasil dihapus, namun terjadi kesalahan saat mengirim permintaan gabung tim baru.\n\n` +
-                `${error instanceof Error ? error.message : String(error)}\n\n` +
-                `Silakan coba lagi dengan kode tim: ${pendingActionAfterDelete.teamCode}`
+                  `${error instanceof Error ? error.message : String(error)}\n\n` +
+                  `Silakan coba lagi dengan kode tim: ${pendingActionAfterDelete.teamCode}`,
               );
 
               setPendingActionAfterDelete(null);
@@ -1504,9 +1759,9 @@ const TeamCreationPage = () => {
           setPendingInvites([]);
           setJoinRequests([]);
           setInviteRequests([]);
-          
+
           alert("✅ Tim berhasil dihapus dari sistem");
-          
+
           // Close dialog dan reload
           setShowDeleteDialog(false);
           setTimeout(() => {
@@ -1519,7 +1774,7 @@ const TeamCreationPage = () => {
     } catch (error) {
       console.error("Error deleting team:", error);
       alert(
-        `❌ Terjadi kesalahan saat menghapus tim: ${error instanceof Error ? error.message : String(error)}`
+        `❌ Terjadi kesalahan saat menghapus tim: ${error instanceof Error ? error.message : String(error)}`,
       );
     } finally {
       setIsDeletingTeam(false);
@@ -1588,18 +1843,25 @@ const TeamCreationPage = () => {
   return (
     <>
       {/* Join Success Dialog */}
-      <Dialog open={showJoinSuccessDialog} onOpenChange={setShowJoinSuccessDialog}>
+      <Dialog
+        open={showJoinSuccessDialog}
+        onOpenChange={setShowJoinSuccessDialog}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Permintaan Bergabung Terkirim</DialogTitle>
             <DialogDescription>
               {joinSuccess ? (
                 <span>
-                  Anda berhasil mengirim permintaan bergabung ke tim
-                  {" "}
-                  <strong>{joinSuccess.leaderName || "(Nama Ketua tidak tersedia)"}</strong>
-                  {" "}
-                  NIM <strong>{joinSuccess.leaderNim || "(NIM tidak tersedia)"}</strong>.
+                  Anda berhasil mengirim permintaan bergabung ke tim{" "}
+                  <strong>
+                    {joinSuccess.leaderName || "(Nama Ketua tidak tersedia)"}
+                  </strong>{" "}
+                  NIM{" "}
+                  <strong>
+                    {joinSuccess.leaderNim || "(NIM tidak tersedia)"}
+                  </strong>
+                  .
                 </span>
               ) : (
                 <span>Permintaan bergabung berhasil dikirim.</span>
@@ -1608,12 +1870,19 @@ const TeamCreationPage = () => {
           </DialogHeader>
           <div className="py-2 text-sm">
             <p className="mb-1">
-              Kode Tim: <span className="font-mono font-semibold">{joinSuccess?.teamCode}</span>
+              Kode Tim:{" "}
+              <span className="font-mono font-semibold">
+                {joinSuccess?.teamCode}
+              </span>
             </p>
-            <p className="text-muted-foreground">Status: PENDING — menunggu persetujuan ketua tim.</p>
+            <p className="text-muted-foreground">
+              Status: PENDING — menunggu persetujuan ketua tim.
+            </p>
           </div>
           <DialogFooter>
-            <Button onClick={() => setShowJoinSuccessDialog(false)}>Tutup</Button>
+            <Button onClick={() => setShowJoinSuccessDialog(false)}>
+              Tutup
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1641,7 +1910,9 @@ const TeamCreationPage = () => {
                 <Users className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <p className="text-xs text-muted-foreground font-medium mb-1">Kode Tim Anda</p>
+                <p className="text-xs text-muted-foreground font-medium mb-1">
+                  Kode Tim Anda
+                </p>
                 <div className="flex items-center gap-2">
                   <p className="text-xl font-bold font-mono text-primary tracking-wide">
                     {team.code}
@@ -1803,11 +2074,14 @@ const TeamCreationPage = () => {
                   <div className="text-center py-8">
                     <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                     <p className="text-muted-foreground mb-6">
-                      Anda belum memiliki tim. Silakan buat tim baru atau gabung dengan
-                      tim yang sudah ada.
+                      Anda belum memiliki tim. Silakan buat tim baru atau gabung
+                      dengan tim yang sudah ada.
                     </p>
                     <div className="flex justify-center gap-4">
-                      <Button onClick={handleCreateTeam} disabled={isCreatingTeam}>
+                      <Button
+                        onClick={handleCreateTeam}
+                        disabled={isCreatingTeam}
+                      >
                         {isCreatingTeam ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1836,21 +2110,24 @@ const TeamCreationPage = () => {
 
             {/* Sent Invitations Component - Shows invitations sent by team leader */}
             {team?.isLeader && (
-              <SentInvitations 
+              <SentInvitations
                 members={pendingInvites}
                 onRefresh={loadMyTeams}
               />
             )}
 
-            <MemberList
-              title="Daftar Permintaan Gabung Tim"
-              members={joinRequests}
-              showActions={!!team?.isLeader}
-              isLeader={!!team?.isLeader}
-              currentUserId={user?.id}
-              onAccept={handleAcceptJoinRequest}
-              onReject={handleRejectJoinRequest}
-            />
+            {/* Join Requests - Only show for team leader */}
+            {team?.isLeader && (
+              <MemberList
+                title="Daftar Permintaan Gabung Tim"
+                members={joinRequests}
+                showActions={true}
+                isLeader={true}
+                currentUserId={user?.id}
+                onAccept={handleAcceptJoinRequest}
+                onReject={handleRejectJoinRequest}
+              />
+            )}
 
             <MemberList
               title="Daftar Permintaan Ajakan Tim"

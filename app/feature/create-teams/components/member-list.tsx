@@ -80,7 +80,7 @@ function MemberList({
                       <span>{member.role}</span>
                       {member.nim && <span>• {member.nim}</span>}
                       {member.email && <span>• {member.email}</span>}
-                      {member.status && (
+                      {member.status && (!isLeader || member.status !== "PENDING") && (
                         <Badge
                           variant="outline"
                           className={
@@ -132,7 +132,8 @@ function MemberList({
                   </Button>
                 )}
 
-                {!showActions && !showCancel && !member.isLeader && onRemove && (
+                {!showActions && !showCancel && !member.isLeader && onRemove && 
+                  (isLeader || member.userId === currentUserId) && (
                   <Button
                     size="sm"
                     variant="destructive"

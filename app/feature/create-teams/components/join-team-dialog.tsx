@@ -90,6 +90,15 @@ export function JoinTeamDialog({
       return;
     }
 
+    // Jika user memilih dari hasil pencarian, cegah join ke tim penuh (>=3)
+    const selectedSuggestion = suggestions.find(
+      (s) => s.code === codeToJoin || `${s.leaderNim} - ${s.leaderName}` === codeToJoin,
+    );
+    if (selectedSuggestion && selectedSuggestion.memberCount >= 3) {
+      alert("❌ Tim ini sudah penuh (maksimal 3 anggota)");
+      return;
+    }
+
     onJoinTeam(codeToJoin);
     setSearchQuery("");
     setSelectedTeamCode("");
@@ -99,6 +108,10 @@ export function JoinTeamDialog({
   };
 
   const handleSelectSuggestion = (suggestion: TeamSuggestion) => {
+    if (suggestion.memberCount >= 3) {
+      alert("❌ Tim ini sudah penuh (maksimal 3 anggota)");
+      return;
+    }
     setSearchQuery(`${suggestion.leaderNim} - ${suggestion.leaderName}`);
     setSelectedTeamCode(suggestion.code);
     setShowSuggestions(false);
