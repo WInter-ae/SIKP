@@ -44,6 +44,7 @@ export interface Team {
   code: string;
   name?: string;
   leaderId: string;
+  isLeader?: boolean;
   status: TeamStatus;
 }
 
@@ -51,6 +52,7 @@ export interface TeamMember {
   id: string;
   teamId: string;
   userId: string;
+  role: "KETUA" | "ANGGOTA";
   invitationStatus: InvitationStatus;
   invitedAt: string;
   respondedAt?: string;

@@ -46,3 +46,23 @@ export async function respondToInvitation(memberId: string, accept: boolean) {
     { accept },
   );
 }
+
+/**
+ * Leave team (for team members, not leader)
+ */
+export async function leaveTeam(teamId: string) {
+  return post<{ success: boolean; message: string; teamId: string }>(
+    `/api/teams/${teamId}/leave`,
+    {},
+  );
+}
+
+/**
+ * Delete team (for team leader)
+ */
+export async function deleteTeam(teamId: string) {
+  return post<{ success: boolean; deletedTeamId: string; deletedTeamCode: string; membersAffected: number }>(
+    `/api/teams/${teamId}/delete`,
+    {},
+  );
+}
