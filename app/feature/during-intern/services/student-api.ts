@@ -104,3 +104,14 @@ export async function getStudentInternship(
 ): Promise<ApiResponse<InternshipData>> {
   return get<InternshipData>(`/api/mahasiswa/${studentId}/internship`);
 }
+
+/**
+ * Update internship period (periode magang)
+ * PUT /api/mahasiswa/internship/period
+ */
+export async function updateInternshipPeriod(data: {
+  startDate: string; // ISO string or YYYY-MM-DD
+  endDate: string; // ISO string or YYYY-MM-DD
+}): Promise<ApiResponse<InternshipData>> {
+  return put<InternshipData>("/api/mahasiswa/internship/period", data);
+}

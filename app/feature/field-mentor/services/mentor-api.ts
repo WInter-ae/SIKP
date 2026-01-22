@@ -17,6 +17,8 @@ export interface MentorProfile {
   company: string;
   position: string;
   address?: string;
+  signature?: string; // Base64 signature - setup once
+  signatureSetAt?: string; // When signature was created/updated
   createdAt: string;
   updatedAt: string;
 }
@@ -117,28 +119,30 @@ export async function getStudentLogbook(
 
 /**
  * Approve (paraf) logbook entry
+ * Uses signature from mentor profile (no need to sign again)
  * POST /api/mentor/logbook/:logbookId/approve
  */
 export async function approveLogbook(
   logbookId: string,
-  signature: string
+  notes?: string
 ): Promise<ApiResponse<LogbookEntry>> {
   return post<LogbookEntry>(`/api/mentor/logbook/${logbookId}/approve`, {
-    signature,
+    notes,
   });
 }
 
 /**
  * Approve all pending logbooks for a student
+ * Uses signature from mentor profile (no need to sign again)
  * POST /api/mentor/logbook/:studentId/approve-all
  */
 export async function approveAllLogbooks(
   studentId: string,
-  signature: string
+  notes?: string
 ): Promise<ApiResponse<{ approved: number; logbooks: LogbookEntry[] }>> {
   return post<{ approved: number; logbooks: LogbookEntry[] }>(
     `/api/mentor/logbook/${studentId}/approve-all`,
-    { signature }
+    { notes }
   );
 }
 
@@ -177,4 +181,30 @@ export async function updateAssessment(
   data: Partial<Omit<AssessmentData, "id" | "studentId" | "mentorId" | "createdAt" | "updatedAt" | "totalScore">>
 ): Promise<ApiResponse<AssessmentData>> {
   return put<AssessmentData>(`/api/mentor/assessment/${assessmentId}`, data);
+}
+
+/**
+ * Save/Update mentor signature in profile (setup once)
+ * PUT /api/mentor/signature
+ */
+export async function saveMentorSignature(
+  signature: string
+): Promise<ApiResponse<MentorProfile>> {
+  return put<MentorProfile>("/api/mentor/signature", { signature });
+}
+
+/**
+ * Get mentor signature from profile
+ * GET /api/mentor/signature
+ */
+export async function getMentorSignature(): Promise<ApiResponse<{ signature?: string; signatureSetAt?: string }>> {
+  return get<{ signature?: string; signatureSetAt?: string }>("/api/mentor/signature");
+}
+
+/**
+ * Delete mentor signature from profile
+ * DELETE /api/mentor/signature
+ */
+export async function deleteMentorSignature(): Promise<ApiResponse<{ success: boolean }>> {
+  return post<{ success: boolean }>("/api/mentor/signature/delete", {});
 }
