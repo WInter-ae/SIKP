@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import {
   UserPlus,
   CheckCircle,
@@ -39,6 +39,7 @@ const MENTOR_CODE_RANDOM_LENGTH = 4;
 const MENTOR_CODE_RANDOM_MAX = 10000;
 
 function FieldMentorPage() {
+  const navigate = useNavigate();
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [mentorRequest, setMentorRequest] = useState<MentorRequest>({
     mentorName: "",
@@ -154,11 +155,9 @@ function FieldMentorPage() {
       </div>
 
       {/* Back Button */}
-      <Button variant="secondary" asChild>
-        <Link to="/mahasiswa/kp/saat-magang">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Kembali
-        </Link>
+      <Button variant="secondary" onClick={() => navigate(-1)}>
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Kembali
       </Button>
 
       {/* Info Section */}
