@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
-import { Calendar, User } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Calendar, User, Eye } from "lucide-react";
 
 import type { AcademicSupervisorGrade } from "../types/index.d";
 
@@ -36,7 +37,20 @@ export default function AcademicSupervisorGradeCard({
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">Penilaian Dosen Pembimbing KP</CardTitle>
-          <Badge className="bg-green-500">Sudah Dinilai</Badge>
+          <div className="flex items-center gap-2">
+            <Badge className="bg-green-500">Sudah Dinilai</Badge>
+            {grade.pdfUrl && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                onClick={() => window.open(grade.pdfUrl, '_blank')}
+              >
+                <Eye className="h-4 w-4" />
+                Preview PDF
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">

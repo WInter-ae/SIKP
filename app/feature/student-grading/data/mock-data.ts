@@ -10,6 +10,7 @@ export const MOCK_STUDENT_GRADE: StudentGradeInfo = {
   hasAcademicSupervisorGrade: true,
   canViewCombinedGrade: true,
   fieldMentorGrade: {
+    pdfUrl: "/api/assessment/mentor-lapangan/download/1",
     categories: [
       {
         category: "Kehadiran (20%)",
@@ -61,6 +62,7 @@ export const MOCK_STUDENT_GRADE: StudentGradeInfo = {
     gradedBy: "Ir. Budi Santoso",
   },
   academicSupervisorGrade: {
+    pdfUrl: "/api/assessment/dosen-pembimbing/download/1",
     categories: [
       {
         category: "Kesesuaian Laporan dengan Format (30%)",
@@ -104,6 +106,7 @@ export const MOCK_STUDENT_GRADE: StudentGradeInfo = {
     gradedBy: "Dr. Siti Aminah, M.Kom",
   },
   combinedGrade: {
+    pdfUrl: "/api/assessment/rekap-nilai/download/1",
     fieldMentorScore: 26.7,
     academicSupervisorScore: 60.9,
     totalScore: 87.6, // 26.7 + 60.9
@@ -124,6 +127,7 @@ export const MOCK_STUDENT_GRADE_INCOMPLETE: StudentGradeInfo = {
   hasAcademicSupervisorGrade: false,
   canViewCombinedGrade: false,
   fieldMentorGrade: {
+    pdfUrl: "/api/assessment/mentor-lapangan/download/2",
     categories: [
       {
         category: "Kehadiran (20%)",

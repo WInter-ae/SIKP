@@ -15,6 +15,7 @@ export interface GradeCategory {
 
 // Nilai dari Mentor Lapangan (30%)
 export interface FieldMentorGrade {
+  pdfUrl?: string;
   categories: GradeCategory[];
   totalScore: number;
   maxScore: number;
@@ -27,6 +28,7 @@ export interface FieldMentorGrade {
 
 // Nilai dari Dosen Pembimbing KP (70%)
 export interface AcademicSupervisorGrade {
+  pdfUrl?: string;
   categories: GradeCategory[];
   totalScore: number;
   maxScore: number;
@@ -39,6 +41,7 @@ export interface AcademicSupervisorGrade {
 
 // Rekap Nilai Gabungan
 export interface CombinedGrade {
+  pdfUrl?: string;
   fieldMentorScore: number;
   academicSupervisorScore: number;
   totalScore: number;

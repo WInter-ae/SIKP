@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
-import { Award, TrendingUp, Lock } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Award, TrendingUp, Lock, Eye } from "lucide-react";
 
 import type { CombinedGrade } from "../types/index.d";
 
@@ -87,7 +88,20 @@ export default function CombinedGradeCard({ grade, canView }: CombinedGradeCardP
             <Award className="h-6 w-6 text-purple-600" />
             Rekap Nilai Akhir
           </CardTitle>
-          {getStatusBadge(grade.status)}
+          <div className="flex items-center gap-2">
+            {getStatusBadge(grade.status)}
+            {grade.pdfUrl && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                onClick={() => window.open(grade.pdfUrl, '_blank')}
+              >
+                <Eye className="h-4 w-4" />
+                Preview PDF
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
