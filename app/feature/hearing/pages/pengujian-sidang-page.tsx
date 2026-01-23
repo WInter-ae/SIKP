@@ -488,7 +488,7 @@ export default function PengujianSidangPage() {
                   
                   <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
                     <Clock className="h-4 w-4" />
-                    <span>Terakhir disimpan: {formatDateTime(beritaAcara.updatedAt)}</span>
+                    <span>Terakhir disimpan: {beritaAcara.updatedAt ? formatDateTime(beritaAcara.updatedAt) : "-"}</span>
                   </div>
                 </div>
 
@@ -603,7 +603,7 @@ export default function PengujianSidangPage() {
                   
                   <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
                     <Clock className="h-4 w-4" />
-                    <span>Diajukan pada: {formatDateTime(beritaAcara.updatedAt)}</span>
+                    <span>Diajukan pada: {beritaAcara.updatedAt ? formatDateTime(beritaAcara.updatedAt) : "-"}</span>
                   </div>
                   
                   <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
@@ -688,7 +688,7 @@ export default function PengujianSidangPage() {
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span>Disetujui pada: {formatDateTime(beritaAcara.tanggalApproval)}</span>
+                  <span>Disetujui pada: {beritaAcara.tanggalApproval ? formatDateTime(beritaAcara.tanggalApproval) : "-"}</span>
                 </div>
               </CardContent>
             </Card>

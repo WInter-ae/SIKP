@@ -9,6 +9,7 @@ import { Info, Filter, Clock, CheckCircle, XCircle, Download, Eye } from "lucide
 import type { PengajuanSidang } from "../types/dosen";
 import type { DosenESignature } from "../types/esignature";
 import { PengajuanCard } from "../components/pengajuan-card";
+import { ESignatureSetupDialog } from "../components/esignature-setup";
 
 // Mock data pengajuan dari mahasiswa
 const mockPengajuanList: PengajuanSidang[] = [
@@ -74,6 +75,8 @@ export default function VerifikasiSidangDosenPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("menunggu");
   const [dosenESignature, setDosenESignature] = useState<DosenESignature | null>(null);
+  const [showESignatureDialog, setShowESignatureDialog] = useState(false);
+  const [pendingApprovalId, setPendingApprovalId] = useState<string | null>(null);
   const [notification, setNotification] = useState<{
     title: string;
     description: string;
@@ -159,70 +162,75 @@ export default function VerifikasiSidangDosenPage() {
   ) => {
     console.log("🟢 DOSEN: processApprovalWithSignature started", { id, catatan, nilai });
     
-    // Update status pengajuan jadwal sidang (BUKAN berita acara)
-    setPengajuanList((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              status: "approved",
-              tanggalVerifikasi: new Date().toISOString(),
-              catatanDosen: catatan,
-            }
-          : p,
-      ),
-    );
-
     console.log("🔍 DOSEN: Finding pengajuan with id:", id);
     const pengajuan = pengajuanList.find((p) => p.id === id);
-    if (pengajuan) {
-      console.log("✅ DOSEN: Jadwal sidang approved for:", pengajuan.mahasiswa.nama);
-      
-      // Update status pengajuan di localStorage untuk mahasiswa
-      // HANYA update status jadwal, BELUM buat berita acara
-      const jadwalApproved = {
-        id: pengajuan.id,
-        judulLaporan: pengajuan.data.judulLaporan,
-        tempatPelaksanaan: pengajuan.data.tempatPelaksanaan,
-        tanggalSidang: pengajuan.data.tanggalSidang,
-        waktuMulai: pengajuan.data.waktuMulai,
-        waktuSelesai: pengajuan.data.waktuSelesai,
-        status: "jadwal_approved", // Status baru: jadwal disetujui, belum sidang
-        catatanDosen: catatan,
-        createdAt: pengajuan.tanggalPengajuan,
-        updatedAt: new Date().toISOString(),
-        tanggalApproval: new Date().toISOString(),
-      };
-      
-      console.log("💾 DOSEN: Saving jadwal approval to localStorage");
-      console.log("📋 DOSEN: Jadwal Data:", {
-        id: jadwalApproved.id,
-        status: jadwalApproved.status,
-        tanggalSidang: jadwalApproved.tanggalSidang
-      });
-      
-      // Simpan ke localStorage mahasiswa (di production akan lewat API ke database)
-      const jsonString = JSON.stringify(jadwalApproved);
-      localStorage.setItem("berita-acara-draft", jsonString);
-      
-      // Update list pengajuan juga
-      localStorage.setItem("pengajuan-sidang-list", JSON.stringify(pengajuanList));
-      
-      // Verify save
-      const verified = localStorage.getItem("berita-acara-draft");
-      console.log("✔️ DOSEN: Verified localStorage save:", verified === jsonString);
-      
-      // Trigger storage event manually untuk same-tab update
-      console.log("📢 DOSEN: Dispatching storage event...");
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'berita-acara-draft',
-        newValue: jsonString,
-        storageArea: localStorage,
-        url: window.location.href
-      }));
-      
-      console.log("✅ DOSEN: Jadwal sidang approved and event dispatched successfully!");
+    
+    if (!pengajuan) {
+      console.error("❌ DOSEN: Pengajuan not found!");
+      return;
     }
+    
+    console.log("✅ DOSEN: Jadwal sidang approved for:", pengajuan.mahasiswa.nama);
+    
+    // Update status pengajuan jadwal sidang (BUKAN berita acara)
+    const updatedList = pengajuanList.map((p) =>
+      p.id === id
+        ? {
+            ...p,
+            status: "approved" as const,
+            tanggalVerifikasi: new Date().toISOString(),
+            catatanDosen: catatan,
+          }
+        : p,
+    );
+    
+    setPengajuanList(updatedList);
+    
+    // Update status pengajuan di localStorage untuk mahasiswa
+    // HANYA update status jadwal, BELUM buat berita acara
+    const jadwalApproved = {
+      id: pengajuan.id,
+      judulLaporan: pengajuan.data.judulLaporan,
+      tempatPelaksanaan: pengajuan.data.tempatPelaksanaan,
+      tanggalSidang: pengajuan.data.tanggalSidang,
+      waktuMulai: pengajuan.data.waktuMulai,
+      waktuSelesai: pengajuan.data.waktuSelesai,
+      dosenPenguji: pengajuan.data.dosenPenguji || [],
+      status: "jadwal_approved", // Status baru: jadwal disetujui, belum sidang
+      catatanDosen: catatan,
+      createdAt: pengajuan.tanggalPengajuan,
+      updatedAt: new Date().toISOString(),
+      tanggalApproval: new Date().toISOString(),
+    };
+    
+    console.log("💾 DOSEN: Saving jadwal approval to localStorage");
+    console.log("📋 DOSEN: Jadwal Data:", {
+      id: jadwalApproved.id,
+      status: jadwalApproved.status,
+      tanggalSidang: jadwalApproved.tanggalSidang
+    });
+    
+    // Simpan ke localStorage mahasiswa (di production akan lewat API ke database)
+    const jsonString = JSON.stringify(jadwalApproved);
+    localStorage.setItem("berita-acara-draft", jsonString);
+    
+    // Update list pengajuan juga
+    localStorage.setItem("pengajuan-sidang-list", JSON.stringify(updatedList));
+    
+    // Verify save
+    const verified = localStorage.getItem("berita-acara-draft");
+    console.log("✔️ DOSEN: Verified localStorage save:", verified === jsonString);
+    
+    // Trigger storage event manually untuk same-tab update
+    console.log("📢 DOSEN: Dispatching storage event...");
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'berita-acara-draft',
+      newValue: jsonString,
+      storageArea: localStorage,
+      url: window.location.href
+    }));
+    
+    console.log("✅ DOSEN: Jadwal sidang approved and event dispatched successfully!");
 
     // Show success notification
     setNotification({
@@ -236,65 +244,69 @@ export default function VerifikasiSidangDosenPage() {
   const processRejection = (id: string, catatan: string) => {
     console.log("🔴 DOSEN: processRejection started", { id, catatan });
     
-    setPengajuanList((prev) =>
-      prev.map((p) =>
-        p.id === id
-          ? {
-              ...p,
-              status: "rejected",
-              tanggalVerifikasi: new Date().toISOString(),
-              catatanDosen: catatan,
-            }
-          : p,
-      ),
-    );
-
-    // Update status di localStorage untuk mahasiswa
     console.log("🔍 DOSEN: Finding pengajuan with id:", id);
     const pengajuan = pengajuanList.find((p) => p.id === id);
-    if (pengajuan) {
-      console.log("❌ DOSEN: Jadwal sidang rejected for:", pengajuan.mahasiswa.nama);
-      
-      const jadwalRejected = {
-        id: pengajuan.id,
-        judulLaporan: pengajuan.data.judulLaporan,
-        tempatPelaksanaan: pengajuan.data.tempatPelaksanaan,
-        tanggalSidang: pengajuan.data.tanggalSidang,
-        waktuMulai: pengajuan.data.waktuMulai,
-        waktuSelesai: pengajuan.data.waktuSelesai,
-        status: "rejected",
-        catatanDosen: catatan,
-        createdAt: pengajuan.tanggalPengajuan,
-        updatedAt: new Date().toISOString(),
-        tanggalVerifikasi: new Date().toISOString(),
-      };
-      
-      console.log("💾 DOSEN: Saving rejection to localStorage");
-      console.log("📋 DOSEN: Rejection Data:", {
-        id: jadwalRejected.id,
-        status: jadwalRejected.status,
-        catatan: jadwalRejected.catatanDosen
-      });
-      
-      const jsonString = JSON.stringify(jadwalRejected);
-      localStorage.setItem("berita-acara-draft", jsonString);
-      localStorage.setItem("pengajuan-sidang-list", JSON.stringify(pengajuanList));
-      
-      // Verify save
-      const verified = localStorage.getItem("berita-acara-draft");
-      console.log("✔️ DOSEN: Verified localStorage save:", verified === jsonString);
-      
-      // Trigger storage event
-      console.log("📢 DOSEN: Dispatching storage event for rejection...");
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'berita-acara-draft',
-        newValue: jsonString,
-        storageArea: localStorage,
-        url: window.location.href
-      }));
-      
-      console.log("✅ DOSEN: Rejection saved and event dispatched!");
+    
+    if (!pengajuan) {
+      console.error("❌ DOSEN: Pengajuan not found!");
+      return;
     }
+    
+    console.log("❌ DOSEN: Jadwal sidang rejected for:", pengajuan.mahasiswa.nama);
+    
+    const updatedList = pengajuanList.map((p) =>
+      p.id === id
+        ? {
+            ...p,
+            status: "rejected" as const,
+            tanggalVerifikasi: new Date().toISOString(),
+            catatanDosen: catatan,
+          }
+        : p,
+    );
+    
+    setPengajuanList(updatedList);
+    
+    const jadwalRejected = {
+      id: pengajuan.id,
+      judulLaporan: pengajuan.data.judulLaporan,
+      tempatPelaksanaan: pengajuan.data.tempatPelaksanaan,
+      tanggalSidang: pengajuan.data.tanggalSidang,
+      waktuMulai: pengajuan.data.waktuMulai,
+      waktuSelesai: pengajuan.data.waktuSelesai,
+      dosenPenguji: pengajuan.data.dosenPenguji || [],
+      status: "rejected",
+      catatanDosen: catatan,
+      createdAt: pengajuan.tanggalPengajuan,
+      updatedAt: new Date().toISOString(),
+      tanggalVerifikasi: new Date().toISOString(),
+    };
+    
+    console.log("💾 DOSEN: Saving rejection to localStorage");
+    console.log("📋 DOSEN: Rejection Data:", {
+      id: jadwalRejected.id,
+      status: jadwalRejected.status,
+      catatan: jadwalRejected.catatanDosen
+    });
+    
+    const jsonString = JSON.stringify(jadwalRejected);
+    localStorage.setItem("berita-acara-draft", jsonString);
+    localStorage.setItem("pengajuan-sidang-list", JSON.stringify(updatedList));
+    
+    // Verify save
+    const verified = localStorage.getItem("berita-acara-draft");
+    console.log("✔️ DOSEN: Verified localStorage save:", verified === jsonString);
+    
+    // Trigger storage event
+    console.log("📢 DOSEN: Dispatching storage event for rejection...");
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'berita-acara-draft',
+      newValue: jsonString,
+      storageArea: localStorage,
+      url: window.location.href
+    }));
+    
+    console.log("✅ DOSEN: Rejection saved and event dispatched!");
 
     setNotification({
       title: "❌ Pengajuan Ditolak",
@@ -302,6 +314,27 @@ export default function VerifikasiSidangDosenPage() {
     });
 
     setTimeout(() => setNotification(null), 4000);
+  };
+
+  // Handler untuk save e-signature
+  const handleESignatureSave = (signature: DosenESignature) => {
+    console.log("✍️ DOSEN: E-Signature saved", signature);
+    setDosenESignature(signature);
+    localStorage.setItem("dosen-esignature", JSON.stringify(signature));
+    setShowESignatureDialog(false);
+    
+    // Jika ada pending approval, proses sekarang
+    if (pendingApprovalId) {
+      console.log("🔄 DOSEN: Processing pending approval with new signature:", pendingApprovalId);
+      processApprovalWithSignature(pendingApprovalId, "Jadwal sidang disetujui");
+      setPendingApprovalId(null);
+    }
+    
+    setNotification({
+      title: "✅ E-Signature Berhasil Dibuat",
+      description: "Tanda tangan digital Anda telah tersimpan.",
+    });
+    setTimeout(() => setNotification(null), 3000);
   };
 
   // Filter pengajuan berdasarkan status
@@ -629,6 +662,14 @@ export default function VerifikasiSidangDosenPage() {
             )}
           </TabsContent>
         </Tabs>
+        
+        {/* E-Signature Setup Dialog */}
+        <ESignatureSetupDialog
+          open={showESignatureDialog}
+          onOpenChange={setShowESignatureDialog}
+          onSave={handleESignatureSave}
+          existingSignature={dosenESignature}
+        />
       </div>
     </div>
   );
