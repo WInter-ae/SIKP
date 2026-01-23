@@ -39,6 +39,9 @@ const mockStudents: Student[] = [
     email: "adam@student.ac.id",
     university: "Universitas Indonesia",
     major: "Teknik Informatika",
+    fakultas: "Fakultas Sains dan Teknologi",
+    company: "PT. Tech Innovate Indonesia",
+    position: "Frontend Developer",
     startDate: "2024-01-01",
     endDate: "2024-03-31",
   },
@@ -49,6 +52,9 @@ const mockStudents: Student[] = [
     email: "robin@student.ac.id",
     university: "Universitas Indonesia",
     major: "Teknik Informatika",
+    fakultas: "Fakultas Sains dan Teknologi",
+    company: "PT. Tech Innovate Indonesia",
+    position: "Backend Developer",
     startDate: "2024-01-01",
     endDate: "2024-03-31",
   },
@@ -453,19 +459,16 @@ function StudentLogbookDetailPage() {
               <p className="font-medium">{student.major}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Universitas</p>
-              <p className="font-medium">{student.university}</p>
+              <p className="text-sm text-muted-foreground">Tempat KP</p>
+              <p className="font-medium">{student.company || "-"}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">Bagian/Bidang</p>
+              <p className="font-medium">{student.position || "-"}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Email</p>
               <p className="font-medium">{student.email}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Periode Magang</p>
-              <p className="font-medium">
-                {new Date(student.startDate).toLocaleDateString("id-ID")} -{" "}
-                {new Date(student.endDate).toLocaleDateString("id-ID")}
-              </p>
             </div>
           </div>
         </CardContent>

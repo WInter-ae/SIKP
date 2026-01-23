@@ -25,7 +25,10 @@ export interface Student {
   nim: string;
   email: string;
   university: string;
-  major: string;
+  major: string; // Program Studi
+  fakultas?: string; // Fakultas
+  company?: string; // Tempat KP
+  position?: string; // Bagian/Bidang
   startDate: string;
   endDate: string;
   photo?: string;

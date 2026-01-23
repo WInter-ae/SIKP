@@ -225,6 +225,16 @@ export function post<T>(endpoint: string, body?: unknown) {
 }
 
 /**
+ * PUT request helper
+ */
+export function put<T>(endpoint: string, body?: unknown) {
+  return apiClient<T>(endpoint, {
+    method: "PUT",
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+/**
  * PATCH request helper
  */
 export function patch<T>(endpoint: string, body?: unknown) {

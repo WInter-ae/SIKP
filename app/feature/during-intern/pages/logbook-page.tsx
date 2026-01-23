@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { ArrowLeft, Calendar, FileText, Plus, Save, Sparkles, CheckCircle, Clock, AlertCircle, XCircle, Download, Edit } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, Plus, Save, Sparkles, CheckCircle, Clock, AlertCircle, XCircle, Download, Edit, User, Building, GraduationCap } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -31,6 +31,11 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Separator } from "~/components/ui/separator";
+
+// API Services
+import { getMyProfile, getMyInternship } from "~/feature/during-intern/services";
+import type { StudentProfile, InternshipData } from "~/feature/during-intern/services/student-api";
 
 interface LogbookEntry {
   id: string;
@@ -71,6 +76,115 @@ function LogbookPage() {
   const [description, setDescription] = useState("");
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [generatedDates, setGeneratedDates] = useState<string[]>([]);
+  
+  // Student data state
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
+  const [internshipData, setInternshipData] = useState<InternshipData | null>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+
+  // Fetch student profile and internship data
+  useEffect(() => {
+    async function fetchStudentData() {
+      try {
+        const [profileResponse, internshipResponse] = await Promise.all([
+          getMyProfile(),
+          getMyInternship()
+        ]);
+
+        if (profileResponse.success && profileResponse.data) {
+          setStudentProfile(profileResponse.data);
+        }
+
+        if (internshipResponse.success && internshipResponse.data) {
+          setInternshipData(internshipResponse.data);
+          
+          // NOTE: Auto-populate periode TIDAK digunakan
+          // Mahasiswa harus input periode manual sekali
+          // Kode ini disimpan sebagai referensi jika nanti perlu:
+          /*
+          const internship = internshipResponse.data;
+          if (internship.startDate && internship.endDate) {
+            setWorkPeriod(prev => ({
+              ...prev,
+              startDate: internship.startDate,
+              endDate: internship.endDate,
+            }));
+          }
+          */
+        }
+      } catch (error) {
+        console.error("Error fetching student data:", error);
+        toast.error("Gagal memuat data mahasiswa");
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    }
+
+    fetchStudentData();
+  }, []);
+
+  // Restore state dari localStorage jika ada
+  useEffect(() => {
+    // Check localStorage untuk saved state
+    const savedPeriodState = localStorage.getItem('logbook_period_saved');
+    const savedDates = localStorage.getItem('logbook_generated_dates');
+    const savedEntries = localStorage.getItem('logbook_entries');
+    const savedWorkPeriod = localStorage.getItem('logbook_work_period');
+
+    if (savedPeriodState === 'true' && savedDates && savedWorkPeriod) {
+      // Restore dari localStorage
+      setIsPeriodSaved(true);
+      setGeneratedDates(JSON.parse(savedDates));
+      setWorkPeriod(JSON.parse(savedWorkPeriod));
+      if (savedEntries) {
+        setLogbookEntries(JSON.parse(savedEntries));
+      }
+      toast.success('Periode logbook berhasil dimuat!');
+    }
+    // Jika belum ada saved state, mahasiswa harus input manual
+  }, []);
+
+  // Helper function untuk generate dates
+  const generateDatesFromPeriod = (
+    startDate: string,
+    endDate: string,
+    startDay: string,
+    endDay: string
+  ): string[] => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dates: string[] = [];
+
+    const dayMap: { [key: string]: number } = {
+      minggu: 0,
+      senin: 1,
+      selasa: 2,
+      rabu: 3,
+      kamis: 4,
+      jumat: 5,
+      sabtu: 6,
+    };
+
+    const startDayNum = dayMap[startDay.toLowerCase()] || 1;
+    const endDayNum = dayMap[endDay.toLowerCase()] || 5;
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+    for (let d = new Date(start); d <= end; d = new Date(d.getTime() + MS_PER_DAY)) {
+      const currentDay = d.getDay();
+
+      if (startDayNum <= endDayNum) {
+        if (currentDay >= startDayNum && currentDay <= endDayNum) {
+          dates.push(d.toISOString().split('T')[0]);
+        }
+      } else {
+        if (currentDay >= startDayNum || currentDay <= endDayNum) {
+          dates.push(d.toISOString().split('T')[0]);
+        }
+      }
+    }
+
+    return dates;
+  };
 
   const handleSubmitPeriod = () => {
     if (!workPeriod.startDate || !workPeriod.endDate) {
@@ -86,16 +200,36 @@ function LogbookPage() {
       return;
     }
 
-    // Auto-generate dates
-    handleGenerate();
+    // Generate dates
+    const dates = generateDatesFromPeriod(
+      workPeriod.startDate,
+      workPeriod.endDate,
+      workPeriod.startDay || 'senin',
+      workPeriod.endDay || 'jumat'
+    );
+    
+    setGeneratedDates(dates);
     setIsPeriodSaved(true);
-    toast.success("Periode berhasil disimpan dan tabel logbook telah digenerate!");
+    
+    // Save to localStorage
+    localStorage.setItem('logbook_period_saved', 'true');
+    localStorage.setItem('logbook_generated_dates', JSON.stringify(dates));
+    localStorage.setItem('logbook_work_period', JSON.stringify(workPeriod));
+    
+    toast.success(`Periode berhasil disimpan! ${dates.length} hari kerja telah digenerate.`);
   };
 
   const handleEditPeriod = () => {
     setIsPeriodSaved(false);
     setGeneratedDates([]);
     setLogbookEntries([]);
+    
+    // Clear localStorage
+    localStorage.removeItem('logbook_period_saved');
+    localStorage.removeItem('logbook_generated_dates');
+    localStorage.removeItem('logbook_entries');
+    
+    toast.info('Periode logbook direset');
   };
 
   const handleAddLogbook = () => {
@@ -110,57 +244,14 @@ function LogbookPage() {
       description: description.trim(),
     };
 
-    setLogbookEntries([...logbookEntries, newEntry]);
+    const updatedEntries = [...logbookEntries, newEntry];
+    setLogbookEntries(updatedEntries);
+    
+    // Save to localStorage
+    localStorage.setItem('logbook_entries', JSON.stringify(updatedEntries));
     setSelectedDate("");
     setDescription("");
     toast.success("Logbook berhasil ditambahkan!");
-  };
-
-  const handleGenerate = () => {
-    if (!workPeriod.startDate || !workPeriod.endDate) {
-      toast.error("Mohon set periode kerja praktik terlebih dahulu!");
-      return;
-    }
-
-    const start = new Date(workPeriod.startDate);
-    const end = new Date(workPeriod.endDate);
-    const dates: string[] = [];
-
-    const dayMap: { [key: string]: number } = {
-      minggu: 0,
-      senin: 1,
-      selasa: 2,
-      rabu: 3,
-      kamis: 4,
-      jumat: 5,
-      sabtu: 6,
-    };
-
-    const startDayNum = workPeriod.startDay
-      ? dayMap[workPeriod.startDay.toLowerCase()]
-      : 1;
-    const endDayNum = workPeriod.endDay
-      ? dayMap[workPeriod.endDay.toLowerCase()]
-      : 5;
-
-    const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-    for (let d = new Date(start); d <= end; d = new Date(d.getTime() + MS_PER_DAY)) {
-      const currentDay = d.getDay();
-
-      if (startDayNum <= endDayNum) {
-        if (currentDay >= startDayNum && currentDay <= endDayNum) {
-          dates.push(new Date(d).toISOString().split("T")[0]);
-        }
-      } else {
-        if (currentDay >= startDayNum || currentDay <= endDayNum) {
-          dates.push(new Date(d).toISOString().split("T")[0]);
-        }
-      }
-    }
-
-    setGeneratedDates(dates);
-    toast.success(`${dates.length} hari kerja berhasil di-generate!`);
   };
 
   const getLogbookForDate = (date: string) => {
@@ -322,6 +413,87 @@ function LogbookPage() {
         </Link>
       </Button>
 
+      {/* Student Profile Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Data Mahasiswa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoadingProfile ? (
+            <div className="text-center py-4 text-muted-foreground">
+              Memuat data mahasiswa...
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-muted-foreground">Nama</Label>
+                  <p className="font-medium">{studentProfile?.name || "-"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">NIM</Label>
+                  <p className="font-medium">{studentProfile?.nim || "-"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Program Studi</Label>
+                  <p className="font-medium">{studentProfile?.prodi || "Manajemen Informatika"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Fakultas</Label>
+                  <p className="font-medium">
+                    {studentProfile?.fakultas || "Ilmu Komputer"}
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-muted-foreground">Tempat KP</Label>
+                  <p className="font-medium flex items-center gap-2">
+                    <Building className="h-4 w-4" />
+                    {internshipData?.company || "-"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Bagian/Bidang</Label>
+                  <p className="font-medium">{internshipData?.position || "-"}</p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Periode KP</Label>
+                  <p className="font-medium flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    {workPeriod.startDate && workPeriod.endDate
+                      ? `${new Date(workPeriod.startDate).toLocaleDateString("id-ID", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })} - ${new Date(workPeriod.endDate).toLocaleDateString("id-ID", {
+                          day: "2-digit",
+                          month: "long",
+                          year: "numeric",
+                        })}`
+                      : "Belum diisi"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <div className="mt-1">
+                    <Badge
+                      variant={internshipData?.status === "AKTIF" ? "default" : "secondary"}
+                      className={internshipData?.status === "AKTIF" ? "bg-green-500" : ""}
+                    >
+                      {internshipData?.status || "PENDING"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Step Indicator */}
       <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
         <div className={`flex items-center gap-2 ${isPeriodSaved ? 'text-green-600' : 'text-blue-600'}`}>
@@ -444,7 +616,7 @@ function LogbookPage() {
             <Alert className="border-l-4 border-green-500 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                Periode kerja praktik telah disimpan. Tabel logbook telah digenerate otomatis dengan {generatedDates.length} hari kerja.
+                Periode kerja praktik telah disimpan. Tabel logbook dengan {generatedDates.length} hari kerja siap digunakan. Anda dapat menambahkan catatan harian di bawah ini.
               </AlertDescription>
             </Alert>
           )}
