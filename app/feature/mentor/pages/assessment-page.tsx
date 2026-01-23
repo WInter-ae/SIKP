@@ -25,6 +25,9 @@ import {
 import PageHeader from "../components/page-header";
 import BackButton from "../components/back-button";
 
+// API Services
+import { submitAssessment } from "~/feature/field-mentor/services";
+
 // Types
 import type { AssessmentCriteria, MenteeOption } from "../types";
 
@@ -82,6 +85,7 @@ function AssessmentPage() {
   const [feedback, setFeedback] = useState("");
   const [assessments, setAssessments] =
     useState<AssessmentCriteria[]>(DEFAULT_ASSESSMENTS);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleScoreChange(id: string, value: string) {
     const numValue = parseInt(value) || 0;
@@ -99,7 +103,7 @@ function AssessmentPage() {
     return assessments.reduce((sum, a) => sum + (a.score * a.weight) / 100, 0);
   }, [assessments]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!selectedMentee) {
@@ -107,13 +111,42 @@ function AssessmentPage() {
       return;
     }
 
-    toast.success(
-      `Penilaian berhasil disimpan!\nMahasiswa: ${MENTEE_LIST.find((m) => m.id === selectedMentee)?.name}\nNilai Rata-rata: ${totalScore.toFixed(1)}`
-    );
+    setIsSubmitting(true);
 
-    setSelectedMentee("");
-    setFeedback("");
-    setAssessments((prev) => prev.map((a) => ({ ...a, score: 0 })));
+    try {
+      // Prepare assessment data
+      const assessmentData = {
+        studentId: selectedMentee,
+        kehadiran: assessments.find((a) => a.category === "Kehadiran")?.score || 0,
+        kerjasama: assessments.find((a) => a.category === "Kerjasama")?.score || 0,
+        sikapEtika: assessments.find((a) => a.category === "Sikap, Etika dan Tingkah Laku")?.score || 0,
+        prestasiKerja: assessments.find((a) => a.category === "Prestasi Kerja")?.score || 0,
+        kreatifitas: assessments.find((a) => a.category === "Kreatifitas")?.score || 0,
+        feedback: feedback.trim() || undefined,
+      };
+
+      // Submit to API
+      const response = await submitAssessment(assessmentData);
+
+      if (response.success) {
+        const menteeName = MENTEE_LIST.find((m) => m.id === selectedMentee)?.name;
+        toast.success(
+          `Penilaian berhasil disimpan!\nMahasiswa: ${menteeName}\nNilai Rata-rata: ${totalScore.toFixed(1)}`
+        );
+
+        // Reset form
+        setSelectedMentee("");
+        setFeedback("");
+        setAssessments((prev) => prev.map((a) => ({ ...a, score: 0 })));
+      } else {
+        toast.error(response.message || "Gagal menyimpan penilaian");
+      }
+    } catch (error) {
+      console.error("Error submitting assessment:", error);
+      toast.error("Terjadi kesalahan saat menyimpan penilaian");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -228,9 +261,14 @@ function AssessmentPage() {
             </Card>
 
             <div className="flex justify-center mb-6">
-              <Button type="submit" size="lg" className="px-8">
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="px-8"
+                disabled={isSubmitting}
+              >
                 <Save className="mr-2 h-4 w-4" />
-                Simpan Penilaian
+                {isSubmitting ? "Menyimpan..." : "Simpan Penilaian"}
               </Button>
             </div>
           </>
