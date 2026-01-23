@@ -11,11 +11,6 @@ export const mockPengajuanList: PengajuanJudul[] = [
       prodi: "Teknik Informatika",
       email: "budi.santoso@student.ac.id",
     },
-    tim: {
-      id: "TIM-001",
-      nama: "Frontend Dev Team",
-      anggota: ["Budi Santoso", "Siti Rahayu"],
-    },
     data: {
       judulLaporan:
         "Sistem Informasi Manajemen Perpustakaan Berbasis Web dengan Teknologi React dan Node.js",

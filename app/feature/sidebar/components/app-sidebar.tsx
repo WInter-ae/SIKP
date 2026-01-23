@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/sidebar"
 import { getSidebarMenuByUrl } from "../data/sidebar-data"
 import type { User, UserRole } from "../types"
+import { useUser } from "~/contexts/user-context"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: User
@@ -40,10 +41,23 @@ const getDefaultUser = (pathname: string): User => {
   }
 }
 
-export function AppSidebar({ user, ...props }: AppSidebarProps) {
+export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
   const location = useLocation()
+  const { user: contextUser } = useUser()
   const defaultUser = getDefaultUser(location.pathname)
-  const currentUser = user || defaultUser
+  
+  // Prioritize user from context, fall back to prop, then default
+  const user = React.useMemo(() => {
+    if (contextUser) {
+      return {
+        name: contextUser.nama,
+        email: contextUser.email,
+        avatar: "/avatars/default.jpg",
+        role: contextUser.role.toLowerCase() as UserRole,
+      }
+    }
+    return userProp || defaultUser
+  }, [contextUser, userProp, defaultUser])
   
   // Get menu items based on current URL path
   const navItems = React.useMemo(() => getSidebarMenuByUrl(location.pathname), [location.pathname])
@@ -67,7 +81,7 @@ export function AppSidebar({ user, ...props }: AppSidebarProps) {
         <NavMain items={navItems} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={currentUser} />
+        <NavUser user={user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

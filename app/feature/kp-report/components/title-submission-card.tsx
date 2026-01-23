@@ -103,12 +103,6 @@ function TitleSubmissionCard({
                   <span className="hidden sm:inline">•</span>
                   <span className="text-xs sm:text-sm">{pengajuan.mahasiswa.prodi}</span>
                 </div>
-                {pengajuan.tim && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="w-3 h-3" />
-                    <span>Tim: {pengajuan.tim.nama}</span>
-                  </div>
-                )}
               </CardDescription>
             </div>
             <div className="text-right text-xs text-muted-foreground whitespace-nowrap">

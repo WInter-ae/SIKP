@@ -9,7 +9,8 @@ import { toast } from "sonner"
 
 // 2. Internal utilities
 import { cn } from "~/lib/utils"
-import { authClient } from "~/lib/auth-client"
+import { registerMahasiswa } from "~/lib/auth-client"
+import { useUser } from "~/contexts/user-context"
 
 // 3. Components
 import { Button } from "~/components/ui/button"
@@ -31,10 +32,20 @@ const registerSchema = z
       .min(1, "Nama lengkap wajib diisi")
       .min(3, "Nama lengkap minimal 3 karakter")
       .max(100, "Nama lengkap maksimal 100 karakter"),
+    nim: z
+      .string()
+      .min(1, "NIM wajib diisi")
+      .regex(/^[0-9]+$/, "NIM harus berupa angka")
+      .min(8, "NIM minimal 8 digit")
+      .max(20, "NIM maksimal 20 digit"),
     email: z
       .string()
       .min(1, "Email wajib diisi")
       .email("Format email tidak valid"),
+    prodi: z
+      .string()
+      .min(1, "Program studi wajib diisi")
+      .min(3, "Program studi minimal 3 karakter"),
     password: z
       .string()
       .min(1, "Kata sandi wajib diisi")
@@ -56,13 +67,16 @@ export function RegisterForm({
   ...props
 }: React.ComponentProps<"form">) {
   const navigate = useNavigate()
+  const { setUser } = useUser()
   const [error, setError] = useState<string | null>(null)
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
+      nim: "",
       email: "",
+      prodi: "",
       password: "",
       confirmPassword: "",
     },
@@ -73,18 +87,29 @@ export function RegisterForm({
     try {
       setError(null)
 
-      const result = await authClient.signUp.email({
+      // Call backend API untuk registrasi mahasiswa
+      const result = await registerMahasiswa({
+        nama: data.name,
+        nim: data.nim,
         email: data.email,
+        prodi: data.prodi,
         password: data.password,
-        name: data.name,
       })
 
-      if (result.error) {
-        setError(result.error.message || "Registrasi gagal. Silakan coba lagi.")
+      if (!result.success) {
+        setError(result.error || "Registrasi gagal. Silakan coba lagi.")
         return
       }
 
-      // Redirect ke halaman mahasiswa jika berhasil
+      // Update user context
+      if (result.user) {
+        setUser(result.user)
+      }
+
+      // Tampilkan notifikasi sukses
+      toast.success("Registrasi berhasil! Selamat datang di SIKP.")
+
+      // Redirect ke halaman mahasiswa
       navigate("/mahasiswa")
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.")
@@ -137,6 +162,27 @@ export function RegisterForm({
         />
 
         <Controller
+          name="nim"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="nim">NIM</FieldLabel>
+              <Input
+                {...field}
+                id="nim"
+                type="text"
+                placeholder="12345678"
+                aria-invalid={fieldState.invalid}
+                autoComplete="off"
+              />
+              {fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} />
+              )}
+            </Field>
+          )}
+        />
+
+        <Controller
           name="email"
           control={form.control}
           render={({ field, fieldState }) => (
@@ -157,6 +203,27 @@ export function RegisterForm({
                   Kami akan menggunakan email ini untuk menghubungi Anda. Kami
                   tidak akan membagikan email Anda kepada siapa pun.
                 </FieldDescription>
+              )}
+            </Field>
+          )}
+        />
+
+        <Controller
+          name="prodi"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor="prodi">Program Studi</FieldLabel>
+              <Input
+                {...field}
+                id="prodi"
+                type="text"
+                placeholder="Teknik Informatika"
+                aria-invalid={fieldState.invalid}
+                autoComplete="off"
+              />
+              {fieldState.invalid && (
+                <FieldError errors={[fieldState.error]} />
               )}
             </Field>
           )}

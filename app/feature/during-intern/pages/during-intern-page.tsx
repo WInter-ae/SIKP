@@ -4,10 +4,16 @@ import { Button } from "~/components/ui/button";
 
 import Card from "~/feature/during-intern/components/card";
 
-import { ArrowLeft, ArrowRight, BookOpen, ClipboardCheck, FileCheck } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, ClipboardCheck, FileCheck, UserCircle, FileText } from "lucide-react";
 
 function DuringInternPage() {
   const menuItems = [
+    {
+      title: "Mentor Lapangan",
+      description: "Kelola informasi pembimbing lapangan dari perusahaan",
+      icon: UserCircle,
+      to: "/mahasiswa/mentor-lapangan",
+    },
     {
       title: "Logbook",
       description: "Catat aktivitas harian selama masa kerja praktik",
@@ -21,11 +27,10 @@ function DuringInternPage() {
       to: "/mahasiswa/kp/penilaian",
     },
     {
-      title: "Pengesahan",
-      description: "Dapatkan pengesahan dokumen kerja praktik",
-      icon: FileCheck,
-      to: "https://ols.ilkom.unsri.ac.id/login",
-      external: true,
+      title: "Laporan KP",
+      description: "Kelola judul dan upload laporan kerja praktik",
+      icon: FileText,
+      to: "/mahasiswa/kp/laporan",
     },
   ];
 
@@ -42,7 +47,7 @@ function DuringInternPage() {
       </div>
 
       {/* Menu Cards */}
-      <div className="flex flex-col md:flex-row gap-8 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
         {menuItems.map((item) => {
           if (item.external) {
             return (
@@ -51,7 +56,6 @@ function DuringInternPage() {
                 href={item.to}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1"
               >
                 <Card
                   title={item.title}

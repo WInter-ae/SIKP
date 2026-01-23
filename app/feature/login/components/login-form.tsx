@@ -1,5 +1,5 @@
-import { cn } from "~/lib/utils"
-import { Button } from "~/components/ui/button"
+import { cn } from "~/lib/utils";
+import { Button } from "~/components/ui/button";
 import {
   Field,
   FieldDescription,
@@ -7,15 +7,16 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "~/components/ui/field"
-import { Input } from "~/components/ui/input"
-import { Github } from "lucide-react"
-import { Link, useNavigate } from "react-router"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { authClient } from "~/lib/auth-client"
-import { useState } from "react"
+} from "~/components/ui/field";
+import { Input } from "~/components/ui/input";
+import { Github } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { login } from "~/lib/auth-client";
+import { useState } from "react";
+import { useUser } from "~/contexts/user-context";
 
 // Schema validasi untuk form login
 const loginSchema = z.object({
@@ -23,20 +24,18 @@ const loginSchema = z.object({
     .string()
     .min(1, "Email wajib diisi")
     .email("Format email tidak valid"),
-  password: z
-    .string()
-    .min(1, "Kata sandi wajib diisi")
-    .min(8, "Kata sandi minimal 8 karakter"),
-})
+  password: z.string().min(1, "Kata sandi wajib diisi"),
+});
 
-type LoginFormData = z.infer<typeof loginSchema>
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const { setUser } = useUser();
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -45,29 +44,41 @@ export function LoginForm({
       password: "",
     },
     mode: "onBlur", // Validasi saat blur
-  })
+  });
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      setError(null)
+      setError(null);
 
-      const result = await authClient.signIn.email({
-        email: data.email,
-        password: data.password,
-      })
+      // Call backend API
+      const result = await login(data.email, data.password);
 
-      if (result.error) {
-        setError(result.error.message || "Login gagal. Silakan coba lagi.")
-        return
+      if (!result.success) {
+        setError(result.error || "Login gagal. Silakan coba lagi.");
+        return;
       }
 
-      // Redirect ke halaman mahasiswa jika berhasil
-      navigate("/mahasiswa")
+      // Update user context
+      if (result.user) {
+        setUser(result.user);
+      }
+
+      // Redirect berdasarkan role
+      const user = result.user;
+      if (user?.role === "MAHASISWA") {
+        navigate("/mahasiswa");
+      } else if (user?.role === "ADMIN") {
+        navigate("/admin");
+      } else if (user?.role === "DOSEN") {
+        navigate("/dosen");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
-      setError("Terjadi kesalahan. Silakan coba lagi.")
-      console.error("Login error:", err)
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+      console.error("Login error:", err);
     }
-  }
+  };
 
   return (
     <form
@@ -106,9 +117,7 @@ export function LoginForm({
                 aria-invalid={fieldState.invalid}
                 autoComplete="email"
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -134,9 +143,7 @@ export function LoginForm({
                 aria-invalid={fieldState.invalid}
                 autoComplete="current-password"
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -163,5 +170,5 @@ export function LoginForm({
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
-import { ArrowLeft, Calendar, FileText, Plus, Save, Sparkles } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, Plus, Save, Sparkles, CheckCircle, Clock, AlertCircle, XCircle, Download, Edit } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
+import { Badge } from "~/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -35,6 +36,12 @@ interface LogbookEntry {
   id: string;
   date: string;
   description: string;
+  mentorSignature?: {
+    status: "approved" | "revision" | "rejected";
+    signedAt: string;
+    mentorName: string;
+    notes?: string;
+  };
 }
 
 interface WorkPeriod {
@@ -55,6 +62,7 @@ const DAYS_OPTIONS = [
 ];
 
 function LogbookPage() {
+  const [isPeriodSaved, setIsPeriodSaved] = useState(false);
   const [workPeriod, setWorkPeriod] = useState<WorkPeriod>({
     startDay: "senin",
     endDay: "jumat",
@@ -78,7 +86,16 @@ function LogbookPage() {
       return;
     }
 
-    toast.success("Periode berhasil disimpan!");
+    // Auto-generate dates
+    handleGenerate();
+    setIsPeriodSaved(true);
+    toast.success("Periode berhasil disimpan dan tabel logbook telah digenerate!");
+  };
+
+  const handleEditPeriod = () => {
+    setIsPeriodSaved(false);
+    setGeneratedDates([]);
+    setLogbookEntries([]);
   };
 
   const handleAddLogbook = () => {
@@ -165,14 +182,31 @@ function LogbookPage() {
   };
 
   const getWeekNumber = (dateString: string) => {
-    if (!workPeriod.startDate) return 0;
+    if (!generatedDates.length) return 0;
 
-    const start = new Date(workPeriod.startDate);
-    const current = new Date(dateString);
-    const diffTime = current.getTime() - start.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    // Find the index of current date in generatedDates
+    const currentIndex = generatedDates.indexOf(dateString);
+    if (currentIndex === -1) return 0;
 
-    return Math.floor(diffDays / 7) + 1;
+    // Count weeks by looking at Friday or last working day of the week
+    let weekNumber = 1;
+    for (let i = 0; i < currentIndex; i++) {
+      const currentDate = new Date(generatedDates[i]);
+      const nextDate = i + 1 < generatedDates.length ? new Date(generatedDates[i + 1]) : null;
+      const currentDay = currentDate.getDay();
+      
+      // Check if this is the last day of week (Friday=5, Saturday=6, Sunday=0)
+      // or if next day is Monday (1) which means this is end of week
+      if (nextDate) {
+        const nextDay = nextDate.getDay();
+        // If current is Fri/Sat/Sun OR next day is Monday, increment week
+        if (currentDay === 5 || currentDay === 6 || currentDay === 0 || nextDay === 1) {
+          weekNumber++;
+        }
+      }
+    }
+
+    return weekNumber;
   };
 
   const getWeekRowSpan = (dates: string[], currentIndex: number) => {
@@ -188,6 +222,86 @@ function LogbookPage() {
     }
 
     return count;
+  };
+
+  const getMentorSignatureBadge = (entry: LogbookEntry | undefined) => {
+    if (!entry) {
+      return (
+        <Badge variant="outline" className="bg-gray-50">
+          <span className="text-muted-foreground">Belum diisi</span>
+        </Badge>
+      );
+    }
+
+    if (!entry.mentorSignature) {
+      return (
+        <Badge variant="outline" className="bg-yellow-50">
+          <Clock className="w-3 h-3 mr-1" />
+          Menunggu Paraf
+        </Badge>
+      );
+    }
+
+    switch (entry.mentorSignature.status) {
+      case "approved":
+        return (
+          <Badge className="bg-green-500">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Disetujui
+          </Badge>
+        );
+      case "revision":
+        return (
+          <Badge className="bg-yellow-500">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Perlu Revisi
+          </Badge>
+        );
+      case "rejected":
+        return (
+          <Badge variant="destructive">
+            <XCircle className="w-3 h-3 mr-1" />
+            Ditolak
+          </Badge>
+        );
+    }
+  };
+
+  const handleExportToFile = () => {
+    // TODO: Implement file generation (PDF/Excel)
+    // Fungsi ini akan diaktifkan setelah format file ditentukan
+    toast.info("Fitur generate file sedang dalam pengembangan");
+    
+    // // Generate CSV content
+    // let csvContent = "Minggu Ke,Hari,Tanggal,Deskripsi Kegiatan,Status Paraf,Catatan Mentor\n";
+    // 
+    // generatedDates.forEach((date) => {
+    //   const entry = getLogbookForDate(date);
+    //   const weekNum = getWeekNumber(date);
+    //   const dayName = getDayName(date);
+    //   const formattedDate = formatDate(date);
+    //   const description = entry?.description || "Belum diisi";
+    //   const status = entry?.mentorSignature ? 
+    //     (entry.mentorSignature.status === "approved" ? "Disetujui" : 
+    //      entry.mentorSignature.status === "revision" ? "Perlu Revisi" : "Ditolak") : 
+    //     "Menunggu Paraf";
+    //   const notes = entry?.mentorSignature?.notes || "-";
+    //   
+    //   csvContent += `${weekNum},${dayName},"${formattedDate}","${description}",${status},"${notes}"\n`;
+    // });
+    //
+    // // Create blob and download
+    // const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    // const link = document.createElement("a");
+    // const url = URL.createObjectURL(blob);
+    // link.setAttribute("href", url);
+    // link.setAttribute("download", `logbook_${workPeriod.startDate}_${workPeriod.endDate}.csv`);
+    // link.style.visibility = "hidden";
+    // document.body.appendChild(link);
+    // link.click();
+    // document.body.removeChild(link);
+    // 
+    // toast.success("Logbook berhasil diexport ke file CSV!");
   };
 
   return (
@@ -208,16 +322,43 @@ function LogbookPage() {
         </Link>
       </Button>
 
+      {/* Step Indicator */}
+      <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+        <div className={`flex items-center gap-2 ${isPeriodSaved ? 'text-green-600' : 'text-blue-600'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${isPeriodSaved ? 'bg-green-100' : 'bg-blue-100'}`}>
+            {isPeriodSaved ? <CheckCircle className="w-5 h-5" /> : '1'}
+          </div>
+          <span className="font-medium">Set Periode</span>
+        </div>
+        <div className={`h-0.5 flex-1 ${isPeriodSaved ? 'bg-green-600' : 'bg-gray-300'}`}></div>
+        <div className={`flex items-center gap-2 ${isPeriodSaved ? 'text-blue-600' : 'text-gray-400'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${isPeriodSaved ? 'bg-blue-100' : 'bg-gray-100'}`}>
+            2
+          </div>
+          <span className="font-medium">Isi Logbook</span>
+        </div>
+      </div>
+
       {/* Section 1: Work Period Form */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Periode Kerja Praktik
-          </CardTitle>
-          <CardDescription>
-            Tentukan periode dan hari kerja praktik Anda
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
+                Periode Kerja Praktik
+              </CardTitle>
+              <CardDescription>
+                Tentukan periode dan hari kerja praktik Anda
+              </CardDescription>
+            </div>
+            {isPeriodSaved && (
+              <Button variant="outline" size="sm" onClick={handleEditPeriod}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Periode
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -229,6 +370,7 @@ function LogbookPage() {
                 onChange={(e) =>
                   setWorkPeriod({ ...workPeriod, startDate: e.target.value })
                 }
+                disabled={isPeriodSaved}
               />
             </div>
             <div className="space-y-2">
@@ -239,6 +381,7 @@ function LogbookPage() {
                 onChange={(e) =>
                   setWorkPeriod({ ...workPeriod, endDate: e.target.value })
                 }
+                disabled={isPeriodSaved}
               />
             </div>
           </div>
@@ -251,6 +394,7 @@ function LogbookPage() {
                 onValueChange={(value) =>
                   setWorkPeriod({ ...workPeriod, startDay: value })
                 }
+                disabled={isPeriodSaved}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih hari" />
@@ -271,6 +415,7 @@ function LogbookPage() {
                 onValueChange={(value) =>
                   setWorkPeriod({ ...workPeriod, endDay: value })
                 }
+                disabled={isPeriodSaved}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Pilih hari" />
@@ -286,26 +431,40 @@ function LogbookPage() {
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button onClick={handleSubmitPeriod}>
-              <Save className="mr-2 h-4 w-4" />
-              Simpan Periode
-            </Button>
-          </div>
+          {!isPeriodSaved && (
+            <div className="flex justify-end">
+              <Button onClick={handleSubmitPeriod}>
+                <Save className="mr-2 h-4 w-4" />
+                Simpan Periode
+              </Button>
+            </div>
+          )}
+
+          {isPeriodSaved && (
+            <Alert className="border-l-4 border-green-500 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Periode kerja praktik telah disimpan. Tabel logbook telah digenerate otomatis dengan {generatedDates.length} hari kerja.
+              </AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 
-      {/* Section 2: Add Logbook Entry Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Tambah Entri Logbook
-          </CardTitle>
-          <CardDescription>
-            Tambahkan catatan kegiatan harian Anda
-          </CardDescription>
-        </CardHeader>
+      {/* Show sections below only if period is saved */}
+      {isPeriodSaved && (
+        <>
+          {/* Section 2: Add Logbook Entry Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                Tambah Entri Logbook
+              </CardTitle>
+              <CardDescription>
+                Tambahkan catatan kegiatan harian Anda
+              </CardDescription>
+            </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
@@ -346,37 +505,24 @@ function LogbookPage() {
             Tabel Logbook
           </CardTitle>
           <CardDescription>
-            Generate dan kelola entri logbook berdasarkan periode kerja
+            Daftar kegiatan harian berdasarkan periode kerja yang telah digenerate
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Period Display & Generate Button */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-sm text-muted-foreground">Periode:</span>
-              <span className="px-3 py-1.5 bg-muted rounded-md text-sm font-medium">
-                {workPeriod.startDate ? formatDate(workPeriod.startDate) : "Belum diset"}
-              </span>
-              <span className="text-muted-foreground">s/d</span>
-              <span className="px-3 py-1.5 bg-muted rounded-md text-sm font-medium">
-                {workPeriod.endDate ? formatDate(workPeriod.endDate) : "Belum diset"}
-              </span>
-            </div>
-            <Button onClick={handleGenerate} variant="outline">
-              <Sparkles className="mr-2 h-4 w-4" />
-              Generate
-            </Button>
+          {/* Period Display */}
+          <div className="flex flex-wrap items-center gap-2 p-3 bg-muted rounded-lg">
+            <span className="font-medium text-sm text-muted-foreground">Periode:</span>
+            <span className="px-3 py-1.5 bg-background rounded-md text-sm font-medium">
+              {workPeriod.startDate ? formatDate(workPeriod.startDate) : "Belum diset"}
+            </span>
+            <span className="text-muted-foreground">s/d</span>
+            <span className="px-3 py-1.5 bg-background rounded-md text-sm font-medium">
+              {workPeriod.endDate ? formatDate(workPeriod.endDate) : "Belum diset"}
+            </span>
+            <span className="ml-auto px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-sm font-medium">
+              {generatedDates.length} Hari Kerja
+            </span>
           </div>
-
-          {/* Info Alert */}
-          {generatedDates.length === 0 && (
-            <Alert>
-              <FileText className="h-4 w-4" />
-              <AlertDescription>
-                Klik tombol Generate untuk menampilkan tabel logbook berdasarkan periode yang telah diset.
-              </AlertDescription>
-            </Alert>
-          )}
 
           {/* Logbook Table */}
           {generatedDates.length > 0 && (
@@ -419,7 +565,14 @@ function LogbookPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-center">
-                          <span className="text-muted-foreground">-</span>
+                          <div className="flex flex-col items-center gap-1">
+                            {getMentorSignatureBadge(entry)}
+                            {entry?.mentorSignature?.notes && (
+                              <p className="text-xs text-muted-foreground italic mt-1">
+                                {entry.mentorSignature.notes}
+                              </p>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -428,21 +581,35 @@ function LogbookPage() {
               </Table>
             </div>
           )}
-
-          {/* Save Button */}
-          {generatedDates.length > 0 && (
-            <div className="flex justify-center pt-4">
-              <Button
-                size="lg"
-                onClick={() => toast.success("Data logbook berhasil disimpan!")}
-              >
-                <Save className="mr-2 h-4 w-4" />
-                Simpan Logbook
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Export Button - Bottom of page */}
+      {generatedDates.length > 0 && (
+        <Card className="border-2 border-primary">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Download className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Export Logbook</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Generate file CSV untuk logbook Anda
+                  </p>
+                </div>
+              </div>
+              <Button size="lg" onClick={handleExportToFile}>
+                <Download className="mr-2 h-5 w-5" />
+                Generate File
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+        </>
+      )}
     </div>
   );
 }

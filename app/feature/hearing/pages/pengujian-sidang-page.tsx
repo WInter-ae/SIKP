@@ -189,7 +189,7 @@ export default function PengujianSidangPage() {
         setApprovalNotificationShown(false);
       }
     }
-  }, [beritaAcara]);
+  }, [beritaAcara, approvalNotificationShown]);
 
   // Handler untuk simpan draft
   const handleSaveDraft = (data: Partial<BeritaAcara>) => {
@@ -201,12 +201,12 @@ export default function PengujianSidangPage() {
     } as BeritaAcara;
 
     setBeritaAcara(draft);
-    
+
     // Simpan ke localStorage hanya di client-side
     if (typeof window !== "undefined") {
       localStorage.setItem("berita-acara-draft", JSON.stringify(draft));
     }
-    
+
     setNotification({
       title: "✅ Draft berhasil disimpan",
       description: "Data berita acara Anda telah tersimpan sebagai draft.",
@@ -316,14 +316,18 @@ export default function PengujianSidangPage() {
     }
 
     // Simulasi generate surat
-    const nomorSurat = `BA/KP/${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(4, "0")}`;
-    
+    const nomorSurat = `BA/KP/${new Date().getFullYear()}/${Math.floor(
+      Math.random() * 1000,
+    )
+      .toString()
+      .padStart(4, "0")}`;
+
     setNotification({
       title: "✅ Surat berhasil digenerate",
       description: `Nomor Surat: ${nomorSurat}. Surat dapat diunduh dari menu Arsip.`,
     });
     setTimeout(() => setNotification(null), 3000);
-    
+
     // Di production, ini akan trigger download PDF atau redirect ke halaman preview surat
     console.log("Generate surat dengan data:", {
       nomorSurat,
@@ -408,7 +412,8 @@ export default function PengujianSidangPage() {
               Pengujian Sidang Kerja Praktik
             </h1>
             <p className="text-muted-foreground mt-1">
-              Ajukan berita acara sidang dan dapatkan surat setelah disetujui dosen
+              Ajukan berita acara sidang dan dapatkan surat setelah disetujui
+              dosen
             </p>
           </div>
         </div>
@@ -705,7 +710,9 @@ export default function PengujianSidangPage() {
               <Info className="h-5 w-5" />
               <AlertDescription>
                 <div className="space-y-4">
-                  <p className="font-medium">Belum ada berita acara yang dibuat</p>
+                  <p className="font-medium">
+                    Belum ada berita acara yang dibuat
+                  </p>
                   <Button
                     onClick={() => setShowForm(true)}
                     className="bg-green-700 hover:bg-green-800 h-11"
@@ -724,8 +731,9 @@ export default function PengujianSidangPage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Hapus Draft Berita Acara?</AlertDialogTitle>
               <AlertDialogDescription>
-                Draft yang tersimpan akan dihapus secara permanen.
-                Anda harus membuat berita acara baru dari awal.
+                Tindakan ini akan menghapus semua data berita acara dan draft
+                yang tersimpan. Data yang sudah dihapus tidak dapat
+                dikembalikan.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

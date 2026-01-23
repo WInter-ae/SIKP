@@ -1,10 +1,12 @@
 export interface Member {
-  id: number;
+  id: string; // keep invitation/team member ids as-is (may include suffixes)
+  userId?: string; // actual user id (needed for self-actions and comparisons)
   name: string;
   role: string;
   isLeader?: boolean;
   nim?: string;
   email?: string;
+  status?: string;
 }
 
 export interface MemberListProps {
@@ -12,23 +14,27 @@ export interface MemberListProps {
   members: Member[];
   showActions?: boolean;
   showCancel?: boolean;
-  onAccept?: (memberId: number) => void;
-  onReject?: (memberId: number) => void;
-  onRemove?: (memberId: number) => void;
-  onCancel?: (memberId: number) => void;
+  isLeader?: boolean;
+  currentUserId?: string;
+  onAccept?: (memberId: string) => void;
+  onReject?: (memberId: string) => void;
+  onRemove?: (memberId: string) => void;
+  onCancel?: (memberId: string) => void;
 }
 
 export interface Team {
   id: string;
   name: string;
   code: string;
-  leaderId: number;
+  leaderId: string;
+  isLeader?: boolean;
+  status?: string;
   members: Member[];
   maxMembers: number;
 }
 
 export interface SearchResult {
-  id: number;
+  id: string;
   name: string;
   nim: string;
   email: string;
