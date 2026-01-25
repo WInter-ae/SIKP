@@ -23,16 +23,28 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 // Default user untuk development/testing
 // Nanti bisa diganti dengan data user dari authentication context
-const defaultUser: User = {
-  name: "John Doe",
-  email: "john.doe@example.com",
-  avatar: "/avatars/default.jpg",
-  role: "mahasiswa", // Default role: mahasiswa
+const getDefaultUser = (pathname: string): User => {
+  let role: UserRole = "mahasiswa"
+  if (pathname.startsWith("/admin")) {
+    role = "admin"
+  } else if (pathname.startsWith("/dosen")) {
+    role = "dosen"
+  } else if (pathname.startsWith("/mentor")) {
+    role = "mentor"
+  }
+  
+  return {
+    name: role === "dosen" ? "Dr. Ahmad Santoso, M.Kom" : "John Doe",
+    email: role === "dosen" ? "ahmad.santoso@university.ac.id" : "john.doe@example.com",
+    avatar: "/avatars/default.jpg",
+    role,
+  }
 }
 
 export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
   const location = useLocation()
   const { user: contextUser } = useUser()
+  const defaultUser = getDefaultUser(location.pathname)
   
   // Prioritize user from context, fall back to prop, then default
   const user = React.useMemo(() => {
@@ -45,7 +57,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
       }
     }
     return userProp || defaultUser
-  }, [contextUser, userProp])
+  }, [contextUser, userProp, defaultUser])
   
   // Get menu items based on current URL path
   const navItems = React.useMemo(() => getSidebarMenuByUrl(location.pathname), [location.pathname])

@@ -235,7 +235,7 @@ export default function StudentGradeDetailPage() {
                 onClick={() => navigate(`/dosen/penilaian/beri-nilai/${id}`)}
               >
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Nilai
+                Beri Nilai
               </Button>
             </div>
           </CardContent>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
   Users,
@@ -27,10 +27,37 @@ const ITEMS_PER_PAGE = 6;
 export default function DosenGradingListPage() {
   const navigate = useNavigate();
 
-  const students = MOCK_STUDENTS_FOR_GRADING;
+  const [students, setStudents] = useState(MOCK_STUDENTS_FOR_GRADING);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [revisionFilter, setRevisionFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Load students who have uploaded laporan from localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLaporan = localStorage.getItem("laporan-kp");
+      
+      if (savedLaporan) {
+        const laporanData = JSON.parse(savedLaporan);
+        
+        // Only show students who have uploaded laporan
+        if (laporanData.fileName && laporanData.status !== "belum_upload") {
+          // Filter students to only show those who uploaded
+          const studentsWithLaporan = MOCK_STUDENTS_FOR_GRADING.filter(
+            (s) => s.student.id === "std-001" // Match with uploaded laporan's student
+          );
+          setStudents(studentsWithLaporan);
+        } else {
+          // No laporan uploaded yet, show empty list
+          setStudents([]);
+        }
+      } else {
+        // No laporan data, show empty list
+        setStudents([]);
+      }
+    }
+  }, []);
 
   // Filter students based on search and status
   const filteredStudents = useMemo(() => {
@@ -48,9 +75,13 @@ export default function DosenGradingListPage() {
       const matchesStatus =
         statusFilter === "all" || student.gradingStatus === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      // Revision filter
+      const matchesRevision =
+        revisionFilter === "all" || student.revisionStatus === revisionFilter;
+
+      return matchesSearch && matchesStatus && matchesRevision;
     });
-  }, [students, searchQuery, statusFilter]);
+  }, [students, searchQuery, statusFilter, revisionFilter]);
 
   // Pagination
   const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
@@ -207,6 +238,25 @@ export default function DosenGradingListPage() {
                   <SelectItem value="not-graded">Belum Dinilai</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Revision Filter */}
+              <Select
+                value={revisionFilter}
+                onValueChange={(value) => {
+                  setRevisionFilter(value);
+                  handleFilterChange();
+                }}
+              >
+                <SelectTrigger className="w-full md:w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                  <SelectValue placeholder="Status Revisi" />
+                </SelectTrigger>
+                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                  <SelectItem value="all">Semua Revisi</SelectItem>
+                  <SelectItem value="sudah-direvisi">Sudah Direvisi</SelectItem>
+                  <SelectItem value="proses">Proses</SelectItem>
+                  <SelectItem value="belum-direvisi">Belum Direvisi</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Results count */}
@@ -222,65 +272,79 @@ export default function DosenGradingListPage() {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Daftar Mahasiswa Bimbingan
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedStudents.map((studentInfo) => (
-              <StudentGradingCard
-                key={studentInfo.student.id}
-                studentInfo={studentInfo}
-                onGiveGrade={handleGiveGrade}
-                onViewDetail={handleViewDetail}
-              />
-            ))}
-          </div>
+          
+          {students.length === 0 ? (
+            <Card className="p-12 dark:bg-gray-800 dark:border-gray-700">
+              <div className="text-center">
+                <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Belum Ada Mahasiswa yang Upload Laporan
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Daftar mahasiswa akan muncul setelah mereka mengupload Laporan Kerja Praktik di halaman Pasca Magang.
+                </p>
+              </div>
+            </Card>
+          ) : filteredStudents.length === 0 ? (
+            <Card className="p-12 dark:bg-gray-800 dark:border-gray-700">
+              <div className="text-center">
+                <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                  Tidak Ada Hasil Pencarian
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Tidak ada mahasiswa yang sesuai dengan filter atau pencarian Anda.
+                </p>
+              </div>
+            </Card>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedStudents.map((studentInfo) => (
+                  <StudentGradingCard
+                    key={studentInfo.student.id}
+                    studentInfo={studentInfo}
+                    onGiveGrade={handleGiveGrade}
+                    onViewDetail={handleViewDetail}
+                  />
+                ))}
+              </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                Halaman {currentPage} dari {totalPages}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Sebelumnya
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-                >
-                  Berikutnya
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Halaman {currentPage} dari {totalPages}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Sebelumnya
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                    >
+                      Berikutnya
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
-
-        {/* Empty State */}
-        {filteredStudents.length === 0 && (
-          <Card className="p-12 dark:bg-gray-800 dark:border-gray-700">
-            <div className="text-center">
-              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Tidak Ada Mahasiswa Ditemukan
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Coba ubah filter atau kata kunci pencarian Anda.
-              </p>
-            </div>
-          </Card>
-        )}
       </div>
     </div>
   );

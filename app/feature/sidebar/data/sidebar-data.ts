@@ -156,7 +156,7 @@ const adminMenu: NavItem[] = [
     items: [
       {
         title: "Kelola Template",
-        url: "#",
+        url: "/admin/template",
       },
     ],
   },
@@ -218,7 +218,7 @@ const dosenMenu: NavItem[] = [
   },
   {
     title: "Profil",
-    url: "#",
+    url: "/dosen/profil",
     icon: UserCircle,
   },
   {

@@ -1,272 +1,314 @@
-# Dosen Grading Feature
+# Fitur Penilaian Dosen (Dosen Grading)
 
-Fitur penilaian mahasiswa untuk dosen yang memungkinkan dosen memberikan nilai kepada mahasiswa bimbingannya dan melihat nilai dari pembimbing lapangan.
+Modul lengkap untuk pengelolaan penilaian mahasiswa Kerja Praktik (KP) oleh dosen pembimbing, dengan workflow revisi dokumen terintegrasi.
 
-## 📁 Struktur Folder
+## 📋 Daftar Isi
+
+- [Fitur Utama](#-fitur-utama)
+- [Workflow](#-workflow)
+- [Struktur File](#-struktur-file)
+- [Komponen](#-komponen)
+- [Cara Penggunaan](#-cara-penggunaan)
+- [API Integration](#-api-integration)
+
+## ✨ Fitur Utama
+
+### 1. **Workflow Revisi Dokumen** ⭐ NEW
+- ✅ Review dan approve/reject dokumen mahasiswa
+- ✅ Opsi "Tidak Ada Revisi" untuk skip review
+- ✅ Progress tracking dengan visual indicator
+- ✅ Alasan penolakan yang wajib diisi
+- ✅ Tab system: Menunggu / Disetujui / Ditolak
+
+### 2. **Form Penilaian**
+- ✅ Penilaian berdasar 4 komponen dengan bobot
+- ✅ Real-time calculation nilai total
+- ✅ Catatan penilaian opsional
+- ✅ Lock mechanism sampai revisi disetujui ⭐ NEW
+
+### 3. **Manajemen Mahasiswa**
+- ✅ Daftar mahasiswa bimbingan
+- ✅ Filter berdasar status penilaian dan revisi ⭐ NEW
+- ✅ Search by nama atau NIM
+- ✅ Statistik dan dashboard
+- ✅ Badge status visual
+
+### 4. **Detail dan History**
+- ✅ View detail penilaian lengkap
+- ✅ Edit penilaian yang sudah ada
+- ✅ History revisi dokumen
+- ✅ Grade calculation otomatis
+
+## 🔄 Workflow
+
+### Opsi A: Tidak Ada Revisi (Langsung Nilai)
+```
+Dosen Buka Page → Toggle "Tidak Ada Revisi" → Tab Penilaian Terbuka → Isi Form → Submit ✅
+```
+
+### Opsi B: Review Revisi Dulu
+```
+Dosen Buka Page → Review Dokumen → Approve Semua ✅ → Tab Penilaian Terbuka → Isi Form → Submit ✅
+```
+
+### Opsi C: Ada Revisi yang Ditolak
+```
+Dosen Buka Page → Review Dokumen → Reject ❌ → Mahasiswa Revisi → Upload Ulang → Dosen Approve ✅ → Penilaian Terbuka
+```
+
+## 📁 Struktur File
 
 ```
-dosen-grading/
+app/feature/dosen-grading/
+│
 ├── components/
-│   ├── grading-form.tsx           # Form input nilai dengan validasi
-│   └── student-grading-card.tsx   # Card mahasiswa dengan status penilaian
-├── data/
-│   └── mock-students.ts           # Data dummy 3 mahasiswa (2 sudah dinilai, 1 belum)
+│   ├── grading-form.tsx                    # Form penilaian 4 komponen
+│   ├── revision-review-section.tsx  ⭐     # Review & approve/reject revisi
+│   └── student-grading-card.tsx            # Card mahasiswa di list
+│
 ├── pages/
-│   ├── dosen-grading-list-page.tsx        # Halaman daftar mahasiswa bimbingan
-│   ├── give-grade-page.tsx                # Halaman form pemberian nilai
-│   └── student-grade-detail-page.tsx      # Halaman detail nilai lengkap
+│   ├── dosen-grading-list-page.tsx         # Daftar mahasiswa
+│   ├── give-grade-page.tsx          ⭐     # Beri nilai + revisi workflow
+│   └── student-grade-detail-page.tsx       # Detail nilai mahasiswa
+│
+├── data/
+│   └── mock-students.ts             ⭐     # Mock data + status revisi
+│
 ├── types/
-│   └── index.d.ts                 # Type definitions untuk grading
-└── index.ts                       # Barrel export file
+│   └── index.d.ts                          # TypeScript interfaces
+│
+├── index.ts                                # Barrel exports
+│
+└── docs/
+    ├── README.md                           # Overview (file ini)
+    ├── REVISION_WORKFLOW.md         ⭐     # Detail workflow revisi
+    ├── IMPLEMENTATION_SUMMARY.md    ⭐     # Summary implementasi
+    └── VISUAL_GUIDE.md              ⭐     # UI/UX guide dengan diagram
+
+⭐ = File baru/diupdate untuk fitur revisi
 ```
 
-## 🎯 Fitur
+## 🧩 Komponen Utama
 
-### Halaman Daftar Mahasiswa (`/dosen/penilaian`)
-- **Dashboard Statistik**: 4 metric cards
-  - Total Mahasiswa Bimbingan
-  - Mahasiswa Sudah Dinilai
-  - Mahasiswa Belum Dinilai
-  - Rata-rata Nilai
-- **Grid Mahasiswa**: Menampilkan student grading cards
-- **Student Grading Card**: Setiap card menampilkan:
-  - Avatar dan info mahasiswa
-  - Status penilaian (Sudah Dinilai / Belum Dinilai / Pending)
-  - Badge grade dan nilai akhir (untuk yang sudah dinilai)
-  - Info perusahaan, periode magang, pembimbing lapangan
-  - Breakdown nilai dosen dan pembimbing lapangan
-  - Action buttons (Beri Nilai / Edit Nilai + Lihat Detail)
-
-### Halaman Pemberian Nilai (`/dosen/penilaian/beri-nilai/:id`)
-- **Informasi Mahasiswa**: Card dengan data lengkap mahasiswa
-- **Form Penilaian**: Terbagi 2 kategori
-  
-  **1. Penilaian Laporan Kerja Praktik**
-  - Sistematika Penulisan (Bobot 20%)
-  - Isi dan Pembahasan (Bobot 40%)
-  - Analisis dan Kesimpulan (Bobot 40%)
-  
-  **2. Penilaian Presentasi & Ujian**
-  - Penyampaian Materi (Bobot 30%)
-  - Penguasaan Materi (Bobot 50%)
-  - Kemampuan Menjawab (Bobot 20%)
-  
-- **Catatan Penilaian**: Textarea opsional untuk komentar
-- **Ringkasan Nilai Akhir**: Real-time calculation
-  - Nilai Laporan
-  - Nilai Presentasi
-  - Total Nilai Dosen (rata-rata dari kedua nilai)
-- **Validasi**: Input hanya menerima nilai 0-100
-- **Fitur Edit**: Jika mahasiswa sudah dinilai, form akan terisi dengan nilai sebelumnya
-
-### Halaman Detail Nilai (`/dosen/penilaian/detail/:id`)
-- **Header Mahasiswa**: Info lengkap dengan grade, status, dan nilai akhir
-- **Penilaian Dosen Pembimbing (Anda)**:
-  - Laporan Kerja Praktik dengan komponen dan progress bar
-  - Presentasi & Ujian dengan komponen dan progress bar
-- **Penilaian Pembimbing Lapangan** (Read-only):
-  - Keterampilan Teknis
-  - Soft Skills
-- **Rekap Nilai Akhir**: 3 summary cards
-  - Nilai Dosen Pembimbing
-  - Nilai Pembimbing Lapangan
-  - Nilai Akhir (Grade)
-- **Catatan Penilaian**: Catatan dari dosen
-- **Button Edit Nilai**: Quick access ke form edit nilai
-
-## 📊 Data Mock
-
-File `mock-students.ts` berisi 3 mahasiswa bimbingan:
-
-1. **Ahmad Fauzi** (NIM: 1234567890)
-   - PT. Teknologi Nusantara
-   - Status: Sudah Dinilai
-   - Nilai Akhir: 85.44 (Grade A)
-
-2. **Siti Nurhaliza** (NIM: 1234567891)
-   - PT. Digital Indonesia
-   - Status: Sudah Dinilai
-   - Nilai Akhir: 91.29 (Grade A)
-
-3. **Rizki Maulana** (NIM: 1234567892)
-   - PT. Inovasi Teknologi
-   - Status: Belum Dinilai
-   - Nilai Pembimbing Lapangan: Sudah ada
-
-## 🎨 Komponen
-
-### StudentGradingCard
-Props: `studentInfo`, `onGiveGrade`, `onViewDetail`
-- Menampilkan card mahasiswa dengan status penilaian
-- Badge untuk status (Sudah/Belum/Pending) dan grade
-- Action buttons kondisional berdasarkan status
-
-### GradingForm
-Props: `initialData`, `onSubmit`, `onCancel`, `isSubmitting`
-- Form lengkap untuk pemberian nilai dengan validasi
-- Real-time calculation untuk setiap kategori
-- Alert info untuk menjelaskan bobot penilaian
-- Ringkasan nilai akhir dengan 3 cards
-- Error handling untuk input invalid
-
-## 🛣️ Routes
-
-Routes yang dibuat:
-- `_sidebar.dosen.penilaian.tsx` - Layout wrapper
-- `_sidebar.dosen.penilaian._index.tsx` - Halaman daftar
-- `_sidebar.dosen.penilaian.beri-nilai.$id.tsx` - Halaman form pemberian nilai
-- `_sidebar.dosen.penilaian.detail.$id.tsx` - Halaman detail nilai
-
-## 📝 Types
+### 1. RevisionReviewSection ⭐ NEW
+Komponen untuk review dan approval revisi dokumen.
 
 ```typescript
-interface StudentForGrading {
-  id: string;
-  name: string;
-  studentId: string;
-  photo: string;
-  company: string;
-  fieldSupervisor: string;
-  internPeriod: { start: string; end: string };
+<RevisionReviewSection
+  studentId="std-003"
+  onAllRevisionsApproved={handleAllRevisionsApproved}
+  noRevisionNeeded={false}
+  onNoRevisionChange={handleNoRevisionChange}
+/>
+```
+
+**Features**:
+- Toggle "Tidak Ada Revisi Diperlukan"
+- Tab Menunggu/Disetujui/Ditolak
+- Approve/Reject per dokumen
+- Progress tracking
+- Dialog alasan penolakan
+
+### 2. GiveGradePage ⭐ UPDATED
+Halaman utama untuk penilaian dengan revisi workflow.
+
+**Features**:
+- Tab Revisi dan Penilaian
+- Lock mechanism pada tab Penilaian
+- Auto-switch tab saat approved
+- Status alerts
+- Integration dengan GradingForm
+
+### 3. GradingForm
+Form penilaian dengan 4 komponen berbobot.
+
+**Komponen**:
+1. Kesesuaian Laporan dengan Format (30%)
+2. Penguasaan Materi KP (30%)
+3. Analisis dan Perancangan (30%)
+4. Sikap dan Etika (10%)
+
+### 4. StudentGradingCard ⭐ UPDATED
+Card mahasiswa dengan status badge.
+
+**Status Badges**:
+- 🟢 Sudah Dinilai / Sudah Direvisi
+- 🔵 Proses Revisi
+- 🟠 Belum Dinilai / Belum Direvisi
+
+## 🚀 Cara Penggunaan
+
+### Setup Routes
+```typescript
+// routes/_sidebar.dosen.penilaian._index.tsx
+import DosenGradingListPage from "~/feature/dosen-grading/pages/dosen-grading-list-page";
+export default function DosenPenilaianIndexRoute() {
+  return <DosenGradingListPage />;
 }
 
-interface GradeComponent {
-  name: string;
-  score: number;
-  maxScore: number;
-  weight: number;
-}
-
-interface AcademicGradeCategory {
-  category: string;
-  components: GradeComponent[];
-  totalScore: number;
-  maxScore: number;
-  percentage: number;
-}
-
-interface GradingFormData {
-  reportSystematics: number;
-  reportContent: number;
-  reportAnalysis: number;
-  presentationDelivery: number;
-  presentationMastery: number;
-  presentationQA: number;
-  notes?: string;
-}
-
-type GradingStatus = "graded" | "not-graded" | "pending";
-
-interface StudentGradingInfo {
-  student: StudentForGrading;
-  gradingStatus: GradingStatus;
-  academicGrades?: AcademicGradeCategory[];
-  fieldSupervisorGrades?: FieldSupervisorGrade[];
-  summary?: {
-    academicSupervisorTotal: number;
-    fieldSupervisorTotal: number;
-    finalScore: number;
-    grade: "A" | "B" | "C" | "D" | "E";
-    status: "passed" | "failed" | "pending";
-  };
-  notes?: string;
-  gradedAt?: string;
+// routes/_sidebar.dosen.penilaian.beri-nilai.$id.tsx
+import GiveGradePage from "~/feature/dosen-grading/pages/give-grade-page";
+export default function DosenPenilaianGiveGradeRoute() {
+  return <GiveGradePage />;
 }
 ```
 
-## 🔄 Alur Kerja
+### Workflow untuk Dosen (End User)
 
-1. **Dosen Login** → Akses menu "Penilaian KP"
-2. **Lihat Daftar** → Dashboard dengan statistik dan list mahasiswa
-3. **Pilih Mahasiswa**:
-   - **Belum Dinilai**: Klik "Beri Nilai" → Form input nilai
-   - **Sudah Dinilai**: Klik "Lihat Detail" atau "Edit Nilai"
-4. **Input Nilai**:
-   - Isi 6 aspek penilaian (Laporan + Presentasi)
-   - Lihat perhitungan otomatis
-   - Tambah catatan (opsional)
-   - Simpan nilai
-5. **Lihat Detail**: Lihat nilai lengkap termasuk nilai dari pembimbing lapangan
+#### Scenario 1: Tidak Perlu Revisi
+1. Buka halaman penilaian mahasiswa
+2. **Aktifkan toggle** "Tidak Ada Revisi Diperlukan"
+3. Tab Penilaian otomatis terbuka
+4. Isi form penilaian (4 komponen)
+5. Klik "Simpan Penilaian" ✅
 
-## ⚙️ Perhitungan Nilai
+#### Scenario 2: Review Revisi
+1. Buka halaman penilaian mahasiswa
+2. Tab **Revisi** aktif (default)
+3. Review dokumen (Laporan KP & Slide Presentasi):
+   - Klik "Setujui Revisi" ✅ jika OK
+   - Klik "Tolak Revisi" ❌ + isi alasan jika perlu perbaikan
+4. Setelah **semua disetujui**:
+   - Alert hijau muncul
+   - Tab Penilaian terbuka otomatis
+5. Isi form penilaian
+6. Klik "Simpan Penilaian" ✅
 
-### Nilai Laporan KP
+## 🔌 API Integration
+
+### Required Endpoints
+
+```typescript
+// Get student revisions
+GET /api/students/:id/revisions
+Response: { revisions: Revision[] }
+
+// Approve revision
+POST /api/revisions/:id/approve
+Response: { success: boolean }
+
+// Reject revision
+POST /api/revisions/:id/reject
+Body: { reason: string }
+Response: { success: boolean }
+
+// Set no revision needed
+POST /api/students/:id/no-revision-needed
+Response: { success: boolean }
+
+// Submit grade
+POST /api/students/:id/grade
+Body: GradingFormData
+Response: { success: boolean, grade: GradeData }
 ```
-Nilai Laporan = (Sistematika × 20%) + (Isi & Pembahasan × 40%) + (Analisis × 40%)
+
+### Integration Example
+
+```typescript
+// components/revision-review-section.tsx
+const handleApproveRevision = async (revisionId: string) => {
+  try {
+    const response = await fetch(`/api/revisions/${revisionId}/approve`, {
+      method: 'POST'
+    });
+    
+    if (response.ok) {
+      setRevisions(prev => 
+        prev.map(rev => 
+          rev.id === revisionId 
+            ? { ...rev, status: 'approved' } 
+            : rev
+        )
+      );
+      toast.success('Revisi berhasil disetujui');
+    }
+  } catch (error) {
+    toast.error('Gagal menyetujui revisi');
+  }
+};
 ```
 
-### Nilai Presentasi & Ujian
+## 📚 Dokumentasi Lengkap
+
+Untuk informasi lebih detail, lihat dokumentasi berikut:
+
+- **[REVISION_WORKFLOW.md](./REVISION_WORKFLOW.md)** - Detail lengkap workflow revisi dengan flow diagram
+- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** - Summary implementasi teknis dan changes
+- **[VISUAL_GUIDE.md](./VISUAL_GUIDE.md)** - UI/UX guide dengan ASCII diagram dan color scheme
+
+## 🧪 Testing
+
+### Test Scenarios
+- ✅ Toggle "no revision" membuka tab penilaian
+- ✅ Approve semua dokumen membuka tab penilaian
+- ✅ Reject dokumen keeps tab locked
+- ✅ Progress bar updates correctly
+- ✅ Reject dialog validates alasan
+- ✅ Badge status muncul di card list
+
+### Mock Data
+File `data/mock-students.ts` menyediakan 4 mahasiswa dengan berbagai status:
+
+| Student | Status Nilai | Status Revisi |
+|---------|--------------|---------------|
+| std-001 | ✅ Graded | ✅ Sudah Direvisi |
+| std-002 | ✅ Graded | ✅ Sudah Direvisi |
+| std-003 | ⏳ Not Graded | 🔵 Proses |
+| std-004 | ⏳ Not Graded | 🟠 Belum Direvisi |
+
+## 🔐 Security & Permissions
+
+### Role-Based Access
+```typescript
+// Only dosen can access grading
+router.use('/dosen/penilaian', requireDosenRole);
 ```
-Nilai Presentasi = (Penyampaian × 30%) + (Penguasaan × 50%) + (Kemampuan Menjawab × 20%)
-```
 
-### Total Nilai Dosen
-```
-Total Nilai Dosen = (Nilai Laporan + Nilai Presentasi) / 2
-```
+### Data Validation
+- Reject reason minimal 10 karakter
+- Grade scores antara 0-100
+- All revisions must be approved before grading (unless no revision mode)
 
-### Nilai Akhir Mahasiswa
-```
-Nilai Akhir = (Total Nilai Dosen + Nilai Pembimbing Lapangan) / 2
-```
+## 🐛 Known Limitations
 
-## ✅ Status
+### Current
+- 📝 Mock data belum terintegrasi database
+- 📝 File preview belum diimplementasi
+- 📝 Email notifications belum ada
 
-- [x] Folder structure
-- [x] Type definitions
-- [x] Components (StudentGradingCard, GradingForm)
-- [x] Mock data (3 students: 2 graded, 1 not graded)
-- [x] List page (dosen-grading-list-page.tsx)
-- [x] Give grade page (give-grade-page.tsx)
-- [x] Detail page (student-grade-detail-page.tsx)
-- [x] Route files
-- [x] Sidebar menu integration
-- [x] Barrel export (index.ts)
-- [x] Validation & error handling
-- [x] Real-time calculation
+### Future Improvements
+- [ ] Real-time notifications
+- [ ] Bulk approve/reject
+- [ ] PDF preview in-app
+- [ ] Export to Excel
+- [ ] Template alasan penolakan
+- [ ] Dark mode optimization
 
-## 🚀 Cara Menggunakan
+## 📞 Support
 
-1. Akses halaman penilaian di `/dosen/penilaian`
+Untuk pertanyaan atau issue terkait fitur ini, silakan hubungi:
+- 📧 Email: dev@sikp.ac.id
+- 💬 Slack: #sikp-dev
+- 📝 GitHub Issues: [Create Issue](https://github.com/sikp/issues/new)
 
-2. Pilih mahasiswa yang ingin dinilai
+## ✨ What's New in v2.0
 
-3. Isi form penilaian dengan nilai 0-100 untuk setiap aspek
+### Revision Workflow System
+- ✅ Complete revision approval workflow
+- ✅ No revision mode for direct grading
+- ✅ Progress tracking and visual feedback
+- ✅ Reject with mandatory reason
+- ✅ Tab locking mechanism
+- ✅ Auto tab switching
+- ✅ Status badges in list view
 
-4. Sistem akan otomatis menghitung:
-   - Nilai per kategori (Laporan & Presentasi)
-   - Total nilai dosen
-   - Preview nilai akhir (kombinasi dengan nilai pembimbing lapangan)
+### UI/UX Improvements
+- ✅ Clear visual indicators
+- ✅ Better status alerts
+- ✅ Improved card layout
+- ✅ Responsive design
+- ✅ Accessibility enhancements
 
-5. Simpan nilai dan lihat detail lengkap
+---
 
-## 🎨 Design System
-
-- **Status Badge Colors**:
-  - Sudah Dinilai: Green (bg-green-100 text-green-800)
-  - Belum Dinilai: Gray (bg-gray-100 text-gray-800)
-  - Pending: Yellow (bg-yellow-100 text-yellow-800)
-
-- **Grade Badge Colors**:
-  - Grade A: Green (bg-green-500)
-  - Grade B: Blue (bg-blue-500)
-  - Grade C: Yellow (bg-yellow-500)
-  - Grade D: Orange (bg-orange-500)
-  - Grade E: Red (bg-red-500)
-
-- **Score Display Colors**:
-  - Nilai Laporan: Blue (bg-blue-50)
-  - Nilai Presentasi: Purple (bg-purple-50)
-  - Nilai Akhir: Green (bg-green-50)
-
-## 🔗 Integrasi dengan Evaluation Feature
-
-Halaman detail menggunakan komponen `GradeSection` dari `evaluation` feature untuk konsistensi UI dalam menampilkan breakdown nilai.
-
-## 📌 Catatan Penting
-
-- Form validasi memastikan input hanya 0-100
-- Perhitungan nilai real-time saat user mengetik
-- Data mahasiswa yang belum dinilai tetap menampilkan nilai dari pembimbing lapangan
-- Status "graded" akan mengubah tampilan card dan menampilkan nilai
-- Dosen dapat mengedit nilai kapan saja setelah dinilai
+**Copyright © 2026 SIKP Team. All rights reserved.**

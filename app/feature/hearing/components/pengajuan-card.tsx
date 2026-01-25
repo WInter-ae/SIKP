@@ -27,13 +27,25 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
     });
   };
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
   const formatTime = (timeString: string) => {
     return timeString;
   };
 
   const handleApprove = () => {
-    setDialogType("approved");
-    setShowDialog(true);
+    // Langsung setujui tanpa dialog
+    onVerifikasi(pengajuan.id, "approved", "Pengajuan disetujui", undefined);
   };
 
   const handleReject = () => {
@@ -79,12 +91,63 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
               </div>
             </div>
             <Badge variant="secondary" className="font-semibold">
-              Menunggu Verifikasi
+              {pengajuan.status === "submitted" && "Menunggu Verifikasi"}
+              {pengajuan.status === "approved" && (
+                <span className="text-green-700 dark:text-green-400">✓ Disetujui</span>
+              )}
+              {pengajuan.status === "rejected" && (
+                <span className="text-red-700 dark:text-red-400">✗ Ditolak</span>
+              )}
             </Badge>
           </div>
         </CardHeader>
 
         <CardContent className="pt-6 space-y-4">
+          {/* Tampilkan info verifikasi jika sudah disetujui/ditolak */}
+          {(pengajuan.status === "approved" || pengajuan.status === "rejected") && pengajuan.tanggalVerifikasi && (
+            <>
+              <div className={`p-4 rounded-lg border-2 ${
+                pengajuan.status === "approved" 
+                  ? "bg-green-50 border-green-200 dark:bg-green-950/20" 
+                  : "bg-red-50 border-red-200 dark:bg-red-950/20"
+              }`}>
+                <div className="flex items-start gap-3">
+                  {pengajuan.status === "approved" ? (
+                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <p className={`font-semibold ${
+                      pengajuan.status === "approved" ? "text-green-900 dark:text-green-100" : "text-red-900 dark:text-red-100"
+                    }`}>
+                      {pengajuan.status === "approved" ? "Pengajuan Disetujui" : "Pengajuan Ditolak"}
+                    </p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">
+                        {formatDateTime(pengajuan.tanggalVerifikasi)}
+                      </span>
+                    </div>
+                    {pengajuan.catatanDosen && (
+                      <div className="pt-2 border-t border-current opacity-30">
+                        <p className="text-sm font-medium mb-1">Catatan:</p>
+                        <p className="text-sm">{pengajuan.catatanDosen}</p>
+                      </div>
+                    )}
+                    {pengajuan.nilaiAkhir && (
+                      <div className="pt-2">
+                        <span className="text-sm font-medium">Nilai: </span>
+                        <span className="text-base font-bold">{pengajuan.nilaiAkhir}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Separator />
+            </>
+          )}
+
           {/* Judul Laporan */}
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -137,24 +200,26 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
 
           <Separator />
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <Button
-              onClick={handleApprove}
-              className="flex-1 h-11 font-semibold gap-2"
-            >
-              <Check className="h-5 w-5" />
-              Setujui Pengajuan
-            </Button>
-            <Button
-              onClick={handleReject}
-              variant="destructive"
-              className="flex-1 h-11 font-semibold gap-2"
-            >
-              <XCircle className="h-5 w-5" />
-              Tolak Pengajuan
-            </Button>
-          </div>
+          {/* Action Buttons - Hanya tampilkan jika masih submitted */}
+          {pengajuan.status === "submitted" && (
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Button
+                onClick={handleApprove}
+                className="flex-1 h-11 font-semibold gap-2"
+              >
+                <Check className="h-5 w-5" />
+                Setujui Pengajuan
+              </Button>
+              <Button
+                onClick={handleReject}
+                variant="destructive"
+                className="flex-1 h-11 font-semibold gap-2"
+              >
+                <XCircle className="h-5 w-5" />
+                Tolak Pengajuan
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 

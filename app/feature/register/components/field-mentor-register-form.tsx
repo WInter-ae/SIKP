@@ -9,7 +9,7 @@ import { toast } from "sonner"
 
 // 2. Internal utilities
 import { cn } from "~/lib/utils"
-import { authClient } from "~/lib/auth-client"
+import { registerFieldMentor } from "~/lib/auth-client"
 
 // 3. Components
 import { Button } from "~/components/ui/button"
@@ -115,14 +115,18 @@ export function FieldMentorRegisterForm({
       //   return
       // }
 
-      const result = await authClient.signUp.email({
+      const result = await registerFieldMentor({
         email: data.email,
         password: data.password,
-        name: data.name,
+        nama: data.name,
+        nip: data.nip || '',
+        instansi: data.institution || '',
+        jabatan: data.jobTitle || '',
+        no_telepon: data.phoneNumber || '',
       })
 
-      if (result.error) {
-        setError(result.error.message || "Registrasi gagal. Silakan coba lagi.")
+      if (!result.success) {
+        setError(result.message || "Registrasi gagal. Silakan coba lagi.")
         return
       }
 
