@@ -55,7 +55,10 @@ export async function uploadKPReport(
 
   // Use fetch directly for file upload with FormData
   const token = await getAuthToken();
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    "";
   
   try {
     const response = await fetch(`${API_BASE_URL}/api/report/upload`, {
@@ -64,7 +67,8 @@ export async function uploadKPReport(
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: formData,
-      credentials: "include",
+      // Use cookies only when same-origin
+      credentials: API_BASE_URL ? "omit" : "include",
     });
 
     if (!response.ok) {
@@ -161,6 +165,9 @@ export async function deleteReport(
  * GET /api/report/:reportId/download
  */
 export function getReportDownloadUrl(reportId: string): string {
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "";
+  const API_BASE_URL =
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    "";
   return `${API_BASE_URL}/api/report/${reportId}/download`;
 }

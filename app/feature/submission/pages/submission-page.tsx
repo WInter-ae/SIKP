@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -18,13 +18,33 @@ import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
 import { ConfirmDialog } from "../components/confirm-dialog";
 
-import type { AdditionalInfoData, Application, Member } from "../types";
-import { Eye, Info } from "lucide-react";
+import type { AdditionalInfoData, Member, Submission, SubmissionDocument } from "../types";
+import { getMyTeams } from "~/feature/create-teams/services/team-api";
+import { apiClient } from "~/lib/api-client";
+import {
+  getSubmissionByTeamId,
+  createSubmission,
+  uploadSubmissionDocument,
+  updateSubmission,
+  submitSubmission,
+} from "~/lib/services/submission-api";
+import { useUser } from "~/contexts/user-context";
+import { ArrowLeft, Eye, Info } from "lucide-react";
 
 function SubmissionPage() {
   const navigate = useNavigate();
+  const { user, isLoading: isUserLoading, isAuthenticated } = useUser();
 
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [teamName, setTeamName] = useState<string>("");
+  const [teamStatus, setTeamStatus] = useState<string>("");
+  const [teamId, setTeamId] = useState<string>("");
+  const [isCurrentUserLeader, setIsCurrentUserLeader] = useState<boolean>(false);
+
+  const [submission, setSubmission] = useState<Submission | null>(null);
+  const [submissionDocuments, setSubmissionDocuments] = useState<SubmissionDocument[]>([]);
 
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfoData>({
     tujuanSurat: "",
@@ -35,158 +55,324 @@ function SubmissionPage() {
     pembimbingLapangan: "",
   });
 
-  const [collectedFiles, setCollectedFiles] = useState<
-    { docId: number; memberId: number; file: File }[]
-  >([]);
   const [proposalFile, setProposalFile] = useState<File | null>(null);
-
-  const teamMembers: Member[] = [
-    {
-      id: 1,
-      name: "Adam",
-      role: "Ketua",
-      nim: "2021001234",
-      prodi: "Teknik Informatika",
-    },
-    {
-      id: 2,
-      name: "Robin",
-      role: "Anggota",
-      nim: "2021001235",
-      prodi: "Teknik Informatika",
-    },
-    {
-      id: 3,
-      name: "Raihan",
-      role: "Anggota",
-      nim: "2021001236",
-      prodi: "Teknik Informatika",
-    },
-  ];
+  const [teamMembers, setTeamMembers] = useState<Member[]>([]);
 
   const documents = [
-    { id: 1, title: "Surat Kesediaan" },
-    { id: 2, title: "Form Permohonan" },
-    { id: 3, title: "KRS Semester 4" },
-    { id: 4, title: "Daftar Kumpulan Nilai" },
-    { id: 5, title: "Bukti Pembayaran UKT" },
+    { id: 1, title: "Surat Kesediaan", type: "SURAT_KESEDIAAN" as const },
+    { id: 2, title: "Form Permohonan", type: "FORM_PERMOHONAN" as const },
+    { id: 3, title: "KRS Semester 4", type: "KRS_SEMESTER_4" as const },
+    { id: 4, title: "Daftar Kumpulan Nilai", type: "DAFTAR_KUMPULAN_NILAI" as const },
+    { id: 5, title: "Bukti Pembayaran UKT", type: "BUKTI_PEMBAYARAN_UKT" as const },
   ];
 
-  const handleProposalUpload = (file: File) => {
-    setProposalFile(file);
+  // Fetch team data (finalized) for current user
+  useEffect(() => {
+    if (isUserLoading) return;
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    const loadTeam = async () => {
+      try {
+        setIsLoading(true);
+        setLoadError(null);
+        const response = await getMyTeams();
+
+        if (response.success && Array.isArray(response.data)) {
+          const fixedTeam =
+            response.data.find(
+              (t) => t.status?.toUpperCase() === "FIXED",
+            ) || response.data[0];
+
+          if (!fixedTeam) {
+            setLoadError("Tim tidak ditemukan. Silakan buat tim terlebih dahulu.");
+            setTeamMembers([]);
+            return;
+          }
+
+          const acceptedMembers = (fixedTeam.members || []).filter(
+            (m) => m.status === "ACCEPTED",
+          );
+
+          const mappedMembers: Member[] = acceptedMembers.map((m) => ({
+            id: m.user.id,
+            name: m.user.name,
+            nim: m.user.nim,
+            role: m.role === "KETUA" ? "Ketua" : "Anggota",
+          }));
+
+          // Sort: Ketua urutan atas, baru anggota
+          mappedMembers.sort((a, b) => {
+            if (a.role === "Ketua" && b.role !== "Ketua") return -1;
+            if (a.role !== "Ketua" && b.role === "Ketua") return 1;
+            return 0;
+          });
+
+          setTeamMembers(mappedMembers);
+          setTeamName(fixedTeam.name || fixedTeam.code || "Tim KP");
+          setTeamStatus(fixedTeam.status || "");
+          setTeamId(fixedTeam.id);
+
+          // Tentukan apakah user adalah ketua
+          const currentUserMember = mappedMembers.find((m) => m.id === user?.id);
+          setIsCurrentUserLeader(currentUserMember?.role === "Ketua");
+
+          // Fetch submission dari database
+          const submissionResponse = await getSubmissionByTeamId(fixedTeam.id);
+          if (submissionResponse.success && submissionResponse.data) {
+            setSubmission(submissionResponse.data);
+            if (submissionResponse.data.documents) {
+              setSubmissionDocuments(submissionResponse.data.documents);
+            }
+            // Populate form dengan data submission yang ada
+            setAdditionalInfo({
+              tujuanSurat: submissionResponse.data.letterPurpose || "",
+              namaTempat: submissionResponse.data.companyName || "",
+              alamatTempat: submissionResponse.data.companyAddress || "",
+              tanggalMulai: submissionResponse.data.startDate || "",
+              tanggalSelesai: submissionResponse.data.endDate || "",
+              pembimbingLapangan: submissionResponse.data.companySupervisor || "",
+            });
+          } else {
+            // Jika belum ada submission, siapkan form kosong
+            setSubmission(null);
+            setSubmissionDocuments([]);
+          }
+        } else {
+          setLoadError(response.message || "Gagal memuat data tim");
+        }
+      } catch (error) {
+        console.error("❌ Error loading team members:", error);
+        setLoadError(
+          error instanceof Error ? error.message : "Gagal memuat data tim",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadTeam();
+  }, [isUserLoading, isAuthenticated, navigate]);
+
+  const handleProposalUpload = async (file: File) => {
+    if (!user) return;
+
+    try {
+      setIsLoading(true);
+
+      // Auto-create submission hanya oleh ketua
+      let currentSubmission = submission;
+      if (!currentSubmission) {
+        if (!isCurrentUserLeader) {
+          toast.error("Submission belum dibuat oleh ketua");
+          return;
+        }
+
+        const createResponse = await createSubmission(teamId, {
+          letterPurpose: additionalInfo.tujuanSurat || "Draft",
+          companyName: additionalInfo.namaTempat || "Belum diisi",
+          companyAddress: additionalInfo.alamatTempat || "Belum diisi",
+          division: additionalInfo.namaTempat || "Belum diisi",
+          companySupervisor: additionalInfo.pembimbingLapangan || "Belum diisi",
+          startDate: additionalInfo.tanggalMulai || new Date().toISOString(),
+          endDate: additionalInfo.tanggalSelesai || new Date().toISOString(),
+        });
+
+        if (!createResponse.success || !createResponse.data) {
+          toast.error(createResponse.message || "Gagal membuat submission");
+          return;
+        }
+
+        currentSubmission = createResponse.data;
+        setSubmission(currentSubmission);
+      }
+
+      const response = await uploadSubmissionDocument(
+        currentSubmission.id,
+        "PROPOSAL_KETUA",
+        user.id,
+        file,
+        user.id,
+      );
+
+      if (response.success && response.data) {
+        setSubmissionDocuments((prev) => {
+          // Hapus proposal lama jika ada
+          const filtered = prev.filter((doc) => doc.documentType !== "PROPOSAL_KETUA");
+          return [...filtered, response.data];
+        });
+        setProposalFile(file);
+        toast.success("Proposal berhasil diupload");
+      } else {
+        toast.error(response.message || "Gagal mengupload proposal");
+      }
+    } catch (error) {
+      console.error("❌ Error uploading proposal:", error);
+      toast.error("Terjadi kesalahan saat mengupload proposal");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDocumentUpload = (
+  /**
+   * Fetch & refresh semua documents untuk submission dari backend
+   * Ini dipanggil setelah upload untuk sync dengan dokumen dari anggota lain
+   */
+  const refreshSubmissionDocuments = async (submissionId: string) => {
+    try {
+      const docsResponse = await apiClient<SubmissionDocument[]>(
+        `/api/submissions/${submissionId}/documents`
+      );
+
+      if (docsResponse.success && docsResponse.data) {
+        console.log(
+          `📄 Fetched ${docsResponse.data.length} documents from server`,
+          docsResponse.data
+        );
+        setSubmissionDocuments(docsResponse.data);
+      } else {
+        console.warn("⚠️ Failed to refresh documents:", docsResponse.message);
+      }
+    } catch (error) {
+      console.error("❌ Error refreshing documents:", error);
+    }
+  };
+
+  const handleDocumentUpload = async (
     docId: number,
-    memberId: number,
+    memberId: string,
     file: File,
   ) => {
-    const dId = Number(docId);
-    const mId = Number(memberId);
-    setCollectedFiles((prev) => {
-      // Hapus file lama jika ada untuk kombinasi docId dan memberId yang sama
-      const filtered = prev.filter(
-        (item) => !(item.docId === dId && item.memberId === mId),
+    try {
+      setIsLoading(true);
+
+      // Auto-create submission hanya oleh ketua; anggota harus pakai submission yang sudah ada
+      let currentSubmission = submission;
+      if (!currentSubmission) {
+        if (!isCurrentUserLeader) {
+          toast.error("Submission belum dibuat oleh ketua");
+          return;
+        }
+
+        const createResponse = await createSubmission(teamId, {
+          letterPurpose: additionalInfo.tujuanSurat || "Draft",
+          companyName: additionalInfo.namaTempat || "Belum diisi",
+          companyAddress: additionalInfo.alamatTempat || "Belum diisi",
+          division: additionalInfo.namaTempat || "Belum diisi",
+          companySupervisor: additionalInfo.pembimbingLapangan || "Belum diisi",
+          startDate: additionalInfo.tanggalMulai || new Date().toISOString(),
+          endDate: additionalInfo.tanggalSelesai || new Date().toISOString(),
+        });
+
+        if (!createResponse.success || !createResponse.data) {
+          toast.error(createResponse.message || "Gagal membuat submission");
+          return;
+        }
+
+        currentSubmission = createResponse.data;
+        setSubmission(currentSubmission);
+      }
+
+      const docInfo = documents.find((d) => d.id === docId);
+      if (!docInfo) {
+        toast.error("Tipe dokumen tidak dikenali");
+        return;
+      }
+
+      const response = await uploadSubmissionDocument(
+        currentSubmission.id,
+        docInfo.type,
+        memberId,
+        file,
+        user?.id,
       );
-      return [...filtered, { docId: dId, memberId: mId, file }];
-    });
+
+      if (response.success && response.data) {
+        toast.success(`${docInfo.title} berhasil diupload`);
+        
+        // ✅ KEY FIX: Re-fetch semua documents dari server
+        // Ini memastikan dokumen dari user lain juga terlihat
+        console.log("🔄 Re-fetching all documents from server...");
+        await refreshSubmissionDocuments(currentSubmission.id);
+      } else {
+        toast.error(response.message || "Gagal mengupload dokumen");
+      }
+    } catch (error) {
+      console.error("❌ Error uploading document:", error);
+      toast.error("Terjadi kesalahan saat mengupload dokumen");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleAdditionalInfoChange = (data: AdditionalInfoData) => {
+  const handleAdditionalInfoChange = async (data: AdditionalInfoData) => {
     setAdditionalInfo(data);
-  };
 
-  // Helper untuk mengubah file menjadi Base64 string agar bisa disimpan di localStorage
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
+    // Auto-save ke database jika submission sudah ada
+    if (submission) {
+      try {
+        await updateSubmission(submission.id, {
+          letterPurpose: data.tujuanSurat,
+          companyName: data.namaTempat,
+          companyAddress: data.alamatTempat,
+          division: data.namaTempat, // Gunakan namaTempat sebagai division (bisa disesuaikan)
+          companySupervisor: data.pembimbingLapangan,
+          startDate: data.tanggalMulai,
+          endDate: data.tanggalSelesai,
+        });
+      } catch (error) {
+        console.error("❌ Error auto-saving submission:", error);
+      }
+    }
   };
 
   const handleSubmit = async () => {
+    if (isLoading) return;
+    if (!teamMembers.length) {
+      toast.error("Tim belum tersedia atau belum final. Lengkapi tim terlebih dahulu.");
+      return;
+    }
+
     try {
-      // 1. Konstruksi Objek Application
-      // Note: ID menggunakan Date.now() agar unik dan tidak bentrok dengan mock data admin
-      const newApplication: Application = {
-        id: Date.now(), // Generate ID unik berdasarkan timestamp
-        date: new Date().toLocaleDateString("id-ID"),
-        status: "pending",
-        supervisor: "Dr. Budi Santoso, M.Kom", // Simulasi data dosen pembimbing (biasanya dari database)
-        members: teamMembers,
-        internship: additionalInfo,
-        documents: [],
-      };
+      setIsLoading(true);
 
-      // 2. Masukkan File Proposal
-      if (proposalFile) {
-        // Konversi ke Base64 jika ukuran < 2MB (batas aman localStorage)
-        // Jika lebih, gunakan dummy URL
-        const fileUrl =
-          proposalFile.size < 2 * 1024 * 1024
-            ? await fileToBase64(proposalFile)
-            : "#";
-
-        newApplication.documents.push({
-          id: `prop-${Date.now()}`,
-          title: "Surat Proposal",
-          uploadedBy: "Adam (Ketua)",
-          uploadDate: new Date().toLocaleDateString("id-ID"),
-          status: "uploaded",
-          url: fileUrl,
+      // Jika submission belum ada, buat baru
+      if (!submission) {
+        const createResponse = await createSubmission(teamId, {
+          letterPurpose: additionalInfo.tujuanSurat,
+          companyName: additionalInfo.namaTempat,
+          companyAddress: additionalInfo.alamatTempat,
+          division: additionalInfo.namaTempat,
+          companySupervisor: additionalInfo.pembimbingLapangan,
+          startDate: additionalInfo.tanggalMulai,
+          endDate: additionalInfo.tanggalSelesai,
         });
-      }
 
-      // 3. Masukkan File Lampiran Anggota
-      for (const item of collectedFiles) {
-        const docInfo = documents.find((d) => d.id === Number(item.docId));
-        const memberInfo = teamMembers.find(
-          (m) => m.id === Number(item.memberId),
-        );
-
-        if (docInfo && memberInfo) {
-          // Proses konversi file satu per satu
-          const fileUrl =
-            item.file.size < 2 * 1024 * 1024
-              ? await fileToBase64(item.file)
-              : "#";
-
-          newApplication.documents.push({
-            id: `doc-${item.docId}-${item.memberId}-${Date.now()}`,
-            title: docInfo.title,
-            uploadedBy: memberInfo.name,
-            uploadDate: new Date().toLocaleDateString("id-ID"),
-            status: "uploaded",
-            url: fileUrl,
-          });
-        }
-      }
-
-      // 4. Simpan ke LocalStorage
-      const existingData = localStorage.getItem("kp_submissions");
-      const submissions = existingData ? JSON.parse(existingData) : [];
-
-      try {
-        localStorage.setItem(
-          "kp_submissions",
-          JSON.stringify([newApplication, ...submissions]),
-        );
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "QuotaExceededError") {
-          toast.error(
-            "Gagal menyimpan: Ukuran file terlalu besar. Coba kurangi ukuran file.",
-          );
+        if (!createResponse.success || !createResponse.data) {
+          toast.error(createResponse.message || "Gagal membuat submission");
           return;
         }
-        throw e;
+
+        setSubmission(createResponse.data);
       }
 
-      navigate("/mahasiswa/kp/surat-pengantar");
+      // Submit submission (ubah status ke PENDING_REVIEW)
+      const submitResponse = await submitSubmission(submission?.id || "");
+      if (submitResponse.success) {
+        toast.success("Surat pengantar berhasil diajukan!");
+        navigate("/mahasiswa/kp/surat-pengantar");
+      } else {
+        toast.error(submitResponse.message || "Gagal mengajukan surat pengantar");
+      }
+
       setIsConfirmDialogOpen(false);
-    } catch {
-      toast.error("Terjadi kesalahan saat memproses pengajuan.");
+    } catch (error) {
+      console.error("❌ Error submitting:", error);
+      toast.error("Terjadi kesalahan saat mengajukan surat pengantar");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -202,10 +388,40 @@ function SubmissionPage() {
     }
   };
 
+  if (isUserLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Memuat data tim...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertDescription>{loadError}</AlertDescription>
+        </Alert>
+        <Button onClick={() => navigate("/mahasiswa/kp/buat-tim")}>Kembali ke Buat Tim</Button>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Header Section */}
       <div className="mb-8">
+        <div className="flex items-center gap-3 mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/mahasiswa/kp/buat-tim")}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Kembali ke Buat Tim
+          </Button>
+        </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Pengajuan Syarat Kerja Praktik
         </h1>
@@ -213,6 +429,11 @@ function SubmissionPage() {
           Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
           Praktik
         </p>
+        {teamName && (
+          <p className="text-sm text-muted-foreground mt-2">
+            Tim: {teamName} ({teamMembers.length} anggota, status {teamStatus || "-"})
+          </p>
+        )}
       </div>
 
       {/* Info Alert */}
@@ -277,6 +498,8 @@ function SubmissionPage() {
                 key={document.id}
                 document={document}
                 members={teamMembers}
+                documents={submissionDocuments}
+                currentUserId={user?.id}
                 onUpload={handleDocumentUpload}
               />
             ))}

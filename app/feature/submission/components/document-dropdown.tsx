@@ -12,46 +12,51 @@ import { Button } from "~/components/ui/button";
 import { FileUploadDialog } from "./file-upload-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 
-import type { Document, Member } from "../types";
+import type { Document, Member, SubmissionDocument } from "../types";
 
 interface DocumentDropdownProps {
   document: Document;
   members: Member[];
-  onUpload?: (documentId: number, memberId: number, file: File) => void;
+  documents: SubmissionDocument[];
+  currentUserId?: string;
+  onUpload?: (documentId: number, memberId: string, file: File) => void;
 }
 
 function DocumentDropdown({
   document,
   members,
+  documents,
+  currentUserId,
   onUpload,
 }: DocumentDropdownProps) {
-  const [uploadedFiles, setUploadedFiles] = useState<Record<number, File>>({});
   const [uploadingMember, setUploadingMember] = useState<{
-    id: number;
+    id: string;
     name: string;
   } | null>(null);
   const [reuploadingMember, setReuploadingMember] = useState<{
-    id: number;
+    id: string;
     name: string;
   } | null>(null);
 
+  const getDocumentForMember = (memberId: string) => {
+    return documents.find(
+      (doc) =>
+        doc.documentType === (document as any).type &&
+        doc.memberUserId === memberId
+    );
+  };
+
   const handleFileUpload = (file: File) => {
-    if (uploadingMember) {
-      setUploadedFiles((prev) => ({ ...prev, [uploadingMember.id]: file }));
-      if (onUpload) {
-        onUpload(document.id, uploadingMember.id, file);
-      }
+    if (uploadingMember && onUpload) {
+      onUpload(document.id, uploadingMember.id, file);
+      setUploadingMember(null);
     }
   };
 
-  const handlePreview = (memberId: number) => {
-    const file = uploadedFiles[memberId];
-    if (file) {
+  const handlePreview = (documentUrl: string) => {
+    if (documentUrl) {
       try {
-        const fileURL = URL.createObjectURL(file);
-        window.open(fileURL, "_blank");
-        // Melepas URL objek setelah tab baru dibuka untuk menghindari memory leak
-        setTimeout(() => URL.revokeObjectURL(fileURL), 100);
+        window.open(documentUrl, "_blank");
       } catch {
         alert("Tidak dapat menampilkan pratinjau file.");
       }
@@ -60,8 +65,8 @@ function DocumentDropdown({
 
   const handleConfirmReupload = () => {
     if (reuploadingMember) {
-      setUploadingMember(reuploadingMember); // Buka dialog upload file
-      setReuploadingMember(null); // Tutup dialog konfirmasi
+      setUploadingMember(reuploadingMember);
+      setReuploadingMember(null);
     }
   };
 
@@ -76,49 +81,59 @@ function DocumentDropdown({
             <span className="font-medium text-foreground">{document.title}</span>
           </AccordionTrigger>
           <AccordionContent className="bg-card px-4 pb-0">
-            {members.map((member) => (
-              <div
-                key={member.id}
-                className="flex justify-between items-center py-3 border-b border-border last:border-b-0"
-              >
-                <div className="font-medium text-foreground">
-                  {member.name} {member.role}
-                </div>
-                {uploadedFiles[member.id] ? (
-                  <div className="flex items-center gap-2">
+            {members.map((member) => {
+              const isCurrentUser = currentUserId === member.id;
+              const memberDocument = getDocumentForMember(member.id);
+              const isUploaded = !!memberDocument;
+
+              return (
+                <div
+                  key={member.id}
+                  className="flex justify-between items-center py-3 border-b border-border last:border-b-0"
+                >
+                  <div className="font-medium text-foreground">
+                    {member.name} {member.role}
+                  </div>
+                  {isUploaded ? (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        disabled={!isCurrentUser}
+                        onClick={() =>
+                          setReuploadingMember({
+                            id: member.id,
+                            name: member.name,
+                          })
+                        }
+                      >
+                        Terupload
+                      </Button>
+                      {memberDocument && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => handlePreview(memberDocument.fileUrl)}
+                        >
+                          <Eye className="h-5 w-5" />
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
                     <Button
+                      variant="secondary"
                       size="sm"
+                      disabled={!isCurrentUser}
                       onClick={() =>
-                        setReuploadingMember({
-                          id: member.id,
-                          name: member.name,
-                        })
+                        setUploadingMember({ id: member.id, name: member.name })
                       }
                     >
-                      Terupload
+                      Upload
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => handlePreview(member.id)}
-                    >
-                      <Eye className="h-5 w-5" />
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      setUploadingMember({ id: member.id, name: member.name })
-                    }
-                  >
-                    Upload
-                  </Button>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </AccordionContent>
         </AccordionItem>
       </Accordion>
