@@ -92,7 +92,9 @@ export function JoinTeamDialog({
 
     // Jika user memilih dari hasil pencarian, cegah join ke tim penuh (>=3)
     const selectedSuggestion = suggestions.find(
-      (s) => s.code === codeToJoin || `${s.leaderNim} - ${s.leaderName}` === codeToJoin,
+      (s) =>
+        s.code === codeToJoin ||
+        `${s.leaderNim} - ${s.leaderName}` === codeToJoin,
     );
     if (selectedSuggestion && selectedSuggestion.memberCount >= 3) {
       alert("❌ Tim ini sudah penuh (maksimal 3 anggota)");

@@ -7,12 +7,11 @@
 
 import { getAuthToken as getStoredToken } from "./auth-client";
 
-// Gunakan empty string untuk development (akan gunakan proxy dari vite.config.ts)
-// Untuk production, gunakan full URL dari env
+// Gunakan URL Workers sebagai default; bisa di-override via env
 const API_BASE_URL =
-  import.meta.env.MODE === "development"
-    ? "" // Empty string = gunakan same origin (proxy akan handle)
-    : import.meta.env.VITE_APP_AUTH_URL || "http://localhost:8787";
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_APP_AUTH_URL ||
+  "https://backend-sikp.backend-sikp.workers.dev";
 
 /**
  * Standard API Response format
@@ -75,10 +74,19 @@ function getAuthToken(): string | null {
  * const { data } = await apiClient<Team[]>('/api/teams/my-teams');
  *
  * @example
- * // POST request
+ * // POST request with JSON
  * const { data } = await apiClient<Team>('/api/teams', {
  *   method: 'POST',
  *   body: JSON.stringify({ name: 'Tim KP ABC' }),
+ * });
+ *
+ * @example
+ * // POST request with FormData
+ * const formData = new FormData();
+ * formData.append('file', file);
+ * const { data } = await apiClient<Document>('/api/submissions/123/documents', {
+ *   method: 'POST',
+ *   body: formData,
  * });
  */
 export async function apiClient<T>(
@@ -88,14 +96,26 @@ export async function apiClient<T>(
   const token = getAuthToken();
 
   try {
+    // Detect if body is FormData
+    const isFormData = options.body instanceof FormData;
+
+    // Build headers - don't force Content-Type for FormData
+    const headers: Record<string, string> = {};
+    if (!isFormData && !options.headers) {
+      headers["Content-Type"] = "application/json";
+    }
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    if (options.headers && typeof options.headers === "object") {
+      Object.assign(headers, options.headers);
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      credentials: "include", // Include cookies for better-auth
-      headers: {
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
+      // Use cookies only when same-origin (no explicit base URL)
+      credentials: API_BASE_URL ? "omit" : "include",
+      headers,
     });
 
     // Check if response has content
@@ -175,7 +195,8 @@ export async function uploadFile<T>(
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
-      credentials: "include",
+      // Use cookies only when same-origin
+      credentials: API_BASE_URL ? "omit" : "include",
       headers: {
         // Don't set Content-Type for FormData, browser will set it with boundary
         ...(token && { Authorization: `Bearer ${token}` }),

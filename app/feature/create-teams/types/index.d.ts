@@ -7,6 +7,9 @@ export interface Member {
   nim?: string;
   email?: string;
   status?: string;
+  memberId?: string; // Member ID untuk respond
+  teamId?: string; // Team ID untuk tracking
+  invitedAt?: string;
 }
 
 export interface MemberListProps {
