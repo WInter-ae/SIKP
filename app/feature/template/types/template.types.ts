@@ -1,13 +1,4 @@
-export type TemplateType = 
-  | "berita-acara"
-  | "form-nilai"
-  | "surat-pengantar"
-  | "surat-balasan"
-  | "lembar-persetujuan"
-  | "cover-laporan"
-  | "form-evaluasi"
-  | "sertifikat"
-  | "lainnya";
+export type TemplateType = "Template Only" | "Generate & Template";
 
 export type TemplateCategory = {
   value: TemplateType;
@@ -15,15 +6,8 @@ export type TemplateCategory = {
 };
 
 export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
-  { value: "berita-acara", label: "Berita Acara" },
-  { value: "form-nilai", label: "Form Nilai" },
-  { value: "surat-pengantar", label: "Surat Pengantar" },
-  { value: "surat-balasan", label: "Surat Balasan" },
-  { value: "lembar-persetujuan", label: "Lembar Persetujuan" },
-  { value: "cover-laporan", label: "Cover Laporan" },
-  { value: "form-evaluasi", label: "Form Evaluasi" },
-  { value: "sertifikat", label: "Sertifikat" },
-  { value: "lainnya", label: "Lainnya" },
+  { value: "Template Only", label: "Template Only" },
+  { value: "Generate & Template", label: "Generate & Template" },
 ];
 
 /**
@@ -58,7 +42,6 @@ export interface Template {
   type: TemplateType;
   description?: string;
   content: string;
-  fileExtension: "html" | "docx" | "txt";
   fields: TemplateField[];    // Field metadata untuk dynamic form
   version: number;            // Version untuk tracking perubahan
   createdAt: string;
@@ -72,7 +55,6 @@ export interface CreateTemplateData {
   type: TemplateType;
   description?: string;
   content: string;
-  fileExtension: "html" | "docx" | "txt";
   fields: TemplateField[];
 }
 

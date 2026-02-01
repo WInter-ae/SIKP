@@ -17,6 +17,7 @@ import FileUpload from "../components/file-upload";
 import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { FileUploadDialog } from "../components/file-upload-dialog";
 
 import type { AdditionalInfoData, Member, Submission, SubmissionDocument } from "../types";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
@@ -57,6 +58,12 @@ function SubmissionPage() {
 
   const [proposalFile, setProposalFile] = useState<File | null>(null);
   const [teamMembers, setTeamMembers] = useState<Member[]>([]);
+  const [isProposalReuploadConfirmOpen, setIsProposalReuploadConfirmOpen] = useState(false);
+  const [isProposalUploadDialogOpen, setIsProposalUploadDialogOpen] = useState(false);
+
+  const proposalDocument = submissionDocuments.find(
+    (doc) => doc.documentType === "PROPOSAL_KETUA",
+  );
 
   const documents = [
     { id: 1, title: "Surat Kesediaan", type: "SURAT_KESEDIAAN" as const },
@@ -377,15 +384,29 @@ function SubmissionPage() {
   };
 
   const handlePreviewProposal = () => {
+    if (proposalDocument?.fileUrl) {
+      window.open(proposalDocument.fileUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
     if (proposalFile) {
       try {
         const fileURL = URL.createObjectURL(proposalFile);
-        window.open(fileURL, "_blank");
+        window.open(fileURL, "_blank", "noopener,noreferrer");
         setTimeout(() => URL.revokeObjectURL(fileURL), 100);
+        return;
       } catch {
         toast.error("Tidak dapat menampilkan pratinjau file.");
+        return;
       }
     }
+
+    toast.error("File proposal belum tersedia untuk dipreview.");
+  };
+
+  const handleConfirmProposalReupload = () => {
+    setIsProposalReuploadConfirmOpen(false);
+    setIsProposalUploadDialogOpen(true);
   };
 
   if (isUserLoading || isLoading) {
@@ -454,34 +475,96 @@ function SubmissionPage() {
               </CardTitle>
             </CardHeader>
             <Separator className="mb-4" />
-            <div className="flex items-center gap-4">
-              <div className="flex-grow">
-                <FileUpload
-                  label="Upload Surat Proposal (Ketua Tim)"
-                  onFileChange={handleProposalUpload}
-                />
-              </div>
-              {proposalFile && (
-                <div className="pt-8">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
+            <div className="flex flex-wrap items-start gap-3">
+              <div className={isCurrentUserLeader && !proposalDocument ? "flex-grow" : ""}>
+                {isCurrentUserLeader ? (
+                  proposalDocument ? (
+                    <div className="mb-2">
+                      <p className="block font-medium mb-2">
+                        Upload Surat Proposal (Ketua Tim)
+                      </p>
+                      <div className="flex items-center gap-2 flex-wrap">
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={handlePreviewProposal}
-                          className="text-muted-foreground hover:text-foreground"
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          onClick={() => setIsProposalReuploadConfirmOpen(true)}
                         >
-                          <Eye className="size-5" />
+                          Terupload
                         </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Preview File</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-              )}
+                        {(proposalDocument || proposalFile) && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={handlePreviewProposal}
+                                  className="text-muted-foreground hover:text-foreground"
+                                >
+                                  <Eye className="size-5" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Preview File</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Klik untuk upload ulang proposal ketua tim.
+                      </p>
+                    </div>
+                  ) : (
+                    <FileUpload
+                      label="Upload Surat Proposal (Ketua Tim)"
+                      onFileChange={handleProposalUpload}
+                    />
+                  )
+                ) : (
+                  <div className="mb-2">
+                    <p className="block font-medium mb-2">
+                      Upload Surat Proposal (Ketua Tim)
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        className={
+                          proposalDocument
+                            ? "w-full sm:w-auto disabled:opacity-100 disabled:bg-primary disabled:text-primary-foreground"
+                            : "w-full sm:w-auto disabled:opacity-100 disabled:bg-destructive disabled:text-destructive-foreground"
+                        }
+                        variant={proposalDocument ? "default" : "destructive"}
+                        disabled
+                      >
+                        {proposalDocument ? "Terupload" : "Belum diupload"}
+                      </Button>
+                      {proposalDocument && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handlePreviewProposal}
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                <Eye className="size-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Preview File</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Proposal hanya bisa diupload oleh ketua tim.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -520,6 +603,24 @@ function SubmissionPage() {
           </div>
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={isProposalReuploadConfirmOpen}
+        onOpenChange={setIsProposalReuploadConfirmOpen}
+        title="Upload Ulang Proposal?"
+        description="File proposal yang lama akan diganti. Lanjutkan upload ulang?"
+        onConfirm={handleConfirmProposalReupload}
+        confirmText="Ya, Upload Ulang"
+        cancelText="Batal"
+      />
+
+      <FileUploadDialog
+        open={isProposalUploadDialogOpen}
+        onOpenChange={setIsProposalUploadDialogOpen}
+        onFileUpload={(file) => void handleProposalUpload(file)}
+        memberName="Ketua Tim"
+        documentTitle="Surat Proposal"
+      />
 
       <ConfirmDialog
         open={isConfirmDialogOpen}

@@ -66,7 +66,7 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Template",
-    url: "#",
+    url: "/mahasiswa/kp/template",
     icon: FileText,
   },
   {

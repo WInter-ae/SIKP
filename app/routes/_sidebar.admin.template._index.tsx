@@ -1,4 +1,4 @@
-import TemplateManagementPage from "~/feature/template/pages/template-management-page";
+import TemplateManagementPage from "~/feature/template/pages/admin-template-management-page";
 
 export default function Page() {
   return <TemplateManagementPage />;

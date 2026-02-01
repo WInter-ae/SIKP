@@ -25,81 +25,89 @@ import type { TemplateType, TemplateField } from "../types/template.types";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { autoGenerateFields } from "../services/template.service";
+import { createTemplate } from "~/lib/services/template-api";
 
 interface CreateTemplateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: {
-    name: string;
-    type: TemplateType;
-    description: string;
-    content: string;
-    fileExtension: "html" | "docx" | "txt";
-    fields: TemplateField[];
-  }) => void;
+  onSuccess: () => void;
 }
 
 export function CreateTemplateDialog({
   open,
   onOpenChange,
-  onSubmit,
+  onSuccess,
 }: CreateTemplateDialogProps) {
   const [name, setName] = useState("");
-  const [type, setType] = useState<TemplateType>("berita-acara");
+  const [type, setType] = useState<TemplateType | "">("");
   const [description, setDescription] = useState("");
-  const [fileExtension, setFileExtension] = useState<"html" | "docx" | "txt">("html");
-  const [content, setContent] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [fields, setFields] = useState<TemplateField[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setUploadedFile(file);
-    
-    // Set file extension based on uploaded file
-    const ext = file.name.split('.').pop()?.toLowerCase();
-    if (ext === 'html' || ext === 'docx' || ext === 'txt') {
-      setFileExtension(ext);
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      setContent(text);
-      toast.success(`File ${file.name} berhasil diupload`);
-    };
-    reader.readAsText(file);
+    toast.success(`File ${file.name} dipilih`);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name.trim()) {
       toast.error("Nama template harus diisi");
       return;
     }
-    if (!content.trim()) {
-      toast.error("Content template harus diisi atau upload file terlebih dahulu");
+    if (!type) {
+      toast.error("Tipe template harus dipilih");
+      return;
+    }
+    if (!uploadedFile) {
+      toast.error("File template harus diupload");
       return;
     }
 
-    // Auto-generate fields dari content
-    const fields = autoGenerateFields(content);
+    if (type === "Generate & Template" && fields.length === 0) {
+      toast.error('Fields wajib diisi untuk tipe "Generate & Template"');
+      return;
+    }
 
-    onSubmit({
-      name: name.trim(),
-      type,
-      description: description.trim(),
-      content: content.trim(),
-      fileExtension,
-      fields,
-    });
+    setIsLoading(true);
+    try {
+      const response = await createTemplate({
+        file: uploadedFile,
+        name: name.trim(),
+        type,
+        description: description.trim(),
+        fields: type === "Generate & Template" ? fields : [],
+        isActive: true,
+      });
 
-    // Reset form
+      if (response.success) {
+        resetForm();
+        onSuccess();
+      } else {
+        // Check for specific error messages
+        if (response.message?.includes("Forbidden") || response.message?.includes("admin")) {
+          toast.error("Hanya admin yang dapat membuat template");
+        } else {
+          toast.error(response.message || "Gagal membuat template");
+        }
+      }
+    } catch (error) {
+      console.error("Error creating template:", error);
+      toast.error("Terjadi kesalahan saat membuat template");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const resetForm = () => {
     setName("");
-    setType("berita-acara");
+    setType("");
     setDescription("");
-    setContent("");
     setUploadedFile(null);
+    setFields([]);
   };
 
   return (
@@ -125,40 +133,24 @@ export function CreateTemplateDialog({
             />
           </div>
 
-          {/* Row 2: Jenis Template & Format File */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="type">Jenis Template</Label>
-              <Select value={type} onValueChange={(value) => setType(value as TemplateType)}>
-                <SelectTrigger id="type">
-                  <SelectValue placeholder="Pilih jenis template" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TEMPLATE_CATEGORIES.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {category.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="fileExtension">Format File</Label>
-              <Select 
-                value={fileExtension} 
-                onValueChange={(value) => setFileExtension(value as "html" | "docx" | "txt")}
-              >
-                <SelectTrigger id="fileExtension">
-                  <SelectValue placeholder="Pilih format file" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="html">HTML</SelectItem>
-                  <SelectItem value="docx">DOCX</SelectItem>
-                  <SelectItem value="txt">TXT</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Row 2: Tipe */}
+          <div className="space-y-2">
+            <Label htmlFor="type">Tipe</Label>
+            <Select
+              value={type}
+              onValueChange={(value) => setType(value as TemplateType)}
+            >
+              <SelectTrigger id="type">
+                <SelectValue placeholder="Pilih Tipe" />
+              </SelectTrigger>
+              <SelectContent>
+                {TEMPLATE_CATEGORIES.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    {category.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Row 3: Upload Template File (Full Width) */}
@@ -172,13 +164,11 @@ export function CreateTemplateDialog({
                 onChange={handleFileUpload}
                 className="cursor-pointer flex-1"
               />
-              <Button type="button" variant="outline" size="icon" className="shrink-0">
-                <Upload className="h-4 w-4" />
-              </Button>
             </div>
             {uploadedFile && (
               <p className="text-sm text-muted-foreground mt-2">
-                File: {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(2)} KB)
+                File: {uploadedFile.name} (
+                {(uploadedFile.size / 1024).toFixed(2)} KB)
               </p>
             )}
           </div>
@@ -196,28 +186,23 @@ export function CreateTemplateDialog({
             />
           </div>
 
-          {/* Row 5: Konten Template Preview */}
-          <div className="space-y-2">
-            <Label htmlFor="content">Konten Template (Preview)</Label>
-            <Textarea
-              id="content"
-              placeholder="Konten template akan muncul di sini setelah upload..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={18}
-              className="font-mono text-sm w-full resize-none"
-            />
-            <p className="text-xs text-muted-foreground">
-              Anda dapat mengedit konten di atas atau klik "Edit" setelah template dibuat untuk menggunakan editor kode lengkap
-            </p>
-          </div>
+          {/* Row 5: Konten Template Preview (Removed) */}
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             Batal
           </Button>
-          <Button onClick={handleSubmit}>Simpan Template</Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? "Menyimpan..." : "Simpan Template"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
