@@ -11,6 +11,7 @@ import { getAuthToken as getStoredToken } from "./auth-client";
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_APP_AUTH_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
   "https://backend-sikp.backend-sikp.workers.dev";
 
 /**

@@ -6,7 +6,7 @@ export { DynamicFormFromTemplate } from "./components/dynamic-form-from-template
 export { TemplateUsageExample, GenerateBeritaAcara } from "./components/template-usage-example";
 
 // Pages
-export { default as TemplateManagementPage } from "./pages/template-management-page";
+export { default as TemplateManagementPage } from "./pages/admin-template-management-page";
 
 // Services
 export {

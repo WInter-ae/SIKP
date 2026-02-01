@@ -1,7 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { useUser } from "~/contexts/user-context";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import {
@@ -48,93 +56,102 @@ import {
   Eye,
   Download,
   Filter,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import { CreateTemplateDialog } from "../components/create-template-dialog";
 import { EditTemplateDialog } from "../components/edit-template-dialog";
 import { TEMPLATE_CATEGORIES } from "../types/template.types";
-import type { Template, TemplateType, TemplateField } from "../types/template.types";
+import type { TemplateType } from "../types/template.types";
 import { toast } from "sonner";
+import {
+  getAllTemplates,
+  deleteTemplate,
+  toggleTemplateActive,
+  downloadTemplate,
+  type TemplateResponse,
+} from "~/lib/services/template-api";
 
 export default function TemplateManagementPage() {
-  const [templates, setTemplates] = useState<Template[]>([
-    {
-      id: "1",
-      name: "Berita Acara Sidang KP 2025",
-      type: "berita-acara",
-      description: "Template berita acara untuk sidang kerja praktek tahun 2025",
-      content: `<!DOCTYPE html>
-<html>
-<head>
-    <title>Berita Acara Sidang</title>
-</head>
-<body>
-    <h1>BERITA ACARA SIDANG KERJA PRAKTEK</h1>
-    <p>Pada hari ini, {{tanggal}}, telah dilaksanakan sidang kerja praktek.</p>
-    <p>Nama Mahasiswa: {{nama_mahasiswa}}</p>
-    <p>NIM: {{nim}}</p>
-    <p>Judul: {{judul}}</p>
-</body>
-</html>`,
-      fileExtension: "html",
-      fields: [
-        { variable: "tanggal", label: "Tanggal Sidang", type: "date", required: true, order: 0 },
-        { variable: "nama_mahasiswa", label: "Nama Mahasiswa", type: "text", required: true, order: 1 },
-        { variable: "nim", label: "NIM", type: "text", required: true, order: 2 },
-        { variable: "judul", label: "Judul KP", type: "textarea", required: true, order: 3 },
-      ],
-      version: 1,
-      createdAt: "2025-01-15T10:00:00Z",
-      updatedAt: "2025-01-15T10:00:00Z",
-      isActive: true,
-    },
-    {
-      id: "2",
-      name: "Form Nilai KP",
-      type: "form-nilai",
-      description: "Template form penilaian kerja praktek",
-      content: `<!DOCTYPE html>
-<html>
-<head>
-    <title>Form Nilai KP</title>
-</head>
-<body>
-    <h1>FORM PENILAIAN KERJA PRAKTEK</h1>
-    <table>
-        <tr>
-            <td>Nama</td>
-            <td>: {{nama_mahasiswa}}</td>
-        </tr>
-        <tr>
-            <td>NIM</td>
-            <td>: {{nim}}</td>
-        </tr>
-        <tr>
-            <td>Nilai</td>
-            <td>: {{nilai}}</td>
-        </tr>
-    </table>
-</body>
-</html>`,
-      fileExtension: "html",
-      fields: [
-        { variable: "nama_mahasiswa", label: "Nama Mahasiswa", type: "text", required: true, order: 0 },
-        { variable: "nim", label: "NIM", type: "text", required: true, order: 1 },
-        { variable: "nilai", label: "Nilai", type: "number", required: true, order: 2 },
-      ],
-      version: 1,
-      createdAt: "2025-01-16T09:00:00Z",
-      updatedAt: "2025-01-16T09:00:00Z",
-      isActive: true,
-    },
-  ]);
-
+  const navigate = useNavigate();
+  const { user } = useUser();
+  const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<TemplateType | "all">("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<TemplateResponse | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
+  const [templateToDelete, setTemplateToDelete] =
+    useState<TemplateResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  // Check admin access
+  useEffect(() => {
+    if (!user) {
+      toast.error("Anda harus login terlebih dahulu");
+      navigate("/login");
+      return;
+    }
+
+    if (user.role !== "ADMIN") {
+      toast.error("Anda tidak memiliki akses ke halaman ini");
+      navigate("/");
+      return;
+    }
+
+    setIsAuthorized(true);
+  }, [user, navigate]);
+
+  // Fetch templates on mount (only after authorized)
+  useEffect(() => {
+    if (isAuthorized) {
+      fetchTemplates();
+    }
+  }, [isAuthorized]);
+
+  const fetchTemplates = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getAllTemplates();
+      if (response.success && response.data) {
+        setTemplates(response.data);
+      } else {
+        toast.error(response.message || "Gagal memuat templates");
+      }
+    } catch (error: unknown) {
+      console.error("Error fetching templates:", error);
+      
+      // Handle authorization errors
+      if (
+        (error as Error).message?.includes("Unauthorized") ||
+        (error as Error).message?.includes("Forbidden")
+      ) {
+        toast.error("Sesi Anda telah berakhir atau Anda tidak memiliki akses");
+        navigate("/login");
+        return;
+      }
+      
+      toast.error("Terjadi kesalahan saat memuat templates");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Show loading state while checking authorization
+  if (!isAuthorized) {
+    return (
+      <div className="container mx-auto p-6">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <p className="text-muted-foreground">Memeriksa akses...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Filter templates
   const filteredTemplates = templates.filter((template) => {
@@ -145,83 +162,100 @@ export default function TemplateManagementPage() {
     return matchesSearch && matchesType;
   });
 
-  // Create template
-  const handleCreateTemplate = (data: {
-    name: string;
-    type: TemplateType;
-    description: string;
-    content: string;
-    fileExtension: "html" | "docx" | "txt";
-    fields: TemplateField[];
-  }) => {
-    const newTemplate: Template = {
-      id: Date.now().toString(),
-      ...data,
-      version: 1,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      isActive: true,
-    };
-    setTemplates([...templates, newTemplate]);
+  // Create template - akan dipanggil dari CreateTemplateDialog
+  const handleCreateTemplate = async () => {
+    // Dialog akan handle create dan refresh
     setCreateDialogOpen(false);
+    await fetchTemplates();
     toast.success("Template berhasil dibuat");
   };
 
-  // Edit template
-  const handleEditTemplate = (
-    id: string,
-    data: {
-      name: string;
-      type: TemplateType;
-      description: string;
-      content: string;
-      fileExtension: "html" | "docx" | "txt";
-      fields: TemplateField[];
-    }
-  ) => {
-    setTemplates(
-      templates.map((t) =>
-        t.id === id
-          ? { ...t, ...data, updatedAt: new Date().toISOString() }
-          : t
-      )
-    );
+  // Edit template - akan dipanggil dari EditTemplateDialog
+  const handleEditTemplate = async () => {
     setEditDialogOpen(false);
     setSelectedTemplate(null);
+    await fetchTemplates();
     toast.success("Template berhasil diupdate");
   };
 
   // Delete template
-  const handleDeleteTemplate = () => {
+  const handleDeleteTemplate = async () => {
     if (!templateToDelete) return;
-    setTemplates(templates.filter((t) => t.id !== templateToDelete.id));
-    setDeleteDialogOpen(false);
-    setTemplateToDelete(null);
-    toast.success("Template berhasil dihapus");
+    
+    setIsLoading(true);
+    try {
+      const response = await deleteTemplate(templateToDelete.id);
+      if (response.success) {
+        await fetchTemplates();
+        toast.success("Template berhasil dihapus");
+      } else {
+        toast.error(response.message || "Gagal menghapus template");
+      }
+    } catch (error: unknown) {
+      console.error("Error deleting template:", error);
+      
+      if ((error as Error).message?.includes("Forbidden")) {
+        toast.error("Anda tidak memiliki izin untuk menghapus template");
+        navigate("/login");
+        return;
+      }
+      
+      toast.error("Terjadi kesalahan saat menghapus template");
+    } finally {
+      setIsLoading(false);
+      setDeleteDialogOpen(false);
+      setTemplateToDelete(null);
+    }
   };
 
   // Toggle active status
-  const handleToggleActive = (id: string) => {
-    setTemplates(
-      templates.map((t) =>
-        t.id === id ? { ...t, isActive: !t.isActive } : t
-      )
-    );
-    toast.success("Status template berhasil diubah");
+  const handleToggleActive = async (id: string) => {
+    setIsLoading(true);
+    try {
+      const response = await toggleTemplateActive(id);
+      if (response.success) {
+        await fetchTemplates();
+        toast.success("Status template berhasil diubah");
+      } else {
+        toast.error(response.message || "Gagal mengubah status template");
+      }
+    } catch (error: unknown) {
+      console.error("Error toggling template status:", error);
+      
+      if ((error as Error).message?.includes("Forbidden")) {
+        toast.error("Anda tidak memiliki izin untuk mengubah status template");
+        navigate("/login");
+        return;
+      }
+      
+      toast.error("Terjadi kesalahan saat mengubah status");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Download template
-  const handleDownloadTemplate = (template: Template) => {
-    const blob = new Blob([template.content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${template.name}.${template.fileExtension}`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Template berhasil didownload");
+  const handleDownloadTemplate = async (template: TemplateResponse) => {
+    try {
+      await downloadTemplate(template.id, template.originalName);
+      toast.success("Template berhasil didownload");
+    } catch (error: unknown) {
+      console.error("Error downloading template:", error);
+      
+      if ((error as Error).message?.includes("Forbidden")) {
+        toast.error("Anda tidak memiliki akses untuk mendownload template");
+        return;
+      }
+      
+      toast.error("Gagal mendownload template");
+    }
+  };
+
+  // View template (placeholder - bisa dibuat dialog preview)
+  const handleViewTemplate = (template: TemplateResponse) => {
+    // TODO: Implement preview dialog
+    console.log("View template:", template);
+    toast.info("Fitur preview akan segera tersedia");
   };
 
   const getTypeLabel = (type: TemplateType) => {
@@ -231,17 +265,21 @@ export default function TemplateManagementPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Template Management</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Template Management
+        </h1>
         <p className="text-muted-foreground">
           Kelola template dokumen untuk berbagai keperluan mahasiswa
         </p>
       </div>
 
       {/* Statistics */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Template</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Template
+            </CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -250,34 +288,14 @@ export default function TemplateManagementPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Template Aktif</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Template Aktif
+            </CardTitle>
             <FileText className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {templates.filter((t) => t.isActive).length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Berita Acara</CardTitle>
-            <FileText className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {templates.filter((t) => t.type === "berita-acara").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Form Nilai</CardTitle>
-            <FileText className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {templates.filter((t) => t.type === "form-nilai").length}
             </div>
           </CardContent>
         </Card>
@@ -315,7 +333,9 @@ export default function TemplateManagementPage() {
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select
                 value={filterType}
-                onValueChange={(value) => setFilterType(value as TemplateType | "all")}
+                onValueChange={(value) =>
+                  setFilterType(value as TemplateType | "all")
+                }
               >
                 <SelectTrigger className="w-[200px]">
                   <SelectValue placeholder="Filter by type" />
@@ -338,8 +358,7 @@ export default function TemplateManagementPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama Template</TableHead>
-                  <TableHead>Jenis</TableHead>
-                  <TableHead>Format</TableHead>
+                  <TableHead>Tipe</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Terakhir Diupdate</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
@@ -348,7 +367,10 @@ export default function TemplateManagementPage() {
               <TableBody>
                 {filteredTemplates.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       {searchQuery || filterType !== "all"
                         ? "Tidak ada template yang sesuai dengan filter"
                         : "Belum ada template. Klik tombol 'Tambah Template' untuk membuat."}
@@ -368,22 +390,28 @@ export default function TemplateManagementPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline">{getTypeLabel(template.type)}</Badge>
+                        <Badge variant="outline">
+                          {getTypeLabel(template.type)}
+                        </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{template.fileExtension.toUpperCase()}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={template.isActive ? "default" : "destructive"}>
+                        <Badge
+                          variant={
+                            template.isActive ? "default" : "destructive"
+                          }
+                        >
                           {template.isActive ? "Aktif" : "Nonaktif"}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(template.updatedAt).toLocaleDateString("id-ID", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {new Date(template.updatedAt).toLocaleDateString(
+                          "id-ID",
+                          {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          },
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -404,12 +432,26 @@ export default function TemplateManagementPage() {
                               <Edit className="h-4 w-4 mr-2" />
                               Edit
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDownloadTemplate(template)}>
+                            <DropdownMenuItem
+                              onClick={() => handleViewTemplate(template)}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              Lihat
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDownloadTemplate(template)}
+                            >
                               <Download className="h-4 w-4 mr-2" />
                               Download
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleToggleActive(template.id)}>
-                              <Eye className="h-4 w-4 mr-2" />
+                            <DropdownMenuItem
+                              onClick={() => handleToggleActive(template.id)}
+                            >
+                              {template.isActive ? (
+                                <ToggleLeft className="h-4 w-4 mr-2" />
+                              ) : (
+                                <ToggleRight className="h-4 w-4 mr-2" />
+                              )}
                               {template.isActive ? "Nonaktifkan" : "Aktifkan"}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
@@ -439,14 +481,14 @@ export default function TemplateManagementPage() {
       <CreateTemplateDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
-        onSubmit={handleCreateTemplate}
+        onSuccess={handleCreateTemplate}
       />
 
       <EditTemplateDialog
         template={selectedTemplate}
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
-        onSubmit={handleEditTemplate}
+        onSuccess={handleEditTemplate}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -454,14 +496,19 @@ export default function TemplateManagementPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Template</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus template "{templateToDelete?.name}"?
-              Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus template &quot;
+              {templateToDelete?.name}&quot;? Tindakan ini tidak dapat
+              dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteTemplate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Hapus
+            <AlertDialogAction
+              onClick={handleDeleteTemplate}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isLoading}
+            >
+              {isLoading ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
