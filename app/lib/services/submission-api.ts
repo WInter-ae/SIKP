@@ -1,6 +1,9 @@
 import { apiClient } from "~/lib/api-client";
 import { getAuthToken } from "~/lib/auth-client";
-import type { Submission, SubmissionDocument } from "~/feature/submission/types";
+import type {
+  Submission,
+  SubmissionDocument,
+} from "~/feature/submission/types";
 
 /**
  * Fetch submission untuk tim yang sedang aktif
@@ -13,14 +16,16 @@ import type { Submission, SubmissionDocument } from "~/feature/submission/types"
  * - Gunakan /api/submissions/my-submissions untuk mendapatkan submission milik user
  * - Filter berdasarkan teamId untuk menemukan submission yang sesuai
  * - Fetch documents dengan submissionId yang sudah ditemukan
- * 
+ *
  * Per Frontend Integration Guide: Hindari memanggil GET /api/submissions/team/:teamId
  * karena endpoint tersebut tidak tersedia di backend.
  */
 export async function getSubmissionByTeamId(teamId: string) {
   try {
     // Gunakan my-submissions dan filter by teamId
-    const response = await apiClient<Submission[]>(`/api/submissions/my-submissions`);
+    const response = await apiClient<Submission[]>(
+      `/api/submissions/my-submissions`,
+    );
 
     if (!response.success || !response.data) {
       return {
@@ -43,7 +48,7 @@ export async function getSubmissionByTeamId(teamId: string) {
     // Fetch documents untuk submission ini
     // Backend HARUS return SEMUA dokumen dari semua anggota, bukan hanya auth user
     const docsResponse = await apiClient<SubmissionDocument[]>(
-      `/api/submissions/${found.id}/documents`
+      `/api/submissions/${found.id}/documents`,
     );
 
     if (docsResponse.success && docsResponse.data) {
@@ -52,7 +57,7 @@ export async function getSubmissionByTeamId(teamId: string) {
     } else if (found.documents) {
       // Fallback: jika found.documents sudah ada dari response my-submissions, gunakan itu
       console.warn(
-        "⚠️ Fetch documents failed, menggunakan documents dari my-submissions"
+        "⚠️ Fetch documents failed, menggunakan documents dari my-submissions",
       );
     }
 
@@ -65,7 +70,8 @@ export async function getSubmissionByTeamId(teamId: string) {
     console.error("❌ Error fetching submission:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Gagal memuat submission",
+      message:
+        error instanceof Error ? error.message : "Gagal memuat submission",
       data: null,
     };
   }
@@ -81,10 +87,9 @@ export async function createSubmission(
     companyName: string;
     companyAddress: string;
     division: string;
-    companySupervisor: string;
     startDate: string;
     endDate: string;
-  }
+  },
 ) {
   try {
     const response = await apiClient<Submission>("/api/submissions", {
@@ -99,7 +104,8 @@ export async function createSubmission(
     console.error("❌ Error creating submission:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Gagal membuat submission",
+      message:
+        error instanceof Error ? error.message : "Gagal membuat submission",
       data: null,
     };
   }
@@ -111,7 +117,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 /**
  * Upload dokumen untuk submission
  * Menggunakan multipart form data untuk file
- * 
+ *
  * Validasi:
  * - Ukuran file maksimal 10 MB
  * - MIME type di-trim untuk menghindari overflow di kolom varchar(100)
@@ -161,7 +167,7 @@ export async function uploadSubmissionDocument(
       {
         method: "POST",
         body: formData,
-      }
+      },
     );
 
     return response;
@@ -169,7 +175,8 @@ export async function uploadSubmissionDocument(
     console.error("❌ Error uploading document:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Gagal mengupload dokumen",
+      message:
+        error instanceof Error ? error.message : "Gagal mengupload dokumen",
       data: null,
     };
   }
@@ -188,7 +195,7 @@ export async function updateSubmission(
     companySupervisor?: string;
     startDate?: string;
     endDate?: string;
-  }
+  },
 ) {
   try {
     const response = await apiClient<Submission>(
@@ -196,14 +203,15 @@ export async function updateSubmission(
       {
         method: "PUT",
         body: JSON.stringify(data),
-      }
+      },
     );
     return response;
   } catch (error) {
     console.error("❌ Error updating submission:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Gagal memperbarui submission",
+      message:
+        error instanceof Error ? error.message : "Gagal memperbarui submission",
       data: null,
     };
   }
@@ -219,14 +227,15 @@ export async function submitSubmission(submissionId: string) {
       {
         method: "PUT",
         body: JSON.stringify({}),
-      }
+      },
     );
     return response;
   } catch (error) {
     console.error("❌ Error submitting submission:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Gagal mengajukan submission",
+      message:
+        error instanceof Error ? error.message : "Gagal mengajukan submission",
       data: null,
     };
   }
@@ -237,15 +246,19 @@ export async function submitSubmission(submissionId: string) {
  */
 export async function deleteSubmissionDocument(documentId: string) {
   try {
-    const response = await apiClient<void>(`/api/submissions/documents/${documentId}`, {
-      method: "DELETE",
-    });
+    const response = await apiClient<void>(
+      `/api/submissions/documents/${documentId}`,
+      {
+        method: "DELETE",
+      },
+    );
     return response;
   } catch (error) {
     console.error("❌ Error deleting document:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Gagal menghapus dokumen",
+      message:
+        error instanceof Error ? error.message : "Gagal menghapus dokumen",
       data: null,
     };
   }

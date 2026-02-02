@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 
 import { Input } from "~/components/ui/input";
@@ -9,28 +9,64 @@ import type { AdditionalInfoData } from "../types";
 
 interface AdditionalInfoFormProps {
   onDataChange?: (data: AdditionalInfoData) => void;
+  initialData?: AdditionalInfoData;
+  isEditable?: boolean;
 }
 
-function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
-  const [formData, setFormData] = useState<AdditionalInfoData>({
-    tujuanSurat: "",
-    namaTempat: "",
-    alamatTempat: "",
-    tanggalMulai: "",
-    tanggalSelesai: "",
-    pembimbingLapangan: "",
-  });
+function AdditionalInfoForm({
+  onDataChange,
+  initialData,
+  isEditable = true,
+}: AdditionalInfoFormProps) {
+  const [formData, setFormData] = useState<AdditionalInfoData>(
+    initialData || {
+      tujuanSurat: "",
+      namaTempat: "",
+      alamatTempat: "",
+      tanggalMulai: "",
+      tanggalSelesai: "",
+      divisi: "",
+    }
+  );
 
   const tanggalMulaiRef = useRef<HTMLInputElement>(null);
   const tanggalSelesaiRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Update formData ketika initialData berubah (dari parent component)
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+  }, [initialData]);
+
+  // Debounced autosave: tunggu 10 detik setelah user berhenti mengetik
+  useEffect(() => {
+    if (!isEditable) return;
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      if (onDataChange) {
+        console.log("💾 Auto-saving additional info after 10 seconds:", formData);
+        onDataChange(formData);
+      }
+    }, 10000); // 10 detik delay
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [formData, onDataChange, isEditable]);
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!isEditable) return;
     const { name, value } = e.target;
     const updatedFormData = { ...formData, [name]: value };
     setFormData(updatedFormData);
-    if (onDataChange) {
-      onDataChange(updatedFormData);
-    }
+    // Jangan langsung call onDataChange - biarkan debounce effect menanganinya
   }
 
   return (
@@ -49,6 +85,7 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
             placeholder="HRD/Lainnya"
             onChange={handleInputChange}
             value={formData.tujuanSurat}
+            disabled={!isEditable}
           />
         </div>
         <div className="space-y-2">
@@ -60,6 +97,7 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
             placeholder=""
             onChange={handleInputChange}
             value={formData.namaTempat}
+            disabled={!isEditable}
           />
         </div>
         <div className="space-y-2">
@@ -71,17 +109,19 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
             placeholder=""
             onChange={handleInputChange}
             value={formData.alamatTempat}
+            disabled={!isEditable}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="pembimbingLapangan">Nama Unit/Divisi</Label>
+          <Label htmlFor="divisi">Nama Unit/Divisi</Label>
           <Input
             type="text"
-            id="pembimbingLapangan"
-            name="pembimbingLapangan"
+            id="divisi"
+            name="divisi"
             placeholder=""
             onChange={handleInputChange}
-            value={formData.pembimbingLapangan}
+            value={formData.divisi}
+            disabled={!isEditable}
           />
         </div>
         <div className="space-y-2">
@@ -95,10 +135,14 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
               value={formData.tanggalMulai}
               ref={tanggalMulaiRef}
               className="pr-10"
+              disabled={!isEditable}
             />
             <CalendarIcon
               className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
-              onClick={() => tanggalMulaiRef.current?.showPicker()}
+              onClick={() => {
+                if (!isEditable) return;
+                tanggalMulaiRef.current?.showPicker();
+              }}
             />
           </div>
         </div>
@@ -113,10 +157,14 @@ function AdditionalInfoForm({ onDataChange }: AdditionalInfoFormProps) {
               value={formData.tanggalSelesai}
               ref={tanggalSelesaiRef}
               className="pr-10"
+              disabled={!isEditable}
             />
             <CalendarIcon
               className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
-              onClick={() => tanggalSelesaiRef.current?.showPicker()}
+              onClick={() => {
+                if (!isEditable) return;
+                tanggalSelesaiRef.current?.showPicker();
+              }}
             />
           </div>
         </div>

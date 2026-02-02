@@ -19,7 +19,12 @@ import AdditionalInfoForm from "../components/add-info-form";
 import { ConfirmDialog } from "../components/confirm-dialog";
 import { FileUploadDialog } from "../components/file-upload-dialog";
 
-import type { AdditionalInfoData, Member, Submission, SubmissionDocument } from "../types";
+import type {
+  AdditionalInfoData,
+  Member,
+  Submission,
+  SubmissionDocument,
+} from "../types";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
 import { apiClient } from "~/lib/api-client";
 import {
@@ -42,10 +47,13 @@ function SubmissionPage() {
   const [teamName, setTeamName] = useState<string>("");
   const [teamStatus, setTeamStatus] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
-  const [isCurrentUserLeader, setIsCurrentUserLeader] = useState<boolean>(false);
+  const [isCurrentUserLeader, setIsCurrentUserLeader] =
+    useState<boolean>(false);
 
   const [submission, setSubmission] = useState<Submission | null>(null);
-  const [submissionDocuments, setSubmissionDocuments] = useState<SubmissionDocument[]>([]);
+  const [submissionDocuments, setSubmissionDocuments] = useState<
+    SubmissionDocument[]
+  >([]);
 
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfoData>({
     tujuanSurat: "",
@@ -53,13 +61,19 @@ function SubmissionPage() {
     alamatTempat: "",
     tanggalMulai: "",
     tanggalSelesai: "",
-    pembimbingLapangan: "",
+    divisi: "",
   });
 
   const [proposalFile, setProposalFile] = useState<File | null>(null);
   const [teamMembers, setTeamMembers] = useState<Member[]>([]);
-  const [isProposalReuploadConfirmOpen, setIsProposalReuploadConfirmOpen] = useState(false);
-  const [isProposalUploadDialogOpen, setIsProposalUploadDialogOpen] = useState(false);
+  const [isProposalReuploadConfirmOpen, setIsProposalReuploadConfirmOpen] =
+    useState(false);
+  const [isProposalUploadDialogOpen, setIsProposalUploadDialogOpen] =
+    useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [autoSaveError, setAutoSaveError] = useState<string | null>(null);
 
   const proposalDocument = submissionDocuments.find(
     (doc) => doc.documentType === "PROPOSAL_KETUA",
@@ -69,8 +83,16 @@ function SubmissionPage() {
     { id: 1, title: "Surat Kesediaan", type: "SURAT_KESEDIAAN" as const },
     { id: 2, title: "Form Permohonan", type: "FORM_PERMOHONAN" as const },
     { id: 3, title: "KRS Semester 4", type: "KRS_SEMESTER_4" as const },
-    { id: 4, title: "Daftar Kumpulan Nilai", type: "DAFTAR_KUMPULAN_NILAI" as const },
-    { id: 5, title: "Bukti Pembayaran UKT", type: "BUKTI_PEMBAYARAN_UKT" as const },
+    {
+      id: 4,
+      title: "Daftar Kumpulan Nilai",
+      type: "DAFTAR_KUMPULAN_NILAI" as const,
+    },
+    {
+      id: 5,
+      title: "Bukti Pembayaran UKT",
+      type: "BUKTI_PEMBAYARAN_UKT" as const,
+    },
   ];
 
   // Fetch team data (finalized) for current user
@@ -89,12 +111,13 @@ function SubmissionPage() {
 
         if (response.success && Array.isArray(response.data)) {
           const fixedTeam =
-            response.data.find(
-              (t) => t.status?.toUpperCase() === "FIXED",
-            ) || response.data[0];
+            response.data.find((t) => t.status?.toUpperCase() === "FIXED") ||
+            response.data[0];
 
           if (!fixedTeam) {
-            setLoadError("Tim tidak ditemukan. Silakan buat tim terlebih dahulu.");
+            setLoadError(
+              "Tim tidak ditemukan. Silakan buat tim terlebih dahulu.",
+            );
             setTeamMembers([]);
             return;
           }
@@ -123,7 +146,9 @@ function SubmissionPage() {
           setTeamId(fixedTeam.id);
 
           // Tentukan apakah user adalah ketua
-          const currentUserMember = mappedMembers.find((m) => m.id === user?.id);
+          const currentUserMember = mappedMembers.find(
+            (m) => m.id === user?.id,
+          );
           setIsCurrentUserLeader(currentUserMember?.role === "Ketua");
 
           // Fetch submission dari database
@@ -133,14 +158,14 @@ function SubmissionPage() {
             if (submissionResponse.data.documents) {
               setSubmissionDocuments(submissionResponse.data.documents);
             }
-            // Populate form dengan data submission yang ada
+            // form dengan data submission pada db yang ada
             setAdditionalInfo({
               tujuanSurat: submissionResponse.data.letterPurpose || "",
               namaTempat: submissionResponse.data.companyName || "",
               alamatTempat: submissionResponse.data.companyAddress || "",
               tanggalMulai: submissionResponse.data.startDate || "",
               tanggalSelesai: submissionResponse.data.endDate || "",
-              pembimbingLapangan: submissionResponse.data.companySupervisor || "",
+              divisi: submissionResponse.data.division || "",
             });
           } else {
             // Jika belum ada submission, siapkan form kosong
@@ -181,8 +206,7 @@ function SubmissionPage() {
           letterPurpose: additionalInfo.tujuanSurat || "Draft",
           companyName: additionalInfo.namaTempat || "Belum diisi",
           companyAddress: additionalInfo.alamatTempat || "Belum diisi",
-          division: additionalInfo.namaTempat || "Belum diisi",
-          companySupervisor: additionalInfo.pembimbingLapangan || "Belum diisi",
+          division: additionalInfo.divisi || "Belum diisi",
           startDate: additionalInfo.tanggalMulai || new Date().toISOString(),
           endDate: additionalInfo.tanggalSelesai || new Date().toISOString(),
         });
@@ -207,7 +231,9 @@ function SubmissionPage() {
       if (response.success && response.data) {
         setSubmissionDocuments((prev) => {
           // Hapus proposal lama jika ada
-          const filtered = prev.filter((doc) => doc.documentType !== "PROPOSAL_KETUA");
+          const filtered = prev.filter(
+            (doc) => doc.documentType !== "PROPOSAL_KETUA",
+          );
           return [...filtered, response.data];
         });
         setProposalFile(file);
@@ -230,13 +256,13 @@ function SubmissionPage() {
   const refreshSubmissionDocuments = async (submissionId: string) => {
     try {
       const docsResponse = await apiClient<SubmissionDocument[]>(
-        `/api/submissions/${submissionId}/documents`
+        `/api/submissions/${submissionId}/documents`,
       );
 
       if (docsResponse.success && docsResponse.data) {
         console.log(
           `📄 Fetched ${docsResponse.data.length} documents from server`,
-          docsResponse.data
+          docsResponse.data,
         );
         setSubmissionDocuments(docsResponse.data);
       } else {
@@ -267,8 +293,7 @@ function SubmissionPage() {
           letterPurpose: additionalInfo.tujuanSurat || "Draft",
           companyName: additionalInfo.namaTempat || "Belum diisi",
           companyAddress: additionalInfo.alamatTempat || "Belum diisi",
-          division: additionalInfo.namaTempat || "Belum diisi",
-          companySupervisor: additionalInfo.pembimbingLapangan || "Belum diisi",
+          division: additionalInfo.divisi || "Belum diisi",
           startDate: additionalInfo.tanggalMulai || new Date().toISOString(),
           endDate: additionalInfo.tanggalSelesai || new Date().toISOString(),
         });
@@ -298,7 +323,7 @@ function SubmissionPage() {
 
       if (response.success && response.data) {
         toast.success(`${docInfo.title} berhasil diupload`);
-        
+
         // ✅ KEY FIX: Re-fetch semua documents dari server
         // Ini memastikan dokumen dari user lain juga terlihat
         console.log("🔄 Re-fetching all documents from server...");
@@ -317,20 +342,35 @@ function SubmissionPage() {
   const handleAdditionalInfoChange = async (data: AdditionalInfoData) => {
     setAdditionalInfo(data);
 
-    // Auto-save ke database jika submission sudah ada
+    // Auto-save ke database dengan user feedback
     if (submission) {
       try {
-        await updateSubmission(submission.id, {
+        setAutoSaveStatus("saving");
+        setAutoSaveError(null);
+
+        const response = await updateSubmission(submission.id, {
           letterPurpose: data.tujuanSurat,
           companyName: data.namaTempat,
           companyAddress: data.alamatTempat,
-          division: data.namaTempat, // Gunakan namaTempat sebagai division (bisa disesuaikan)
-          companySupervisor: data.pembimbingLapangan,
+          division: data.divisi,
           startDate: data.tanggalMulai,
           endDate: data.tanggalSelesai,
         });
+
+        if (response.success) {
+          console.log("✅ Auto-saved successfully");
+          setAutoSaveStatus("saved");
+          // Tampilkan status saved selama 2 detik
+          setTimeout(() => setAutoSaveStatus("idle"), 2000);
+        } else {
+          throw new Error(response.message || "Gagal menyimpan perubahan");
+        }
       } catch (error) {
         console.error("❌ Error auto-saving submission:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Gagal menyimpan perubahan";
+        setAutoSaveError(errorMessage);
+        setAutoSaveStatus("error");
       }
     }
   };
@@ -338,7 +378,9 @@ function SubmissionPage() {
   const handleSubmit = async () => {
     if (isLoading) return;
     if (!teamMembers.length) {
-      toast.error("Tim belum tersedia atau belum final. Lengkapi tim terlebih dahulu.");
+      toast.error(
+        "Tim belum tersedia atau belum final. Lengkapi tim terlebih dahulu.",
+      );
       return;
     }
 
@@ -351,8 +393,7 @@ function SubmissionPage() {
           letterPurpose: additionalInfo.tujuanSurat,
           companyName: additionalInfo.namaTempat,
           companyAddress: additionalInfo.alamatTempat,
-          division: additionalInfo.namaTempat,
-          companySupervisor: additionalInfo.pembimbingLapangan,
+          division: additionalInfo.divisi,
           startDate: additionalInfo.tanggalMulai,
           endDate: additionalInfo.tanggalSelesai,
         });
@@ -371,7 +412,9 @@ function SubmissionPage() {
         toast.success("Surat pengantar berhasil diajukan!");
         navigate("/mahasiswa/kp/surat-pengantar");
       } else {
-        toast.error(submitResponse.message || "Gagal mengajukan surat pengantar");
+        toast.error(
+          submitResponse.message || "Gagal mengajukan surat pengantar",
+        );
       }
 
       setIsConfirmDialogOpen(false);
@@ -423,7 +466,9 @@ function SubmissionPage() {
         <Alert variant="destructive">
           <AlertDescription>{loadError}</AlertDescription>
         </Alert>
-        <Button onClick={() => navigate("/mahasiswa/kp/buat-tim")}>Kembali ke Buat Tim</Button>
+        <Button onClick={() => navigate("/mahasiswa/kp/buat-tim")}>
+          Kembali ke Buat Tim
+        </Button>
       </div>
     );
   }
@@ -452,7 +497,8 @@ function SubmissionPage() {
         </p>
         {teamName && (
           <p className="text-sm text-muted-foreground mt-2">
-            Tim: {teamName} ({teamMembers.length} anggota, status {teamStatus || "-"})
+            Tim: {teamName} ({teamMembers.length} anggota, status{" "}
+            {teamStatus || "-"})
           </p>
         )}
       </div>
@@ -476,7 +522,11 @@ function SubmissionPage() {
             </CardHeader>
             <Separator className="mb-4" />
             <div className="flex flex-wrap items-start gap-3">
-              <div className={isCurrentUserLeader && !proposalDocument ? "flex-grow" : ""}>
+              <div
+                className={
+                  isCurrentUserLeader && !proposalDocument ? "flex-grow" : ""
+                }
+              >
                 {isCurrentUserLeader ? (
                   proposalDocument ? (
                     <div className="mb-2">
@@ -589,7 +639,39 @@ function SubmissionPage() {
           </div>
 
           {/* Keterangan Lain Section */}
-          <AdditionalInfoForm onDataChange={handleAdditionalInfoChange} />
+          <div className="mb-8">
+            <AdditionalInfoForm
+              initialData={additionalInfo}
+              onDataChange={handleAdditionalInfoChange}
+              isEditable={isCurrentUserLeader}
+            />
+
+            {/* Auto-save Status Indicator */}
+            {autoSaveStatus !== "idle" && (
+              <div className="mt-4 flex items-center gap-2">
+                {autoSaveStatus === "saving" && (
+                  <>
+                    <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm text-blue-600">Menyimpan...</span>
+                  </>
+                )}
+                {autoSaveStatus === "saved" && (
+                  <>
+                    <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-green-600">Tersimpan</span>
+                  </>
+                )}
+                {autoSaveStatus === "error" && (
+                  <>
+                    <div className="h-2 w-2 bg-red-500 rounded-full"></div>
+                    <span className="text-sm text-red-600">
+                      {autoSaveError || "Gagal menyimpan"}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Submit Button */}
           <div className="text-center mt-8">

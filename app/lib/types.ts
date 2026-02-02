@@ -70,14 +70,11 @@ export interface Submission {
   companyAddress: string;
   companyPhone?: string;
   companyEmail?: string;
-  companySupervisor?: string;
   position: string;
   startDate: string;
   endDate: string;
-  description: string;
   status: SubmissionStatus;
   rejectionReason?: string;
-  approvedBy?: string;
   approvedAt?: string;
   submittedAt?: string;
   createdAt: string;
