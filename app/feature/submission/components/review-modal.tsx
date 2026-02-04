@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
@@ -39,7 +40,10 @@ interface ReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApprove: (docReviews: Record<string, "approved" | "rejected">) => void;
-  onReject: (comment: string, docReviews: Record<string, "approved" | "rejected">) => void;
+  onReject: (
+    comment: string,
+    docReviews: Record<string, "approved" | "rejected">,
+  ) => void;
 }
 
 function ReviewModal({
@@ -61,18 +65,70 @@ function ReviewModal({
     } else {
       setDocReviews({});
     }
-  }, [application?.id, application?.documentReviews]);
+
+    // Debug: log documents received by modal - VERY DETAILED
+    console.log("📋 ReviewModal received application:", {
+      applicationId: application?.id,
+      documentsCount: application?.documents?.length || 0,
+      documents: application?.documents?.map((d) => ({
+        id: d.id,
+        title: d.title,
+        uploadedBy: d.uploadedBy,
+        uploadDate: d.uploadDate,
+        url: d.url,
+        status: d.status,
+        fullObject: d,
+      })),
+      rawApplication: application,
+    });
+  }, [
+    application?.id,
+    application?.documentReviews,
+    application?.documents,
+    application,
+  ]);
 
   // Group documents by title
   const groupedDocuments = useMemo<Record<string, DocumentFile[]>>(() => {
-    if (!application) return {};
+    if (!application) {
+      console.log("📂 groupedDocuments: No application yet");
+      return {};
+    }
+
+    console.log("📂 Starting to group documents:", {
+      applicationId: application.id,
+      documentsArray: application.documents,
+      documentsCount: application.documents.length,
+    });
+
     const groups: Record<string, DocumentFile[]> = {};
-    application.documents.forEach((doc) => {
+    application.documents.forEach((doc, index) => {
+      console.log(`📂 Processing document ${index}:`, {
+        docId: doc.id,
+        title: doc.title,
+        titleType: typeof doc.title,
+        titleUndefined: doc.title === "undefined",
+        titleEmpty: !doc.title,
+      });
+
       if (!groups[doc.title]) {
         groups[doc.title] = [];
       }
       groups[doc.title].push(doc);
     });
+
+    console.log("📂 Final grouped documents:", {
+      applicationId: application.id,
+      documentCount: application.documents.length,
+      groupCount: Object.keys(groups).length,
+      groups: Object.keys(groups),
+      groupDetails: Object.entries(groups).map(([title, docs]) => ({
+        title,
+        count: docs.length,
+        docs: docs.map((d) => ({ id: d.id, uploadedBy: d.uploadedBy })),
+      })),
+    });
+
     return groups;
   }, [application]);
 
@@ -88,8 +144,21 @@ function ReviewModal({
       "Daftar Kumpulan Nilai",
       "Bukti Pembayaran UKT",
     ];
-    const uploadedTitles = Object.keys(groupedDocuments);
-    return Array.from(new Set([...standardDocs, ...uploadedTitles]));
+    const uploadedTitles = Object.keys(groupedDocuments).filter(
+      (title) => title && title !== "undefined",
+    );
+    const allTitles = Array.from(new Set([...standardDocs, ...uploadedTitles]));
+
+    console.log("📋 All document titles in modal:", {
+      applicationId: application.id,
+      standardDocsCount: standardDocs.length,
+      uploadedTitlesCount: uploadedTitles.length,
+      uploadedTitles,
+      allTitlesCount: allTitles.length,
+      allTitles,
+    });
+
+    return allTitles;
   }, [application, groupedDocuments]);
 
   // Cek apakah ada dokumen yang belum dikumpulkan (missing)
@@ -162,11 +231,15 @@ function ReviewModal({
       return;
     }
     if (hasMissingDocs) {
-      toast.warning("Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.");
+      toast.warning(
+        "Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.",
+      );
       return;
     }
     if (!allDocsReviewed) {
-      toast.warning("Harap review semua dokumen yang diupload terlebih dahulu.");
+      toast.warning(
+        "Harap review semua dokumen yang diupload terlebih dahulu.",
+      );
       return;
     }
     onApprove(docReviews);
@@ -199,7 +272,7 @@ function ReviewModal({
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-destructive/10 text-destructive rounded flex items-center justify-center">
+          <div className="w-8 h-8 bg-gray-200 text-green-600 rounded flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
@@ -308,11 +381,18 @@ function ReviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent
+        className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+        aria-label="Review Pengajuan Surat Pengantar"
+      >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl">
             Review Pengajuan Surat Pengantar
           </DialogTitle>
+          <DialogDescription>
+            Modal untuk admin meninjau dan menyetujui atau menolak pengajuan
+            surat pengantar dari mahasiswa dengan dokumen lengkap.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-8 py-4 flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -420,7 +500,7 @@ function ReviewModal({
                 <div className="md:col-span-2 space-y-2">
                   <Label>Nama Unit/Divisi</Label>
                   <Input
-                    value={application.internship.pembimbingLapangan}
+                    value={application.internship.divisi}
                     readOnly
                     className="bg-muted cursor-not-allowed"
                   />
@@ -441,6 +521,15 @@ function ReviewModal({
               <Accordion type="multiple" className="space-y-4">
                 {allDocumentTitles.map((title) => {
                   const docs = groupedDocuments[title] || [];
+                  console.log(`📄 Rendering accordion for "${title}":`, {
+                    title,
+                    docsCount: docs.length,
+                    docs: docs.map((d) => ({
+                      id: d.id,
+                      uploadedBy: d.uploadedBy,
+                    })),
+                  });
+
                   return (
                     <AccordionItem
                       key={title}
@@ -499,8 +588,8 @@ function ReviewModal({
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
                       Terdapat dokumen yang ditolak. Anda <strong>wajib</strong>{" "}
-                      memberikan catatan review untuk menjelaskan alasan penolakan
-                      kepada mahasiswa.
+                      memberikan catatan review untuk menjelaskan alasan
+                      penolakan kepada mahasiswa.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -552,7 +641,8 @@ function ReviewModal({
                         Surat Pengantar Telah Disetujui
                       </p>
                       <p className="text-sm text-green-800 dark:text-green-200 mb-4">
-                        Surat pengantar kerja praktik telah berhasil dibuat dan dapat diunduh oleh mahasiswa.
+                        Surat pengantar kerja praktik telah berhasil dibuat dan
+                        dapat diunduh oleh mahasiswa.
                       </p>
                       <Button
                         variant="outline"
@@ -601,7 +691,8 @@ function ReviewModal({
         <div className="flex-shrink-0 border-t border-border pt-4">
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
             <Button variant="outline" onClick={handleClose}>
-              {application.status === "approved" || application.status === "rejected"
+              {application.status === "approved" ||
+              application.status === "rejected"
                 ? "Tutup"
                 : "Batal"}
             </Button>
@@ -617,7 +708,9 @@ function ReviewModal({
                 </Button>
                 <Button
                   onClick={handleApproveApplication}
-                  disabled={hasRejectedDocs || hasMissingDocs || !allDocsReviewed}
+                  disabled={
+                    hasRejectedDocs || hasMissingDocs || !allDocsReviewed
+                  }
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   <Check className="w-4 h-4 mr-2" />

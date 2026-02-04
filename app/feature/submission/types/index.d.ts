@@ -47,6 +47,11 @@ export interface SubmissionDocument {
   fileSize: number;
   fileUrl: string;
   createdAt: string;
+  uploadedByUser?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface Submission {

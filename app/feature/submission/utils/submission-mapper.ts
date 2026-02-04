@@ -1,0 +1,300 @@
+import type {
+  Submission,
+  SubmissionDocument,
+} from "~/feature/submission/types";
+import type {
+  Application,
+  DocumentFile,
+  Member,
+} from "~/feature/submission/types";
+
+/**
+ * Mapping document type dari backend ke display title
+ */
+const DOCUMENT_TYPE_MAPPING: Record<string, string> = {
+  PROPOSAL_KETUA: "Surat Proposal",
+  SURAT_KESEDIAAN: "Surat Kesediaan",
+  FORM_PERMOHONAN: "Form Permohonan",
+  KRS_SEMESTER_4: "KRS Semester 4",
+  DAFTAR_KUMPULAN_NILAI: "Daftar Kumpulan Nilai",
+  BUKTI_PEMBAYARAN_UKT: "Bukti Pembayaran UKT",
+};
+
+/**
+ * Mapping submission document dari backend ke DocumentFile untuk review modal
+ */
+function mapSubmissionDocumentToDocumentFile(
+  doc: SubmissionDocument,
+  memberName: string,
+): DocumentFile {
+  const title = DOCUMENT_TYPE_MAPPING[doc.documentType] || doc.documentType;
+  
+  // Debug: Log jika documentType tidak ada di mapping
+  if (!DOCUMENT_TYPE_MAPPING[doc.documentType]) {
+    console.warn("⚠️ Unknown documentType:", {
+      documentType: doc.documentType,
+      docId: doc.id,
+      fileName: (doc as any).fileName,
+      fallbackTitle: title,
+      availableTypes: Object.keys(DOCUMENT_TYPE_MAPPING),
+    });
+  }
+  
+  return {
+    id: doc.id,
+    title: title,
+    uploadedBy: memberName,
+    uploadDate: new Date(doc.createdAt).toLocaleDateString("id-ID", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }),
+    status: "uploaded",
+    url: doc.fileUrl,
+  };
+}
+
+/**
+ * Format tanggal dari ISO string ke format Indonesia
+ */
+function formatDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/**
+ * Interface untuk Team Member dari backend
+ */
+interface TeamMemberFromBackend {
+  user: {
+    id: string;
+    name: string;
+    nim: string;
+    email?: string;
+    prodi?: string;
+  };
+  role: "KETUA" | "ANGGOTA";
+  status: string;
+}
+
+/**
+ * Interface untuk Team dari backend
+ */
+interface TeamFromBackend {
+  id: string;
+  name: string;
+  code: string;
+  status: string;
+  members: TeamMemberFromBackend[];
+  academicSupervisor?: string;
+}
+
+/**
+ * Interface untuk Submission dengan relasi Team dari backend
+ */
+export interface SubmissionWithTeam extends Submission {
+  team?: TeamFromBackend;
+}
+
+/**
+ * Map submission dari backend ke Application untuk admin page
+ *
+ * @param submission - Submission object dari backend (harus include team & documents)
+ * @returns Application object untuk ditampilkan di admin page
+ */
+export function mapSubmissionToApplication(
+  submission: SubmissionWithTeam,
+): Application | null {
+  if (!submission.team) {
+    console.error("❌ Submission missing team data:", submission.id);
+    return null;
+  }
+
+  // Debug: Log team structure
+  console.log("🔍 Team structure:", {
+    teamId: submission.team.id,
+    membersCount: submission.team.members?.length || 0,
+    members: submission.team.members?.map((m) => ({
+      userId: m.user?.id,
+      userName: m.user?.name,
+      userObject: m.user ? "✅ Present" : "❌ Missing",
+      role: m.role,
+      status: m.status,
+      fullMember: m,
+    })),
+  });
+
+  // Filter hanya accepted members, dengan fallback untuk members tanpa status
+  const acceptedMembers = (submission.team.members || []).filter((m) => {
+    // Jika status tidak ada, anggap sebagai ACCEPTED (fallback)
+    return !m.status || m.status === "ACCEPTED";
+  });
+
+  if (acceptedMembers.length === 0) {
+    console.error(
+      "❌ No accepted members in team:",
+      submission.team.id,
+      "Members count:",
+      submission.team.members?.length || 0
+    );
+    return null;
+  }
+
+  console.log("✅ Found accepted members:", acceptedMembers.length);
+  console.log("🔍 Member structure sample:", acceptedMembers[0]);
+
+  // Map members ke format yang dibutuhkan
+  // Handle 2 struktur: nested user object OR flat user data
+  const members: Member[] = acceptedMembers
+    .map((m) => {
+      // Cek apakah user object nested atau data flat
+      const userObj = m.user;
+      
+      // Jika user object ada (nested structure)
+      if (userObj) {
+        return {
+          id: userObj.id,
+          name: userObj.name,
+          nim: userObj.nim,
+          prodi: userObj.prodi,
+          role: m.role === "KETUA" ? "Ketua" : "Anggota",
+        };
+      }
+      
+      // Fallback: user data flat di member object
+      console.warn("⚠️ Member user nested object missing, using flat structure:", {
+        memberId: (m as any).id,
+        userId: (m as any).userId,
+        name: (m as any).name,
+        nim: (m as any).nim,
+        prodi: (m as any).prodi,
+      });
+      
+      return {
+        id: (m as any).userId || (m as any).id,
+        name: (m as any).name,
+        nim: (m as any).nim,
+        prodi: (m as any).prodi,
+        role: m.role === "KETUA" ? "Ketua" : "Anggota",
+      };
+    });
+
+  // Sort: Ketua first
+  members.sort((a, b) => {
+    if (a.role === "Ketua") return -1;
+    if (b.role === "Ketua") return 1;
+    return 0;
+  });
+
+  // Map documents
+  const documents: DocumentFile[] = (submission.documents || [])
+    .map((doc) => {
+      // ✅ Backend sekarang mengirimkan uploadedByUser object dengan name
+      let uploaderName = "Unknown";
+      
+      // Prioritas 1: Gunakan uploadedByUser.name dari backend (NEW!)
+      if (doc.uploadedByUser && doc.uploadedByUser.name) {
+        uploaderName = doc.uploadedByUser.name;
+      }
+      // Fallback 1: Cari dari team members jika uploadedByUser tidak ada
+      else if (doc.uploadedByUserId) {
+        const uploader = acceptedMembers.find((m) => {
+          const userId = m.user?.id || (m as any).userId;
+          return userId === doc.uploadedByUserId;
+        });
+        uploaderName = uploader?.user?.name || (uploader as any)?.name || "Unknown";
+      }
+      // Fallback 2: Gunakan string uploadedBy jika ada
+      else if ("uploadedBy" in doc && typeof doc.uploadedBy === "string") {
+        uploaderName = doc.uploadedBy;
+      }
+
+      console.log("📄 Mapping document:", {
+        docId: doc.id,
+        documentType: doc.documentType,
+        hasUploadedByUser: !!doc.uploadedByUser,
+        uploadedByUserName: doc.uploadedByUser?.name,
+        uploadedByUserId: doc.uploadedByUserId,
+        resolvedUploaderName: uploaderName,
+        fileName: doc.fileName,
+        fileUrl: doc.fileUrl,
+      });
+
+      return mapSubmissionDocumentToDocumentFile(doc, uploaderName);
+    })
+    .filter((doc) => {
+      // Filter out documents dengan title undefined
+      if (doc.title === "undefined" || !doc.title) {
+        console.warn("⚠️ Filtering out document with undefined/empty title:", doc);
+        return false;
+      }
+      return true;
+    });
+
+  console.log("📄 Documents mapping summary:", {
+    submissionId: submission.id,
+    totalDocumentsFromBackend: submission.documents?.length || 0,
+    totalDocumentsAfterMapping: documents.length,
+    documents: documents.map((d) => ({
+      id: d.id,
+      title: d.title,
+      uploadedBy: d.uploadedBy,
+      url: d.url,
+    })),
+  });
+
+  // Map status
+  let status: "pending" | "approved" | "rejected" = "pending";
+  if (submission.status === "APPROVED") {
+    status = "approved";
+  } else if (submission.status === "REJECTED") {
+    status = "rejected";
+  }
+
+  // Supervisor dummy (TODO: ambil dari team.academicSupervisor jika ada)
+  const supervisor =
+    submission.team.academicSupervisor || "Dr. Ahmad Fauzi, M.Kom"; // Dummy supervisor
+
+  return {
+    id: parseInt(submission.id, 10) || Math.floor(Math.random() * 10000),
+    date: submission.submittedAt
+      ? new Date(submission.submittedAt).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+      : new Date(submission.createdAt).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+    status,
+    supervisor,
+    members,
+    internship: {
+      tujuanSurat: submission.letterPurpose,
+      namaTempat: submission.companyName,
+      alamatTempat: submission.companyAddress,
+      divisi: submission.division,
+      tanggalMulai: formatDate(submission.startDate),
+      tanggalSelesai: formatDate(submission.endDate),
+    },
+    documents,
+    rejectionComment: submission.rejectionReason,
+    // documentReviews akan dikelola di state lokal admin page
+  };
+}
+
+/**
+ * Map array submissions ke applications
+ */
+export function mapSubmissionsToApplications(
+  submissions: SubmissionWithTeam[],
+): Application[] {
+  return submissions
+    .map(mapSubmissionToApplication)
+    .filter((app): app is Application => app !== null);
+}

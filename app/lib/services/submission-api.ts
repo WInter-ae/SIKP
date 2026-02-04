@@ -219,16 +219,34 @@ export async function updateSubmission(
 
 /**
  * Submit/finalize submission (ubah status menjadi PENDING_REVIEW)
+ * 
+ * Note: Backend support both POST dan PUT method, tapi preferensi gunakan POST
+ * untuk consistency dengan create endpoint
  */
 export async function submitSubmission(submissionId: string) {
   try {
+    // Try POST first (more standard for actions)
     const response = await apiClient<Submission>(
       `/api/submissions/${submissionId}/submit`,
       {
-        method: "PUT",
+        method: "POST",
         body: JSON.stringify({}),
       },
     );
+    
+    // Jika POST 404, fallback ke PUT
+    if (!response.success && response.message?.includes("404")) {
+      console.warn("📢 POST failed with 404, trying PUT method...");
+      const putResponse = await apiClient<Submission>(
+        `/api/submissions/${submissionId}/submit`,
+        {
+          method: "PUT",
+          body: JSON.stringify({}),
+        },
+      );
+      return putResponse;
+    }
+    
     return response;
   } catch (error) {
     console.error("❌ Error submitting submission:", error);
@@ -259,6 +277,64 @@ export async function deleteSubmissionDocument(documentId: string) {
       success: false,
       message:
         error instanceof Error ? error.message : "Gagal menghapus dokumen",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Fetch semua submissions untuk admin (hanya yang statusnya PENDING_REVIEW, APPROVED, atau REJECTED)
+ * Endpoint ini hanya bisa diakses oleh admin
+ */
+export async function getAllSubmissionsForAdmin() {
+  try {
+    const response = await apiClient<Submission[]>(
+      "/api/admin/submissions",
+    );
+    return response;
+  } catch (error) {
+    console.error("❌ Error fetching admin submissions:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Gagal memuat daftar pengajuan",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Update status submission (approve/reject) oleh admin
+ */
+export async function updateSubmissionStatus(
+  submissionId: string,
+  status: "APPROVED" | "REJECTED",
+  rejectionReason?: string,
+  documentReviews?: Record<string, "approved" | "rejected">,
+) {
+  try {
+    const response = await apiClient<Submission>(
+      `/api/admin/submissions/${submissionId}/status`,
+      {
+        method: "PUT",
+        body: JSON.stringify({
+          status,
+          rejectionReason,
+          documentReviews,
+        }),
+      },
+    );
+    return response;
+  } catch (error) {
+    console.error("❌ Error updating submission status:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Gagal memperbarui status pengajuan",
       data: null,
     };
   }

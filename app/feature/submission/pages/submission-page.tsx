@@ -229,12 +229,13 @@ function SubmissionPage() {
       );
 
       if (response.success && response.data) {
+        const docToAdd = response.data;
         setSubmissionDocuments((prev) => {
           // Hapus proposal lama jika ada
           const filtered = prev.filter(
             (doc) => doc.documentType !== "PROPOSAL_KETUA",
           );
-          return [...filtered, response.data];
+          return [...filtered, docToAdd];
         });
         setProposalFile(file);
         toast.success("Proposal berhasil diupload");
@@ -407,20 +408,36 @@ function SubmissionPage() {
       }
 
       // Submit submission (ubah status ke PENDING_REVIEW)
-      const submitResponse = await submitSubmission(submission?.id || "");
+      const submissionId = submission?.id || "";
+      console.log("📤 Submitting submission:", { submissionId, teamId });
+
+      if (!submissionId) {
+        toast.error("Submission ID tidak valid. Silakan coba ulang.");
+        return;
+      }
+
+      const submitResponse = await submitSubmission(submissionId);
+      console.log("📥 Submit response:", submitResponse);
+
       if (submitResponse.success) {
         toast.success("Surat pengantar berhasil diajukan!");
+        console.log("✅ Submission berhasil di-submit:", submitResponse.data);
         navigate("/mahasiswa/kp/surat-pengantar");
       } else {
-        toast.error(
-          submitResponse.message || "Gagal mengajukan surat pengantar",
-        );
+        const errorMsg =
+          submitResponse.message || "Gagal mengajukan surat pengantar";
+        console.error("❌ Submit failed:", errorMsg);
+        toast.error(errorMsg);
       }
 
       setIsConfirmDialogOpen(false);
     } catch (error) {
       console.error("❌ Error submitting:", error);
-      toast.error("Terjadi kesalahan saat mengajukan surat pengantar");
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat mengajukan surat pengantar";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
