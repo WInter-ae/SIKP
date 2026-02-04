@@ -39,7 +39,10 @@ interface ReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApprove: (docReviews: Record<string, "approved" | "rejected">) => void;
-  onReject: (comment: string, docReviews: Record<string, "approved" | "rejected">) => void;
+  onReject: (
+    comment: string,
+    docReviews: Record<string, "approved" | "rejected">,
+  ) => void;
 }
 
 function ReviewModal({
@@ -162,11 +165,15 @@ function ReviewModal({
       return;
     }
     if (hasMissingDocs) {
-      toast.warning("Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.");
+      toast.warning(
+        "Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.",
+      );
       return;
     }
     if (!allDocsReviewed) {
-      toast.warning("Harap review semua dokumen yang diupload terlebih dahulu.");
+      toast.warning(
+        "Harap review semua dokumen yang diupload terlebih dahulu.",
+      );
       return;
     }
     onApprove(docReviews);
@@ -199,7 +206,7 @@ function ReviewModal({
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-destructive/10 text-destructive rounded flex items-center justify-center">
+          <div className="w-8 h-8 bg-gray-200 text-green-600 rounded flex items-center justify-center">
             <FileText className="w-5 h-5" />
           </div>
           <div>
@@ -420,7 +427,7 @@ function ReviewModal({
                 <div className="md:col-span-2 space-y-2">
                   <Label>Nama Unit/Divisi</Label>
                   <Input
-                    value={application.internship.pembimbingLapangan}
+                    value={application.internship.divisi}
                     readOnly
                     className="bg-muted cursor-not-allowed"
                   />
@@ -499,8 +506,8 @@ function ReviewModal({
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
                       Terdapat dokumen yang ditolak. Anda <strong>wajib</strong>{" "}
-                      memberikan catatan review untuk menjelaskan alasan penolakan
-                      kepada mahasiswa.
+                      memberikan catatan review untuk menjelaskan alasan
+                      penolakan kepada mahasiswa.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -552,7 +559,8 @@ function ReviewModal({
                         Surat Pengantar Telah Disetujui
                       </p>
                       <p className="text-sm text-green-800 dark:text-green-200 mb-4">
-                        Surat pengantar kerja praktik telah berhasil dibuat dan dapat diunduh oleh mahasiswa.
+                        Surat pengantar kerja praktik telah berhasil dibuat dan
+                        dapat diunduh oleh mahasiswa.
                       </p>
                       <Button
                         variant="outline"
@@ -601,7 +609,8 @@ function ReviewModal({
         <div className="flex-shrink-0 border-t border-border pt-4">
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
             <Button variant="outline" onClick={handleClose}>
-              {application.status === "approved" || application.status === "rejected"
+              {application.status === "approved" ||
+              application.status === "rejected"
                 ? "Tutup"
                 : "Batal"}
             </Button>
@@ -617,7 +626,9 @@ function ReviewModal({
                 </Button>
                 <Button
                   onClick={handleApproveApplication}
-                  disabled={hasRejectedDocs || hasMissingDocs || !allDocsReviewed}
+                  disabled={
+                    hasRejectedDocs || hasMissingDocs || !allDocsReviewed
+                  }
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   <Check className="w-4 h-4 mr-2" />

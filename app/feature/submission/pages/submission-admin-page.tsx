@@ -33,180 +33,82 @@ import StatCard from "../components/stat-card";
 import ReviewModal from "../components/review-modal";
 
 import type { Application } from "../types";
+import {
+  getAllSubmissionsForAdmin,
+  updateSubmissionStatus,
+} from "~/lib/services/submission-api";
+import {
+  mapSubmissionsToApplications,
+  type SubmissionWithTeam,
+} from "../utils/submission-mapper";
 
 function SubmissionAdminPage() {
-  // Mock data for applications
-  const [applications, setApplications] = useState<Application[]>([
-    {
-      id: 1,
-      date: "15/06/2023",
-      status: "pending",
-      supervisor: "Dr. Budi Santoso, M.Kom",
-      members: [
-        {
-          id: 1,
-          name: "Adam Rizki",
-          nim: "2021001234",
-          prodi: "Teknik Informatika",
-          role: "Ketua",
-        },
-        {
-          id: 2,
-          name: "Robin",
-          nim: "2021001235",
-          prodi: "Teknik Informatika",
-          role: "Anggota",
-        },
-        {
-          id: 3,
-          name: "Raihan",
-          nim: "2021001236",
-          prodi: "Teknik Informatika",
-          role: "Anggota",
-        },
-      ],
-      internship: {
-        tujuanSurat: "HRD PT. Teknologi Indonesia",
-        namaTempat: "PT. Teknologi Indonesia",
-        alamatTempat: "Jl. Teknologi No. 123, Jakarta",
-        tanggalMulai: "01 Juli 2023",
-        tanggalSelesai: "30 September 2023",
-        pembimbingLapangan: "Bapak Joko",
-      },
-      documents: [
-        {
-          id: "doc-1",
-          title: "Surat Proposal",
-          uploadedBy: "Adam (Ketua Tim)",
-          uploadDate: "15/06/2023",
-          status: "uploaded",
-          url: "data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNTMgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQ5CiUlRU9GCg==",
-        },
-        {
-          id: "doc-2",
-          title: "Surat Kesediaan",
-          uploadedBy: "Adam Rizki",
-          uploadDate: "15/06/2023",
-          status: "uploaded",
-          url: "data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNTMgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQ5CiUlRU9GCg==",
-        },
-        {
-          id: "doc-3",
-          title: "Surat Kesediaan",
-          uploadedBy: "Robin",
-          uploadDate: "15/06/2023",
-          status: "uploaded",
-          url: "data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNTMgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQ5CiUlRU9GCg==",
-        },
-        {
-          id: "doc-4",
-          title: "KRS Semester 4",
-          uploadedBy: "Adam Rizki",
-          uploadDate: "15/06/2023",
-          status: "uploaded",
-          url: "data:application/pdf;base64,JVBERi0xLjcKCjEgMCBvYmogICUgZW50cnkgcG9pbnQKPDwKICAvVHlwZSAvQ2F0YWxvZwogIC9QYWdlcyAyIDAgUgo+PgplbmRvYmoKCjIgMCBvYmoKPDwKICAvVHlwZSAvUGFnZXwKICAvTWVkaWFCb3ggWyAwIDAgMjAwIDIwMCBdCiAgL0NvdW50IDEKICAvS2lkcyBbIDMgMCBSIF0KPj4KZW5kb2JqCgozIDAgb2JqCjw8CiAgL1R5cGUgL1BhZ2UKICAvUGFyZW50IDIgMCBSCiAgL1Jlc291cmNlcyA8PAogICAgL0ZvbnQgPDwKICAgICAgL0YxIDQgMCBSCisgICAgPj4KICA+PgogIC9Db250ZW50cyA1IDAgUgo+PgplbmRvYmoKCjQgMCBvYmoKPDwKICAvVHlwZSAvRm9udAogIC9TdWJ0eXBlIC9UeXBlMQogIC9CYXNlRm9udCAvVGltZXMtUm9tYW4KPj4KZW5kb2JqCgo1IDAgb2JqCjw8IC9MZW5ndGggNDQgPj4Kc3RyZWFtCkJUCjcwIDUwIFRECi9GMSAxMiBUZgooSGVsbG8sIHdvcmxkISkgVGoKRVQKZW5kc3RyZWFtCmVuZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4gCjAwMDAwMDAwNjAgMDAwMDAgbiAKMDAwMDAwMDE1NyAwMDAwMCBuIAowMDAwMDAwMjU1IDAwMDAwIG4gCjAwMDAwMDAzNTMgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDQ5CiUlRU9GCg==",
-        },
-      ],
-    },
-    {
-      id: 2,
-      date: "14/06/2023",
-      status: "approved",
-      supervisor: "Ibu Siti Aminah, M.T",
-      members: [
-        {
-          id: 4,
-          name: "Siti Nurhaliza",
-          nim: "2021001235",
-          prodi: "Sistem Informasi",
-          role: "Ketua",
-        },
-      ],
-      internship: {
-        tujuanSurat: "HRD CV. Digital Creative",
-        namaTempat: "CV. Digital Creative",
-        alamatTempat: "Jl. Creative No. 45, Bandung",
-        tanggalMulai: "05 Juli 2023",
-        tanggalSelesai: "30 September 2023",
-        pembimbingLapangan: "Ibu Ratna",
-      },
-      documents: [],
-    },
-    {
-      id: 3,
-      date: "13/06/2023",
-      status: "rejected",
-      supervisor: "Bapak Ahmad, M.Kom",
-      members: [
-        {
-          id: 5,
-          name: "Budi Santoso",
-          nim: "2021001236",
-          prodi: "Teknik Informatika",
-          role: "Ketua",
-        },
-      ],
-      internship: {
-        tujuanSurat: "HRD PT. Finansial Teknologi",
-        namaTempat: "PT. Finansial Teknologi",
-        alamatTempat: "Jl. Finansial No. 10, Jakarta",
-        tanggalMulai: "10 Juli 2023",
-        tanggalSelesai: "30 September 2023",
-        pembimbingLapangan: "Bapak Tono",
-      },
-      documents: [],
-    },
-    {
-      id: 4,
-      date: "12/06/2023",
-      status: "pending",
-      supervisor: "Ibu Rina, M.Kom",
-      members: [
-        {
-          id: 6,
-          name: "Dewi Lestari",
-          nim: "2021001237",
-          prodi: "Sistem Informasi",
-          role: "Ketua",
-        },
-      ],
-      internship: {
-        tujuanSurat: "HRD PT. Media Kreatif",
-        namaTempat: "PT. Media Kreatif",
-        alamatTempat: "Jl. Media No. 22, Surabaya",
-        tanggalMulai: "15 Juli 2023",
-        tanggalSelesai: "30 September 2023",
-        pembimbingLapangan: "Bapak Dedi",
-      },
-      documents: [],
-    },
-  ]);
-
-  // Load data from LocalStorage on mount
-  useEffect(() => {
-    const storedData = localStorage.getItem("kp_submissions");
-    if (storedData) {
-      try {
-        const parsedData = JSON.parse(storedData);
-        if (Array.isArray(parsedData)) {
-          setApplications((prev) => {
-            const newIds = new Set(parsedData.map((d: Application) => d.id));
-            const filteredPrev = prev.filter((p) => !newIds.has(p.id));
-            const combined = [...parsedData, ...filteredPrev];
-            return combined.sort((a, b) => b.id - a.id);
-          });
-        }
-      } catch {
-        // Gagal memuat data pengajuan dari localStorage
-      }
-    }
-  }, []);
-
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] =
     useState<Application | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  // Fetch submissions from backend
+  useEffect(() => {
+    const loadSubmissions = async () => {
+      try {
+        setIsLoading(true);
+        console.log("🔄 Fetching admin submissions...");
+        const response = await getAllSubmissionsForAdmin();
+
+        console.log("📊 API Response:", {
+          success: response.success,
+          message: response.message,
+          dataCount: response.data?.length || 0,
+          data: response.data,
+        });
+
+        if (response.success && response.data && response.data.length > 0) {
+          console.log("✅ Loaded submissions from backend:", response.data);
+          const submissions = response.data as SubmissionWithTeam[];
+          const missingTeamCount = submissions.filter(
+            (submission) => !submission.team,
+          ).length;
+          if (missingTeamCount > 0) {
+            console.warn(
+              `⚠️ ${missingTeamCount} submissions missing team data from backend response.`,
+            );
+          }
+
+          const mappedApplications = mapSubmissionsToApplications(submissions);
+          console.log("🎯 Mapped applications:", {
+            count: mappedApplications.length,
+            applications: mappedApplications,
+          });
+          setApplications(mappedApplications);
+
+          if (mappedApplications.length === 0) {
+            console.warn(
+              "⚠️ No applications after mapping. Check if backend returns valid team data.",
+            );
+          }
+        } else if (response.success && response.data?.length === 0) {
+          console.log("📭 No submissions in database");
+          setApplications([]);
+        } else {
+          console.error("❌ API Error:", response.message);
+          toast.error(response.message || "Gagal memuat data pengajuan");
+        }
+      } catch (error) {
+        console.error("❌ Error loading submissions:", error);
+        const errorMsg =
+          error instanceof Error ? error.message : "Terjadi kesalahan";
+        toast.error(errorMsg);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void loadSubmissions();
+  }, []);
 
   // Calculate statistics with LucideIcon
   const stats = useMemo(() => {
@@ -276,49 +178,81 @@ function SubmissionAdminPage() {
     setSelectedApplication(null);
   };
 
-  const handleApprove = (
+  const handleApprove = async (
     docReviews: Record<string, "approved" | "rejected">,
   ) => {
-    if (selectedApplication) {
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === selectedApplication.id
-            ? {
-                ...app,
-                status: "approved" as const,
-                documentReviews: docReviews,
-              }
-            : app,
-        ),
+    if (!selectedApplication) return;
+
+    try {
+      const response = await updateSubmissionStatus(
+        selectedApplication.id.toString(),
+        "APPROVED",
+        undefined,
+        docReviews,
       );
-      toast.success(
-        "Pengajuan telah disetujui dan surat pengantar berhasil dibuat dan dikirimkan!",
-      );
-      handleCloseModal();
+
+      if (response.success) {
+        setApplications((prev) =>
+          prev.map((app) =>
+            app.id === selectedApplication.id
+              ? {
+                  ...app,
+                  status: "approved" as const,
+                  documentReviews: docReviews,
+                }
+              : app,
+          ),
+        );
+        toast.success(
+          "Pengajuan telah disetujui dan surat pengantar berhasil dibuat dan dikirimkan!",
+        );
+        handleCloseModal();
+      } else {
+        toast.error(response.message || "Gagal menyetujui pengajuan");
+      }
+    } catch (error) {
+      console.error("❌ Error approving submission:", error);
+      toast.error("Terjadi kesalahan saat menyetujui pengajuan");
     }
   };
 
-  const handleReject = (
+  const handleReject = async (
     comment: string,
     docReviews: Record<string, "approved" | "rejected">,
   ) => {
-    if (selectedApplication) {
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === selectedApplication.id
-            ? {
-                ...app,
-                status: "rejected" as const,
-                rejectionComment: comment,
-                documentReviews: docReviews,
-              }
-            : app,
-        ),
+    if (!selectedApplication) return;
+
+    try {
+      const response = await updateSubmissionStatus(
+        selectedApplication.id.toString(),
+        "REJECTED",
+        comment,
+        docReviews,
       );
-      toast.error(
-        comment ? `Pengajuan ditolak: ${comment}` : "Pengajuan telah ditolak",
-      );
-      handleCloseModal();
+
+      if (response.success) {
+        setApplications((prev) =>
+          prev.map((app) =>
+            app.id === selectedApplication.id
+              ? {
+                  ...app,
+                  status: "rejected" as const,
+                  rejectionComment: comment,
+                  documentReviews: docReviews,
+                }
+              : app,
+          ),
+        );
+        toast.error(
+          comment ? `Pengajuan ditolak: ${comment}` : "Pengajuan telah ditolak",
+        );
+        handleCloseModal();
+      } else {
+        toast.error(response.message || "Gagal menolak pengajuan");
+      }
+    } catch (error) {
+      console.error("❌ Error rejecting submission:", error);
+      toast.error("Terjadi kesalahan saat menolak pengajuan");
     }
   };
 
@@ -423,30 +357,41 @@ function SubmissionAdminPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="pl-6">Tanggal</TableHead>
-                  <TableHead>NIM</TableHead>
-                  <TableHead>Nama Mahasiswa</TableHead>
-                  <TableHead>Perusahaan</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="pr-6">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredApplications.map((app) => {
-                  const leader =
-                    app.members.find((m) => m.role === "Ketua") ||
-                    app.members[0];
-                  return (
-                    <TableRow key={app.id} className="hover:bg-muted/50">
-                      <TableCell className="text-foreground pl-6">
-                        {app.date}
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {leader?.nim || "-"}
-                      </TableCell>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-muted-foreground">
+                  Memuat data pengajuan...
+                </p>
+              </div>
+            ) : filteredApplications.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <p className="text-muted-foreground">
+                  {searchTerm || statusFilter !== "all"
+                    ? "Tidak ada pengajuan yang sesuai dengan filter"
+                    : "Belum ada pengajuan surat pengantar"}
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="pl-6">Tanggal</TableHead>
+                    <TableHead>Nama Mahasiswa</TableHead>
+                    <TableHead>Perusahaan</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="pr-6">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredApplications.map((app) => {
+                    const leader =
+                      app.members.find((m) => m.role === "Ketua") ||
+                      app.members[0];
+                    return (
+                      <TableRow key={app.id} className="hover:bg-muted/50">
+                        <TableCell className="text-foreground pl-6">
+                          {app.date}
+                        </TableCell>
                       <TableCell>
                         <div className="font-medium text-foreground">
                           {leader?.name || "Unknown"}
@@ -475,6 +420,7 @@ function SubmissionAdminPage() {
                 })}
               </TableBody>
             </Table>
+            )}
           </CardContent>
         </Card>
 
