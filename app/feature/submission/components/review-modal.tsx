@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
@@ -64,18 +65,70 @@ function ReviewModal({
     } else {
       setDocReviews({});
     }
-  }, [application?.id, application?.documentReviews]);
+
+    // Debug: log documents received by modal - VERY DETAILED
+    console.log("📋 ReviewModal received application:", {
+      applicationId: application?.id,
+      documentsCount: application?.documents?.length || 0,
+      documents: application?.documents?.map((d) => ({
+        id: d.id,
+        title: d.title,
+        uploadedBy: d.uploadedBy,
+        uploadDate: d.uploadDate,
+        url: d.url,
+        status: d.status,
+        fullObject: d,
+      })),
+      rawApplication: application,
+    });
+  }, [
+    application?.id,
+    application?.documentReviews,
+    application?.documents,
+    application,
+  ]);
 
   // Group documents by title
   const groupedDocuments = useMemo<Record<string, DocumentFile[]>>(() => {
-    if (!application) return {};
+    if (!application) {
+      console.log("📂 groupedDocuments: No application yet");
+      return {};
+    }
+
+    console.log("📂 Starting to group documents:", {
+      applicationId: application.id,
+      documentsArray: application.documents,
+      documentsCount: application.documents.length,
+    });
+
     const groups: Record<string, DocumentFile[]> = {};
-    application.documents.forEach((doc) => {
+    application.documents.forEach((doc, index) => {
+      console.log(`📂 Processing document ${index}:`, {
+        docId: doc.id,
+        title: doc.title,
+        titleType: typeof doc.title,
+        titleUndefined: doc.title === "undefined",
+        titleEmpty: !doc.title,
+      });
+
       if (!groups[doc.title]) {
         groups[doc.title] = [];
       }
       groups[doc.title].push(doc);
     });
+
+    console.log("📂 Final grouped documents:", {
+      applicationId: application.id,
+      documentCount: application.documents.length,
+      groupCount: Object.keys(groups).length,
+      groups: Object.keys(groups),
+      groupDetails: Object.entries(groups).map(([title, docs]) => ({
+        title,
+        count: docs.length,
+        docs: docs.map((d) => ({ id: d.id, uploadedBy: d.uploadedBy })),
+      })),
+    });
+
     return groups;
   }, [application]);
 
@@ -91,8 +144,21 @@ function ReviewModal({
       "Daftar Kumpulan Nilai",
       "Bukti Pembayaran UKT",
     ];
-    const uploadedTitles = Object.keys(groupedDocuments);
-    return Array.from(new Set([...standardDocs, ...uploadedTitles]));
+    const uploadedTitles = Object.keys(groupedDocuments).filter(
+      (title) => title && title !== "undefined",
+    );
+    const allTitles = Array.from(new Set([...standardDocs, ...uploadedTitles]));
+
+    console.log("📋 All document titles in modal:", {
+      applicationId: application.id,
+      standardDocsCount: standardDocs.length,
+      uploadedTitlesCount: uploadedTitles.length,
+      uploadedTitles,
+      allTitlesCount: allTitles.length,
+      allTitles,
+    });
+
+    return allTitles;
   }, [application, groupedDocuments]);
 
   // Cek apakah ada dokumen yang belum dikumpulkan (missing)
@@ -315,11 +381,18 @@ function ReviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent
+        className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+        aria-label="Review Pengajuan Surat Pengantar"
+      >
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl">
             Review Pengajuan Surat Pengantar
           </DialogTitle>
+          <DialogDescription>
+            Modal untuk admin meninjau dan menyetujui atau menolak pengajuan
+            surat pengantar dari mahasiswa dengan dokumen lengkap.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-8 py-4 flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -448,6 +521,15 @@ function ReviewModal({
               <Accordion type="multiple" className="space-y-4">
                 {allDocumentTitles.map((title) => {
                   const docs = groupedDocuments[title] || [];
+                  console.log(`📄 Rendering accordion for "${title}":`, {
+                    title,
+                    docsCount: docs.length,
+                    docs: docs.map((d) => ({
+                      id: d.id,
+                      uploadedBy: d.uploadedBy,
+                    })),
+                  });
+
                   return (
                     <AccordionItem
                       key={title}

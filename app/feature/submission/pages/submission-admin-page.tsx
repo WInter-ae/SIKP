@@ -63,11 +63,26 @@ function SubmissionAdminPage() {
           success: response.success,
           message: response.message,
           dataCount: response.data?.length || 0,
-          data: response.data,
         });
 
         if (response.success && response.data && response.data.length > 0) {
           console.log("✅ Loaded submissions from backend:", response.data);
+          
+          // Debug: Log raw documents from backend
+          console.log("📦 Backend documents structure:", {
+            firstSubmission: response.data[0]?.id,
+            documentsCount: response.data[0]?.documents?.length || 0,
+            firstDocument: response.data[0]?.documents?.[0]
+              ? {
+                  id: response.data[0].documents[0].id,
+                  documentType: response.data[0].documents[0].documentType,
+                  hasUploadedByUser:
+                    !!response.data[0].documents[0].uploadedByUser,
+                  uploadedByUser: response.data[0].documents[0].uploadedByUser,
+                }
+              : null,
+          });
+          
           const submissions = response.data as SubmissionWithTeam[];
           const missingTeamCount = submissions.filter(
             (submission) => !submission.team,
@@ -81,7 +96,17 @@ function SubmissionAdminPage() {
           const mappedApplications = mapSubmissionsToApplications(submissions);
           console.log("🎯 Mapped applications:", {
             count: mappedApplications.length,
-            applications: mappedApplications,
+            applications: mappedApplications.map((app) => ({
+              id: app.id,
+              membersCount: app.members.length,
+              documentsCount: app.documents.length,
+              documents: app.documents.map((d) => ({
+                id: d.id,
+                title: d.title,
+                uploadedBy: d.uploadedBy,
+                url: d.url,
+              })),
+            })),
           });
           setApplications(mappedApplications);
 
@@ -153,19 +178,54 @@ function SubmissionAdminPage() {
 
   // Filter applications
   const filteredApplications = useMemo(() => {
-    return applications.filter((app) => {
+    console.log("🔍 Filtering applications:", {
+      totalApplications: applications.length,
+      searchTerm,
+      statusFilter,
+      applications: applications.map((app) => ({
+        id: app.id,
+        membersCount: app.members?.length || 0,
+        members: app.members,
+        status: app.status,
+      })),
+    });
+
+    const filtered = applications.filter((app) => {
+      // Defensive: check if members exist
+      if (!app.members || app.members.length === 0) {
+        console.warn("⚠️ Application has no members:", app.id);
+        return false;
+      }
+
       const leader =
         app.members.find((m) => m.role === "Ketua") || app.members[0];
 
-      if (!leader) return false;
+      if (!leader) {
+        console.warn("⚠️ No leader found for application:", app.id);
+        return false;
+      }
 
       const matchesSearch =
         leader.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (leader.nim?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
       const matchesStatus =
         statusFilter === "all" || app.status === statusFilter;
-      return matchesSearch && matchesStatus;
+
+      const passes = matchesSearch && matchesStatus;
+      if (!passes) {
+        console.log("❌ App filtered out:", {
+          id: app.id,
+          leaderName: leader.name,
+          matchesSearch,
+          matchesStatus,
+        });
+      }
+
+      return passes;
     });
+
+    console.log("✅ Filtered applications count:", filtered.length);
+    return filtered;
   }, [applications, searchTerm, statusFilter]);
 
   const handleReview = (application: Application) => {
@@ -392,34 +452,34 @@ function SubmissionAdminPage() {
                         <TableCell className="text-foreground pl-6">
                           {app.date}
                         </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-foreground">
-                          {leader?.name || "Unknown"}
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {app.members.length > 1
-                            ? `+ ${app.members.length - 1} Anggota`
-                            : "Individu"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {app.internship.namaTempat}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(app.status)}</TableCell>
-                      <TableCell className="pr-6">
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto text-primary hover:text-primary/80"
-                          onClick={() => handleReview(app)}
-                        >
-                          {app.status === "pending" ? "Review" : "Lihat"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                        <TableCell>
+                          <div className="font-medium text-foreground">
+                            {leader?.name || "Unknown"}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {app.members.length > 1
+                              ? `+ ${app.members.length - 1} Anggota`
+                              : "Individu"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-foreground">
+                          {app.internship.namaTempat}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(app.status)}</TableCell>
+                        <TableCell className="pr-6">
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto text-primary hover:text-primary/80"
+                            onClick={() => handleReview(app)}
+                          >
+                            {app.status === "pending" ? "Review" : "Lihat"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
