@@ -20,6 +20,7 @@ interface DocumentDropdownProps {
   documents: SubmissionDocument[];
   currentUserId?: string;
   onUpload?: (documentId: number, memberId: string, file: File) => void;
+  disabled?: boolean;
 }
 
 function DocumentDropdown({
@@ -28,6 +29,7 @@ function DocumentDropdown({
   documents,
   currentUserId,
   onUpload,
+  disabled,
 }: DocumentDropdownProps) {
   const [uploadingMember, setUploadingMember] = useState<{
     id: string;
@@ -98,7 +100,7 @@ function DocumentDropdown({
                     <div className="flex items-center gap-2">
                       <Button
                         size="sm"
-                        disabled={!isCurrentUser}
+                        disabled={!isCurrentUser || disabled}
                         onClick={() =>
                           setReuploadingMember({
                             id: member.id,
@@ -123,7 +125,7 @@ function DocumentDropdown({
                     <Button
                       variant="secondary"
                       size="sm"
-                      disabled={!isCurrentUser}
+                      disabled={!isCurrentUser || disabled}
                       onClick={() =>
                         setUploadingMember({ id: member.id, name: member.name })
                       }

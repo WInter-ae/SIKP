@@ -22,21 +22,25 @@ function CoverLetterPage() {
     const loadSubmissionStatus = async () => {
       try {
         setIsLoading(true);
-        
+
         // 1. Get user's team
         const teamsResponse = await getMyTeams();
-        
-        if (!teamsResponse.success || !teamsResponse.data || teamsResponse.data.length === 0) {
+
+        if (
+          !teamsResponse.success ||
+          !teamsResponse.data ||
+          teamsResponse.data.length === 0
+        ) {
           setError("Anda belum bergabung dengan tim manapun");
           setIsLoading(false);
           return;
         }
 
         const team = teamsResponse.data[0]; // Get first active team
-        
+
         // 2. Get submission untuk team ini
         const submissionResponse = await getSubmissionByTeamId(team.id);
-        
+
         if (submissionResponse.success && submissionResponse.data) {
           setSubmission(submissionResponse.data);
           console.log("✅ Loaded submission status:", submissionResponse.data);
@@ -74,7 +78,10 @@ function CoverLetterPage() {
     return (
       <div className="text-center py-12">
         <p className="text-destructive">{error}</p>
-        <Button onClick={() => navigate("/mahasiswa/kp/pengajuan")} className="mt-4">
+        <Button
+          onClick={() => navigate("/mahasiswa/kp/pengajuan")}
+          className="mt-4"
+        >
           Kembali ke Pengajuan
         </Button>
       </div>
@@ -87,8 +94,13 @@ function CoverLetterPage() {
     if (!submission) {
       return (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Belum ada pengajuan. Silakan ajukan terlebih dahulu.</p>
-          <Button onClick={() => navigate("/mahasiswa/kp/pengajuan")} className="mt-4">
+          <p className="text-muted-foreground">
+            Belum ada pengajuan. Silakan ajukan terlebih dahulu.
+          </p>
+          <Button
+            onClick={() => navigate("/mahasiswa/kp/pengajuan")}
+            className="mt-4"
+          >
             Ajukan Sekarang
           </Button>
         </div>
@@ -112,7 +124,10 @@ function CoverLetterPage() {
             title="Pengajuan Ditolak"
             description="Pengajuan Anda ditolak. Silakan perbaiki dan ajukan kembali."
             status="rejected"
-            comment={submission.rejectionReason || "Pengajuan ditolak. Silakan lihat komentar dari reviewer."}
+            comment={
+              submission.rejectionReason ||
+              "Pengajuan ditolak. Silakan lihat komentar dari reviewer."
+            }
             onAction={handleResubmit}
             actionText="Ajukan Ulang"
           />
@@ -131,8 +146,13 @@ function CoverLetterPage() {
       case "DRAFT":
         return (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Draft belum disimpan. Silakan lanjutkan pengajuan.</p>
-            <Button onClick={() => navigate("/mahasiswa/kp/pengajuan")} className="mt-4">
+            <p className="text-muted-foreground">
+              Draft belum disimpan. Silakan lanjutkan pengajuan.
+            </p>
+            <Button
+              onClick={() => navigate("/mahasiswa/kp/pengajuan")}
+              className="mt-4"
+            >
               Lanjutkan Pengajuan
             </Button>
           </div>
@@ -162,35 +182,26 @@ function CoverLetterPage() {
       </div>
 
       <Card className="mb-8">
-        <CardContent className="p-6">
-          {renderStatusSteps()}
-
-          {/* Navigation Buttons - Only show if there's a submission */}
-          {submission && (
-            <div className="flex justify-between mt-8">
-              <Button
-                variant="secondary"
-                asChild
-                className="px-6 py-3 font-medium"
-              >
-                <Link to="/mahasiswa/kp/pengajuan">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Sebelumnya
-                </Link>
-              </Button>
-              <Button
-                asChild
-                className="px-6 py-3 font-medium"
-              >
-                <Link to="/mahasiswa/kp/surat-balasan">
-                  Selanjutnya
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
+        <CardContent className="p-6">{renderStatusSteps()}</CardContent>
       </Card>
+
+      {/* Navigation Buttons - Only show if there's a submission */}
+      {submission && (
+        <div className="flex justify-between mt-8">
+          <Button variant="secondary" asChild className="px-6 py-3 font-medium">
+            <Link to="/mahasiswa/kp/pengajuan">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Sebelumnya
+            </Link>
+          </Button>
+          <Button asChild className="px-6 py-3 font-medium">
+            <Link to="/mahasiswa/kp/surat-balasan">
+              Selanjutnya
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      )}
     </>
   );
 }

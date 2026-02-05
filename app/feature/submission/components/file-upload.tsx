@@ -6,11 +6,12 @@ import { cn } from "~/lib/utils";
 import type { FileUploadProps } from "../types";
 import { Upload } from "lucide-react";
 
-function FileUpload({ label, onFileChange }: FileUploadProps) {
+function FileUpload({ label, onFileChange, disabled }: FileUploadProps & { disabled?: boolean }) {
   const [fileName, setFileName] = useState<string>("");
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return;
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setFileName(file.name);
@@ -21,15 +22,18 @@ function FileUpload({ label, onFileChange }: FileUploadProps) {
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    if (disabled) return;
     e.preventDefault();
     setIsDragging(true);
   };
 
   const handleDragLeave = () => {
+    if (disabled) return;
     setIsDragging(false);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (disabled) return;
     e.preventDefault();
     setIsDragging(false);
 
@@ -48,7 +52,9 @@ function FileUpload({ label, onFileChange }: FileUploadProps) {
       <div
         className={cn(
           "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition",
-          isDragging
+          disabled
+            ? "border-border bg-muted cursor-not-allowed opacity-50"
+            : isDragging
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50"
         )}
@@ -61,11 +67,14 @@ function FileUpload({ label, onFileChange }: FileUploadProps) {
           className="hidden"
           id="file-upload"
           onChange={handleFileChange}
+          disabled={disabled}
         />
-        <label htmlFor="file-upload" className="cursor-pointer">
+        <label htmlFor="file-upload" className={cn("cursor-pointer", disabled && "cursor-not-allowed")}>
           <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-muted-foreground">
-            {fileName ? fileName : "Klik untuk upload atau drag and drop file"}
+            {disabled 
+              ? "File tidak dapat diubah setelah pengajuan" 
+              : fileName ? fileName : "Klik untuk upload atau drag and drop file"}
           </p>
         </label>
       </div>

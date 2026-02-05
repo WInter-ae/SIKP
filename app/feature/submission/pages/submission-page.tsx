@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -35,7 +35,7 @@ import {
   submitSubmission,
 } from "~/lib/services/submission-api";
 import { useUser } from "~/contexts/user-context";
-import { ArrowLeft, Eye, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, Info } from "lucide-react";
 
 function SubmissionPage() {
   const navigate = useNavigate();
@@ -555,6 +555,7 @@ function SubmissionPage() {
                           size="sm"
                           className="w-full sm:w-auto"
                           onClick={() => setIsProposalReuploadConfirmOpen(true)}
+                          disabled={submission?.status === "PENDING_REVIEW"}
                         >
                           Terupload
                         </Button>
@@ -586,6 +587,7 @@ function SubmissionPage() {
                     <FileUpload
                       label="Upload Surat Proposal (Ketua Tim)"
                       onFileChange={handleProposalUpload}
+                      disabled={submission?.status === "PENDING_REVIEW"}
                     />
                   )
                 ) : (
@@ -598,8 +600,8 @@ function SubmissionPage() {
                         size="sm"
                         className={
                           proposalDocument
-                            ? "w-full sm:w-auto disabled:opacity-100 disabled:bg-primary disabled:text-primary-foreground"
-                            : "w-full sm:w-auto disabled:opacity-100 disabled:bg-destructive disabled:text-destructive-foreground"
+                            ? "w-full sm:w-auto opacity-50 cursor-not-allowed"
+                            : "w-full sm:w-auto opacity-50 cursor-not-allowed"
                         }
                         variant={proposalDocument ? "default" : "destructive"}
                         disabled
@@ -651,6 +653,7 @@ function SubmissionPage() {
                 documents={submissionDocuments}
                 currentUserId={user?.id}
                 onUpload={handleDocumentUpload}
+                disabled={submission?.status === "PENDING_REVIEW"}
               />
             ))}
           </div>
@@ -660,7 +663,9 @@ function SubmissionPage() {
             <AdditionalInfoForm
               initialData={additionalInfo}
               onDataChange={handleAdditionalInfoChange}
-              isEditable={isCurrentUserLeader}
+              isEditable={
+                isCurrentUserLeader && submission?.status !== "PENDING_REVIEW"
+              }
             />
 
             {/* Auto-save Status Indicator */}
@@ -696,13 +701,41 @@ function SubmissionPage() {
               onClick={() => setIsConfirmDialogOpen(true)}
               size="lg"
               className="px-8 py-3 font-medium text-lg"
+              disabled={
+                !isCurrentUserLeader || submission?.status === "PENDING_REVIEW"
+              }
             >
-              Ajukan Surat Pengantar
+              {submission?.status === "PENDING_REVIEW"
+                ? "Diajukan"
+                : "Ajukan Surat Pengantar"}
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Navigation Buttons - Only show if there's a submission */}
+      {submission && (
+        <div className="flex justify-between mt-8">
+          <Button variant="secondary" asChild className="px-6 py-3 font-medium">
+            <Link to="/mahasiswa/kp/buat-tim">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Sebelumnya
+            </Link>
+          </Button>
+          <Button
+            className="px-6 py-3 font-medium"
+            disabled={submission?.status !== "PENDING_REVIEW"}
+            onClick={() => {
+              if (submission?.status === "PENDING_REVIEW") {
+                navigate("/mahasiswa/kp/surat-pengantar");
+              }
+            }}
+          >
+            Selanjutnya
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      )}
       <ConfirmDialog
         open={isProposalReuploadConfirmOpen}
         onOpenChange={setIsProposalReuploadConfirmOpen}
