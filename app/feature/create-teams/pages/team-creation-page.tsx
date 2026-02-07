@@ -1020,6 +1020,16 @@ const TeamCreationPage = () => {
     if (team && team.id) {
       // Kasus 1: User adalah ketua -> harus bubarkan tim terlebih dahulu (flow lama)
       if (team.isLeader) {
+        if (team.status === "FIXED") {
+          setNotificationData({
+            type: "warning",
+            title: "Tim Sudah Difinalisasi",
+            message:
+              "Ketua tidak dapat menerima undangan jika tim sudah ditetapkan.",
+          });
+          setShowNotificationDialog(true);
+          return;
+        }
         console.log(
           "⚠️ User is leader, will delete old team before accepting invite",
         );
@@ -1035,6 +1045,17 @@ const TeamCreationPage = () => {
       }
 
       // Kasus 2: User adalah anggota (non-leader) -> auto keluar dari tim lama, lalu accept undangan baru
+      if (team.status === "FIXED") {
+        setNotificationData({
+          type: "warning",
+          title: "Tim Sudah Difinalisasi",
+          message:
+            "Anda tidak dapat keluar dari tim yang sudah ditetapkan. Hubungi ketua atau admin jika perlu perubahan.",
+        });
+        setShowNotificationDialog(true);
+        return;
+      }
+
       try {
         setIsLoading(true);
         console.log(
@@ -1302,6 +1323,16 @@ const TeamCreationPage = () => {
     const isSelf = member.userId === user.id;
 
     if (isSelf) {
+      if (team.status === "FIXED") {
+        setNotificationData({
+          type: "warning",
+          title: "Tim Sudah Difinalisasi",
+          message:
+            "Keluar dari tim hanya bisa dilakukan sebelum tim ditetapkan.",
+        });
+        setShowNotificationDialog(true);
+        return;
+      }
       // Anggota keluar dari tim - show confirm dialog
       setConfirmAction({
         type: "leave-team",
@@ -1319,9 +1350,21 @@ const TeamCreationPage = () => {
     }
   };
 
-  // Fungsi untuk execute leave team setelah confirm
+  // Fungsi bahwa leave team setelah confirm tidak dapat dilakukan
   const handleConfirmLeaveTeam = async () => {
     if (!team) return;
+    if (team.status === "FIXED") {
+      setNotificationData({
+        type: "warning",
+        title: "Tim Sudah Difinalisasi",
+        message:
+          "Keluar dari tim hanya bisa dilakukan sebelum tim ditetapkan.",
+      });
+      setShowNotificationDialog(true);
+      setShowConfirmLeaveDialog(false);
+      setConfirmAction(null);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -2535,7 +2578,7 @@ const TeamCreationPage = () => {
               <MemberList
                 title="Daftar Anggota"
                 members={team.members}
-                onRemove={handleRemoveMember}
+                onRemove={team.status !== "FIXED" ? handleRemoveMember : undefined}
                 isLeader={team.isLeader}
                 currentUserId={user?.id}
               />

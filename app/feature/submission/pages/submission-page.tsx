@@ -469,6 +469,55 @@ function SubmissionPage() {
     setIsProposalUploadDialogOpen(true);
   };
 
+  // Validasi kelengkapan dokumen dan form
+  const validateSubmission = () => {
+    const missingItems: string[] = [];
+
+    // 1. Cek proposal ketua
+    if (!proposalDocument) {
+      missingItems.push("Surat Proposal (Ketua Tim)");
+    }
+
+    // 2. Cek dokumen pribadi setiap anggota
+    teamMembers.forEach((member) => {
+      documents.forEach((doc) => {
+        const uploaded = submissionDocuments.some(
+          (submittedDoc) =>
+            submittedDoc.documentType === doc.type &&
+            submittedDoc.memberUserId === member.id,
+        );
+        if (!uploaded) {
+          missingItems.push(`${doc.title} - ${member.name}`);
+        }
+      });
+    });
+
+    // 3. Cek keterangan lain
+    if (!additionalInfo.tujuanSurat?.trim()) {
+      missingItems.push("Tujuan Surat");
+    }
+    if (!additionalInfo.namaTempat?.trim()) {
+      missingItems.push("Nama Tempat KP");
+    }
+    if (!additionalInfo.alamatTempat?.trim()) {
+      missingItems.push("Alamat Tempat KP");
+    }
+    if (!additionalInfo.divisi?.trim()) {
+      missingItems.push("Nama Unit/Divisi");
+    }
+    if (!additionalInfo.tanggalMulai) {
+      missingItems.push("Tanggal Mulai KP");
+    }
+    if (!additionalInfo.tanggalSelesai) {
+      missingItems.push("Tanggal Selesai KP");
+    }
+
+    return {
+      isValid: missingItems.length === 0,
+      missingItems,
+    };
+  };
+
   if (isUserLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -494,17 +543,6 @@ function SubmissionPage() {
     <>
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/mahasiswa/kp/buat-tim")}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Kembali ke Buat Tim
-          </Button>
-        </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Pengajuan Syarat Kerja Praktik
         </h1>
@@ -668,7 +706,7 @@ function SubmissionPage() {
               }
             />
 
-            {/* Auto-save Status Indicator */}
+            {/* Auto-save Status Indicator
             {autoSaveStatus !== "idle" && (
               <div className="mt-4 flex items-center gap-2">
                 {autoSaveStatus === "saving" && (
@@ -692,13 +730,22 @@ function SubmissionPage() {
                   </>
                 )}
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Submit Button */}
           <div className="text-center mt-8">
             <Button
-              onClick={() => setIsConfirmDialogOpen(true)}
+              onClick={() => {
+                const validation = validateSubmission();
+                if (!validation.isValid) {
+                  toast.error(`Harap lengkapi semua data yang diperlukan!`, {
+                    duration: 6000,
+                  });
+                  return;
+                }
+                setIsConfirmDialogOpen(true);
+              }}
               size="lg"
               className="px-8 py-3 font-medium text-lg"
               disabled={
@@ -713,29 +760,27 @@ function SubmissionPage() {
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons - Only show if there's a submission */}
-      {submission && (
-        <div className="flex justify-between mt-8">
-          <Button variant="secondary" asChild className="px-6 py-3 font-medium">
-            <Link to="/mahasiswa/kp/buat-tim">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Sebelumnya
-            </Link>
-          </Button>
-          <Button
-            className="px-6 py-3 font-medium"
-            disabled={submission?.status !== "PENDING_REVIEW"}
-            onClick={() => {
-              if (submission?.status === "PENDING_REVIEW") {
-                navigate("/mahasiswa/kp/surat-pengantar");
-              }
-            }}
-          >
-            Selanjutnya
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-      )}
+      {/* Navigation Buttons - Always show */}
+      <div className="flex justify-between mt-8">
+        <Button variant="secondary" asChild className="px-6 py-3 font-medium">
+          <Link to="/mahasiswa/kp/buat-tim">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Sebelumnya
+          </Link>
+        </Button>
+        <Button
+          className="px-6 py-3 font-medium"
+          disabled={submission?.status !== "PENDING_REVIEW"}
+          onClick={() => {
+            if (submission?.status === "PENDING_REVIEW") {
+              navigate("/mahasiswa/kp/surat-pengantar");
+            }
+          }}
+        >
+          Selanjutnya
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
       <ConfirmDialog
         open={isProposalReuploadConfirmOpen}
         onOpenChange={setIsProposalReuploadConfirmOpen}

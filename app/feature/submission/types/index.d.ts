@@ -30,6 +30,7 @@ export interface DocumentFile {
 }
 
 export interface SubmissionDocument {
+  userId: string;
   id: string;
   submissionId: string;
   documentType:
