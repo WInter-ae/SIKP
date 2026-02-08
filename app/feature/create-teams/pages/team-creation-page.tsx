@@ -1020,6 +1020,16 @@ const TeamCreationPage = () => {
     if (team && team.id) {
       // Kasus 1: User adalah ketua -> harus bubarkan tim terlebih dahulu (flow lama)
       if (team.isLeader) {
+        if (team.status === "FIXED") {
+          setNotificationData({
+            type: "warning",
+            title: "Tim Sudah Difinalisasi",
+            message:
+              "Ketua tidak dapat menerima undangan jika tim sudah ditetapkan.",
+          });
+          setShowNotificationDialog(true);
+          return;
+        }
         console.log(
           "⚠️ User is leader, will delete old team before accepting invite",
         );
@@ -1035,6 +1045,17 @@ const TeamCreationPage = () => {
       }
 
       // Kasus 2: User adalah anggota (non-leader) -> auto keluar dari tim lama, lalu accept undangan baru
+      if (team.status === "FIXED") {
+        setNotificationData({
+          type: "warning",
+          title: "Tim Sudah Difinalisasi",
+          message:
+            "Anda tidak dapat keluar dari tim yang sudah ditetapkan. Hubungi ketua atau admin jika perlu perubahan.",
+        });
+        setShowNotificationDialog(true);
+        return;
+      }
+
       try {
         setIsLoading(true);
         console.log(
@@ -1302,6 +1323,16 @@ const TeamCreationPage = () => {
     const isSelf = member.userId === user.id;
 
     if (isSelf) {
+      if (team.status === "FIXED") {
+        setNotificationData({
+          type: "warning",
+          title: "Tim Sudah Difinalisasi",
+          message:
+            "Keluar dari tim hanya bisa dilakukan sebelum tim ditetapkan.",
+        });
+        setShowNotificationDialog(true);
+        return;
+      }
       // Anggota keluar dari tim - show confirm dialog
       setConfirmAction({
         type: "leave-team",
@@ -1319,9 +1350,21 @@ const TeamCreationPage = () => {
     }
   };
 
-  // Fungsi untuk execute leave team setelah confirm
+  // Fungsi bahwa leave team setelah confirm tidak dapat dilakukan
   const handleConfirmLeaveTeam = async () => {
     if (!team) return;
+    if (team.status === "FIXED") {
+      setNotificationData({
+        type: "warning",
+        title: "Tim Sudah Difinalisasi",
+        message:
+          "Keluar dari tim hanya bisa dilakukan sebelum tim ditetapkan.",
+      });
+      setShowNotificationDialog(true);
+      setShowConfirmLeaveDialog(false);
+      setConfirmAction(null);
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -1672,7 +1715,10 @@ const TeamCreationPage = () => {
 
         setIsLoading(true);
         try {
-          console.log("👢 Removing member (teamMemberId):", confirmAction.memberId);
+          console.log(
+            "👢 Removing member (teamMemberId):",
+            confirmAction.memberId,
+          );
 
           // Import dan call API
           const { removeMember } = await import(
@@ -1689,7 +1735,9 @@ const TeamCreationPage = () => {
             // Update local state - filter by team member id
             setTeam({
               ...team,
-              members: team.members.filter((m) => m.id !== confirmAction.memberId),
+              members: team.members.filter(
+                (m) => m.id !== confirmAction.memberId,
+              ),
             });
 
             setNotificationData({
@@ -1753,7 +1801,12 @@ const TeamCreationPage = () => {
       setShowNotificationDialog(true);
       return;
     }
-
+    // Jika tim sudah FIXED, navigate langsung ke submission page
+    if (team.status === "FIXED") {
+      navigate("/mahasiswa/kp/pengajuan");
+      return;
+    }
+    // Jika belum FIXED, tampilkan dialog konfirmasi
     setShowConfirmNext(true);
   };
 
@@ -2350,21 +2403,6 @@ const TeamCreationPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* User Info Section */}
-      <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Crown className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="font-semibold text-foreground">{user.nama}</p>
-            <p className="text-sm text-muted-foreground">
-              NIM: {user.nim} | {user.prodi}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Team Code Section - Permanent Display */}
       {team && (
         <div className="mb-6 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/30 rounded-lg shadow-sm">
@@ -2427,7 +2465,20 @@ const TeamCreationPage = () => {
           </div>
         </div>
       )}
-
+      {/* User Info Section */}
+      <div className="mb-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <Crown className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="font-semibold text-foreground">{user.nama}</p>
+            <p className="text-sm text-muted-foreground">
+              NIM: {user.nim} | {user.prodi}
+            </p>
+          </div>
+        </div>
+      </div>
       {/* Header Section */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -2479,8 +2530,8 @@ const TeamCreationPage = () => {
         </Card>
       ) : (
         <>
-          {/* Undang Anggota Button - Show ONLY for team leaders */}
-          {team && user && team.isLeader && (
+          {/* Undang Anggota Button - Show ONLY for team leaders AND if team is NOT FIXED */}
+          {team && user && team.isLeader && team.status !== "FIXED" && (
             <div className="flex justify-end items-center mb-8">
               <Button
                 onClick={() => setShowInviteDialog(true)}
@@ -2527,7 +2578,7 @@ const TeamCreationPage = () => {
               <MemberList
                 title="Daftar Anggota"
                 members={team.members}
-                onRemove={handleRemoveMember}
+                onRemove={team.status !== "FIXED" ? handleRemoveMember : undefined}
                 isLeader={team.isLeader}
                 currentUserId={user?.id}
               />
@@ -2581,7 +2632,8 @@ const TeamCreationPage = () => {
             )}
 
             {/* Join Requests */}
-            {(team?.isLeader || (!team?.isLeader && joinRequests.length > 0)) && (
+            {(team?.isLeader ||
+              (!team?.isLeader && joinRequests.length > 0)) && (
               <MemberList
                 title="Daftar Permintaan Gabung Tim"
                 members={joinRequests}
@@ -2609,16 +2661,18 @@ const TeamCreationPage = () => {
         <Button
           onClick={handleNext}
           size="lg"
-          className="px-8 font-medium text-lg"
+          className="px-6 py-3 font-medium text-lg"
           disabled={isLoading || !team}
         >
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-2 w-2 animate-spin" />
               Sedang diproses...
             </>
-          ) : (
+          ) : team?.status === "FIXED" ? (
             "Selanjutnya"
+          ) : (
+            "Tetapkan Tim"
           )}
         </Button>
       </div>

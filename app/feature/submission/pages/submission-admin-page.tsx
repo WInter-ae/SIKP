@@ -244,25 +244,35 @@ function SubmissionAdminPage() {
     if (!selectedApplication) return;
 
     try {
+      // ✅ CRITICAL FIX: Use submissionId instead of id.toString()
       const response = await updateSubmissionStatus(
-        selectedApplication.id.toString(),
+        selectedApplication.submissionId,
         "APPROVED",
         undefined,
         docReviews,
       );
 
       if (response.success) {
-        setApplications((prev) =>
-          prev.map((app) =>
-            app.id === selectedApplication.id
-              ? {
-                  ...app,
-                  status: "approved" as const,
-                  documentReviews: docReviews,
-                }
-              : app,
-          ),
-        );
+        // ✅ Refresh full submission from backend to get updated statusHistory
+        const submissionsResponse = await getAllSubmissionsForAdmin();
+        if (submissionsResponse.success && submissionsResponse.data) {
+          const submissions = submissionsResponse.data as SubmissionWithTeam[];
+          const mappedApplications = mapSubmissionsToApplications(submissions);
+          setApplications(mappedApplications);
+        } else {
+          // Fallback: update local state if refresh fails
+          setApplications((prev) =>
+            prev.map((app) =>
+              app.id === selectedApplication.id
+                ? {
+                    ...app,
+                    status: "approved" as const,
+                    documentReviews: docReviews,
+                  }
+                : app,
+            ),
+          );
+        }
         toast.success(
           "Pengajuan telah disetujui dan surat pengantar berhasil dibuat dan dikirimkan!",
         );
@@ -283,26 +293,36 @@ function SubmissionAdminPage() {
     if (!selectedApplication) return;
 
     try {
+      // ✅ CRITICAL FIX: Use submissionId instead of id.toString()
       const response = await updateSubmissionStatus(
-        selectedApplication.id.toString(),
+        selectedApplication.submissionId,
         "REJECTED",
         comment,
         docReviews,
       );
 
       if (response.success) {
-        setApplications((prev) =>
-          prev.map((app) =>
-            app.id === selectedApplication.id
-              ? {
-                  ...app,
-                  status: "rejected" as const,
-                  rejectionComment: comment,
-                  documentReviews: docReviews,
-                }
-              : app,
-          ),
-        );
+        // ✅ Refresh full submission from backend to get updated statusHistory
+        const submissionsResponse = await getAllSubmissionsForAdmin();
+        if (submissionsResponse.success && submissionsResponse.data) {
+          const submissions = submissionsResponse.data as SubmissionWithTeam[];
+          const mappedApplications = mapSubmissionsToApplications(submissions);
+          setApplications(mappedApplications);
+        } else {
+          // Fallback: update local state if refresh fails
+          setApplications((prev) =>
+            prev.map((app) =>
+              app.id === selectedApplication.id
+                ? {
+                    ...app,
+                    status: "rejected" as const,
+                    rejectionComment: comment,
+                    documentReviews: docReviews,
+                  }
+                : app,
+            ),
+          );
+        }
         toast.error(
           comment ? `Pengajuan ditolak: ${comment}` : "Pengajuan telah ditolak",
         );

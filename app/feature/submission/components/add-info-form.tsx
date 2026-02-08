@@ -26,7 +26,7 @@ function AdditionalInfoForm({
       tanggalMulai: "",
       tanggalSelesai: "",
       divisi: "",
-    }
+    },
   );
 
   const tanggalMulaiRef = useRef<HTMLInputElement>(null);
@@ -49,10 +49,13 @@ function AdditionalInfoForm({
 
     debounceTimerRef.current = setTimeout(() => {
       if (onDataChange) {
-        console.log("💾 Auto-saving additional info after 10 seconds:", formData);
+        console.log(
+          "💾 Auto-saving additional info after 5 seconds:",
+          formData,
+        );
         onDataChange(formData);
       }
-    }, 10000); // 10 detik delay
+    }, 5000); // 5 detik delay
 
     return () => {
       if (debounceTimerRef.current) {

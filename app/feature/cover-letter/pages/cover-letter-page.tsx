@@ -5,10 +5,13 @@ import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 
-import ProcessStep from "~/feature/cover-letter/components/process-step";
+import StatusTimeline from "~/feature/cover-letter/components/status-timeline";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { getSubmissionByTeamId } from "~/lib/services/submission-api";
+import {
+  getSubmissionByTeamId,
+  resetSubmissionToDraft,
+} from "~/lib/services/submission-api";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
 import type { Submission } from "~/feature/submission/types";
 
@@ -22,21 +25,25 @@ function CoverLetterPage() {
     const loadSubmissionStatus = async () => {
       try {
         setIsLoading(true);
-        
+
         // 1. Get user's team
         const teamsResponse = await getMyTeams();
-        
-        if (!teamsResponse.success || !teamsResponse.data || teamsResponse.data.length === 0) {
+
+        if (
+          !teamsResponse.success ||
+          !teamsResponse.data ||
+          teamsResponse.data.length === 0
+        ) {
           setError("Anda belum bergabung dengan tim manapun");
           setIsLoading(false);
           return;
         }
 
         const team = teamsResponse.data[0]; // Get first active team
-        
+
         // 2. Get submission untuk team ini
         const submissionResponse = await getSubmissionByTeamId(team.id);
-        
+
         if (submissionResponse.success && submissionResponse.data) {
           setSubmission(submissionResponse.data);
           console.log("✅ Loaded submission status:", submissionResponse.data);
@@ -56,7 +63,19 @@ function CoverLetterPage() {
     void loadSubmissionStatus();
   }, []);
 
-  const handleResubmit = () => {
+  const handleResubmit = async () => {
+    if (!submission) {
+      navigate("/mahasiswa/kp/pengajuan");
+      return;
+    }
+
+    const response = await resetSubmissionToDraft(submission.id);
+    if (!response.success) {
+      toast.error(response.message || "Gagal mengembalikan status ke draft");
+      return;
+    }
+
+    toast.success("Status berhasil dikembalikan ke draft");
     navigate("/mahasiswa/kp/pengajuan");
   };
 
@@ -74,79 +93,47 @@ function CoverLetterPage() {
     return (
       <div className="text-center py-12">
         <p className="text-destructive">{error}</p>
-        <Button onClick={() => navigate("/mahasiswa/kp/pengajuan")} className="mt-4">
+        <Button
+          onClick={() => navigate("/mahasiswa/kp/pengajuan")}
+          className="mt-4"
+        >
           Kembali ke Pengajuan
         </Button>
       </div>
     );
   }
 
-  // Render status berdasarkan submission status
+  // Render status berdasarkan submission status dengan timeline
   const renderStatusSteps = () => {
     // Jika tidak ada submission, tampil pesan
     if (!submission) {
       return (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Belum ada pengajuan. Silakan ajukan terlebih dahulu.</p>
-          <Button onClick={() => navigate("/mahasiswa/kp/pengajuan")} className="mt-4">
+          <p className="text-muted-foreground">
+            Belum ada pengajuan. Silakan ajukan terlebih dahulu.
+          </p>
+          <Button
+            onClick={() => navigate("/mahasiswa/kp/pengajuan")}
+            className="mt-4"
+          >
             Ajukan Sekarang
           </Button>
         </div>
       );
     }
 
-    // Map status ke UI
-    switch (submission.status) {
-      case "PENDING_REVIEW":
-        return (
-          <ProcessStep
-            title="Mengajukan Surat Pengantar"
-            description="Pengajuan surat pengantar telah diterima dan sedang dalam proses review"
-            status="submitted"
-          />
-        );
-
-      case "REJECTED":
-        return (
-          <ProcessStep
-            title="Pengajuan Ditolak"
-            description="Pengajuan Anda ditolak. Silakan perbaiki dan ajukan kembali."
-            status="rejected"
-            comment={submission.rejectionReason || "Pengajuan ditolak. Silakan lihat komentar dari reviewer."}
-            onAction={handleResubmit}
-            actionText="Ajukan Ulang"
-          />
-        );
-
-      case "APPROVED":
-        return (
-          <ProcessStep
-            title="Surat Pengantar Telah Dibuat"
-            description="Surat pengantar kerja praktik Anda telah disetujui dan dapat diunduh"
-            status="approved"
-            showDocumentPreview={true}
-          />
-        );
-
-      case "DRAFT":
-        return (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Draft belum disimpan. Silakan lanjutkan pengajuan.</p>
-            <Button onClick={() => navigate("/mahasiswa/kp/pengajuan")} className="mt-4">
-              Lanjutkan Pengajuan
-            </Button>
-          </div>
-        );
-
-      default:
-        return (
-          <ProcessStep
-            title="Mengajukan Surat Pengantar"
-            description="Pengajuan surat pengantar telah diterima dan sedang dalam proses review"
-            status="submitted"
-          />
-        );
-    }
+    // ✅ Render timeline dari status history (menampilkan semua status yang pernah ada)
+    return (
+      <StatusTimeline
+        statusHistory={submission.statusHistory}
+        currentStatus={submission.status}
+        rejectionReason={submission.rejectionReason}
+        submittedAt={submission.submittedAt}
+        approvedAt={submission.approvedAt}
+        documents={submission.documents}
+        onResubmit={handleResubmit}
+      />
+    );
   };
 
   return (
@@ -162,35 +149,26 @@ function CoverLetterPage() {
       </div>
 
       <Card className="mb-8">
-        <CardContent className="p-6">
-          {renderStatusSteps()}
-
-          {/* Navigation Buttons - Only show if there's a submission */}
-          {submission && (
-            <div className="flex justify-between mt-8">
-              <Button
-                variant="secondary"
-                asChild
-                className="px-6 py-3 font-medium"
-              >
-                <Link to="/mahasiswa/kp/pengajuan">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Sebelumnya
-                </Link>
-              </Button>
-              <Button
-                asChild
-                className="px-6 py-3 font-medium"
-              >
-                <Link to="/mahasiswa/kp/surat-balasan">
-                  Selanjutnya
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          )}
-        </CardContent>
+        <CardContent className="p-6">{renderStatusSteps()}</CardContent>
       </Card>
+
+      {/* Navigation Buttons - Only show if there's a submission */}
+      {submission && (
+        <div className="flex justify-between mt-8">
+          <Button variant="secondary" asChild className="px-6 py-3 font-medium">
+            <Link to="/mahasiswa/kp/pengajuan">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Sebelumnya
+            </Link>
+          </Button>
+          <Button asChild className="px-6 py-3 font-medium">
+            <Link to="/mahasiswa/kp/surat-balasan">
+              Selanjutnya
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      )}
     </>
   );
 }

@@ -30,6 +30,7 @@ export interface DocumentFile {
 }
 
 export interface SubmissionDocument {
+  userId: string;
   id: string;
   submissionId: string;
   documentType:
@@ -38,7 +39,8 @@ export interface SubmissionDocument {
     | "FORM_PERMOHONAN"
     | "KRS_SEMESTER_4"
     | "DAFTAR_KUMPULAN_NILAI"
-    | "BUKTI_PEMBAYARAN_UKT";
+    | "BUKTI_PEMBAYARAN_UKT"
+    | "SURAT_PENGANTAR"; // ✅ Auto-generated when admin approves
   memberUserId: string;
   uploadedByUserId: string;
   originalName: string;
@@ -52,6 +54,13 @@ export interface SubmissionDocument {
     name: string;
     email: string;
   };
+}
+
+// ✅ Status timeline entry untuk track history perubahan status
+export interface StatusHistoryEntry {
+  status: "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "DRAFT";
+  date: string;
+  reason?: string; // Rejection reason jika ada
 }
 
 export interface Submission {
@@ -70,14 +79,17 @@ export interface Submission {
   createdAt: string;
   updatedAt: string;
   documents?: SubmissionDocument[];
+  statusHistory?: StatusHistoryEntry[]; // ✅ Timeline semua perubahan status
 }
 
 export interface Application {
   id: number;
+  submissionId: string; // ✅ Original submission ID from database
   date: string;
   status: "pending" | "approved" | "rejected";
   rejectionComment?: string;
   documentReviews?: Record<string, "approved" | "rejected">;
+  statusHistory?: StatusHistoryEntry[]; // ✅ Timeline untuk detect re-submission
 
   // Team Info
   members: Member[];

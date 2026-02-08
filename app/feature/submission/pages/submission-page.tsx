@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
@@ -35,7 +35,7 @@ import {
   submitSubmission,
 } from "~/lib/services/submission-api";
 import { useUser } from "~/contexts/user-context";
-import { ArrowLeft, Eye, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Eye, Info } from "lucide-react";
 
 function SubmissionPage() {
   const navigate = useNavigate();
@@ -94,6 +94,12 @@ function SubmissionPage() {
       type: "BUKTI_PEMBAYARAN_UKT" as const,
     },
   ];
+
+  // ✅ Filter submission documents - EXCLUDE SURAT_PENGANTAR from upload form
+  // SURAT_PENGANTAR hanya dibuat otomatis oleh backend saat approve
+  const filteredSubmissionDocuments = submissionDocuments.filter(
+    (doc) => doc.documentType !== "SURAT_PENGANTAR",
+  );
 
   // Fetch team data (finalized) for current user
   useEffect(() => {
@@ -469,6 +475,55 @@ function SubmissionPage() {
     setIsProposalUploadDialogOpen(true);
   };
 
+  // Validasi kelengkapan dokumen dan form
+  const validateSubmission = () => {
+    const missingItems: string[] = [];
+
+    // 1. Cek proposal ketua
+    if (!proposalDocument) {
+      missingItems.push("Surat Proposal (Ketua Tim)");
+    }
+
+    // 2. Cek dokumen pribadi setiap anggota
+    teamMembers.forEach((member) => {
+      documents.forEach((doc) => {
+        const uploaded = filteredSubmissionDocuments.some(
+          (submittedDoc) =>
+            submittedDoc.documentType === doc.type &&
+            submittedDoc.memberUserId === member.id,
+        );
+        if (!uploaded) {
+          missingItems.push(`${doc.title} - ${member.name}`);
+        }
+      });
+    });
+
+    // 3. Cek keterangan lain
+    if (!additionalInfo.tujuanSurat?.trim()) {
+      missingItems.push("Tujuan Surat");
+    }
+    if (!additionalInfo.namaTempat?.trim()) {
+      missingItems.push("Nama Tempat KP");
+    }
+    if (!additionalInfo.alamatTempat?.trim()) {
+      missingItems.push("Alamat Tempat KP");
+    }
+    if (!additionalInfo.divisi?.trim()) {
+      missingItems.push("Nama Unit/Divisi");
+    }
+    if (!additionalInfo.tanggalMulai) {
+      missingItems.push("Tanggal Mulai KP");
+    }
+    if (!additionalInfo.tanggalSelesai) {
+      missingItems.push("Tanggal Selesai KP");
+    }
+
+    return {
+      isValid: missingItems.length === 0,
+      missingItems,
+    };
+  };
+
   if (isUserLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -494,17 +549,6 @@ function SubmissionPage() {
     <>
       {/* Header Section */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/mahasiswa/kp/buat-tim")}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Kembali ke Buat Tim
-          </Button>
-        </div>
         <h1 className="text-3xl font-bold text-foreground mb-2">
           Halaman Pengajuan Syarat Kerja Praktik
         </h1>
@@ -521,12 +565,35 @@ function SubmissionPage() {
       </div>
 
       {/* Info Alert */}
-      <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
-        <Info className="h-5 w-5 text-primary" />
-        <AlertDescription className="text-foreground">
-          Pastikan semua dokumen telah diupload sebelum melakukan pengajuan
-        </AlertDescription>
-      </Alert>
+      {submission?.status === "DRAFT" && (
+        <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
+          <Info className="h-5 w-5 text-primary" />
+          <AlertDescription className="text-foreground">
+            Pastikan semua dokumen telah diupload sebelum melakukan pengajuan
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Approval Locked Alert */}
+      {submission?.status === "APPROVED" && (
+        <Alert className="mb-8 border-l-4 border-green-600 bg-green-600/5">
+          <Info className="h-5 w-5 text-green-600" />
+          <AlertDescription className="text-green-700 dark:text-green-400">
+            Pengajuan telah disetujui. Data tidak dapat diubah lagi.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Pending Review Locked Alert */}
+      {submission?.status === "PENDING_REVIEW" && (
+        <Alert className="mb-8 border-l-4 border-amber-600 bg-amber-600/5">
+          <Info className="h-5 w-5 text-amber-600" />
+          <AlertDescription className="text-amber-700 dark:text-amber-400">
+            Pengajuan sedang dalam review. Data tidak dapat diubah hingga proses
+            review selesai.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="mb-8">
         <CardContent className="p-6">
@@ -555,6 +622,10 @@ function SubmissionPage() {
                           size="sm"
                           className="w-full sm:w-auto"
                           onClick={() => setIsProposalReuploadConfirmOpen(true)}
+                          disabled={
+                            submission?.status === "PENDING_REVIEW" ||
+                            submission?.status === "APPROVED"
+                          }
                         >
                           Terupload
                         </Button>
@@ -586,6 +657,10 @@ function SubmissionPage() {
                     <FileUpload
                       label="Upload Surat Proposal (Ketua Tim)"
                       onFileChange={handleProposalUpload}
+                      disabled={
+                        submission?.status === "PENDING_REVIEW" ||
+                        submission?.status === "APPROVED"
+                      }
                     />
                   )
                 ) : (
@@ -598,8 +673,8 @@ function SubmissionPage() {
                         size="sm"
                         className={
                           proposalDocument
-                            ? "w-full sm:w-auto disabled:opacity-100 disabled:bg-primary disabled:text-primary-foreground"
-                            : "w-full sm:w-auto disabled:opacity-100 disabled:bg-destructive disabled:text-destructive-foreground"
+                            ? "w-full sm:w-auto opacity-50 cursor-not-allowed"
+                            : "w-full sm:w-auto opacity-50 cursor-not-allowed"
                         }
                         variant={proposalDocument ? "default" : "destructive"}
                         disabled
@@ -648,9 +723,13 @@ function SubmissionPage() {
                 key={document.id}
                 document={document}
                 members={teamMembers}
-                documents={submissionDocuments}
+                documents={filteredSubmissionDocuments}
                 currentUserId={user?.id}
                 onUpload={handleDocumentUpload}
+                disabled={
+                  submission?.status === "PENDING_REVIEW" ||
+                  submission?.status === "APPROVED"
+                }
               />
             ))}
           </div>
@@ -660,10 +739,14 @@ function SubmissionPage() {
             <AdditionalInfoForm
               initialData={additionalInfo}
               onDataChange={handleAdditionalInfoChange}
-              isEditable={isCurrentUserLeader}
+              isEditable={
+                isCurrentUserLeader &&
+                submission?.status !== "PENDING_REVIEW" &&
+                submission?.status !== "APPROVED"
+              }
             />
 
-            {/* Auto-save Status Indicator */}
+            {/* Auto-save Status Indicator
             {autoSaveStatus !== "idle" && (
               <div className="mt-4 flex items-center gap-2">
                 {autoSaveStatus === "saving" && (
@@ -687,22 +770,61 @@ function SubmissionPage() {
                   </>
                 )}
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Submit Button */}
           <div className="text-center mt-8">
             <Button
-              onClick={() => setIsConfirmDialogOpen(true)}
+              onClick={() => {
+                const validation = validateSubmission();
+                if (!validation.isValid) {
+                  toast.error(`Harap lengkapi semua data yang diperlukan!`, {
+                    duration: 6000,
+                  });
+                  return;
+                }
+                setIsConfirmDialogOpen(true);
+              }}
               size="lg"
               className="px-8 py-3 font-medium text-lg"
+              disabled={
+                !isCurrentUserLeader ||
+                submission?.status === "PENDING_REVIEW" ||
+                submission?.status === "APPROVED"
+              }
             >
-              Ajukan Surat Pengantar
+              {submission?.status === "PENDING_REVIEW"
+                ? "Diajukan"
+                : submission?.status === "APPROVED"
+                  ? "Telah Disetujui"
+                  : "Ajukan Surat Pengantar"}
             </Button>
           </div>
         </CardContent>
       </Card>
 
+      {/* Navigation Buttons - Always show */}
+      <div className="flex justify-between mt-8">
+        <Button variant="secondary" asChild className="px-6 py-3 font-medium">
+          <Link to="/mahasiswa/kp/buat-tim">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Sebelumnya
+          </Link>
+        </Button>
+        <Button
+          className="px-6 py-3 font-medium"
+          disabled={submission?.status !== "PENDING_REVIEW"}
+          onClick={() => {
+            if (submission?.status === "PENDING_REVIEW") {
+              navigate("/mahasiswa/kp/surat-pengantar");
+            }
+          }}
+        >
+          Selanjutnya
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
       <ConfirmDialog
         open={isProposalReuploadConfirmOpen}
         onOpenChange={setIsProposalReuploadConfirmOpen}
