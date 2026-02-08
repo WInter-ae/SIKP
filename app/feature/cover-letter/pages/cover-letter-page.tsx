@@ -5,10 +5,13 @@ import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 
-import ProcessStep from "~/feature/cover-letter/components/process-step";
+import StatusTimeline from "~/feature/cover-letter/components/status-timeline";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { getSubmissionByTeamId } from "~/lib/services/submission-api";
+import {
+  getSubmissionByTeamId,
+  resetSubmissionToDraft,
+} from "~/lib/services/submission-api";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
 import type { Submission } from "~/feature/submission/types";
 
@@ -60,7 +63,19 @@ function CoverLetterPage() {
     void loadSubmissionStatus();
   }, []);
 
-  const handleResubmit = () => {
+  const handleResubmit = async () => {
+    if (!submission) {
+      navigate("/mahasiswa/kp/pengajuan");
+      return;
+    }
+
+    const response = await resetSubmissionToDraft(submission.id);
+    if (!response.success) {
+      toast.error(response.message || "Gagal mengembalikan status ke draft");
+      return;
+    }
+
+    toast.success("Status berhasil dikembalikan ke draft");
     navigate("/mahasiswa/kp/pengajuan");
   };
 
@@ -88,7 +103,7 @@ function CoverLetterPage() {
     );
   }
 
-  // Render status berdasarkan submission status
+  // Render status berdasarkan submission status dengan timeline
   const renderStatusSteps = () => {
     // Jika tidak ada submission, tampil pesan
     if (!submission) {
@@ -107,66 +122,18 @@ function CoverLetterPage() {
       );
     }
 
-    // Map status ke UI
-    switch (submission.status) {
-      case "PENDING_REVIEW":
-        return (
-          <ProcessStep
-            title="Mengajukan Surat Pengantar"
-            description="Pengajuan surat pengantar telah diterima dan sedang dalam proses review"
-            status="submitted"
-          />
-        );
-
-      case "REJECTED":
-        return (
-          <ProcessStep
-            title="Pengajuan Ditolak"
-            description="Pengajuan Anda ditolak. Silakan perbaiki dan ajukan kembali."
-            status="rejected"
-            comment={
-              submission.rejectionReason ||
-              "Pengajuan ditolak. Silakan lihat komentar dari reviewer."
-            }
-            onAction={handleResubmit}
-            actionText="Ajukan Ulang"
-          />
-        );
-
-      case "APPROVED":
-        return (
-          <ProcessStep
-            title="Surat Pengantar Telah Dibuat"
-            description="Surat pengantar kerja praktik Anda telah disetujui dan dapat diunduh"
-            status="approved"
-            showDocumentPreview={true}
-          />
-        );
-
-      case "DRAFT":
-        return (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">
-              Draft belum disimpan. Silakan lanjutkan pengajuan.
-            </p>
-            <Button
-              onClick={() => navigate("/mahasiswa/kp/pengajuan")}
-              className="mt-4"
-            >
-              Lanjutkan Pengajuan
-            </Button>
-          </div>
-        );
-
-      default:
-        return (
-          <ProcessStep
-            title="Mengajukan Surat Pengantar"
-            description="Pengajuan surat pengantar telah diterima dan sedang dalam proses review"
-            status="submitted"
-          />
-        );
-    }
+    // ✅ Render timeline dari status history (menampilkan semua status yang pernah ada)
+    return (
+      <StatusTimeline
+        statusHistory={submission.statusHistory}
+        currentStatus={submission.status}
+        rejectionReason={submission.rejectionReason}
+        submittedAt={submission.submittedAt}
+        approvedAt={submission.approvedAt}
+        documents={submission.documents}
+        onResubmit={handleResubmit}
+      />
+    );
   };
 
   return (

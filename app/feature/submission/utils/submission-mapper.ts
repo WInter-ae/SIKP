@@ -260,6 +260,7 @@ export function mapSubmissionToApplication(
 
   return {
     id: parseInt(submission.id, 10) || Math.floor(Math.random() * 10000),
+    submissionId: submission.id, // ✅ CRITICAL: Store original ID from database
     date: submission.submittedAt
       ? new Date(submission.submittedAt).toLocaleDateString("id-ID", {
           day: "2-digit",
@@ -284,6 +285,7 @@ export function mapSubmissionToApplication(
     },
     documents,
     rejectionComment: submission.rejectionReason,
+    statusHistory: submission.statusHistory, // ✅ Pass status history for re-submission detection
     // documentReviews akan dikelola di state lokal admin page
   };
 }

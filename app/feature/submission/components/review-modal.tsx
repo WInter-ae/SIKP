@@ -66,6 +66,16 @@ function ReviewModal({
       setDocReviews({});
     }
 
+    // ✅ FIX: Jika status PENDING_REVIEW tapi ada REJECTED sebelumnya (re-submission),
+    // clear old document reviews agar admin bisa review ulang dari awal
+    if (application?.status === "pending" && application?.statusHistory && application.statusHistory.length > 0) {
+      const hasRejection = application.statusHistory.some((entry) => entry.status === "REJECTED");
+      if (hasRejection) {
+        console.log("🔄 Clearing old document reviews for re-submission after rejection");
+        setDocReviews({});
+      }
+    }
+
     // Debug: log documents received by modal - VERY DETAILED
     console.log("📋 ReviewModal received application:", {
       applicationId: application?.id,
@@ -147,13 +157,20 @@ function ReviewModal({
     const uploadedTitles = Object.keys(groupedDocuments).filter(
       (title) => title && title !== "undefined",
     );
-    const allTitles = Array.from(new Set([...standardDocs, ...uploadedTitles]));
+    
+    // ✅ EXCLUDE SURAT_PENGANTAR from upload review section
+    // It's only created by backend on approval, not uploaded by students
+    const filteredUploadedTitles = uploadedTitles.filter(
+      (title) => title !== "Surat Pengantar Kerja Praktik"
+    );
+    
+    const allTitles = Array.from(new Set([...standardDocs, ...filteredUploadedTitles]));
 
     console.log("📋 All document titles in modal:", {
       applicationId: application.id,
       standardDocsCount: standardDocs.length,
-      uploadedTitlesCount: uploadedTitles.length,
-      uploadedTitles,
+      uploadedTitlesCount: filteredUploadedTitles.length,
+      uploadedTitles: filteredUploadedTitles,
       allTitlesCount: allTitles.length,
       allTitles,
     });

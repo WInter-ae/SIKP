@@ -2,7 +2,7 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
-import { Eye, FileText, XCircle, RefreshCw, Check } from "lucide-react";
+import { Eye, FileText, XCircle, RefreshCw, Check, Download } from "lucide-react";
 
 import type { ProcessStepProps } from "../types";
 
@@ -14,7 +14,8 @@ function ProcessStep({
   onAction,
   actionText,
   showDocumentPreview = false,
-}: ProcessStepProps) {
+  approvedDate,
+}: ProcessStepProps & { approvedDate?: string }) {
   const getStatusStyles = () => {
     switch (status) {
       case "submitted":
@@ -88,15 +89,32 @@ function ProcessStep({
           )}
 
           {showDocumentPreview && (
-            <div className="bg-muted p-3 rounded flex items-center cursor-pointer hover:bg-muted/80 transition">
-              <div className="bg-primary w-10 h-10 rounded flex items-center justify-center text-primary-foreground mr-3">
-                <Eye className="size-5" />
-              </div>
-              <div>
-                <div className="font-medium text-foreground">Surat Pengantar Kerja Praktik</div>
-                <div className="text-sm text-muted-foreground">
-                  Dibuat pada: 15 Juni 2023
+            <div className="bg-muted p-4 rounded-lg border border-border cursor-pointer hover:bg-muted/80 transition">
+              <div className="flex items-start gap-3">
+                <div className="bg-primary w-10 h-10 rounded-lg flex items-center justify-center text-primary-foreground flex-shrink-0">
+                  <FileText className="size-5" />
                 </div>
+                <div className="flex-1">
+                  <div className="font-semibold text-foreground">Surat Pengantar Kerja Praktik</div>
+                  <div className="text-sm text-muted-foreground">
+                    Disetujui: {approvedDate || new Date().toLocaleDateString("id-ID")}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    File: Surat_Pengantar_Kerja_Praktik.pdf
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="ml-2 flex-shrink-0"
+                  onClick={() => {
+                    // TODO: Implement download functionality
+                    console.log("Download surat pengantar");
+                  }}
+                >
+                  <Download className="size-4 mr-1" />
+                  Download
+                </Button>
               </div>
             </div>
           )}

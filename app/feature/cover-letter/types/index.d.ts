@@ -7,4 +7,5 @@ export interface ProcessStepProps {
   onAction?: () => void;
   actionText?: string;
   showDocumentPreview?: boolean;
+  approvedDate?: string;
 }

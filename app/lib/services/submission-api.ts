@@ -339,3 +339,29 @@ export async function updateSubmissionStatus(
     };
   }
 }
+
+/**
+ * Reset submission ke status DRAFT (oleh mahasiswa saat ajukan ulang)
+ * Backend endpoint: PUT /api/submissions/:id/reset
+ */
+export async function resetSubmissionToDraft(submissionId: string) {
+  try {
+    const response = await apiClient<Submission>(
+      `/api/submissions/${submissionId}/reset`,
+      {
+        method: "PUT",
+      },
+    );
+    return response;
+  } catch (error) {
+    console.error("❌ Error resetting submission to draft:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Gagal mengembalikan status ke draft",
+      data: null,
+    };
+  }
+}
