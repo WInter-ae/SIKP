@@ -1,18 +1,22 @@
 /**
  * API Client untuk SIKP Backend
  *
- * Gunakan modul ini untuk melakukan API calls ke backend selain authentication.
- * Authentication menggunakan better-auth yang sudah dikonfigurasi di auth-client.ts
+ * Gunakan modul ini untuk melakukan API calls ke Backend SIKP.
+ * Authentication menggunakan OAuth 2.0 + PKCE tokens dari SSO UNSRI.
+ *
+ * Token OAuth secara otomatis diinject ke header Authorization.
  */
 
-import { getAuthToken as getStoredToken } from "./auth-client";
+import {
+  getAuthToken as getStoredToken,
+  refreshAccessToken,
+} from "./auth-client";
 
-// Gunakan URL Workers sebagai default; bisa di-override via env
+// Backend SIKP Base URL
 const API_BASE_URL =
+  import.meta.env.VITE_BACKEND_SIKP_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_APP_AUTH_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://backend-sikp.backend-sikp.workers.dev";
+  "http://localhost:8789";
 
 /**
  * Standard API Response format
@@ -93,6 +97,7 @@ function getAuthToken(): string | null {
 export async function apiClient<T>(
   endpoint: string,
   options: RequestInit = {},
+  retryCount = 0,
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
 
@@ -119,35 +124,49 @@ export async function apiClient<T>(
       headers,
     });
 
-    // Check if response has content
-    const contentType = response.headers.get("content-type");
-    const hasJsonContent = contentType && contentType.includes("application/json");
-    
+    // Handle 401 Unauthorized - try to refresh token once
+    if (response.status === 401 && retryCount === 0) {
+      try {
+        console.log("Token expired, attempting refresh...");
+        await refreshAccessToken();
+        // Retry the request with new token
+        return apiClient<T>(endpoint, options, retryCount + 1);
+      } catch (refreshError) {
+        console.error("Token refresh failed:", refreshError);
+        // If refresh fails, return 401 error
+        return {
+          success: false,
+          message: "Session expired. Please login again.",
+          data: null,
+        };
+      }
+    }
+
     let data;
     try {
       // Only parse JSON if content-type is JSON and body is not empty
       const text = await response.text();
-      
+
       if (!text || text.trim() === "") {
         console.error("❌ Empty response from backend:", {
           endpoint,
           status: response.status,
-          statusText: response.statusText
+          statusText: response.statusText,
         });
-        
+
         return {
           success: false,
           message: `Backend error: Empty response (Status ${response.status})`,
           data: null,
         };
       }
-      
+
       data = JSON.parse(text);
     } catch (jsonError) {
       console.error("❌ Invalid JSON response:", jsonError);
       console.error("Response endpoint:", endpoint);
       console.error("Response status:", response.status);
-      
+
       return {
         success: false,
         message: `Backend error: Invalid JSON response (Status ${response.status})`,

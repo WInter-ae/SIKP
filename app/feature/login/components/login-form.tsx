@@ -1,174 +1,77 @@
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator,
-} from "~/components/ui/field";
-import { Input } from "~/components/ui/input";
-import { Github } from "lucide-react";
-import { Link, useNavigate } from "react-router";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { login } from "~/lib/auth-client";
-import { useState } from "react";
-import { useUser } from "~/contexts/user-context";
+import { Link } from "react-router";
+import { initiateOAuthLogin } from "~/lib/auth-client";
+import { LogIn } from "lucide-react";
 
-// Schema validasi untuk form login
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email wajib diisi")
-    .email("Format email tidak valid"),
-  password: z.string().min(1, "Kata sandi wajib diisi"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-
+/**
+ * Login Form - OAuth 2.0 SSO UNSRI
+ *
+ * Replaces the old email/password form with OAuth redirect.
+ * Clicking "Login dengan SSO UNSRI" will redirect to SSO authorize page.
+ */
 export function LoginForm({
   className,
   ...props
-}: React.ComponentProps<"form">) {
-  const navigate = useNavigate();
-  const { setUser } = useUser();
-  const [error, setError] = useState<string | null>(null);
-
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-    mode: "onBlur", // Validasi saat blur
-  });
-
-  const onSubmit = async (data: LoginFormData) => {
-    try {
-      setError(null);
-
-      // Call backend API
-      const result = await login(data.email, data.password);
-
-      if (!result.success) {
-        setError(result.error || "Login gagal. Silakan coba lagi.");
-        return;
-      }
-
-      // Update user context
-      if (result.user) {
-        setUser(result.user);
-      }
-
-      // Redirect berdasarkan role
-      const user = result.user;
-      if (user?.role === "MAHASISWA") {
-        navigate("/mahasiswa");
-      } else if (user?.role === "ADMIN") {
-        navigate("/admin");
-      } else if (user?.role === "DOSEN") {
-        navigate("/dosen");
-      } else {
-        navigate("/dashboard");
-      }
-    } catch (err) {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
-      console.error("Login error:", err);
-    }
+}: React.ComponentProps<"div">) {
+  const handleLogin = () => {
+    initiateOAuthLogin();
   };
 
   return (
-    <form
-      className={cn("flex flex-col gap-6", className)}
-      onSubmit={form.handleSubmit(onSubmit)}
-      {...props}
-    >
-      <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Masuk ke Akun Anda</h1>
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <h1 className="text-2xl font-bold">Selamat Datang di SIKP</h1>
           <p className="text-muted-foreground text-sm text-balance">
-            Masukkan email Anda di bawah ini untuk masuk ke akun Anda
+            Sistem Informasi Kerja Praktik Universitas Sriwijaya
           </p>
         </div>
 
-        {error && (
-          <div
-            role="alert"
-            className="rounded-md bg-destructive/15 p-3 text-sm text-destructive"
+        <div className="flex flex-col gap-4">
+          <Button
+            onClick={handleLogin}
+            className="w-full"
+            size="lg"
+            type="button"
           >
-            {error}
+            <LogIn className="mr-2 h-4 w-4" />
+            Login dengan SSO UNSRI
+          </Button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                atau
+              </span>
+            </div>
           </div>
-        )}
 
-        <Controller
-          name="email"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
-                {...field}
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                aria-invalid={fieldState.invalid}
-                autoComplete="email"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="password"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <div className="flex items-center">
-                <FieldLabel htmlFor="password">Kata Sandi</FieldLabel>
-                <Link
-                  to="#"
-                  className="ml-auto text-sm underline-offset-4 hover:underline"
-                >
-                  Lupa kata sandi?
-                </Link>
-              </div>
-              <Input
-                {...field}
-                id="password"
-                type="password"
-                aria-invalid={fieldState.invalid}
-                autoComplete="current-password"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Field>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Memproses..." : "Masuk"}
-          </Button>
-        </Field>
-
-        <FieldSeparator>Atau lanjutkan dengan</FieldSeparator>
-
-        <Field>
-          <Button variant="outline" type="button">
-            <Github />
-            Masuk dengan GitHub
-          </Button>
-          <FieldDescription className="text-center">
+          <p className="text-center text-sm text-muted-foreground">
             Belum punya akun?{" "}
-            <Link to="/register" className="underline underline-offset-4">
-              Daftar
+            <Link
+              to="/register"
+              className="text-primary underline-offset-4 hover:underline font-medium"
+            >
+              Daftar sekarang
             </Link>
-          </FieldDescription>
-        </Field>
-      </FieldGroup>
-    </form>
+          </p>
+        </div>
+
+        <p className="text-xs text-muted-foreground text-center">
+          Dengan login, Anda menyetujui{" "}
+          <Link to="/terms" className="underline hover:text-primary">
+            Syarat & Ketentuan
+          </Link>{" "}
+          dan{" "}
+          <Link to="/privacy" className="underline hover:text-primary">
+            Kebijakan Privasi
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 }

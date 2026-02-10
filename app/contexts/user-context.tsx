@@ -3,12 +3,14 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
   type ReactNode,
 } from "react";
 import {
-  getCurrentUser,
-  getAuthToken,
+  fetchUserProfile,
   logout as authLogout,
+  isAuthenticated,
+  refreshAccessToken,
 } from "~/lib/auth-client";
 
 /**
@@ -36,11 +38,13 @@ export interface User {
 
 interface UserContextType {
   user: User | null;
-  token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  error: string | null;
   logout: () => void;
   setUser: (user: User | null) => void;
+  fetchCurrentUser: () => Promise<User | null>;
+  refreshToken: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -59,40 +63,87 @@ interface UserProviderProps {
 
 export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load user data saat component mount
-  useEffect(() => {
-    const storedUser = getCurrentUser();
-    const storedToken = getAuthToken();
-
-    if (storedUser && storedToken) {
-      setUser(storedUser);
-      setToken(storedToken);
+  /**
+   * Fetch current user profile from Backend SIKP
+   * This replaces the old getCurrentUser() which read from localStorage
+   */
+  const fetchCurrentUser = useCallback(async (): Promise<User | null> => {
+    // Check if user has valid token
+    if (!isAuthenticated()) {
+      setUser(null);
+      setIsLoading(false);
+      return null;
     }
 
-    setIsLoading(false);
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const userProfile = await fetchUserProfile();
+      setUser(userProfile as User);
+      return userProfile as User;
+    } catch (err) {
+      console.error("Error fetching user profile:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch user";
+      setError(errorMessage);
+
+      // If fetch fails and it's an auth error, logout
+      if (
+        errorMessage.includes("Session expired") ||
+        errorMessage.includes("Not authenticated")
+      ) {
+        authLogout();
+      }
+
+      setUser(null);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const handleLogout = () => {
+  /**
+   * Refresh access token
+   */
+  const refreshToken = useCallback(async (): Promise<void> => {
+    try {
+      await refreshAccessToken();
+      // After refresh, fetch user again
+      await fetchCurrentUser();
+    } catch (err) {
+      console.error("Token refresh failed:", err);
+      authLogout();
+    }
+  }, [fetchCurrentUser]);
+
+  /**
+   * Logout handler
+   */
+  const handleLogout = useCallback(() => {
     authLogout();
     setUser(null);
-    setToken(null);
+    setError(null);
+  }, []);
+
+  // Load user on mount
+  useEffect(() => {
+    fetchCurrentUser();
+  }, [fetchCurrentUser]);
+
+  const value: UserContextType = {
+    user,
+    isLoading,
+    isAuthenticated: isAuthenticated(),
+    error,
+    logout: handleLogout,
+    setUser,
+    fetchCurrentUser,
+    refreshToken,
   };
 
-  return (
-    <UserContext.Provider
-      value={{
-        user,
-        token,
-        isLoading,
-        isAuthenticated: !!user && !!token,
-        logout: handleLogout,
-        setUser,
-      }}
-    >
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 };

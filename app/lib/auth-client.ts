@@ -1,140 +1,311 @@
 /**
- * Auth Client untuk SIKP Backend
- * 
- * Menangani authentication dengan backend Hono API
- * API: POST /api/auth/login, POST /api/auth/register/mahasiswa, etc.
+ * OAuth 2.0 + PKCE Authentication Client for SIKP
+ *
+ * Integrates with SSO UNSRI using Authorization Code Flow with PKCE.
+ * This replaces the previous custom authentication implementation.
+ *
+ * Flow:
+ * 1. initiateOAuthLogin() → Redirect to SSO authorize
+ * 2. SSO redirects back to /callback with code
+ * 3. handleOAuthCallback() → Exchange code for tokens via Backend SIKP
+ * 4. Store tokens in sessionStorage
+ * 5. fetchCurrentUser() → Get user profile from Backend SIKP
  */
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_APP_AUTH_URL ||
-  'https://backend-sikp.backend-sikp.workers.dev';
+import {
+  generateCodeVerifier,
+  generateCodeChallenge,
+  generateState,
+} from "./pkce";
+
+// ========== Configuration ==========
+
+const SSO_BASE_URL =
+  import.meta.env.VITE_SSO_BASE_URL || "http://localhost:8787";
+const CLIENT_ID = import.meta.env.VITE_SSO_CLIENT_ID || "sikp-client";
+const REDIRECT_URI =
+  import.meta.env.VITE_SSO_REDIRECT_URI || "http://localhost:5173/callback";
+const SCOPES = import.meta.env.VITE_SSO_SCOPES || "openid profile email";
+const BACKEND_SIKP_URL =
+  import.meta.env.VITE_BACKEND_SIKP_BASE_URL || "http://localhost:8789";
+
+// ========== Types ==========
+
+interface TokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  id_token?: string;
+  expires_in: number;
+  token_type: string;
+}
+
+interface StoredTokens {
+  access_token: string;
+  refresh_token?: string;
+  expires_at: number;
+}
+
+interface UserProfile {
+  id: string;
+  email: string;
+  nama: string;
+  role: string;
+  nim?: string;
+  nip?: string;
+  fakultas?: string;
+  prodi?: string;
+  semester?: number;
+  angkatan?: string;
+  phone?: string;
+  [key: string]: unknown;
+}
+
+// ========== OAuth Flow Functions ==========
 
 /**
- * Login dengan email dan password
- * @param email Email pengguna
- * @param password Kata sandi pengguna
- * @returns User data dan JWT token
+ * Initiate OAuth 2.0 Authorization Code Flow with PKCE
+ * Redirects browser to SSO authorize endpoint
  */
-export async function login(email: string, password: string) {
+export async function initiateOAuthLogin(): Promise<void> {
+  // 1. Generate PKCE parameters
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = await generateCodeChallenge(codeVerifier);
+  const state = generateState();
+
+  // 2. Store PKCE parameters in sessionStorage (temporary, for callback)
+  sessionStorage.setItem("pkce_code_verifier", codeVerifier);
+  sessionStorage.setItem("oauth_state", state);
+
+  // 3. Build authorize URL
+  const params = new URLSearchParams({
+    response_type: "code",
+    client_id: CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    scope: SCOPES,
+    state: state,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
+  });
+
+  // 4. Redirect browser to SSO
+  const authorizeUrl = `${SSO_BASE_URL}/oauth/authorize?${params.toString()}`;
+  window.location.href = authorizeUrl;
+}
+
+/**
+ * Handle OAuth callback after user authorizes
+ * Exchange authorization code for access token
+ *
+ * @param code - Authorization code from SSO
+ * @param state - State parameter for CSRF protection
+ * @returns Token response
+ */
+export async function handleOAuthCallback(
+  code: string,
+  state: string,
+): Promise<TokenResponse> {
+  // 1. Verify state parameter (CSRF protection)
+  const storedState = sessionStorage.getItem("oauth_state");
+  if (state !== storedState) {
+    throw new Error("Invalid state parameter - possible CSRF attack");
+  }
+
+  // 2. Retrieve code verifier
+  const codeVerifier = sessionStorage.getItem("pkce_code_verifier");
+  if (!codeVerifier) {
+    throw new Error("Code verifier not found in session");
+  }
+
+  // 3. Exchange code for tokens via Backend SIKP (acts as proxy to SSO)
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
+    const response = await fetch(`${BACKEND_SIKP_URL}/auth/exchange`, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        code,
+        redirectUri: REDIRECT_URI,
+        codeVerifier,
+      }),
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.message || 'Login gagal');
+      const error = await response.json();
+      throw new Error(error.message || "Token exchange failed");
     }
 
-    // Simpan token ke localStorage
-    if (data.data?.token) {
-      localStorage.setItem('auth_token', data.data.token);
-      localStorage.setItem('user_data', JSON.stringify(data.data.user));
-    }
+    const data: TokenResponse = await response.json();
 
-    return {
-      success: true,
-      user: data.data?.user,
-      token: data.data?.token,
+    // 4. Store tokens in sessionStorage with expiry
+    const storedTokens: StoredTokens = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: Date.now() + data.expires_in * 1000,
     };
+    sessionStorage.setItem("auth_tokens", JSON.stringify(storedTokens));
+
+    // 5. Cleanup PKCE parameters
+    sessionStorage.removeItem("pkce_code_verifier");
+    sessionStorage.removeItem("oauth_state");
+
+    return data;
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Login gagal',
-    };
+    // Cleanup on error
+    sessionStorage.removeItem("pkce_code_verifier");
+    sessionStorage.removeItem("oauth_state");
+    throw error;
   }
 }
 
-/**
- * Register mahasiswa baru
- */
-export async function registerMahasiswa(data: {
-  nim: string;
-  nama: string;
-  email: string;
-  password: string;
-  phone: string;
-  fakultas: string;
-  prodi: string;
-  semester: number;
-  angkatan: string;
-}) {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/auth/register/mahasiswa`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || 'Registrasi gagal');
-    }
-
-    // Simpan token ke localStorage
-    if (result.data?.token) {
-      localStorage.setItem('auth_token', result.data.token);
-      localStorage.setItem('user_data', JSON.stringify(result.data.user));
-    }
-
-    return {
-      success: true,
-      user: result.data?.user,
-      token: result.data?.token,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Registrasi gagal',
-    };
-  }
-}
+// ========== Token Management ==========
 
 /**
- * Logout dan hapus token
- */
-export function logout() {
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('user_data');
-}
-
-/**
- * Get current user dari localStorage
- */
-export function getCurrentUser() {
-  const userData = localStorage.getItem('user_data');
-  if (userData) {
-    try {
-      return JSON.parse(userData);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-/**
- * Get auth token dari localStorage
+ * Get access token from storage
+ * @returns Access token string or null
  */
 export function getAuthToken(): string | null {
-  return localStorage.getItem('auth_token');
+  const storedTokensStr = sessionStorage.getItem("auth_tokens");
+  if (!storedTokensStr) return null;
+
+  try {
+    const tokens: StoredTokens = JSON.parse(storedTokensStr);
+
+    // Check if token is expired
+    if (Date.now() >= tokens.expires_at) {
+      // Token expired, clear storage
+      sessionStorage.removeItem("auth_tokens");
+      return null;
+    }
+
+    return tokens.access_token;
+  } catch {
+    return null;
+  }
 }
 
 /**
- * Check apakah user sudah login
+ * Get all stored tokens
+ * @returns Stored tokens or null
+ */
+export function getStoredTokens(): StoredTokens | null {
+  const storedTokensStr = sessionStorage.getItem("auth_tokens");
+  if (!storedTokensStr) return null;
+
+  try {
+    const tokens: StoredTokens = JSON.parse(storedTokensStr);
+
+    // Check if token is expired
+    if (Date.now() >= tokens.expires_at) {
+      sessionStorage.removeItem("auth_tokens");
+      return null;
+    }
+
+    return tokens;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Refresh access token using refresh token
+ * @returns New token response
+ */
+export async function refreshAccessToken(): Promise<TokenResponse> {
+  const tokens = getStoredTokens();
+  if (!tokens?.refresh_token) {
+    throw new Error("No refresh token available");
+  }
+
+  try {
+    const response = await fetch(`${BACKEND_SIKP_URL}/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        refreshToken: tokens.refresh_token,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Token refresh failed");
+    }
+
+    const data: TokenResponse = await response.json();
+
+    // Store new tokens
+    const storedTokens: StoredTokens = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || tokens.refresh_token,
+      expires_at: Date.now() + data.expires_in * 1000,
+    };
+    sessionStorage.setItem("auth_tokens", JSON.stringify(storedTokens));
+
+    return data;
+  } catch (error) {
+    // If refresh fails, logout
+    logout();
+    throw error;
+  }
+}
+
+/**
+ * Check if user is authenticated (has valid token)
+ * @returns True if authenticated
  */
 export function isAuthenticated(): boolean {
-  return !!getAuthToken();
+  return getAuthToken() !== null;
+}
+
+/**
+ * Logout user - clear tokens and redirect
+ */
+export function logout(): void {
+  // Clear all auth-related storage
+  sessionStorage.removeItem("auth_tokens");
+  sessionStorage.removeItem("pkce_code_verifier");
+  sessionStorage.removeItem("oauth_state");
+
+  // Redirect to home/login
+  window.location.href = "/";
+}
+
+// ========== User Profile ==========
+
+/**
+ * Fetch current user profile from Backend SIKP
+ * Backend SIKP will proxy request to SSO /userinfo or /profile
+ *
+ * @returns User profile data
+ */
+export async function fetchUserProfile(): Promise<UserProfile> {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const response = await fetch(`${BACKEND_SIKP_URL}/auth/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      // Try to refresh token
+      try {
+        await refreshAccessToken();
+        // Retry with new token
+        return fetchUserProfile();
+      } catch {
+        logout();
+        throw new Error("Session expired");
+      }
+    }
+    throw new Error("Failed to fetch user profile");
+  }
+
+  const data = await response.json();
+  return data.data || data;
 }

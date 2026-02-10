@@ -1,8 +1,7 @@
-import { GalleryVerticalEnd, Briefcase } from "lucide-react"
-import { Link } from "react-router"
+import { GalleryVerticalEnd } from "lucide-react";
+import { Link } from "react-router";
 
-import { RegisterForm } from "~/feature/register/components/register-form"
-import { Button } from "~/components/ui/button"
+import { RegisterForm } from "~/feature/register/components/register-form";
 
 export default function RegisterPage() {
   return (
@@ -26,29 +25,9 @@ export default function RegisterPage() {
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-md">
             <RegisterForm />
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Atau
-                  </span>
-                </div>
-              </div>
-              <div className="mt-6">
-                <Link to="/pembimbing-lapangan">
-                  <Button variant="outline" className="w-full">
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    Daftar sebagai Pembimbing Lapangan
-                  </Button>
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
