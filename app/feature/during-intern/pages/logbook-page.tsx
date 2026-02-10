@@ -32,10 +32,23 @@ import {
 } from "~/components/ui/table";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Separator } from "~/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 
 // API Services
 import { getMyProfile, getMyInternship } from "~/feature/during-intern/services";
 import type { StudentProfile, InternshipData } from "~/feature/during-intern/services/student-api";
+
+// Utility Functions
+import { generateLogbookDOCX } from "~/feature/during-intern/utils/generate-logbook-docx";
 
 interface LogbookEntry {
   id: string;
@@ -81,6 +94,7 @@ function LogbookPage() {
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [internshipData, setInternshipData] = useState<InternshipData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [showEmptyDataDialog, setShowEmptyDataDialog] = useState(false);
 
   // Fetch student profile and internship data
   useEffect(() => {
@@ -358,41 +372,66 @@ function LogbookPage() {
     }
   };
 
-  const handleExportToFile = () => {
-    // TODO: Implement file generation (PDF/Excel)
-    // Fungsi ini akan diaktifkan setelah format file ditentukan
-    toast.info("Fitur generate file sedang dalam pengembangan");
+  const handleExportToFile = async () => {
+    // Validasi minimal: harus ada periode dan tanggal yang digenerate
+    if (!workPeriod.startDate || !workPeriod.endDate) {
+      toast.error("Periode kerja praktik belum diset");
+      return;
+    }
+
+    if (generatedDates.length === 0) {
+      toast.error("Belum ada tanggal yang digenerate");
+      return;
+    }
+// Cek apakah data mahasiswa atau magang kosong
+    const isDataMissing = !studentProfile || !internshipData;
+
+    if (isDataMissing) {
+      // Tampilkan dialog konfirmasi
+      setShowEmptyDataDialog(true);
+    } else {
+      // Data lengkap, langsung generate
+      await performGenerate();
+    }
+  };
+
+  const performGenerate = async () => {
     
-    // // Generate CSV content
-    // let csvContent = "Minggu Ke,Hari,Tanggal,Deskripsi Kegiatan,Status Paraf,Catatan Mentor\n";
-    // 
-    // generatedDates.forEach((date) => {
-    //   const entry = getLogbookForDate(date);
-    //   const weekNum = getWeekNumber(date);
-    //   const dayName = getDayName(date);
-    //   const formattedDate = formatDate(date);
-    //   const description = entry?.description || "Belum diisi";
-    //   const status = entry?.mentorSignature ? 
-    //     (entry.mentorSignature.status === "approved" ? "Disetujui" : 
-    //      entry.mentorSignature.status === "revision" ? "Perlu Revisi" : "Ditolak") : 
-    //     "Menunggu Paraf";
-    //   const notes = entry?.mentorSignature?.notes || "-";
-    //   
-    //   csvContent += `${weekNum},${dayName},"${formattedDate}","${description}",${status},"${notes}"\n`;
-    // });
-    //
-    // // Create blob and download
-    // const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    // const link = document.createElement("a");
-    // const url = URL.createObjectURL(blob);
-    // link.setAttribute("href", url);
-    // link.setAttribute("download", `logbook_${workPeriod.startDate}_${workPeriod.endDate}.csv`);
-    // link.style.visibility = "hidden";
-    // document.body.appendChild(link);
-    // link.click();
-    // document.body.removeChild(link);
-    // 
-    // toast.success("Logbook berhasil diexport ke file CSV!");
+    try {
+      // workPeriod dates sudah divalidasi sebelumnya di handleExportToFile
+      const logbookData = {
+        student: studentProfile ? {
+          name: studentProfile.name,
+          nim: studentProfile.nim,
+          prodi: studentProfile.prodi || "Manajemen Informatika",
+          fakultas: studentProfile.fakultas || "Ilmu Komputer"
+        } : null,
+        internship: internshipData ? {
+          company: internshipData.company,
+          division: undefined,
+          position: internshipData.position,
+          mentorName: internshipData.mentorName,
+          startDate: internshipData.startDate,
+          endDate: internshipData.endDate
+        } : null,
+        workPeriod: {
+          startDate: workPeriod.startDate!,
+          endDate: workPeriod.endDate!,
+          startDay: workPeriod.startDay,
+          endDay: workPeriod.endDay
+        },
+        generatedDates,
+        entries: logbookEntries
+      };
+
+      // Generate and download DOCX
+      await generateLogbookDOCX(logbookData);
+      
+      toast.success("Logbook DOCX berhasil didownload!");
+    } catch (error) {
+      console.error("Error generating logbook:", error);
+      toast.error("Gagal generate logbook. Silakan coba lagi.");
+    }
   };
 
   return (
@@ -768,13 +807,68 @@ function LogbookPage() {
                 <div>
                   <h3 className="font-semibold text-foreground">Export Logbook</h3>
                   <p className="text-sm text-muted-foreground">
-                    Generate file CSV untuk logbook Anda
+
+      {/* Confirmation Dialog for Empty Data */}
+      <AlertDialog open={showEmptyDataDialog} onOpenChange={setShowEmptyDataDialog}>
+        <AlertDialogContent className="sm:max-w-[500px]">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 bg-amber-100 rounded-full">
+                <AlertCircle className="h-6 w-6 text-amber-600" />
+              </div>
+              <AlertDialogTitle className="text-xl">Data Belum Lengkap</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-base space-y-4 pt-2">
+              <p className="text-foreground">
+                {!studentProfile && !internshipData 
+                  ? "Data mahasiswa dan data magang Anda belum tersedia."
+                  : !studentProfile 
+                    ? "Data mahasiswa Anda belum tersedia."
+                    : "Data magang Anda belum tersedia."}
+              </p>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-900 font-medium mb-2">📋 Yang akan dihasilkan:</p>
+                <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                  <li>File DOCX logbook dengan format standar</li>
+                  <li>Field yang kosong dapat diisi manual di Word</li>
+                  <li>Periode minggu sesuai tanggal yang Anda set</li>
+                  <li>Tabel kegiatan dengan {generatedDates.length} hari kerja</li>
+                </ul>
+                <p className="text-xs text-blue-700 mt-2 italic">
+                  ⚠️ Format mungkin perlu disesuaikan setelah dibuka di Word
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                💡 <strong>Rekomendasi:</strong> Lengkapi data Anda terlebih dahulu untuk hasil yang lebih baik, atau lanjutkan untuk mendapatkan template kosong.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="mt-2 sm:mt-0">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowEmptyDataDialog(false);
+                await performGenerate();
+              }}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Ya, Download Template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+                    Generate dokumen logbook Anda
                   </p>
                 </div>
               </div>
               <Button size="lg" onClick={handleExportToFile}>
                 <Download className="mr-2 h-5 w-5" />
-                Generate File
+                Generate Logbook
               </Button>
             </div>
           </CardContent>

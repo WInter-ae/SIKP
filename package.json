@@ -33,6 +33,7 @@
     "better-auth": "^1.3.34",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "docx": "^9.5.1",
     "docxtemplater": "^3.67.6",
     "file-saver": "^2.0.5",
     "html2canvas": "^1.4.1",
