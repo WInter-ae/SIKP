@@ -67,6 +67,9 @@ interface UserProfile {
  * Redirects browser to SSO authorize endpoint
  */
 export async function initiateOAuthLogin(): Promise<void> {
+  // Only run in browser
+  if (typeof window === "undefined") return;
+
   // 1. Generate PKCE parameters
   const codeVerifier = generateCodeVerifier();
   const codeChallenge = await generateCodeChallenge(codeVerifier);
@@ -104,6 +107,11 @@ export async function handleOAuthCallback(
   code: string,
   state: string,
 ): Promise<TokenResponse> {
+  // Only run in browser
+  if (typeof window === "undefined") {
+    throw new Error("OAuth callback can only be handled in browser");
+  }
+
   // 1. Verify state parameter (CSRF protection)
   const storedState = sessionStorage.getItem("oauth_state");
   if (state !== storedState) {
@@ -165,6 +173,9 @@ export async function handleOAuthCallback(
  * @returns Access token string or null
  */
 export function getAuthToken(): string | null {
+  // Only run in browser
+  if (typeof window === "undefined") return null;
+
   const storedTokensStr = sessionStorage.getItem("auth_tokens");
   if (!storedTokensStr) return null;
 
@@ -189,6 +200,9 @@ export function getAuthToken(): string | null {
  * @returns Stored tokens or null
  */
 export function getStoredTokens(): StoredTokens | null {
+  // Only run in browser
+  if (typeof window === "undefined") return null;
+
   const storedTokensStr = sessionStorage.getItem("auth_tokens");
   if (!storedTokensStr) return null;
 
@@ -234,13 +248,15 @@ export async function refreshAccessToken(): Promise<TokenResponse> {
 
     const data: TokenResponse = await response.json();
 
-    // Store new tokens
-    const storedTokens: StoredTokens = {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token || tokens.refresh_token,
-      expires_at: Date.now() + data.expires_in * 1000,
-    };
-    sessionStorage.setItem("auth_tokens", JSON.stringify(storedTokens));
+    // Store new tokens (only in browser)
+    if (typeof window !== "undefined") {
+      const storedTokens: StoredTokens = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token || tokens.refresh_token,
+        expires_at: Date.now() + data.expires_in * 1000,
+      };
+      sessionStorage.setItem("auth_tokens", JSON.stringify(storedTokens));
+    }
 
     return data;
   } catch (error) {
@@ -262,6 +278,9 @@ export function isAuthenticated(): boolean {
  * Logout user - clear tokens and redirect
  */
 export function logout(): void {
+  // Only run in browser
+  if (typeof window === "undefined") return;
+
   // Clear all auth-related storage
   sessionStorage.removeItem("auth_tokens");
   sessionStorage.removeItem("pkce_code_verifier");
