@@ -126,7 +126,7 @@ export async function handleOAuthCallback(
 
   // 3. Exchange code for tokens via Backend SIKP (acts as proxy to SSO)
   try {
-    const response = await fetch(`${BACKEND_SIKP_URL}/auth/exchange`, {
+    const response = await fetch(`${BACKEND_SIKP_URL}/api/auth/exchange`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -138,12 +138,33 @@ export async function handleOAuthCallback(
       }),
     });
 
+    // Get response text first for better error handling
+    const responseText = await response.text();
+
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Token exchange failed");
+      // Try to parse as JSON, fallback to plain text
+      let errorMessage = "Token exchange failed";
+      try {
+        const error = JSON.parse(responseText);
+        errorMessage = error.message || error.error || errorMessage;
+      } catch {
+        // Not JSON, use raw text
+        errorMessage =
+          responseText || `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorMessage);
     }
 
-    const data: TokenResponse = await response.json();
+    // Parse successful response as JSON
+    let data: TokenResponse;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("Failed to parse token response:", responseText);
+      throw new Error(
+        `Invalid JSON response from server: ${parseError instanceof Error ? parseError.message : "Unknown error"}`,
+      );
+    }
 
     // 4. Store tokens in sessionStorage with expiry
     const storedTokens: StoredTokens = {
@@ -232,7 +253,7 @@ export async function refreshAccessToken(): Promise<TokenResponse> {
   }
 
   try {
-    const response = await fetch(`${BACKEND_SIKP_URL}/auth/refresh`, {
+    const response = await fetch(`${BACKEND_SIKP_URL}/api/auth/refresh`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -304,7 +325,7 @@ export async function fetchUserProfile(): Promise<UserProfile> {
     throw new Error("Not authenticated");
   }
 
-  const response = await fetch(`${BACKEND_SIKP_URL}/auth/me`, {
+  const response = await fetch(`${BACKEND_SIKP_URL}/api/auth/me`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
