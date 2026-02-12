@@ -75,7 +75,7 @@ axiosInstance.interceptors.response.use(
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
-  data: T | null;
+  data?: T | null;
 }
 
 /**

@@ -18,6 +18,8 @@ import {
   generateCodeChallenge,
   generateState,
 } from "./pkce";
+import type { ApiResponse } from "./api-client";
+import type { User, UserRole } from "./types";
 
 // ========== Configuration ==========
 
@@ -55,19 +57,73 @@ interface StoredTokens {
   expires_at: number;
 }
 
-interface UserProfile {
+export interface AuthMeMahasiswa {
   id: string;
+  nim: string;
+  prodi: string;
+  fakultas: string;
+  angkatan?: number;
+}
+
+export interface AuthMeDosen {
+  id: string;
+  nidn: string;
+  prodi: string;
+  fakultas: string;
+}
+
+export interface AuthMeAdmin {
+  id: string;
+  level: string;
+}
+
+export interface AuthMeData {
+  sub: string;
   email: string;
-  nama: string;
-  role: string;
-  nim?: string;
-  nip?: string;
-  fakultas?: string;
-  prodi?: string;
-  semester?: number;
-  angkatan?: string;
-  phone?: string;
-  [key: string]: unknown;
+  name: string;
+  roles: string[];
+  mahasiswa?: AuthMeMahasiswa | null;
+  dosen?: AuthMeDosen | null;
+  admin?: AuthMeAdmin | null;
+}
+
+export type AuthMeApiResponse = ApiResponse<AuthMeData>;
+
+function pickPrimaryRole(roles: string[] | null | undefined): UserRole {
+  const normalized = (roles ?? []).map((r) => String(r).toUpperCase());
+  const known: UserRole[] = [
+    "ADMIN",
+    "WAKIL_DEKAN",
+    "KAPRODI",
+    "DOSEN",
+    "PEMBIMBING_LAPANGAN",
+    "MAHASISWA",
+  ];
+
+  for (const role of known) {
+    if (normalized.includes(role)) return role;
+  }
+  return "MAHASISWA";
+}
+
+function mapAuthMeToUser(me: AuthMeData): User {
+  const role = pickPrimaryRole(me.roles);
+  const id = me.mahasiswa?.id ?? me.dosen?.id ?? me.admin?.id ?? me.sub;
+
+  return {
+    id,
+    nama: me.name,
+    email: me.email,
+    role,
+    nim: me.mahasiswa?.nim,
+    nip: me.dosen?.nidn,
+    fakultas: me.mahasiswa?.fakultas ?? me.dosen?.fakultas,
+    prodi: me.mahasiswa?.prodi ?? me.dosen?.prodi,
+    angkatan:
+      me.mahasiswa?.angkatan !== undefined
+        ? String(me.mahasiswa.angkatan)
+        : undefined,
+  };
 }
 
 // ========== OAuth Flow Functions ==========
@@ -300,32 +356,38 @@ export function logout(): void {
  *
  * @returns User profile data
  */
-export async function fetchUserProfile(): Promise<UserProfile> {
+export async function fetchUserProfile(): Promise<User> {
   const token = getAuthToken();
   if (!token) {
     throw new Error("Not authenticated");
   }
 
   try {
-    const response = await authAxios.get("/api/auth/me", {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await authAxios.get<AuthMeApiResponse | AuthMeData>(
+      "/api/auth/me",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
 
-    // Response can be { data: UserProfile } or UserProfile directly
-    const responseData = response.data;
-    if (
-      responseData &&
-      typeof responseData === "object" &&
-      "data" in responseData
-    ) {
-      const wrappedData = responseData as { data: UserProfile };
-      if (wrappedData.data) {
-        return wrappedData.data;
+    const payload = response.data;
+
+    // Preferred: backend returns ApiResponse<AuthMeData>
+    if (payload && typeof payload === "object" && "success" in payload) {
+      const apiResponse = payload as AuthMeApiResponse;
+      if (!apiResponse.success) {
+        throw new Error(apiResponse.message || "Failed to fetch user profile");
       }
+      if (!apiResponse.data) {
+        throw new Error(apiResponse.message || "User profile data is empty");
+      }
+      return mapAuthMeToUser(apiResponse.data);
     }
-    return responseData as UserProfile;
+
+    // Fallback: backend returns raw AuthMeData
+    return mapAuthMeToUser(payload as AuthMeData);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       // Try to refresh token

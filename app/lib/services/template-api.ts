@@ -3,8 +3,12 @@
  * Handles CRUD operations for templates with Cloudflare R2 file storage
  */
 
-import { apiClient, axiosInstance, uploadFile } from "~/lib/api-client";
-import type { AxiosError } from "axios";
+import {
+  apiClient,
+  axiosInstance,
+  uploadFile,
+  type ApiResponse,
+} from "~/lib/api-client";
 import type {
   Template,
   TemplateField,
@@ -38,12 +42,6 @@ export interface TemplateResponse extends Template {
   originalName: string;
   createdBy: string;
   updatedBy?: string;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T | null;
 }
 
 // ==================== CONSTANTS ====================

@@ -12,29 +12,7 @@ import {
   isAuthenticated,
   refreshAccessToken,
 } from "~/lib/auth-client";
-
-/**
- * User type berdasarkan backend API
- */
-export interface User {
-  id: string;
-  nama: string;
-  email: string;
-  role:
-    | "MAHASISWA"
-    | "ADMIN"
-    | "DOSEN"
-    | "KAPRODI"
-    | "WAKIL_DEKAN"
-    | "PEMBIMBING_LAPANGAN";
-  nim?: string;
-  nip?: string;
-  fakultas?: string;
-  prodi?: string;
-  semester?: number;
-  angkatan?: string;
-  phone?: string;
-}
+import type { User } from "~/lib/types";
 
 interface UserContextType {
   user: User | null;
@@ -83,8 +61,8 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
     try {
       const userProfile = await fetchUserProfile();
-      setUser(userProfile as User);
-      return userProfile as User;
+      setUser(userProfile);
+      return userProfile;
     } catch (err) {
       console.error("Error fetching user profile:", err);
       const errorMessage =
