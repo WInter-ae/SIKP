@@ -3,8 +3,8 @@
  * Handles CRUD operations for templates with Cloudflare R2 file storage
  */
 
-import { apiClient } from "~/lib/api-client";
-import { getAuthToken } from "~/lib/auth-client";
+import { apiClient, axiosInstance, uploadFile } from "~/lib/api-client";
+import type { AxiosError } from "axios";
 import type {
   Template,
   TemplateField,
@@ -193,36 +193,15 @@ export async function createTemplate(
       formData.append("isActive", String(data.isActive));
     }
 
-    const token = await getAuthToken();
-    const API_BASE_URL =
-      import.meta.env.VITE_API_URL ||
-      import.meta.env.VITE_API_BASE_URL ||
-      import.meta.env.VITE_APP_AUTH_URL ||
-      "https://backend-sikp.backend-sikp.workers.dev";
+    const result = await uploadFile<TemplateResponse>(
+      "/api/templates",
+      formData,
+    );
 
-    const response = await fetch(`${API_BASE_URL}/api/templates`, {
-      method: "POST",
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: formData,
-      credentials: API_BASE_URL ? "omit" : "include",
-    });
-
-    const result = await response.json();
-
-    if (response.status === 403) {
+    if (!result.success && result.message?.includes("403")) {
       return {
         success: false,
         message: "Forbidden: Hanya admin yang dapat membuat template",
-        data: null,
-      };
-    }
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: result.message || `Error: ${response.status}`,
         data: null,
       };
     }
@@ -306,39 +285,18 @@ export async function updateTemplate(
       formData.append("isActive", String(data.isActive));
     }
 
-    const token = await getAuthToken();
-    const API_BASE_URL =
-      import.meta.env.VITE_API_URL ||
-      import.meta.env.VITE_API_BASE_URL ||
-      import.meta.env.VITE_APP_AUTH_URL ||
-      "https://backend-sikp.backend-sikp.workers.dev";
-
-    const response = await fetch(
-      `${API_BASE_URL}/api/templates/${templateId}`,
+    const result = await apiClient<TemplateResponse>(
+      `/api/templates/${templateId}`,
       {
         method: "PUT",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: formData,
-        credentials: API_BASE_URL ? "omit" : "include",
+        data: formData,
       },
     );
 
-    const result = await response.json();
-
-    if (response.status === 403) {
+    if (!result.success && result.message?.includes("403")) {
       return {
         success: false,
         message: "Forbidden: Hanya admin yang dapat mengupdate template",
-        data: null,
-      };
-    }
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: result.message || `Error: ${response.status}`,
         data: null,
       };
     }
@@ -426,29 +384,14 @@ export async function downloadTemplate(
   fileName: string,
 ): Promise<void> {
   try {
-    const token = await getAuthToken();
-    const API_BASE_URL =
-      import.meta.env.VITE_API_URL ||
-      import.meta.env.VITE_API_BASE_URL ||
-      import.meta.env.VITE_APP_AUTH_URL ||
-      "https://backend-sikp.backend-sikp.workers.dev";
-
-    const response = await fetch(
-      `${API_BASE_URL}/api/templates/${templateId}/download`,
+    const response = await axiosInstance.get(
+      `/api/templates/${templateId}/download`,
       {
-        method: "GET",
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: API_BASE_URL ? "omit" : "include",
+        responseType: "blob",
       },
     );
 
-    if (!response.ok) {
-      throw new Error("Gagal mendownload template");
-    }
-
-    const blob = await response.blob();
+    const blob = new Blob([response.data]);
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;

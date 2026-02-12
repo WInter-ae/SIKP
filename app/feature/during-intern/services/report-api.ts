@@ -3,7 +3,7 @@
  * Handles internship report upload and management
  */
 
-import { post, get, put } from "~/lib/api-client";
+import { post, get, put, uploadFile } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 // ==================== TYPES ====================
@@ -41,11 +41,11 @@ export async function uploadKPReport(
   metadata?: {
     description?: string;
     notes?: string;
-  }
+  },
 ): Promise<ApiResponse<UploadReportResponse>> {
   const formData = new FormData();
   formData.append("file", file);
-  
+
   if (metadata?.description) {
     formData.append("description", metadata.description);
   }
@@ -53,58 +53,7 @@ export async function uploadKPReport(
     formData.append("notes", metadata.notes);
   }
 
-  // Use fetch directly for file upload with FormData
-  const token = await getAuthToken();
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    "";
-  
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/report/upload`, {
-      method: "POST",
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: formData,
-      // Use cookies only when same-origin
-      credentials: API_BASE_URL ? "omit" : "include",
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        message: errorData.message || `Upload failed: ${response.statusText}`,
-        data: null,
-      };
-    }
-
-    const result = await response.json();
-    return {
-      success: true,
-      message: result.message || "File uploaded successfully",
-      data: result.data,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Upload failed",
-      data: null,
-    };
-  }
-}
-
-/**
- * Get auth token for file upload
- */
-async function getAuthToken(): Promise<string | null> {
-  try {
-    const token = localStorage.getItem('auth_token');
-    return token;
-  } catch {
-    return null;
-  }
+  return uploadFile<UploadReportResponse>("/api/report/upload", formData);
 }
 
 /**
@@ -120,7 +69,7 @@ export async function getMyReport(): Promise<ApiResponse<KPReport>> {
  * GET /api/report/student/:studentId
  */
 export async function getStudentReport(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<KPReport>> {
   return get<KPReport>(`/api/report/student/${studentId}`);
 }
@@ -130,7 +79,7 @@ export async function getStudentReport(
  * POST /api/report/:reportId/submit
  */
 export async function submitReport(
-  reportId: string
+  reportId: string,
 ): Promise<ApiResponse<KPReport>> {
   return post<KPReport>(`/api/report/${reportId}/submit`, {});
 }
@@ -144,7 +93,7 @@ export async function updateReportMetadata(
   data: {
     description?: string;
     notes?: string;
-  }
+  },
 ): Promise<ApiResponse<KPReport>> {
   return put<KPReport>(`/api/report/${reportId}`, data);
 }
@@ -154,7 +103,7 @@ export async function updateReportMetadata(
  * DELETE /api/report/:reportId
  */
 export async function deleteReport(
-  reportId: string
+  reportId: string,
 ): Promise<ApiResponse<void>> {
   // Using post with delete action since del might not be defined
   return post<void>(`/api/report/${reportId}/delete`, {});
@@ -166,8 +115,6 @@ export async function deleteReport(
  */
 export function getReportDownloadUrl(reportId: string): string {
   const API_BASE_URL =
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    "";
+    import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
   return `${API_BASE_URL}/api/report/${reportId}/download`;
 }

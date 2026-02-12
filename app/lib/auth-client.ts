@@ -12,6 +12,7 @@
  * 5. fetchCurrentUser() → Get user profile from Backend SIKP
  */
 
+import axios, { AxiosError } from "axios";
 import {
   generateCodeVerifier,
   generateCodeChallenge,
@@ -28,6 +29,15 @@ const REDIRECT_URI =
 const SCOPES = import.meta.env.VITE_SSO_SCOPES || "openid profile email";
 const BACKEND_SIKP_URL =
   import.meta.env.VITE_BACKEND_SIKP_BASE_URL || "http://localhost:8789";
+
+// Create axios instance for auth requests
+const authAxios = axios.create({
+  baseURL: BACKEND_SIKP_URL,
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
 // ========== Types ==========
 
@@ -126,45 +136,13 @@ export async function handleOAuthCallback(
 
   // 3. Exchange code for tokens via Backend SIKP (acts as proxy to SSO)
   try {
-    const response = await fetch(`${BACKEND_SIKP_URL}/api/auth/exchange`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        code,
-        redirectUri: REDIRECT_URI,
-        codeVerifier,
-      }),
+    const response = await authAxios.post<TokenResponse>("/api/auth/exchange", {
+      code,
+      redirectUri: REDIRECT_URI,
+      codeVerifier,
     });
 
-    // Get response text first for better error handling
-    const responseText = await response.text();
-
-    if (!response.ok) {
-      // Try to parse as JSON, fallback to plain text
-      let errorMessage = "Token exchange failed";
-      try {
-        const error = JSON.parse(responseText);
-        errorMessage = error.message || error.error || errorMessage;
-      } catch {
-        // Not JSON, use raw text
-        errorMessage =
-          responseText || `HTTP ${response.status}: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
-    }
-
-    // Parse successful response as JSON
-    let data: TokenResponse;
-    try {
-      data = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error("Failed to parse token response:", responseText);
-      throw new Error(
-        `Invalid JSON response from server: ${parseError instanceof Error ? parseError.message : "Unknown error"}`,
-      );
-    }
+    const data = response.data;
 
     // 4. Store tokens in sessionStorage with expiry
     const storedTokens: StoredTokens = {
@@ -183,6 +161,19 @@ export async function handleOAuthCallback(
     // Cleanup on error
     sessionStorage.removeItem("pkce_code_verifier");
     sessionStorage.removeItem("oauth_state");
+
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<{
+        message?: string;
+        error?: string;
+      }>;
+      const errorMessage =
+        axiosError.response?.data?.message ||
+        axiosError.response?.data?.error ||
+        axiosError.message ||
+        "Token exchange failed";
+      throw new Error(errorMessage);
+    }
     throw error;
   }
 }
@@ -253,21 +244,11 @@ export async function refreshAccessToken(): Promise<TokenResponse> {
   }
 
   try {
-    const response = await fetch(`${BACKEND_SIKP_URL}/api/auth/refresh`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        refreshToken: tokens.refresh_token,
-      }),
+    const response = await authAxios.post<TokenResponse>("/api/auth/refresh", {
+      refreshToken: tokens.refresh_token,
     });
 
-    if (!response.ok) {
-      throw new Error("Token refresh failed");
-    }
-
-    const data: TokenResponse = await response.json();
+    const data = response.data;
 
     // Store new tokens (only in browser)
     if (typeof window !== "undefined") {
@@ -325,14 +306,28 @@ export async function fetchUserProfile(): Promise<UserProfile> {
     throw new Error("Not authenticated");
   }
 
-  const response = await fetch(`${BACKEND_SIKP_URL}/api/auth/me`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const response = await authAxios.get("/api/auth/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-  if (!response.ok) {
-    if (response.status === 401) {
+    // Response can be { data: UserProfile } or UserProfile directly
+    const responseData = response.data;
+    if (
+      responseData &&
+      typeof responseData === "object" &&
+      "data" in responseData
+    ) {
+      const wrappedData = responseData as { data: UserProfile };
+      if (wrappedData.data) {
+        return wrappedData.data;
+      }
+    }
+    return responseData as UserProfile;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
       // Try to refresh token
       try {
         await refreshAccessToken();
@@ -345,7 +340,4 @@ export async function fetchUserProfile(): Promise<UserProfile> {
     }
     throw new Error("Failed to fetch user profile");
   }
-
-  const data = await response.json();
-  return data.data || data;
 }
