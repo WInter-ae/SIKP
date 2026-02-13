@@ -19,7 +19,7 @@ import {
   generateState,
 } from "./pkce";
 import type { ApiResponse } from "./api-client";
-import type { User, UserRole } from "./types";
+import type { AuthMeData, User } from "./types";
 
 // ========== Configuration ==========
 
@@ -57,64 +57,40 @@ interface StoredTokens {
   expires_at: number;
 }
 
-export interface AuthMeMahasiswa {
-  id: string;
-  nim: string;
-  prodi: string;
-  fakultas: string;
-  angkatan?: number;
-}
-
-export interface AuthMeDosen {
-  id: string;
-  nidn: string;
-  prodi: string;
-  fakultas: string;
-}
-
-export interface AuthMeAdmin {
-  id: string;
-  level: string;
-}
-
-export interface AuthMeData {
-  sub: string;
-  email: string;
-  name: string;
-  roles: string[];
-  mahasiswa?: AuthMeMahasiswa | null;
-  dosen?: AuthMeDosen | null;
-  admin?: AuthMeAdmin | null;
-}
-
 export type AuthMeApiResponse = ApiResponse<AuthMeData>;
 
-function pickPrimaryRole(roles: string[] | null | undefined): UserRole {
-  const normalized = (roles ?? []).map((r) => String(r).toUpperCase());
-  const known: UserRole[] = [
-    "ADMIN",
-    "WAKIL_DEKAN",
-    "KAPRODI",
-    "DOSEN",
-    "PEMBIMBING_LAPANGAN",
-    "MAHASISWA",
+function pickPrimaryRole(roles: string[] | null | undefined): string {
+  const normalized = (roles ?? []).map((r) => String(r).toLowerCase());
+  const known = [
+    "admin",
+    "wakil_dekan",
+    "kaprodi",
+    "dosen",
+    "pembimbing_lapangan",
+    "mahasiswa",
   ];
 
   for (const role of known) {
     if (normalized.includes(role)) return role;
   }
-  return "MAHASISWA";
+  return "mahasiswa";
 }
 
 function mapAuthMeToUser(me: AuthMeData): User {
-  const role = pickPrimaryRole(me.roles);
+  const primaryRole = pickPrimaryRole(me.roles);
   const id = me.mahasiswa?.id ?? me.dosen?.id ?? me.admin?.id ?? me.sub;
 
   return {
+    sub: me.sub,
     id,
-    nama: me.name,
     email: me.email,
-    role,
+    name: me.name,
+    nama: me.name,
+    roles: me.roles,
+    primaryRole,
+    mahasiswa: me.mahasiswa ?? null,
+    dosen: me.dosen ?? null,
+    admin: me.admin ?? null,
     nim: me.mahasiswa?.nim,
     nip: me.dosen?.nidn,
     fakultas: me.mahasiswa?.fakultas ?? me.dosen?.fakultas,

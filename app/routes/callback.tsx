@@ -20,14 +20,64 @@ import { handleOAuthCallback } from "~/lib/auth-client";
 import { useUser } from "~/contexts/user-context";
 import { toast } from "sonner";
 
+type LoginMode = "mahasiswa" | "dosen";
+
+function normalizeRoles(roles: string[] | undefined): string[] {
+  return (roles ?? []).map((r) => String(r).toLowerCase());
+}
+
+function getAvailableLoginModes(roles: string[]): LoginMode[] {
+  const hasMahasiswaRole =
+    roles.includes("mahasiswa") || roles.includes("alumni");
+  const hasDosenRole =
+    roles.includes("dosen") ||
+    roles.includes("lektor") ||
+    roles.includes("kaprodi") ||
+    roles.includes("wakil_dekan");
+
+  const modes: LoginMode[] = [];
+  if (hasMahasiswaRole) modes.push("mahasiswa");
+  if (hasDosenRole) modes.push("dosen");
+  return modes;
+}
+
+function getRedirectPathFromRoles(roles: string[] | undefined): string {
+  const normalized = normalizeRoles(roles);
+
+  if (normalized.includes("admin") || normalized.includes("superadmin"))
+    return "/admin";
+  if (normalized.includes("wakil_dekan")) return "/wakil-dekan";
+  if (normalized.includes("kaprodi")) return "/kaprodi";
+  if (normalized.includes("dosen") || normalized.includes("lektor"))
+    return "/dosen";
+  if (normalized.includes("pembimbing_lapangan")) return "/mentor";
+  if (normalized.includes("mahasiswa") || normalized.includes("alumni"))
+    return "/mahasiswa";
+
+  return "/";
+}
+
 export default function CallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { fetchCurrentUser } = useUser();
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
+  const [loginModes, setLoginModes] = useState<LoginMode[]>([]);
+
+  const handleChooseMode = (mode: LoginMode) => {
+    navigate(mode === "mahasiswa" ? "/mahasiswa" : "/dosen", {
+      replace: true,
+    });
+  };
 
   useEffect(() => {
+    const redirectHomeSoon = () => {
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 3000);
+    };
+
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const errorParam = searchParams.get("error");
@@ -40,9 +90,7 @@ export default function CallbackPage() {
       toast.error(`Login gagal: ${errorMsg}`);
       setIsProcessing(false);
 
-      setTimeout(() => {
-        navigate("/", { replace: true });
-      }, 3000);
+      redirectHomeSoon();
       return;
     }
 
@@ -52,9 +100,7 @@ export default function CallbackPage() {
       toast.error("Invalid callback parameters");
       setIsProcessing(false);
 
-      setTimeout(() => {
-        navigate("/", { replace: true });
-      }, 3000);
+      redirectHomeSoon();
       return;
     }
 
@@ -68,33 +114,29 @@ export default function CallbackPage() {
         try {
           const user = await fetchCurrentUser();
 
-          // Redirect based on user role
-          let redirectPath = "/mahasiswa"; // Default
-
           if (user) {
-            switch (user.role) {
-              case "MAHASISWA":
-                redirectPath = "/mahasiswa";
-                break;
-              case "DOSEN":
-                redirectPath = "/dosen";
-                break;
-              case "ADMIN":
-                redirectPath = "/admin";
-                break;
-              case "KAPRODI":
-                redirectPath = "/kaprodi";
-                break;
-              case "WAKIL_DEKAN":
-                redirectPath = "/wakil-dekan";
-                break;
-              case "PEMBIMBING_LAPANGAN":
-                redirectPath = "/mentor";
-                break;
-              default:
-                redirectPath = "/";
+            const normalizedRoles = normalizeRoles(user.roles);
+
+            // Admin always goes to admin dashboard
+            if (
+              normalizedRoles.includes("admin") ||
+              normalizedRoles.includes("superadmin")
+            ) {
+              navigate("/admin", { replace: true });
+              return;
+            }
+
+            const modes = getAvailableLoginModes(normalizedRoles);
+            if (modes.length > 1) {
+              setLoginModes(modes);
+              setIsProcessing(false);
+              return;
             }
           }
+
+          const redirectPath = user
+            ? getRedirectPathFromRoles(user.roles)
+            : "/mahasiswa";
 
           navigate(redirectPath, { replace: true });
         } catch (err) {
@@ -102,9 +144,7 @@ export default function CallbackPage() {
           toast.error("Gagal memuat profil pengguna");
           setError("Failed to load user profile");
 
-          setTimeout(() => {
-            navigate("/", { replace: true });
-          }, 3000);
+          redirectHomeSoon();
         }
       })
       .catch((err) => {
@@ -115,9 +155,7 @@ export default function CallbackPage() {
         toast.error("Login gagal: " + errorMessage);
         setIsProcessing(false);
 
-        setTimeout(() => {
-          navigate("/", { replace: true });
-        }, 3000);
+        redirectHomeSoon();
       });
   }, [searchParams, navigate, fetchCurrentUser]);
 
@@ -144,6 +182,44 @@ export default function CallbackPage() {
           <h1 className="text-2xl font-bold text-red-600 mb-2">Login Error</h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500">Redirecting to home page...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loginModes.length > 1) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Pilih Mode Login
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Akun Anda memiliki beberapa role. Silakan pilih ingin masuk sebagai
+            apa.
+          </p>
+
+          <div className="grid gap-3">
+            {loginModes.includes("mahasiswa") && (
+              <button
+                type="button"
+                onClick={() => handleChooseMode("mahasiswa")}
+                className="w-full rounded-md bg-primary px-4 py-2 text-primary-foreground hover:opacity-90"
+              >
+                Masuk sebagai Mahasiswa
+              </button>
+            )}
+
+            {loginModes.includes("dosen") && (
+              <button
+                type="button"
+                onClick={() => handleChooseMode("dosen")}
+                className="w-full rounded-md border border-input bg-background px-4 py-2 hover:bg-accent"
+              >
+                Masuk sebagai Dosen
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

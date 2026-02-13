@@ -14,7 +14,7 @@ import {
   BookMarked,
   Award,
 } from "lucide-react"
-import type { NavItem, UserRole } from "../types"
+import type { NavItem, SidebarRole } from "../types"
 
 // Menu untuk Mahasiswa
 const mahasiswaMenu: NavItem[] = [
@@ -272,7 +272,7 @@ const mentorMenu: NavItem[] = [
   },
 ]
 
-export function getSidebarMenuByRole(role: UserRole): NavItem[] {
+export function getSidebarMenuByRole(role: SidebarRole): NavItem[] {
   switch (role) {
     case "mahasiswa":
       return mahasiswaMenu

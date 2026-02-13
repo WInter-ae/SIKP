@@ -96,7 +96,8 @@ export default function TemplateManagementPage() {
       return;
     }
 
-    if (user.role !== "ADMIN") {
+    const userRoles = (user.roles ?? []).map((r) => String(r).toLowerCase());
+    if (!userRoles.includes("admin") && !userRoles.includes("superadmin")) {
       toast.error("Anda tidak memiliki akses ke halaman ini");
       navigate("/");
       return;
@@ -123,7 +124,7 @@ export default function TemplateManagementPage() {
       }
     } catch (error: unknown) {
       console.error("Error fetching templates:", error);
-      
+
       // Handle authorization errors
       if (
         (error as Error).message?.includes("Unauthorized") ||
@@ -133,7 +134,7 @@ export default function TemplateManagementPage() {
         navigate("/login");
         return;
       }
-      
+
       toast.error("Terjadi kesalahan saat memuat templates");
     } finally {
       setIsLoading(false);
@@ -181,7 +182,7 @@ export default function TemplateManagementPage() {
   // Delete template
   const handleDeleteTemplate = async () => {
     if (!templateToDelete) return;
-    
+
     setIsLoading(true);
     try {
       const response = await deleteTemplate(templateToDelete.id);
@@ -193,13 +194,13 @@ export default function TemplateManagementPage() {
       }
     } catch (error: unknown) {
       console.error("Error deleting template:", error);
-      
+
       if ((error as Error).message?.includes("Forbidden")) {
         toast.error("Anda tidak memiliki izin untuk menghapus template");
         navigate("/login");
         return;
       }
-      
+
       toast.error("Terjadi kesalahan saat menghapus template");
     } finally {
       setIsLoading(false);
@@ -221,13 +222,13 @@ export default function TemplateManagementPage() {
       }
     } catch (error: unknown) {
       console.error("Error toggling template status:", error);
-      
+
       if ((error as Error).message?.includes("Forbidden")) {
         toast.error("Anda tidak memiliki izin untuk mengubah status template");
         navigate("/login");
         return;
       }
-      
+
       toast.error("Terjadi kesalahan saat mengubah status");
     } finally {
       setIsLoading(false);
@@ -241,12 +242,12 @@ export default function TemplateManagementPage() {
       toast.success("Template berhasil didownload");
     } catch (error: unknown) {
       console.error("Error downloading template:", error);
-      
+
       if ((error as Error).message?.includes("Forbidden")) {
         toast.error("Anda tidak memiliki akses untuk mendownload template");
         return;
       }
-      
+
       toast.error("Gagal mendownload template");
     }
   };
@@ -337,7 +338,7 @@ export default function TemplateManagementPage() {
                   setFilterType(value as TemplateType | "all")
                 }
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-50">
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>

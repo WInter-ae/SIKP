@@ -5,11 +5,60 @@
 
 // ============ User & Auth Types ============
 
-export interface User {
+export interface AuthMeMahasiswa {
   id: string;
-  nama: string;
+  nim: string;
+  prodi: string;
+  fakultas: string;
+  angkatan?: number;
+}
+
+export interface AuthMeDosen {
+  id: string;
+  nidn: string;
+  prodi: string;
+  fakultas: string;
+}
+
+export interface AuthMeAdmin {
+  id: string;
+  level: string;
+}
+
+/**
+ * Payload dari backend untuk endpoint `GET /api/auth/me`
+ */
+export interface AuthMeData {
+  sub: string;
   email: string;
-  role: UserRole;
+  name: string;
+  roles: string[];
+  mahasiswa?: AuthMeMahasiswa | null;
+  dosen?: AuthMeDosen | null;
+  admin?: AuthMeAdmin | null;
+}
+
+export interface User {
+  /** Subject identifier dari SSO */
+  sub: string;
+  /** ID internal (dipakai di banyak endpoint SIKP) */
+  id: string;
+  email: string;
+  /** Nama dari SSO */
+  name: string;
+  /** Alias kompatibilitas (UI lama pakai `nama`) */
+  nama: string;
+  /** Roles raw dari backend */
+  roles: string[];
+  /** Role utama hasil derive dari `roles` (untuk routing/guard legacy) */
+  primaryRole?: string;
+
+  /** Nested profile dari backend (opsional) */
+  mahasiswa?: AuthMeMahasiswa | null;
+  dosen?: AuthMeDosen | null;
+  admin?: AuthMeAdmin | null;
+
+  /** Field convenience untuk kompatibilitas UI/fitur lama */
   nim?: string;
   nip?: string;
   fakultas?: string;
@@ -18,14 +67,6 @@ export interface User {
   angkatan?: string;
   phone?: string;
 }
-
-export type UserRole =
-  | "MAHASISWA"
-  | "ADMIN"
-  | "DOSEN"
-  | "KAPRODI"
-  | "WAKIL_DEKAN"
-  | "PEMBIMBING_LAPANGAN";
 
 export interface LoginResponse {
   user: User;
@@ -130,7 +171,7 @@ export interface SubmissionStatistics {
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
-  data: T | null;
+  data?: T | null;
 }
 
 export interface ApiErrorResponse {

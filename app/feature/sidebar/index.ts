@@ -6,7 +6,7 @@ export { NavUser } from "./components/nav-user"
 export { TeamSwitcher } from "./components/team-switcher"
 
 // Types
-export type { User, UserRole, NavItem, SidebarData } from "./types"
+export type { User, SidebarRole, NavItem, SidebarData } from "./types"
 
 // Data
 export { getSidebarMenuByRole, getSidebarMenuByUrl } from "./data/sidebar-data"

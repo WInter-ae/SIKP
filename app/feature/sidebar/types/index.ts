@@ -1,12 +1,12 @@
 import type { LucideIcon } from "lucide-react"
 
-export type UserRole = "mahasiswa" | "dosen" | "admin" | "mentor"
+export type SidebarRole = "mahasiswa" | "dosen" | "admin" | "mentor"
 
 export interface User {
   name: string
   email: string
   avatar: string
-  role: UserRole
+  role: SidebarRole
 }
 
 export interface NavItem {

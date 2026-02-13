@@ -26,9 +26,21 @@ export function ProtectedRoute({
     }
 
     // Check role-based access
-    if (requiredRoles && user && !requiredRoles.includes(user.role)) {
-      navigate("/unauthorized", { replace: true });
-      return;
+    if (requiredRoles && user) {
+      const userRoles = (user.roles ?? []).map((r) => String(r).toLowerCase());
+      const required = requiredRoles.map((r) => String(r).toLowerCase());
+      const allowed = required.some((role) => {
+        if (role === "admin") {
+          return (
+            userRoles.includes("admin") || userRoles.includes("superadmin")
+          );
+        }
+        return userRoles.includes(role);
+      });
+      if (!allowed) {
+        navigate("/unauthorized", { replace: true });
+        return;
+      }
     }
   }, [isLoading, isAuthenticated, user, requiredRoles, navigate]);
 
@@ -49,8 +61,16 @@ export function ProtectedRoute({
   }
 
   // Check role
-  if (requiredRoles && user && !requiredRoles.includes(user.role)) {
-    return null;
+  if (requiredRoles && user) {
+    const userRoles = (user.roles ?? []).map((r) => String(r).toLowerCase());
+    const required = requiredRoles.map((r) => String(r).toLowerCase());
+    const allowed = required.some((role) => {
+      if (role === "admin") {
+        return userRoles.includes("admin") || userRoles.includes("superadmin");
+      }
+      return userRoles.includes(role);
+    });
+    if (!allowed) return null;
   }
 
   return <>{children}</>;

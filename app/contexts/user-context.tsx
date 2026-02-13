@@ -43,6 +43,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const authenticated = isAuthenticated();
 
   /**
    * Fetch current user profile from Backend SIKP
@@ -115,7 +116,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const value: UserContextType = {
     user,
     isLoading,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated: authenticated,
     error,
     logout: handleLogout,
     setUser,
