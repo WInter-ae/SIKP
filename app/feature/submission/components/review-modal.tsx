@@ -34,6 +34,7 @@ import {
 } from "~/components/ui/dialog";
 
 import type { Application, DocumentFile } from "../types";
+import { STANDARD_DOCUMENT_TITLES, isSuratPengantarDocument } from "../constants/document-types";
 
 interface ReviewModalProps {
   application: Application | null;
@@ -146,22 +147,18 @@ function ReviewModal({
   // agar section dokumen tetap muncul walaupun belum ada yang upload
   const allDocumentTitles = useMemo(() => {
     if (!application) return [];
-    const standardDocs = [
-      "Surat Proposal",
-      "Surat Kesediaan",
-      "Form Permohonan",
-      "KRS Semester 4",
-      "Daftar Kumpulan Nilai",
-      "Bukti Pembayaran UKT",
-    ];
+    
+    // ✅ Gunakan constants daripada hardcoded array
+    const standardDocs = [...STANDARD_DOCUMENT_TITLES];
+    
     const uploadedTitles = Object.keys(groupedDocuments).filter(
       (title) => title && title !== "undefined",
     );
     
-    // ✅ EXCLUDE SURAT_PENGANTAR from upload review section
-    // It's only created by backend on approval, not uploaded by students
+    // ✅ CRITICAL: Exclude SURAT_PENGANTAR menggunakan helper function
+    // SURAT_PENGANTAR tidak boleh muncul di accordion upload
     const filteredUploadedTitles = uploadedTitles.filter(
-      (title) => title !== "Surat Pengantar Kerja Praktik"
+      (title) => !isSuratPengantarDocument(title)
     );
     
     const allTitles = Array.from(new Set([...standardDocs, ...filteredUploadedTitles]));
@@ -169,8 +166,9 @@ function ReviewModal({
     console.log("📋 All document titles in modal:", {
       applicationId: application.id,
       standardDocsCount: standardDocs.length,
+      uploadedTitlesRaw: uploadedTitles,
+      uploadedTitlesFiltered: filteredUploadedTitles,
       uploadedTitlesCount: filteredUploadedTitles.length,
-      uploadedTitles: filteredUploadedTitles,
       allTitlesCount: allTitles.length,
       allTitles,
     });

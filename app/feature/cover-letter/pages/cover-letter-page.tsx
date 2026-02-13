@@ -1,68 +1,33 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 
 import StatusTimeline from "~/feature/cover-letter/components/status-timeline";
+import {
+  SubmissionLoadingState,
+  SubmissionErrorState,
+  SubmissionEmptyState,
+} from "~/feature/cover-letter/components/submission-states";
+import { useSubmissionStatus } from "~/feature/cover-letter/hooks/use-submission-status";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import {
-  getSubmissionByTeamId,
-  resetSubmissionToDraft,
-} from "~/lib/services/submission-api";
-import { getMyTeams } from "~/feature/create-teams/services/team-api";
-import type { Submission } from "~/feature/submission/types";
+import { resetSubmissionToDraft } from "~/lib/services/submission-api";
 
+/**
+ * Cover Letter Page - Display submission status timeline
+ * 
+ * This page shows the status of cover letter submission with visual timeline,
+ * allowing students to track their submission progress and download approved documents.
+ */
 function CoverLetterPage() {
   const navigate = useNavigate();
-  const [submission, setSubmission] = useState<Submission | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { submission, isLoading, error, refetch } = useSubmissionStatus();
 
-  useEffect(() => {
-    const loadSubmissionStatus = async () => {
-      try {
-        setIsLoading(true);
-
-        // 1. Get user's team
-        const teamsResponse = await getMyTeams();
-
-        if (
-          !teamsResponse.success ||
-          !teamsResponse.data ||
-          teamsResponse.data.length === 0
-        ) {
-          setError("Anda belum bergabung dengan tim manapun");
-          setIsLoading(false);
-          return;
-        }
-
-        const team = teamsResponse.data[0]; // Get first active team
-
-        // 2. Get submission untuk team ini
-        const submissionResponse = await getSubmissionByTeamId(team.id);
-
-        if (submissionResponse.success && submissionResponse.data) {
-          setSubmission(submissionResponse.data);
-          console.log("✅ Loaded submission status:", submissionResponse.data);
-        } else {
-          console.log("📭 No submission found for this team");
-          setSubmission(null);
-        }
-      } catch (err) {
-        console.error("❌ Error loading submission:", err);
-        setError(err instanceof Error ? err.message : "Gagal memuat data");
-        toast.error("Gagal memuat status pengajuan");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadSubmissionStatus();
-  }, []);
-
+  /**
+   * Handle resubmit action after rejection
+   */
   const handleResubmit = async () => {
     if (!submission) {
       navigate("/mahasiswa/kp/pengajuan");
@@ -70,6 +35,7 @@ function CoverLetterPage() {
     }
 
     const response = await resetSubmissionToDraft(submission.id);
+    
     if (!response.success) {
       toast.error(response.message || "Gagal mengembalikan status ke draft");
       return;
@@ -79,62 +45,17 @@ function CoverLetterPage() {
     navigate("/mahasiswa/kp/pengajuan");
   };
 
-  // Render loading state
-  if (isLoading) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Memuat status pengajuan...</p>
-      </div>
-    );
-  }
-
-  // Render error state
-  if (error && !submission) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-destructive">{error}</p>
-        <Button
-          onClick={() => navigate("/mahasiswa/kp/pengajuan")}
-          className="mt-4"
-        >
-          Kembali ke Pengajuan
-        </Button>
-      </div>
-    );
-  }
-
-  // Render status berdasarkan submission status dengan timeline
-  const renderStatusSteps = () => {
-    // Jika tidak ada submission, tampil pesan
-    if (!submission) {
-      return (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            Belum ada pengajuan. Silakan ajukan terlebih dahulu.
-          </p>
-          <Button
-            onClick={() => navigate("/mahasiswa/kp/pengajuan")}
-            className="mt-4"
-          >
-            Ajukan Sekarang
-          </Button>
-        </div>
-      );
-    }
-
-    // ✅ Render timeline dari status history (menampilkan semua status yang pernah ada)
-    return (
-      <StatusTimeline
-        statusHistory={submission.statusHistory}
-        currentStatus={submission.status}
-        rejectionReason={submission.rejectionReason}
-        submittedAt={submission.submittedAt}
-        approvedAt={submission.approvedAt}
-        documents={submission.documents}
-        onResubmit={handleResubmit}
-      />
-    );
+  /**
+   * Navigate to submission page
+   */
+  const navigateToSubmission = () => {
+    navigate("/mahasiswa/kp/pengajuan");
   };
+
+  /**
+   * Check if next button should be enabled
+   */
+  const isNextButtonEnabled = submission?.status === "APPROVED";
 
   return (
     <>
@@ -149,23 +70,58 @@ function CoverLetterPage() {
       </div>
 
       <Card className="mb-8">
-        <CardContent className="p-6">{renderStatusSteps()}</CardContent>
+        <CardContent className="p-6">
+          {/* Render loading state */}
+          {isLoading && <SubmissionLoadingState />}
+
+          {/* Render error state */}
+          {!isLoading && error && !submission && (
+            <SubmissionErrorState
+              error={error}
+              onRetry={refetch}
+              onNavigateToSubmission={navigateToSubmission}
+            />
+          )}
+
+          {/* Render empty state */}
+          {!isLoading && !error && !submission && (
+            <SubmissionEmptyState onNavigateToSubmission={navigateToSubmission} />
+          )}
+
+          {/* Render timeline */}
+          {!isLoading && submission && (
+            <StatusTimeline
+              statusHistory={submission.statusHistory}
+              currentStatus={submission.status}
+              rejectionReason={submission.rejectionReason}
+              submittedAt={submission.submittedAt}
+              approvedAt={submission.approvedAt}
+              documents={submission.documents}
+              onResubmit={handleResubmit}
+            />
+          )}
+        </CardContent>
       </Card>
 
       {/* Navigation Buttons - Only show if there's a submission */}
-      {submission && (
+      {submission && !isLoading && (
         <div className="flex justify-between mt-8">
-          <Button variant="secondary" asChild className="px-6 py-3 font-medium">
-            <Link to="/mahasiswa/kp/pengajuan">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Sebelumnya
-            </Link>
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/mahasiswa/kp/pengajuan")}
+            className="px-6 py-3 font-medium"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Sebelumnya
           </Button>
-          <Button asChild className="px-6 py-3 font-medium">
-            <Link to="/mahasiswa/kp/surat-balasan">
-              Selanjutnya
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
+
+          <Button
+            disabled={!isNextButtonEnabled}
+            onClick={() => navigate("/mahasiswa/kp/surat-balasan")}
+            className="px-6 py-3 font-medium"
+          >
+            Selanjutnya
+            <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       )}
