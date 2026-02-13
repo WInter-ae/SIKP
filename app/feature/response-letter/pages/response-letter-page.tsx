@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -15,91 +15,31 @@ import {
 
 import FileUpload from "../components/file-upload";
 import StatusDropdown from "../components/status-dropdown";
-import ProcessSteps from "../components/process-step";
 import { AnnouncementDialog } from "../components/announcement-dialog";
 import { submitResponseLetter } from "~/lib/services/response-letter-api";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
 import { getSubmissionByTeamId } from "~/lib/services/submission-api";
+import { useResponseLetterStatus } from "../hooks/use-response-letter-status";
+import {
+  ResponseLetterLoadingState,
+  ResponseLetterErrorState,
+  ResponseLetterEmptyState,
+} from "../components/response-letter-states";
+import { ResponseLetterTimeline } from "../components/response-letter-timeline";
 
 import { ArrowLeft, ArrowRight, Eye, Info } from "lucide-react";
 
 function ResponseLetterPage() {
   const navigate = useNavigate();
+  const { responseLetter, isLoading, error, refetch } =
+    useResponseLetterStatus();
+
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string>("");
-  const [showProcessSteps, setShowProcessSteps] = useState<boolean>(false);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingData, setIsLoadingData] = useState(true);
   const [submissionId, setSubmissionId] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
-  const [steps, setSteps] = useState([
-    {
-      id: 1,
-      title: "Mengirimkan Surat Balasan",
-      description:
-        "Surat balasan telah diterima dan sedang dalam proses review oleh admin",
-      status: "submitted" as const,
-      visible: false,
-    },
-    {
-      id: 2,
-      title: "Pemberian Izin Pengajuan Ulang",
-      description:
-        "Surat balasan ditolak. Anda diberikan izin untuk mengajukan ulang.",
-      status: "rejected" as const,
-      visible: false,
-    },
-    {
-      id: 3,
-      title: "Persetujuan Kerja Praktik",
-      description:
-        "Surat balasan disetujui. Kerja praktik Anda telah disetujui.",
-      status: "approved" as const,
-      visible: false,
-    },
-  ]);
-
-  useEffect(() => {
-    const loadSubmissionData = async () => {
-      try {
-        setIsLoadingData(true);
-
-        // 1. Get user's team
-        const teamsResponse = await getMyTeams();
-
-        if (
-          !teamsResponse.success ||
-          !teamsResponse.data ||
-          teamsResponse.data.length === 0
-        ) {
-          toast.error("Anda belum bergabung dengan tim manapun");
-          return;
-        }
-
-        const team = teamsResponse.data[0]; // Get first active team
-        setTeamId(team.id);
-        console.log("✅ Loaded team:", team);
-
-        // 2. Get submission for this team
-        const submissionResponse = await getSubmissionByTeamId(team.id);
-
-        if (submissionResponse.success && submissionResponse.data) {
-          setSubmissionId(submissionResponse.data.id);
-          console.log("✅ Loaded submission status:", submissionResponse.data);
-        } else {
-          toast.error("Data pengajuan tidak ditemukan. Silakan buat pengajuan terlebih dahulu.");
-        }
-      } catch (error) {
-        console.error("❌ Error loading submission data:", error);
-        toast.error("Gagal memuat data pengajuan");
-      } finally {
-        setIsLoadingData(false);
-      }
-    };
-
-    void loadSubmissionData();
-  }, []);
 
   const handleFileChange = (selectedFile: File) => {
     setFile(selectedFile);
@@ -120,40 +60,55 @@ function ResponseLetterPage() {
       return;
     }
 
-    if (!submissionId || !teamId) {
-      toast.error("Data pengajuan tidak ditemukan. Silakan kembali dan coba lagi.");
-      return;
-    }
-
     try {
       setIsSubmitting(true);
 
-      // Call API to submit response letter
+      // 1. Get user's team
+      const teamsResponse = await getMyTeams();
+
+      if (
+        !teamsResponse.success ||
+        !teamsResponse.data ||
+        teamsResponse.data.length === 0
+      ) {
+        toast.error("Anda belum bergabung dengan tim manapun");
+        return;
+      }
+
+      const team = teamsResponse.data[0];
+      const teamIdValue = team.id;
+
+      // 2. Get submission for this team
+      const submissionResponse = await getSubmissionByTeamId(teamIdValue);
+
+      if (!submissionResponse.success || !submissionResponse.data) {
+        toast.error(
+          "Data pengajuan tidak ditemukan. Silakan buat pengajuan terlebih dahulu.",
+        );
+        return;
+      }
+
+      const submissionIdValue = submissionResponse.data.id;
+
+      // 3. Call API to submit response letter
       const response = await submitResponseLetter({
-        submissionId,
-        teamId,
+        submissionId: submissionIdValue,
+        teamId: teamIdValue,
         file,
-        letterStatus: (status === "Disetujui" ? "approved" : "rejected") as "approved" | "rejected",
+        letterStatus: (status === "Disetujui" ? "approved" : "rejected") as
+          | "approved"
+          | "rejected",
       });
 
       if (response.success) {
-        // Show only the first step
-        const updatedSteps = steps.map((step, index) => ({
-          ...step,
-          visible: index === 0,
-        }));
-
-        setSteps(updatedSteps);
-        setShowProcessSteps(true);
-
         toast.success("Surat balasan berhasil dikirim");
 
-        // Scroll to the process steps
-        setTimeout(() => {
-          document
-            .getElementById("process-steps-container")
-            ?.scrollIntoView({ behavior: "smooth" });
-        }, 100);
+        // Reload data to show timeline
+        await refetch();
+
+        // Reset form
+        setFile(null);
+        setStatus("");
       } else {
         toast.error(response.message || "Gagal mengirim surat balasan");
       }
@@ -186,26 +141,15 @@ function ResponseLetterPage() {
 
   return (
     <>
-      {isLoadingData ? (
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="flex flex-col items-center gap-4">
-            <div className="animate-spin">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-            </div>
-            <p className="text-muted-foreground">Memuat data pengajuan...</p>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Header Section */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Halaman Surat Balasan
-            </h1>
-            <p className="text-muted-foreground">
-              Upload surat balasan dan pantau status persetujuan kerja praktik
-            </p>
-          </div>
+      {/* Header Section */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-2">
+          Halaman Surat Balasan
+        </h1>
+        <p className="text-muted-foreground">
+          Upload surat balasan dan pantau status persetujuan kerja praktik
+        </p>
+      </div>
 
       {/* Info Alert */}
       <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
@@ -216,80 +160,107 @@ function ResponseLetterPage() {
         </AlertDescription>
       </Alert>
 
-      <Card className="mb-8">
-        <CardContent className="p-6">
-          {/* Upload Surat Balasan Section */}
-          <CardHeader className="px-0 pt-0">
-            <CardTitle className="text-xl font-semibold text-foreground">
-              Upload Surat Balasan
-            </CardTitle>
-          </CardHeader>
-          <Separator className="mb-4" />
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-grow">
-              <FileUpload
-                label="Surat Balasan dari Perusahaan"
-                onFileChange={handleFileChange}
-              />
-            </div>
-            {file && (
-              <div className="pt-8">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={handlePreview}
-                        className="text-muted-foreground hover:text-foreground"
-                      >
-                        <Eye className="size-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Preview File</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-            )}
-          </div>
-
-          {/* Status Surat Balasan Section */}
-          <CardHeader className="px-0 pt-0">
+      {/* Status Timeline Card - Show if response letter exists */}
+      {!isLoading && responseLetter && (
+        <Card className="mb-8">
+          <CardHeader>
             <CardTitle className="text-xl font-semibold text-foreground">
               Status Surat Balasan
             </CardTitle>
           </CardHeader>
-          <Separator className="mb-4" />
-          <StatusDropdown value={status} onChange={handleStatusChange} />
+          <CardContent>
+            <ResponseLetterTimeline
+              letterStatus={responseLetter.letterStatus}
+              submittedAt={responseLetter.submittedAt}
+              verified={responseLetter.verified}
+              verifiedAt={responseLetter.verifiedAt}
+              fileUrl={responseLetter.fileUrl}
+              originalName={responseLetter.originalName}
+            />
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Submit Button */}
-          <div className="text-center mt-6">
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="px-6 py-3 font-medium"
-            >
-              {isSubmitting ? "Mengirim..." : "Kirim"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Upload Form Card - Only show if no response letter yet OR if loading/error */}
+      {(isLoading || error || !responseLetter) && (
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            {/* Render loading state */}
+            {isLoading && <ResponseLetterLoadingState />}
 
-      {showProcessSteps && (
-        <div id="process-steps-container">
-          <ProcessSteps steps={steps} />
-        </div>
+            {/* Render error state */}
+            {!isLoading && error && (
+              <ResponseLetterErrorState error={error} onRetry={refetch} />
+            )}
+
+            {/* Render empty state with upload form */}
+            {!isLoading && !error && !responseLetter && (
+              <>
+                {/* Upload Surat Balasan Section */}
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle className="text-xl font-semibold text-foreground">
+                    Upload Surat Balasan
+                  </CardTitle>
+                </CardHeader>
+                <Separator className="mb-4" />
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="flex-grow">
+                    <FileUpload
+                      label="Surat Balasan dari Perusahaan"
+                      onFileChange={handleFileChange}
+                    />
+                  </div>
+                  {file && (
+                    <div className="pt-8">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={handlePreview}
+                              className="text-muted-foreground hover:text-foreground"
+                            >
+                              <Eye className="size-5" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Preview File</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Surat Balasan Section */}
+                <CardHeader className="px-0 pt-0">
+                  <CardTitle className="text-xl font-semibold text-foreground">
+                    Status Surat Balasan
+                  </CardTitle>
+                </CardHeader>
+                <Separator className="mb-4" />
+                <StatusDropdown value={status} onChange={handleStatusChange} />
+
+                {/* Submit Button */}
+                <div className="text-center mt-6">
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    className="px-6 py-3 font-medium"
+                  >
+                    {isSubmitting ? "Mengirim..." : "Kirim"}
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Navigation Buttons */}
       <div className="flex justify-between mt-8">
-        <Button
-          variant="secondary"
-          asChild
-          className="px-6 py-3 font-medium"
-        >
+        <Button variant="secondary" asChild className="px-6 py-3 font-medium">
           <Link to="/mahasiswa/kp/surat-pengantar">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Sebelumnya
@@ -318,8 +289,6 @@ function ResponseLetterPage() {
         onConfirm={handleNextPage}
         confirmText="Lanjutkan"
       />
-        </>
-      )}
     </>
   );
 }

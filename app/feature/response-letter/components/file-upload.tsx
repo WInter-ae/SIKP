@@ -50,7 +50,7 @@ function FileUpload({ label, onFileChange }: FileUploadProps) {
           "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition",
           isDragging
             ? "border-primary bg-primary/5"
-            : "border-border hover:border-primary/50"
+            : "border-border hover:border-primary/50",
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

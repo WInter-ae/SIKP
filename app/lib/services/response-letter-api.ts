@@ -131,3 +131,39 @@ export async function getResponseLetterDetail(responseId: string) {
     };
   }
 }
+
+/**
+ * Ambil response letter milik mahasiswa yang sedang login (GET /api/response-letters/my)
+ * Dipanggil ketika mahasiswa membuka response-letter-page untuk load existing data
+ * Mengembalikan data response letter jika sudah pernah submit
+ */
+export async function getMyResponseLetter() {
+  try {
+    const response = await apiClient<{
+      id: string;
+      submissionId: string;
+      originalName: string | null;
+      fileName: string | null;
+      fileType: string | null;
+      fileSize: number | null;
+      fileUrl: string | null;
+      memberUserId: string | null;
+      letterStatus: "approved" | "rejected";
+      submittedAt: string;
+      verified: boolean;
+      verifiedAt: string | null;
+      verifiedByAdminId: string | null;
+    }>("/api/response-letters/my");
+    return response;
+  } catch (error) {
+    console.error("❌ Error fetching my response letter:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Gagal memuat data surat balasan",
+      data: null,
+    };
+  }
+}
