@@ -1,7 +1,7 @@
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Link } from "react-router";
-import { initiateOAuthLogin } from "~/lib/auth-client";
+import { initiateSsoLogin } from "~/lib/sso-client";
 import { LogIn } from "lucide-react";
 
 /**
@@ -15,7 +15,7 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const handleLogin = () => {
-    initiateOAuthLogin();
+    initiateSsoLogin();
   };
 
   return (

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import { useUser } from "~/contexts/user-context";
-import { handleOAuthCallback } from "~/features/sso/services/auth-client";
+import { handleSsoCallback } from "~/features/sso/services/sso-client";
 import type { LoginMode } from "~/features/sso/types/role.types";
 import {
   getAvailableLoginModes,
@@ -62,7 +62,7 @@ export function useSsoCallback(): UseSsoCallbackResult {
       return;
     }
 
-    handleOAuthCallback(code, state)
+    handleSsoCallback(code, state)
       .then(async () => {
         toast.success("Login berhasil!");
 

@@ -1,5 +1,5 @@
 /**
- * OAuth 2.0 + PKCE Authentication Client for SIKP
+ * SSO UNSRI Client (OAuth 2.0 + PKCE) for SIKP
  */
 
 import axios, { AxiosError } from "axios";
@@ -20,7 +20,7 @@ const SCOPES = import.meta.env.VITE_SSO_SCOPES || "openid profile email";
 const BACKEND_SIKP_URL =
   import.meta.env.VITE_BACKEND_SIKP_BASE_URL || "http://localhost:8789";
 
-const authAxios = axios.create({
+const ssoAxios = axios.create({
   baseURL: BACKEND_SIKP_URL,
   timeout: 30000,
   headers: {
@@ -42,7 +42,7 @@ interface StoredTokens {
   expires_at: number;
 }
 
-export type AuthMeApiResponse = ApiResponse<AuthMeData>;
+export type SsoUserProfileApiResponse = ApiResponse<AuthMeData>;
 
 function pickPrimaryRole(roles: string[] | null | undefined): string {
   const normalized = (roles ?? []).map((r) => String(r).toLowerCase());
@@ -62,33 +62,37 @@ function pickPrimaryRole(roles: string[] | null | undefined): string {
   return "mahasiswa";
 }
 
-function mapAuthMeToUser(me: AuthMeData): User {
-  const primaryRole = pickPrimaryRole(me.roles);
-  const id = me.mahasiswa?.id ?? me.dosen?.id ?? me.admin?.id ?? me.sub;
+function mapSsoProfileToUser(profile: AuthMeData): User {
+  const primaryRole = pickPrimaryRole(profile.roles);
+  const id =
+    profile.mahasiswa?.id ??
+    profile.dosen?.id ??
+    profile.admin?.id ??
+    profile.sub;
 
   return {
-    sub: me.sub,
+    sub: profile.sub,
     id,
-    email: me.email,
-    name: me.name,
-    nama: me.name,
-    roles: me.roles,
+    email: profile.email,
+    name: profile.name,
+    nama: profile.name,
+    roles: profile.roles,
     primaryRole,
-    mahasiswa: me.mahasiswa ?? null,
-    dosen: me.dosen ?? null,
-    admin: me.admin ?? null,
-    nim: me.mahasiswa?.nim,
-    nip: me.dosen?.nidn,
-    fakultas: me.mahasiswa?.fakultas ?? me.dosen?.fakultas,
-    prodi: me.mahasiswa?.prodi ?? me.dosen?.prodi,
+    mahasiswa: profile.mahasiswa ?? null,
+    dosen: profile.dosen ?? null,
+    admin: profile.admin ?? null,
+    nim: profile.mahasiswa?.nim,
+    nip: profile.dosen?.nidn,
+    fakultas: profile.mahasiswa?.fakultas ?? profile.dosen?.fakultas,
+    prodi: profile.mahasiswa?.prodi ?? profile.dosen?.prodi,
     angkatan:
-      me.mahasiswa?.angkatan !== undefined
-        ? String(me.mahasiswa.angkatan)
+      profile.mahasiswa?.angkatan !== undefined
+        ? String(profile.mahasiswa.angkatan)
         : undefined,
   };
 }
 
-export async function initiateOAuthLogin(): Promise<void> {
+export async function initiateSsoLogin(): Promise<void> {
   if (typeof window === "undefined") return;
 
   const codeVerifier = generateCodeVerifier();
@@ -112,7 +116,7 @@ export async function initiateOAuthLogin(): Promise<void> {
   window.location.href = authorizeUrl;
 }
 
-export async function handleOAuthCallback(
+export async function handleSsoCallback(
   code: string,
   state: string,
 ): Promise<TokenResponse> {
@@ -131,7 +135,7 @@ export async function handleOAuthCallback(
   }
 
   try {
-    const response = await authAxios.post<TokenResponse>("/api/auth/exchange", {
+    const response = await ssoAxios.post<TokenResponse>("/api/auth/exchange", {
       code,
       redirectUri: REDIRECT_URI,
       codeVerifier,
@@ -170,7 +174,7 @@ export async function handleOAuthCallback(
   }
 }
 
-export function getAuthToken(): string | null {
+export function getSsoAccessToken(): string | null {
   if (typeof window === "undefined") return null;
 
   const storedTokensStr = sessionStorage.getItem("auth_tokens");
@@ -190,7 +194,7 @@ export function getAuthToken(): string | null {
   }
 }
 
-export function getStoredTokens(): StoredTokens | null {
+export function getStoredSsoTokens(): StoredTokens | null {
   if (typeof window === "undefined") return null;
 
   const storedTokensStr = sessionStorage.getItem("auth_tokens");
@@ -210,14 +214,14 @@ export function getStoredTokens(): StoredTokens | null {
   }
 }
 
-export async function refreshAccessToken(): Promise<TokenResponse> {
-  const tokens = getStoredTokens();
+export async function refreshSsoAccessToken(): Promise<TokenResponse> {
+  const tokens = getStoredSsoTokens();
   if (!tokens?.refresh_token) {
     throw new Error("No refresh token available");
   }
 
   try {
-    const response = await authAxios.post<TokenResponse>("/api/auth/refresh", {
+    const response = await ssoAxios.post<TokenResponse>("/api/auth/refresh", {
       refreshToken: tokens.refresh_token,
     });
 
@@ -234,16 +238,16 @@ export async function refreshAccessToken(): Promise<TokenResponse> {
 
     return data;
   } catch (error) {
-    logout();
+    logoutFromSso();
     throw error;
   }
 }
 
-export function isAuthenticated(): boolean {
-  return getAuthToken() !== null;
+export function hasValidSsoSession(): boolean {
+  return getSsoAccessToken() !== null;
 }
 
-export function logout(): void {
+export function logoutFromSso(): void {
   if (typeof window === "undefined") return;
 
   sessionStorage.removeItem("auth_tokens");
@@ -253,14 +257,14 @@ export function logout(): void {
   window.location.href = "/";
 }
 
-export async function fetchUserProfile(): Promise<User> {
-  const token = getAuthToken();
+export async function fetchSsoUserProfile(): Promise<User> {
+  const token = getSsoAccessToken();
   if (!token) {
     throw new Error("Not authenticated");
   }
 
   try {
-    const response = await authAxios.get<AuthMeApiResponse | AuthMeData>(
+    const response = await ssoAxios.get<SsoUserProfileApiResponse | AuthMeData>(
       "/api/auth/me",
       {
         headers: {
@@ -272,27 +276,37 @@ export async function fetchUserProfile(): Promise<User> {
     const payload = response.data;
 
     if (payload && typeof payload === "object" && "success" in payload) {
-      const apiResponse = payload as AuthMeApiResponse;
+      const apiResponse = payload as SsoUserProfileApiResponse;
       if (!apiResponse.success) {
         throw new Error(apiResponse.message || "Failed to fetch user profile");
       }
       if (!apiResponse.data) {
         throw new Error(apiResponse.message || "User profile data is empty");
       }
-      return mapAuthMeToUser(apiResponse.data);
+      return mapSsoProfileToUser(apiResponse.data);
     }
 
-    return mapAuthMeToUser(payload as AuthMeData);
+    return mapSsoProfileToUser(payload as AuthMeData);
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       try {
-        await refreshAccessToken();
-        return fetchUserProfile();
+        await refreshSsoAccessToken();
+        return fetchSsoUserProfile();
       } catch {
-        logout();
+        logoutFromSso();
         throw new Error("Session expired");
       }
     }
     throw new Error("Failed to fetch user profile");
   }
 }
+
+// Backward-compatible aliases (temporary)
+export const initiateOAuthLogin = initiateSsoLogin;
+export const handleOAuthCallback = handleSsoCallback;
+export const getAuthToken = getSsoAccessToken;
+export const getStoredTokens = getStoredSsoTokens;
+export const refreshAccessToken = refreshSsoAccessToken;
+export const isAuthenticated = hasValidSsoSession;
+export const logout = logoutFromSso;
+export const fetchUserProfile = fetchSsoUserProfile;

@@ -7,11 +7,11 @@ import {
   type ReactNode,
 } from "react";
 import {
-  fetchUserProfile,
-  logout as authLogout,
-  isAuthenticated,
-  refreshAccessToken,
-} from "~/lib/auth-client";
+  fetchSsoUserProfile,
+  hasValidSsoSession,
+  logoutFromSso,
+  refreshSsoAccessToken,
+} from "~/lib/sso-client";
 import type { User } from "~/lib/types";
 
 interface UserContextType {
@@ -43,7 +43,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const authenticated = isAuthenticated();
+  const authenticated = hasValidSsoSession();
 
   /**
    * Fetch current user profile from Backend SIKP
@@ -51,7 +51,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
    */
   const fetchCurrentUser = useCallback(async (): Promise<User | null> => {
     // Check if user has valid token
-    if (!isAuthenticated()) {
+    if (!hasValidSsoSession()) {
       setUser(null);
       setIsLoading(false);
       return null;
@@ -61,7 +61,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     setError(null);
 
     try {
-      const userProfile = await fetchUserProfile();
+      const userProfile = await fetchSsoUserProfile();
       setUser(userProfile);
       return userProfile;
     } catch (err) {
@@ -75,7 +75,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         errorMessage.includes("Session expired") ||
         errorMessage.includes("Not authenticated")
       ) {
-        authLogout();
+        logoutFromSso();
       }
 
       setUser(null);
@@ -90,12 +90,12 @@ export const UserProvider = ({ children }: UserProviderProps) => {
    */
   const refreshToken = useCallback(async (): Promise<void> => {
     try {
-      await refreshAccessToken();
+      await refreshSsoAccessToken();
       // After refresh, fetch user again
       await fetchCurrentUser();
     } catch (err) {
       console.error("Token refresh failed:", err);
-      authLogout();
+      logoutFromSso();
     }
   }, [fetchCurrentUser]);
 
@@ -103,7 +103,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
    * Logout handler
    */
   const handleLogout = useCallback(() => {
-    authLogout();
+    logoutFromSso();
     setUser(null);
     setError(null);
   }, []);

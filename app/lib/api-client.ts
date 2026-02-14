@@ -9,9 +9,9 @@
 
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import {
-  getAuthToken as getStoredToken,
-  refreshAccessToken,
-} from "./auth-client";
+  getSsoAccessToken as getStoredToken,
+  refreshSsoAccessToken,
+} from "./sso-client";
 
 // Backend SIKP Base URL
 const API_BASE_URL =
@@ -53,7 +53,7 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
       try {
         console.log("Token expired, attempting refresh...");
-        await refreshAccessToken();
+        await refreshSsoAccessToken();
         // Retry with new token
         const token = getStoredToken();
         if (token && originalRequest.headers) {

@@ -136,11 +136,12 @@ SIKP/
 │   │       ├── components/       # Pure presentational callback views
 │   │       ├── hooks/            # use-sso-callback (business flow)
 │   │       ├── pages/            # sso-callback-page.tsx
-│   │       ├── services/         # auth-client.ts, pkce.ts
+│   │       ├── services/         # sso-client.ts, pkce.ts
 │   │       ├── types/
 │   │       └── utils/            # role-routing.ts
 │   ├── lib/                      # Utilities & services
 │   │   ├── api-client.ts         # API wrapper
+│   │   ├── sso-client.ts         # Primary SSO entrypoint (renamed)
 │   │   ├── auth-client.ts        # Backward-compatible re-export ke features/sso
 │   │   ├── types.ts              # Global types
 │   │   ├── utils.ts              # Utility functions
@@ -215,7 +216,7 @@ ThemeContext → useTheme()
 
 #### 3. **Protected Routes Pattern**
 ```typescript
-<ProtectedRoute requiredRoles={["MAHASISWA"]}>
+<ProtectedRoute requiredRoles={["mahasiswa"]}>
   <PageContent />
 </ProtectedRoute>
 ```
@@ -227,7 +228,7 @@ ThemeContext → useTheme()
 ```typescript
 // Separation of concerns
 api-client.ts → Generic API wrapper
-auth-client.ts → Authentication logic
+sso-client.ts → SSO Authentication logic
 services/
   ├── team.service.ts → Team operations
   └── template-api.ts → Template operations
@@ -407,19 +408,19 @@ root.tsx (Layout + Providers)
 ### Authentication Flow
 
 **OAuth 2.0 + PKCE (SSO UNSRI)** dengan clean separation:
-- `app/features/sso/services/auth-client.ts` → OAuth/token/profile logic
+- `app/features/sso/services/sso-client.ts` → OAuth/token/profile logic
 - `app/features/sso/hooks/use-sso-callback.ts` → callback orchestration
 - `app/features/sso/components/*` → UI callback tanpa business logic
 - `app/routes/callback.tsx` → route tipis (delegasi ke feature page)
 
 ```typescript
 // 1. Login trigger (UI)
-initiateOAuthLogin()
+initiateSsoLogin()
   → redirect ke /oauth/authorize (SSO)
   → PKCE code_verifier + state disimpan di sessionStorage
 
 // 2. Callback handling (/callback)
-handleOAuthCallback(code, state)
+handleSsoCallback(code, state)
   → POST /api/auth/exchange via Backend SIKP
   → simpan { access_token, refresh_token, expires_at } di sessionStorage
 
@@ -434,7 +435,7 @@ apiClient('/api/teams')
   → auto refresh token saat 401 lalu retry request
 
 // 5. Logout
-logout()
+logoutFromSso()
   → clear auth_tokens + pkce state dari sessionStorage
   → redirect '/'
 
@@ -447,21 +448,21 @@ roles[] dari SSO (lowercase)
 ### Auth Client Functions
 
 ```typescript
-// app/features/sso/services/auth-client.ts
-export async function initiateOAuthLogin()
-export async function handleOAuthCallback(code: string, state: string)
-export async function fetchUserProfile()
-export async function refreshAccessToken()
-export function logout()
-export function getAuthToken(): string | null
-export function isAuthenticated(): boolean
+// app/features/sso/services/sso-client.ts
+export async function initiateSsoLogin()
+export async function handleSsoCallback(code: string, state: string)
+export async function fetchSsoUserProfile()
+export async function refreshSsoAccessToken()
+export function logoutFromSso()
+export function getSsoAccessToken(): string | null
+export function hasValidSsoSession(): boolean
 ```
 
 ### Clean-Code Split (SSO)
 
 ✅ **Single Responsibility** - route, hook, service, dan UI dipisah jelas  
 ✅ **Maintainability** - perubahan flow OAuth cukup di `features/sso`  
-✅ **Backward Compatible** - `app/lib/auth-client.ts` tetap ada sebagai re-export adapter  
+✅ **Backward Compatible** - `app/lib/auth-client.ts` dan `app/features/sso/services/auth-client.ts` tetap ada sebagai adapter alias, dengan entrypoint baru `app/lib/sso-client.ts`  
 
 ### Role-Based Access Control (RBAC)
 

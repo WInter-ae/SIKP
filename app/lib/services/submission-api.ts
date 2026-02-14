@@ -1,5 +1,4 @@
 import { apiClient } from "~/lib/api-client";
-import { getAuthToken } from "~/lib/auth-client";
 import type {
   Submission,
   SubmissionDocument,
@@ -94,7 +93,7 @@ export async function createSubmission(
   try {
     const response = await apiClient<Submission>("/api/submissions", {
       method: "POST",
-      body: JSON.stringify({
+      data: JSON.stringify({
         teamId,
         ...data,
       }),
@@ -120,7 +119,6 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
  *
  * Validasi:
  * - Ukuran file maksimal 10 MB
- * - MIME type di-trim untuk menghindari overflow di kolom varchar(100)
  * - uploadedByUserId wajib ada (fallback ke memberUserId jika tidak dikirim)
  */
 export async function uploadSubmissionDocument(
@@ -146,11 +144,6 @@ export async function uploadSubmissionDocument(
       };
     }
 
-    // Ekstrak MIME type murni (tanpa parameter charset) untuk menghindari varchar overflow
-    const baseFileType = (file.type || "application/octet-stream")
-      .split(";")[0]
-      .trim();
-
     const formData = new FormData();
     // Backend expects camelCase fields for validation
     formData.append("file", file);
@@ -166,7 +159,7 @@ export async function uploadSubmissionDocument(
       `/api/submissions/${submissionId}/documents`,
       {
         method: "POST",
-        body: formData,
+        data: formData,
       },
     );
 
@@ -202,7 +195,7 @@ export async function updateSubmission(
       `/api/submissions/${submissionId}`,
       {
         method: "PUT",
-        body: JSON.stringify(data),
+        data: JSON.stringify(data),
       },
     );
     return response;
@@ -219,7 +212,7 @@ export async function updateSubmission(
 
 /**
  * Submit/finalize submission (ubah status menjadi PENDING_REVIEW)
- * 
+ *
  * Note: Backend support both POST dan PUT method, tapi preferensi gunakan POST
  * untuk consistency dengan create endpoint
  */
@@ -230,10 +223,10 @@ export async function submitSubmission(submissionId: string) {
       `/api/submissions/${submissionId}/submit`,
       {
         method: "POST",
-        body: JSON.stringify({}),
+        data: JSON.stringify({}),
       },
     );
-    
+
     // Jika POST 404, fallback ke PUT
     if (!response.success && response.message?.includes("404")) {
       console.warn("📢 POST failed with 404, trying PUT method...");
@@ -241,12 +234,12 @@ export async function submitSubmission(submissionId: string) {
         `/api/submissions/${submissionId}/submit`,
         {
           method: "PUT",
-          body: JSON.stringify({}),
+          data: JSON.stringify({}),
         },
       );
       return putResponse;
     }
-    
+
     return response;
   } catch (error) {
     console.error("❌ Error submitting submission:", error);
@@ -288,9 +281,7 @@ export async function deleteSubmissionDocument(documentId: string) {
  */
 export async function getAllSubmissionsForAdmin() {
   try {
-    const response = await apiClient<Submission[]>(
-      "/api/admin/submissions",
-    );
+    const response = await apiClient<Submission[]>("/api/admin/submissions");
     return response;
   } catch (error) {
     console.error("❌ Error fetching admin submissions:", error);
@@ -319,7 +310,7 @@ export async function updateSubmissionStatus(
       `/api/admin/submissions/${submissionId}/status`,
       {
         method: "PUT",
-        body: JSON.stringify({
+        data: JSON.stringify({
           status,
           rejectionReason,
           documentReviews,
