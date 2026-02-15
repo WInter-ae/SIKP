@@ -50,18 +50,20 @@ function ProcessSteps({ steps }: ProcessStepsProps) {
                 className={cn(
                   "border-l-4 rounded-lg p-5 mb-4",
                   getStatusStyles(step.status).bg,
-                  getStatusStyles(step.status).border
+                  getStatusStyles(step.status).border,
                 )}
               >
                 <div className="flex items-start">
                   <div
                     className={cn(
                       "w-12 h-12 rounded-full flex items-center justify-center text-primary-foreground mr-4 flex-shrink-0",
-                      getStatusStyles(step.status).icon
+                      getStatusStyles(step.status).icon,
                     )}
                   >
                     {(() => {
-                      const IconComponent = getStatusStyles(step.status).IconComponent;
+                      const IconComponent = getStatusStyles(
+                        step.status,
+                      ).IconComponent;
                       return <IconComponent className="h-5 w-5" />;
                     })()}
                   </div>
@@ -79,8 +81,8 @@ function ProcessSteps({ steps }: ProcessStepsProps) {
         <Alert>
           <Info className="h-4 w-4" />
           <AlertDescription>
-            Status persetujuan atau penolakan akan ditentukan oleh admin. Silakan
-            pantau status pengajuan Anda secara berkala.
+            Status persetujuan atau penolakan akan ditentukan oleh admin.
+            Silakan pantau status pengajuan Anda secara berkala.
           </AlertDescription>
         </Alert>
       </CardContent>
