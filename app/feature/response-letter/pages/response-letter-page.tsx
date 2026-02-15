@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -23,23 +23,35 @@ import { useResponseLetterStatus } from "../hooks/use-response-letter-status";
 import {
   ResponseLetterLoadingState,
   ResponseLetterErrorState,
-  ResponseLetterEmptyState,
 } from "../components/response-letter-states";
 import { ResponseLetterTimeline } from "../components/response-letter-timeline";
+import { ConfirmDialog } from "../components/confirm-dialog";
+import { FileUploadDialog } from "../components/file-upload-dialog";
 
 import { ArrowLeft, ArrowRight, Eye, Info } from "lucide-react";
 
 function ResponseLetterPage() {
   const navigate = useNavigate();
-  const { responseLetter, isLoading, error, refetch } =
+  const { responseLetter, isLoading, error, refetch, isLeader } =
     useResponseLetterStatus();
 
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string>("");
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionId, setSubmissionId] = useState<string>("");
-  const [teamId, setTeamId] = useState<string>("");
+  const [isReuploadDialogOpen, setIsReuploadDialogOpen] =
+    useState<boolean>(false);
+  const [isFileUploadDialogOpen, setIsFileUploadDialogOpen] =
+    useState<boolean>(false);
+
+  // Set initial status value from responseLetter when data loads
+  useEffect(() => {
+    if (responseLetter?.letterStatus) {
+      const dropdownValue =
+        responseLetter.letterStatus === "approved" ? "disetujui" : "ditolak";
+      setStatus(dropdownValue);
+    }
+  }, [responseLetter]);
 
   const handleFileChange = (selectedFile: File) => {
     setFile(selectedFile);
@@ -47,6 +59,23 @@ function ResponseLetterPage() {
 
   const handleStatusChange = (selectedStatus: string) => {
     setStatus(selectedStatus);
+  };
+
+  const handleReuploadConfirm = () => {
+    // If no responseLetter (before submit), open file upload dialog
+    if (!responseLetter) {
+      setIsReuploadDialogOpen(false);
+      setIsFileUploadDialogOpen(true);
+    } else {
+      // If responseLetter exists, just close the dialog
+      // Upload is locked after submit
+      setIsReuploadDialogOpen(false);
+    }
+  };
+
+  const handleFileUploadFromDialog = (newFile: File) => {
+    setFile(newFile);
+    setIsFileUploadDialogOpen(false);
   };
 
   const handleSubmit = async () => {
@@ -95,7 +124,7 @@ function ResponseLetterPage() {
         submissionId: submissionIdValue,
         teamId: teamIdValue,
         file,
-        letterStatus: (status === "Disetujui" ? "approved" : "rejected") as
+        letterStatus: (status === "disetujui" ? "approved" : "rejected") as
           | "approved"
           | "rejected",
       });
@@ -103,12 +132,20 @@ function ResponseLetterPage() {
       if (response.success) {
         toast.success("Surat balasan berhasil dikirim");
 
+        // Restore status value immediately from response (response.data contains letterStatus)
+        if (response.data?.letterStatus) {
+          const dropdownValue =
+            response.data.letterStatus === "approved"
+              ? "disetujui"
+              : "ditolak";
+          setStatus(dropdownValue);
+        }
+
         // Reload data to show timeline
         await refetch();
 
-        // Reset form
+        // Reset file but keep status
         setFile(null);
-        setStatus("");
       } else {
         toast.error(response.message || "Gagal mengirim surat balasan");
       }
@@ -121,17 +158,26 @@ function ResponseLetterPage() {
   };
 
   const handlePreview = () => {
+    // Priority 1: Use R2 fileUrl if available (from saved responseLetter)
+    if (responseLetter?.fileUrl) {
+      window.open(responseLetter.fileUrl, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    // Priority 2: Use local blob URL if file is newly selected
     if (file) {
       try {
         const fileURL = URL.createObjectURL(file);
-        window.open(fileURL, "_blank");
-        // Melepas URL objek setelah tab baru dibuka untuk menghindari memory leak
+        window.open(fileURL, "_blank", "noopener,noreferrer");
         setTimeout(() => URL.revokeObjectURL(fileURL), 100);
-      } catch (error) {
-        console.error("Gagal membuat pratinjau file:", error);
+        return;
+      } catch {
         toast.error("Tidak dapat menampilkan pratinjau file.");
+        return;
       }
     }
+
+    toast.error("File surat balasan belum tersedia untuk dipreview.");
   };
 
   const handleNextPage = () => {
@@ -155,104 +201,166 @@ function ResponseLetterPage() {
       <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
         <Info className="h-5 w-5 text-primary" />
         <AlertDescription className="text-foreground">
-          Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan
-          ke admin
+          {isLeader
+            ? "Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan ke admin"
+            : "Anda dapat melihat informasi surat balasan. Hanya ketua tim yang dapat melakukan perubahan."}
         </AlertDescription>
       </Alert>
 
-      {/* Status Timeline Card - Show if response letter exists */}
-      {!isLoading && responseLetter && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl font-semibold text-foreground">
-              Status Surat Balasan
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponseLetterTimeline
-              letterStatus={responseLetter.letterStatus}
-              submittedAt={responseLetter.submittedAt}
-              verified={responseLetter.verified}
-              verifiedAt={responseLetter.verifiedAt}
-              fileUrl={responseLetter.fileUrl}
-              originalName={responseLetter.originalName}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Upload Form Card - Only show if no response letter yet OR if loading/error */}
-      {(isLoading || error || !responseLetter) && (
+      {/* Main Form Card */}
+      {isLoading ? (
         <Card className="mb-8">
           <CardContent className="p-6">
-            {/* Render loading state */}
-            {isLoading && <ResponseLetterLoadingState />}
+            <ResponseLetterLoadingState />
+          </CardContent>
+        </Card>
+      ) : error && !responseLetter ? (
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            <ResponseLetterErrorState error={error} onRetry={refetch} />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="mb-8">
+          <CardContent className="p-6">
+            {/* Upload Surat Balasan Section */}
+            <CardHeader className="px-0 pt-0">
+              <CardTitle className="text-xl font-semibold text-foreground">
+                Upload Surat Balasan
+              </CardTitle>
+            </CardHeader>
+            <Separator className="mb-4" />
 
-            {/* Render error state */}
-            {!isLoading && error && (
-              <ResponseLetterErrorState error={error} onRetry={refetch} />
+            {/* Upload Area - Conditional based on file selection and responseLetter */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-grow">
+                {file || responseLetter ? (
+                  // After file selection OR after submission: Show "Terupload" button or "Belum Diupload"
+                  <div className="mb-2">
+                    <p className="block font-medium mb-2">
+                      Surat Balasan dari Perusahaan
+                    </p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {isLeader ? (
+                        // Leader: Show "Terupload" button
+                        <Button
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          onClick={() => setIsReuploadDialogOpen(true)}
+                          disabled={!!responseLetter} // Disabled after submit
+                        >
+                          Terupload
+                        </Button>
+                      ) : (
+                        // Non-leader: Show "Belum Diupload" or "Terupload" (disabled)
+                        <Button
+                          size="sm"
+                          className="w-full sm:w-auto"
+                          disabled
+                          variant={responseLetter ? "default" : "destructive"}
+                        >
+                          {responseLetter ? "Terupload" : "Belum Diupload"}
+                        </Button>
+                      )}
+                      {(file || responseLetter?.fileUrl) && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handlePreview}
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                <Eye className="size-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Preview File</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {responseLetter
+                        ? "Upload sudah dikunci setelah pengiriman."
+                        : !isLeader
+                          ? "Hanya ketua tim yang dapat upload surat balasan."
+                          : "Klik untuk upload ulang surat balasan."}
+                    </p>
+                  </div>
+                ) : isLeader ? (
+                  // Before file selection for leader: Show FileUpload component
+                  <FileUpload
+                    label="Surat Balasan dari Perusahaan"
+                    onFileChange={handleFileChange}
+                  />
+                ) : (
+                  // Before file selection for non-leader: Show "Belum Diupload"
+                  <div className="mb-2">
+                    <p className="block font-medium mb-2">
+                      Surat Balasan dari Perusahaan
+                    </p>
+                    <Button
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled
+                      variant="destructive"
+                    >
+                      Belum Diupload
+                    </Button>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Hanya ketua tim yang dapat upload surat balasan.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Status Surat Balasan Section */}
+            <CardHeader className="px-0 pt-0">
+              <CardTitle className="text-xl font-semibold text-foreground">
+                Status Surat Balasan
+              </CardTitle>
+            </CardHeader>
+            <Separator className="mb-4" />
+            <StatusDropdown
+              value={status}
+              onChange={handleStatusChange}
+              disabled={!!responseLetter || !isLeader} // Disabled after submit or for non-leader
+            />
+            {!isLeader && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Hanya ketua tim yang dapat menentukan status surat balasan.
+              </p>
             )}
 
-            {/* Render empty state with upload form */}
-            {!isLoading && !error && !responseLetter && (
-              <>
-                {/* Upload Surat Balasan Section */}
-                <CardHeader className="px-0 pt-0">
-                  <CardTitle className="text-xl font-semibold text-foreground">
-                    Upload Surat Balasan
-                  </CardTitle>
-                </CardHeader>
-                <Separator className="mb-4" />
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="flex-grow">
-                    <FileUpload
-                      label="Surat Balasan dari Perusahaan"
-                      onFileChange={handleFileChange}
-                    />
-                  </div>
-                  {file && (
-                    <div className="pt-8">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={handlePreview}
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              <Eye className="size-5" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Preview File</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  )}
-                </div>
+            {/* Submit Button - Only show before submission and for team leader */}
+            {!responseLetter && isLeader && (
+              <div className="text-center mt-6">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-6 py-3 font-medium"
+                >
+                  {isSubmitting ? "Mengirim..." : "Kirim"}
+                </Button>
+              </div>
+            )}
 
-                {/* Status Surat Balasan Section */}
-                <CardHeader className="px-0 pt-0">
-                  <CardTitle className="text-xl font-semibold text-foreground">
-                    Status Surat Balasan
-                  </CardTitle>
-                </CardHeader>
-                <Separator className="mb-4" />
-                <StatusDropdown value={status} onChange={handleStatusChange} />
-
-                {/* Submit Button */}
-                <div className="text-center mt-6">
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="px-6 py-3 font-medium"
-                  >
-                    {isSubmitting ? "Mengirim..." : "Kirim"}
-                  </Button>
-                </div>
-              </>
+            {/* Status Timeline - Show after submission */}
+            {responseLetter && (
+              <div className="mt-8 pt-6 border-t border-border">
+                <ResponseLetterTimeline
+                  letterStatus={responseLetter.letterStatus}
+                  submittedAt={responseLetter.submittedAt}
+                  verified={responseLetter.verified}
+                  verifiedAt={responseLetter.verifiedAt}
+                  fileUrl={responseLetter.fileUrl}
+                  originalName={responseLetter.originalName}
+                />
+              </div>
             )}
           </CardContent>
         </Card>
@@ -288,6 +396,22 @@ function ResponseLetterPage() {
         }
         onConfirm={handleNextPage}
         confirmText="Lanjutkan"
+      />
+
+      <ConfirmDialog
+        open={isReuploadDialogOpen}
+        onOpenChange={setIsReuploadDialogOpen}
+        title="Upload Ulang Surat Balasan"
+        description="Apakah Anda ingin upload ulang surat balasan?"
+        onConfirm={handleReuploadConfirm}
+        confirmText="Lanjutkan"
+        cancelText="Batal"
+      />
+
+      <FileUploadDialog
+        open={isFileUploadDialogOpen}
+        onOpenChange={setIsFileUploadDialogOpen}
+        onFileUpload={handleFileUploadFromDialog}
       />
     </>
   );

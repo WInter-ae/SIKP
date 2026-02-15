@@ -1,8 +1,4 @@
-import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
-
-import { Download, FileText } from "lucide-react";
 import type { ResponseLetterStatusHistoryEntry } from "~/feature/response-letter/types";
 import { buildResponseLetterTimeline } from "~/feature/response-letter/utils/timeline-builder";
 import { getResponseLetterStatusConfig } from "~/feature/response-letter/constants/status-config";
@@ -22,9 +18,6 @@ export function ResponseLetterTimeline({
   submittedAt,
   verified,
   verifiedAt,
-  fileUrl,
-  originalName,
-  rejectionReason,
 }: ResponseLetterTimelineProps) {
   // Build timeline from response letter data
   const timeline = buildResponseLetterTimeline({
@@ -93,68 +86,6 @@ export function ResponseLetterTimeline({
                       <p className="text-muted-foreground mb-3">
                         {statusInfo.description}
                       </p>
-
-                      {/* Rejection reason if available */}
-                      {entry.status === "REJECTED" && rejectionReason && (
-                        <Alert variant="destructive" className="mb-3">
-                          <AlertDescription>
-                            <div className="font-medium mb-1">
-                              Alasan Penolakan:
-                            </div>
-                            <div>{rejectionReason}</div>
-                          </AlertDescription>
-                        </Alert>
-                      )}
-
-                      {/* Document preview for any status (if file exists) */}
-                      {fileUrl && originalName && (
-                        <div className="bg-muted p-4 rounded-lg border border-border hover:bg-muted/80 transition">
-                          <div className="flex items-start gap-3">
-                            <div
-                              className={cn(
-                                "w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0",
-                                entry.status === "APPROVED"
-                                  ? "bg-emerald-600"
-                                  : entry.status === "REJECTED"
-                                    ? "bg-red-600"
-                                    : "bg-yellow-600",
-                              )}
-                            >
-                              <FileText className="size-5" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="font-semibold text-foreground">
-                                Surat Balasan dari Perusahaan
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {originalName}
-                              </div>
-                            </div>
-                            <Button
-                              asChild
-                              size="sm"
-                              className={cn(
-                                "text-white flex-shrink-0",
-                                entry.status === "APPROVED"
-                                  ? "bg-emerald-600 hover:bg-emerald-700"
-                                  : entry.status === "REJECTED"
-                                    ? "bg-red-600 hover:bg-red-700"
-                                    : "bg-yellow-600 hover:bg-yellow-700",
-                              )}
-                            >
-                              <a
-                                href={fileUrl}
-                                download={originalName}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                <Download className="h-4 w-4 mr-1" />
-                                Unduh
-                              </a>
-                            </Button>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

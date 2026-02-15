@@ -162,9 +162,13 @@ function AdminResponseLetterPage() {
     if (!selectedStudent) return;
 
     try {
+      const letterStatus =
+        selectedStudent.status === "Disetujui" ? "approved" : "rejected";
+
       // Call API to verify response letter
       const response = await verifyResponseLetter(
         selectedStudent.id.toString(),
+        letterStatus,
       );
 
       if (response.success) {

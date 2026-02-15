@@ -31,6 +31,7 @@ export interface ResponseLetter {
   verified: boolean;
   verifiedAt: string | null;
   verifiedByAdminId: string | null;
+  isLeader?: boolean; // Flag to indicate if current user is team leader
 }
 
 /**

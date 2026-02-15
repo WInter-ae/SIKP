@@ -27,10 +27,10 @@ export function getResponseLetterStatusConfig(
       description:
         "Surat balasan Anda sedang dalam proses review oleh admin. Mohon tunggu konfirmasi lebih lanjut.",
       icon: <Clock className="size-6" />,
-      iconBg: "bg-yellow-500",
-      bg: "bg-yellow-50 dark:bg-yellow-950/20",
-      border: "border-yellow-500",
-      textColor: "text-yellow-600 dark:text-yellow-400",
+      iconBg: "bg-gray-500",
+      bg: "bg-gray-50 dark:bg-gray-950/20",
+      border: "border-gray-500",
+      textColor: "text-gray-600 dark:text-gray-400",
     },
     APPROVED: {
       title: "Surat Balasan Disetujui",

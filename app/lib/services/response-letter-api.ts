@@ -9,7 +9,7 @@ import type { Student } from "~/feature/response-letter/types";
 /**
  * Kirim surat balasan dari mahasiswa (POST /api/response-letters)
  * Dipanggil ketika mahasiswa submit surat balasan di response-letter-page
- * Backend hanya memerlukan submissionId dan file
+ * Backend memerlukan submissionId, file, dan letterStatus
  */
 export async function submitResponseLetter(data: {
   submissionId: string;
@@ -20,9 +20,9 @@ export async function submitResponseLetter(data: {
   try {
     const formData = new FormData();
     formData.append("submissionId", data.submissionId);
-    // Backend doesn't need teamId and letterStatus
-    // teamId diambil dari submission, letterStatus default to 'approved'
+    // teamId diambil dari submission
     formData.append("file", data.file);
+    formData.append("letterStatus", data.letterStatus);
 
     const response = await apiClient<{
       id: string;
@@ -80,9 +80,12 @@ export async function getAllResponseLettersForAdmin() {
 /**
  * Verifikasi surat balasan oleh admin (PUT /api/response-letters/admin/:id/verify)
  * Admin dapat memverifikasi/menyetujui surat balasan yang sudah dikirim mahasiswa
- * Backend hanya memerlukan letterStatus dalam request body
+ * Backend memerlukan letterStatus dalam request body
  */
-export async function verifyResponseLetter(responseId: string) {
+export async function verifyResponseLetter(
+  responseId: string,
+  letterStatus: "approved" | "rejected",
+) {
   try {
     const response = await apiClient<{
       id: string;
@@ -91,7 +94,7 @@ export async function verifyResponseLetter(responseId: string) {
     }>(`/api/response-letters/admin/${responseId}/verify`, {
       method: "PUT",
       body: JSON.stringify({
-        letterStatus: "approved",
+        letterStatus,
       }),
     });
 
@@ -153,10 +156,46 @@ export async function getMyResponseLetter() {
       verified: boolean;
       verifiedAt: string | null;
       verifiedByAdminId: string | null;
+      isLeader?: boolean;
     }>("/api/response-letters/my");
     return response;
   } catch (error) {
     console.error("❌ Error fetching my response letter:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Gagal memuat data surat balasan",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Ambil response letter berdasarkan submission ID
+ * Digunakan untuk mendapatkan data surat balasan untuk seluruh tim
+ */
+export async function getResponseLetterBySubmission(submissionId: string) {
+  try {
+    const response = await apiClient<{
+      id: string;
+      submissionId: string;
+      originalName: string | null;
+      fileName: string | null;
+      fileType: string | null;
+      fileSize: number | null;
+      fileUrl: string | null;
+      memberUserId: string | null;
+      letterStatus: "approved" | "rejected";
+      submittedAt: string;
+      verified: boolean;
+      verifiedAt: string | null;
+      verifiedByAdminId: string | null;
+    }>(`/api/response-letters/submission/${submissionId}`);
+    return response;
+  } catch (error) {
+    console.error("❌ Error fetching response letter by submission:", error);
     return {
       success: false,
       message:
