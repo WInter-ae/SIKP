@@ -20,6 +20,7 @@ import { submitResponseLetter } from "~/lib/services/response-letter-api";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
 import { getSubmissionByTeamId } from "~/lib/services/submission-api";
 import { useResponseLetterStatus } from "../hooks/use-response-letter-status";
+import { get, post } from "~/lib/api-client";
 import {
   ResponseLetterLoadingState,
   ResponseLetterErrorState,
@@ -43,6 +44,15 @@ function ResponseLetterPage() {
     useState<boolean>(false);
   const [isFileUploadDialogOpen, setIsFileUploadDialogOpen] =
     useState<boolean>(false);
+  const [isResettingTeam, setIsResettingTeam] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<{
+    verified: boolean;
+    letterStatus: "approved" | "rejected" | null;
+  }>({
+    verified: false,
+    letterStatus: null,
+  });
 
   // Set initial status value from responseLetter when data loads
   useEffect(() => {
@@ -50,8 +60,52 @@ function ResponseLetterPage() {
       const dropdownValue =
         responseLetter.letterStatus === "approved" ? "disetujui" : "ditolak";
       setStatus(dropdownValue);
+      
+      // Set verification status
+      setVerificationStatus({
+        verified: responseLetter.verified || false,
+        letterStatus: responseLetter.letterStatus,
+      });
     }
   }, [responseLetter]);
+
+  // Auto-poll verification status every 3 seconds
+  useEffect(() => {
+    if (!responseLetter?.id) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await get<{
+          verified: boolean;
+          letterStatus: "approved" | "rejected" | null;
+          teamWasReset: boolean;
+          verifiedAt: string | null;
+        }>(`/api/response-letters/${responseLetter.id}/status`);
+
+        if (response.success && response.data) {
+          setVerificationStatus({
+            verified: response.data.verified,
+            letterStatus: response.data.letterStatus,
+          });
+
+          // If team was reset due to rejection
+          if (response.data.teamWasReset) {
+            clearInterval(pollInterval);
+            toast.error(
+              "Tim Anda telah direset. Silakan mulai dari awal dengan membuat/menetapkan tim baru.",
+            );
+            setTimeout(() => {
+              navigate("/mahasiswa/kp/buat-tim");
+            }, 2000);
+          }
+        }
+      } catch (error) {
+        console.error("Polling error:", error);
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [responseLetter?.id, navigate]);
 
   const handleFileChange = (selectedFile: File) => {
     setFile(selectedFile);
@@ -183,6 +237,36 @@ function ResponseLetterPage() {
   const handleNextPage = () => {
     setShowAnnouncement(false);
     navigate("/mahasiswa/kp/saat-magang");
+  };
+
+  const handleResetTeam = async () => {
+    setShowResetConfirm(true);
+  };
+
+  const confirmResetTeam = async () => {
+    try {
+      setIsResettingTeam(true);
+      setShowResetConfirm(false);
+
+      // Call reset endpoint
+      const teamsResponse = await post<{ success: boolean }>("/api/teams/reset");
+
+      if (teamsResponse.success) {
+        toast.success(
+          "Tim berhasil direset. Silakan mulai proses dari awal.",
+        );
+        setTimeout(() => {
+          navigate("/mahasiswa/kp/buat-tim");
+        }, 1500);
+      } else {
+        toast.error(teamsResponse.message || "Gagal mereset tim. Silakan coba lagi.");
+      }
+    } catch (error) {
+      console.error("Reset error:", error);
+      toast.error("Terjadi kesalahan saat mereset tim");
+    } finally {
+      setIsResettingTeam(false);
+    }
   };
 
   return (
@@ -374,13 +458,29 @@ function ResponseLetterPage() {
             Sebelumnya
           </Link>
         </Button>
-        <Button
-          onClick={() => setShowAnnouncement(true)}
-          className="px-6 py-3 font-medium"
-        >
-          Selanjutnya
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        {/* Next Button - Different behavior based on verification status */}
+        {verificationStatus.verified && verificationStatus.letterStatus === "approved" ? (
+          <Button
+            onClick={() => setShowAnnouncement(true)}
+            className="px-6 py-3 font-medium"
+          >
+            Selanjutnya
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        ) : verificationStatus.verified && verificationStatus.letterStatus === "rejected" ? (
+          <Button
+            onClick={handleResetTeam}
+            disabled={isResettingTeam}
+            className="px-6 py-3 font-medium bg-amber-600 hover:bg-amber-700"
+          >
+            {isResettingTeam ? "Mereset..." : "Mulai Ulang"}
+          </Button>
+        ) : (
+          <Button disabled className="px-6 py-3 font-medium opacity-50">
+            Selanjutnya
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <AnnouncementDialog
@@ -412,6 +512,18 @@ function ResponseLetterPage() {
         open={isFileUploadDialogOpen}
         onOpenChange={setIsFileUploadDialogOpen}
         onFileUpload={handleFileUploadFromDialog}
+      />
+
+      {/* Reset Team Confirmation Dialog */}
+      <ConfirmDialog
+        open={showResetConfirm}
+        onOpenChange={setShowResetConfirm}
+        title="Mulai Ulang Proses KP"
+        description="Surat balasan Anda telah ditolak oleh admin. Apakah Anda yakin ingin memulai ulang proses dari awal? Semua data tim akan direset dan data submission sebelumnya akan terhapus."
+        onConfirm={confirmResetTeam}
+        confirmText="Ya, Mulai Ulang"
+        cancelText="Batal"
+        variant="destructive"
       />
     </>
   );
