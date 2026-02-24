@@ -211,52 +211,59 @@ function ReviewModal({
   );
 
   const handleRejectApplication = () => {
-    if (hasRejectedDocs && !comment.trim()) {
-      toast.warning(
-        "Karena ada dokumen yang ditolak, Anda wajib memberikan catatan review.",
+    // ✅ Backend validation: Must have at least 1 rejected doc
+    if (!hasRejectedDocs) {
+      toast.error(
+        "Harus ada minimal 1 dokumen yang ditolak untuk menolak submission.",
       );
       return;
     }
+    
+    // ✅ Backend validation: Rejection reason is REQUIRED
     if (!comment.trim()) {
-      if (!comment.trim()) {
-        toast(
-          "Apakah Anda yakin ingin menolak tanpa catatan? (Disarankan memberikan alasan)",
-          {
-            action: {
-              label: "Tolak tanpa catatan",
-              onClick: () => {
-                onReject("", docReviews);
-                resetState();
-              },
-            },
-          },
-        );
-        return;
-      }
-    }
-    onReject(comment, docReviews);
-    resetState();
-  };
-
-  const handleApproveApplication = () => {
-    if (hasRejectedDocs) {
-      toast.warning(
-        "Tidak dapat menyetujui pengajuan karena terdapat dokumen yang ditolak. Silakan tolak pengajuan untuk meminta revisi.",
+      toast.error(
+        "Alasan penolakan wajib diisi saat menolak submission.",
       );
       return;
     }
-    if (hasMissingDocs) {
-      toast.warning(
-        "Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.",
-      );
-      return;
-    }
+    
+    // ✅ Check if all docs reviewed
     if (!allDocsReviewed) {
       toast.warning(
         "Harap review semua dokumen yang diupload terlebih dahulu.",
       );
       return;
     }
+    
+    onReject(comment, docReviews);
+    resetState();
+  };
+
+  const handleApproveApplication = () => {
+    // ✅ Backend validation: Cannot approve if ANY doc is rejected
+    if (hasRejectedDocs) {
+      toast.error(
+        "Tidak dapat approve submission jika ada dokumen yang di-reject. Harap review dokumentasi atau tolak submission.",
+      );
+      return;
+    }
+    
+    // ✅ Check missing documents
+    if (hasMissingDocs) {
+      toast.error(
+        "Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.",
+      );
+      return;
+    }
+    
+    // ✅ Backend validation: All docs must be reviewed (no pending)
+    if (!allDocsReviewed) {
+      toast.error(
+        "Harap review semua dokumen yang diupload terlebih dahulu. Semua dokumen harus berstatus 'approved'.",
+      );
+      return;
+    }
+    
     onApprove(docReviews);
     resetState();
   };

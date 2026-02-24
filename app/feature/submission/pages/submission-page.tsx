@@ -18,6 +18,7 @@ import DocumentDropdown from "../components/document-dropdown";
 import AdditionalInfoForm from "../components/add-info-form";
 import { ConfirmDialog } from "../components/confirm-dialog";
 import { FileUploadDialog } from "../components/file-upload-dialog";
+import { StatusBadge } from "../components/status-badge";
 import { UPLOADABLE_DOCUMENT_TYPES, DOCUMENT_TYPE_LABELS, isSuratPengantarDocument } from "../constants/document-types";
 
 import type {
@@ -575,6 +576,24 @@ function SubmissionPage() {
           <Info className="h-5 w-5 text-green-600" />
           <AlertDescription className="text-green-700 dark:text-green-400">
             Pengajuan telah disetujui. Data tidak dapat diubah lagi.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* ✅ NEW: Rejection Alert */}
+      {submission?.status === "REJECTED" && (
+        <Alert className="mb-8 border-l-4 border-destructive bg-destructive/5">
+          <AlertDescription className="text-destructive">
+            <div className="font-semibold mb-2">Pengajuan Ditolak - Silakan Lakukan Perbaikan</div>
+            <p className="text-sm mb-3">
+              Beberapa dokumen yang Anda ajukan perlu diperbaiki. Lihat status masing-masing dokumen di bawah (yang berstatus <strong>Ditolak</strong>), perbaiki, dan upload ulang.
+            </p>
+            {submission.rejectionReason && (
+              <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-destructive/30">
+                <p className="text-xs font-semibold mb-1">💬 Catatan Admin:</p>
+                <p className="text-sm">{submission.rejectionReason}</p>
+              </div>
+            )}
           </AlertDescription>
         </Alert>
       )}

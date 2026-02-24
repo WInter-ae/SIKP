@@ -47,6 +47,8 @@ function mapSubmissionDocumentToDocumentFile(
     }),
     status: "uploaded",
     url: doc.fileUrl,
+    // ✅ NEW: Map database status ke documentStatus
+    documentStatus: doc.status as 'PENDING' | 'APPROVED' | 'REJECTED' | undefined,
   };
 }
 

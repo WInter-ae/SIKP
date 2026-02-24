@@ -11,6 +11,7 @@ import { Button } from "~/components/ui/button";
 
 import { FileUploadDialog } from "./file-upload-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
+import { StatusBadge } from "./status-badge";
 
 import type { Document, Member, SubmissionDocument } from "../types";
 
@@ -93,8 +94,14 @@ function DocumentDropdown({
                   key={member.id}
                   className="flex justify-between items-center py-3 border-b border-border last:border-b-0"
                 >
-                  <div className="font-medium text-foreground">
-                    {member.name} {member.role}
+                  <div className="flex flex-col gap-1">
+                    <div className="font-medium text-foreground">
+                      {member.name} {member.role}
+                    </div>
+                    {/* ✅ NEW: Display document status badge if available */}
+                    {memberDocument?.status && (
+                      <StatusBadge status={memberDocument.status} size="sm" />
+                    )}
                   </div>
                   {isUploaded ? (
                     <div className="flex items-center gap-2">
