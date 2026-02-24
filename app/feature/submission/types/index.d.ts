@@ -27,6 +27,8 @@ export interface DocumentFile {
   uploadDate: string;
   status: "uploaded" | "missing";
   url?: string;
+  // ✅ NEW: Database status setelah admin review
+  documentStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 }
 
 export interface SubmissionDocument {
@@ -54,6 +56,9 @@ export interface SubmissionDocument {
     name: string;
     email: string;
   };
+  // ✅ NEW: Review status dari admin (disimpan di database)
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  statusUpdatedAt?: string;
 }
 
 // ✅ Status timeline entry untuk track history perubahan status

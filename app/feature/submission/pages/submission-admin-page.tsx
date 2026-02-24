@@ -278,7 +278,11 @@ function SubmissionAdminPage() {
         );
         handleCloseModal();
       } else {
-        toast.error(response.message || "Gagal menyetujui pengajuan");
+        // ✅ Backend validation errors
+        console.error("❌ Backend validation error:", response.message);
+        toast.error(
+          response.message || "Gagal menyetujui pengajuan. Periksa validasi dokumen.",
+        );
       }
     } catch (error) {
       console.error("❌ Error approving submission:", error);
@@ -328,7 +332,11 @@ function SubmissionAdminPage() {
         );
         handleCloseModal();
       } else {
-        toast.error(response.message || "Gagal menolak pengajuan");
+        // ✅ Backend validation errors
+        console.error("❌ Backend validation error:", response.message);
+        toast.error(
+          response.message || "Gagal menolak pengajuan. Pastikan validasi terpenuhi.",
+        );
       }
     } catch (error) {
       console.error("❌ Error rejecting submission:", error);
