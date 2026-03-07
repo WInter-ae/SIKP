@@ -92,10 +92,16 @@ function DetailDialog({
               <CardContent>
                 <div className="flex flex-col md:flex-row items-start gap-6">
                   <div className="flex-1 min-w-[220px]">
-                    <InfoItem label="Perusahaan" value={student.company} />
+                    <InfoItem
+                      label="Perusahaan"
+                      value={student.company || "Unknown"}
+                    />
                   </div>
                   <div className="flex-1 min-w-[180px]">
-                    <InfoItem label="Tanggal Upload" value={student.tanggal} />
+                    <InfoItem
+                      label="Tanggal Upload"
+                      value={student.tanggal || "Unknown"}
+                    />
                   </div>
                   <div className="flex-1 min-w-[160px] space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">
@@ -108,7 +114,7 @@ function DetailDialog({
                           : "destructive"
                       }
                     >
-                      {student.status}
+                      {student.status || "Unknown"}
                     </Badge>
                   </div>
                 </div>

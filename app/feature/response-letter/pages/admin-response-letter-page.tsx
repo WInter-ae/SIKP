@@ -34,6 +34,19 @@ function AdminResponseLetterPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const getSafeText = (value?: string) => (value && value.trim() ? value : "Unknown");
+  const getStudentNim = (student: Student) =>
+    getSafeText(student.nim || student.npm);
+  const isApprovedStatus = (status?: string) =>
+    status === "Disetujui" || status?.toLowerCase() === "approved";
+  const isRejectedStatus = (status?: string) =>
+    status === "Ditolak" || status?.toLowerCase() === "rejected";
+  const getDisplayStatus = (status?: string) => {
+    if (isApprovedStatus(status)) return "Disetujui";
+    if (isRejectedStatus(status)) return "Ditolak";
+    return "Unknown";
+  };
+
   useEffect(() => {
     const loadResponseLetters = async () => {
       try {
@@ -84,16 +97,16 @@ function AdminResponseLetterPage() {
   // Calculate statistics
   const stats = useMemo(() => {
     const approvedNotVerified = students.filter(
-      (s) => s.status === "Disetujui" && !s.adminApproved,
+      (s) => isApprovedStatus(s.status) && !s.adminApproved,
     ).length;
     const rejectedNotVerified = students.filter(
-      (s) => s.status === "Ditolak" && !s.adminApproved,
+      (s) => isRejectedStatus(s.status) && !s.adminApproved,
     ).length;
     const approvedVerified = students.filter(
-      (s) => s.status === "Disetujui" && s.adminApproved,
+      (s) => isApprovedStatus(s.status) && s.adminApproved,
     ).length;
     const rejectedVerified = students.filter(
-      (s) => s.status === "Ditolak" && s.adminApproved,
+      (s) => isRejectedStatus(s.status) && s.adminApproved,
     ).length;
     const total = students.length;
 
@@ -131,13 +144,15 @@ function AdminResponseLetterPage() {
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
       const matchesSearch =
-        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.nim.toLowerCase().includes(searchTerm.toLowerCase());
+        getSafeText(student.name)
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        getStudentNim(student).toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesStatus =
         statusFilter === "all" ||
-        (statusFilter === "approved" && student.status === "Disetujui") ||
-        (statusFilter === "rejected" && student.status === "Ditolak");
+        (statusFilter === "approved" && isApprovedStatus(student.status)) ||
+        (statusFilter === "rejected" && isRejectedStatus(student.status));
 
       const matchesVerification =
         verificationFilter === "all" ||
@@ -329,32 +344,32 @@ function AdminResponseLetterPage() {
                   {filteredStudents.map((student) => (
                     <TableRow key={student.id} className="hover:bg-muted/50">
                       <TableCell className="pl-6 text-foreground">
-                        {student.tanggal}
+                        {getSafeText(student.tanggal)}
                       </TableCell>
                       <TableCell>
                         <div className="font-medium text-foreground">
-                          {student.name}
+                          {getSafeText(student.name)}
                         </div>
                         <span className="text-xs text-muted-foreground">
-                          {student.memberCount > 1
+                          {(student.memberCount || 0) > 1
                             ? `+ ${student.memberCount - 1} Anggota`
                             : "Individu"}
                         </span>
                       </TableCell>
                       <TableCell className="text-foreground">
-                        {student.company}
+                        {getSafeText(student.company)}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <Badge
                             variant="outline"
                             className={
-                              student.status === "Disetujui"
+                              isApprovedStatus(student.status)
                                 ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
                                 : "bg-destructive/10 text-destructive border-destructive/30"
                             }
                           >
-                            {student.status}
+                            {getDisplayStatus(student.status)}
                           </Badge>
                           {student.adminApproved && (
                             <Badge

@@ -35,6 +35,7 @@ import {
   uploadSubmissionDocument,
   updateSubmission,
   submitSubmission,
+  deleteSubmissionDocument,
 } from "~/lib/services/submission-api";
 import { useUser } from "~/contexts/user-context";
 import { ArrowLeft, ArrowRight, Eye, Info } from "lucide-react";
@@ -96,6 +97,13 @@ function SubmissionPage() {
   const filteredSubmissionDocuments = submissionDocuments.filter(
     (doc) => !isSuratPengantarDocument(doc.documentType),
   );
+
+  // Status REJECTED dianggap sudah pernah diajukan, sehingga input dikunci
+  // sampai user klik "Ajukan Ulang" di halaman surat pengantar.
+  const isSubmissionSubmitted =
+    submission?.status === "PENDING_REVIEW" ||
+    submission?.status === "APPROVED" ||
+    submission?.status === "REJECTED";
 
   // Fetch team data (finalized) for current user
   useEffect(() => {
@@ -232,6 +240,17 @@ function SubmissionPage() {
 
       if (response.success && response.data) {
         const docToAdd = response.data;
+        
+        // ✅ NEW: Delete old REJECTED proposal from backend if exists
+        const oldRejectedProposal = submissionDocuments.find(
+          (doc) => doc.documentType === "PROPOSAL_KETUA" && doc.status === 'REJECTED'
+        );
+        
+        if (oldRejectedProposal) {
+          console.log(`🗑️ Deleting old REJECTED proposal (${oldRejectedProposal.id})...`);
+          await deleteSubmissionDocument(oldRejectedProposal.id);
+        }
+        
         setSubmissionDocuments((prev) => {
           // Hapus proposal lama jika ada
           const filtered = prev.filter(
@@ -240,7 +259,7 @@ function SubmissionPage() {
           return [...filtered, docToAdd];
         });
         setProposalFile(file);
-        toast.success("Proposal berhasil diupload");
+        toast.success("Proposal berhasil diupload dengan status PENDING");
       } else {
         toast.error(response.message || "Gagal mengupload proposal");
       }
@@ -316,6 +335,27 @@ function SubmissionPage() {
         return;
       }
 
+      // ✅ NEW: Check if document already exists with REJECTED status
+      // If exists, delete it before uploading new one
+      const existingDoc = submissionDocuments.find(
+        (doc) =>
+          doc.documentType === docInfo.type &&
+          doc.memberUserId === memberId
+      );
+
+      if (existingDoc && existingDoc.status === 'REJECTED') {
+        console.log(`🗑️ Deleting old REJECTED document (${existingDoc.id}) before reupload...`);
+        const deleteResponse = await deleteSubmissionDocument(existingDoc.id);
+        
+        if (!deleteResponse.success) {
+          console.warn("⚠️ Failed to delete old document, but continuing with upload...");
+          // Continue anyway - backend might handle this automatically
+        } else {
+          console.log("✅ Old REJECTED document deleted successfully");
+          toast.success("Dokumen lama yang ditolak berhasil dihapus");
+        }
+      }
+
       const response = await uploadSubmissionDocument(
         currentSubmission.id,
         docInfo.type,
@@ -325,7 +365,7 @@ function SubmissionPage() {
       );
 
       if (response.success && response.data) {
-        toast.success(`${docInfo.title} berhasil diupload`);
+        toast.success(`${docInfo.title} berhasil diupload dengan status PENDING`);
 
         // ✅ KEY FIX: Re-fetch semua documents dari server
         // Ini memastikan dokumen dari user lain juga terlihat
@@ -586,7 +626,7 @@ function SubmissionPage() {
           <AlertDescription className="text-destructive">
             <div className="font-semibold mb-2">Pengajuan Ditolak - Silakan Lakukan Perbaikan</div>
             <p className="text-sm mb-3">
-              Beberapa dokumen yang Anda ajukan perlu diperbaiki. Lihat status masing-masing dokumen di bawah (yang berstatus <strong>Ditolak</strong>), perbaiki, dan upload ulang.
+              Beberapa dokumen yang Anda ajukan perlu diperbaiki. Sebelum melakukan perbaikan di halaman ini, Anda wajib menekan tombol <strong>Ajukan Ulang</strong> terlebih dahulu pada halaman <strong>Surat Pengantar</strong>. Setelah itu, dokumen berstatus <strong>Ditolak</strong> dapat diupload ulang.
             </p>
             {submission.rejectionReason && (
               <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-destructive/30">
@@ -636,10 +676,7 @@ function SubmissionPage() {
                           size="sm"
                           className="w-full sm:w-auto"
                           onClick={() => setIsProposalReuploadConfirmOpen(true)}
-                          disabled={
-                            submission?.status === "PENDING_REVIEW" ||
-                            submission?.status === "APPROVED"
-                          }
+                          disabled={isSubmissionSubmitted}
                         >
                           Terupload
                         </Button>
@@ -664,17 +701,21 @@ function SubmissionPage() {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Klik untuk upload ulang proposal ketua tim.
+                        {submission?.status === "REJECTED"
+                          ? "Proposal dikunci sementara. Klik Ajukan Ulang di halaman Surat Pengantar terlebih dahulu."
+                          : "Klik untuk upload ulang proposal ketua tim."}
                       </p>
+                      {proposalDocument?.status && (
+                        <div className="mt-2">
+                          <StatusBadge status={proposalDocument.status} size="sm" />
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <FileUpload
                       label="Upload Surat Proposal (Ketua Tim)"
                       onFileChange={handleProposalUpload}
-                      disabled={
-                        submission?.status === "PENDING_REVIEW" ||
-                        submission?.status === "APPROVED"
-                      }
+                      disabled={isSubmissionSubmitted}
                     />
                   )
                 ) : (
@@ -718,6 +759,11 @@ function SubmissionPage() {
                     <p className="text-xs text-muted-foreground mt-2">
                       Proposal hanya bisa diupload oleh ketua tim.
                     </p>
+                    {proposalDocument?.status && (
+                      <div className="mt-2">
+                        <StatusBadge status={proposalDocument.status} size="sm" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -740,10 +786,7 @@ function SubmissionPage() {
                 documents={filteredSubmissionDocuments}
                 currentUserId={user?.id}
                 onUpload={handleDocumentUpload}
-                disabled={
-                  submission?.status === "PENDING_REVIEW" ||
-                  submission?.status === "APPROVED"
-                }
+                disabled={isSubmissionSubmitted}
               />
             ))}
           </div>
@@ -755,8 +798,7 @@ function SubmissionPage() {
               onDataChange={handleAdditionalInfoChange}
               isEditable={
                 isCurrentUserLeader &&
-                submission?.status !== "PENDING_REVIEW" &&
-                submission?.status !== "APPROVED"
+                !isSubmissionSubmitted
               }
             />
 
@@ -804,14 +846,15 @@ function SubmissionPage() {
               className="px-8 py-3 font-medium text-lg"
               disabled={
                 !isCurrentUserLeader ||
-                submission?.status === "PENDING_REVIEW" ||
-                submission?.status === "APPROVED"
+                isSubmissionSubmitted
               }
             >
               {submission?.status === "PENDING_REVIEW"
-                ? "Diajukan"
+                ? "Telah Diajukan"
                 : submission?.status === "APPROVED"
                   ? "Telah Disetujui"
+                  : submission?.status === "REJECTED"
+                    ? "Telah Diajukan"
                   : "Ajukan Surat Pengantar"}
             </Button>
           </div>
@@ -828,9 +871,17 @@ function SubmissionPage() {
         </Button>
         <Button
           className="px-6 py-3 font-medium"
-          disabled={submission?.status !== "PENDING_REVIEW" && submission?.status !== "APPROVED"}
+          disabled={
+            submission?.status !== "PENDING_REVIEW" &&
+            submission?.status !== "APPROVED" &&
+            submission?.status !== "REJECTED"
+          }
           onClick={() => {
-            if (submission?.status === "PENDING_REVIEW" || submission?.status === "APPROVED") {
+            if (
+              submission?.status === "PENDING_REVIEW" ||
+              submission?.status === "APPROVED" ||
+              submission?.status === "REJECTED"
+            ) {
               navigate("/mahasiswa/kp/surat-pengantar");
             }
           }}

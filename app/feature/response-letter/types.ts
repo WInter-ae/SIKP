@@ -38,14 +38,28 @@ export interface ResponseLetter {
  * Student type untuk admin view
  */
 export interface Student {
-  id: number;
+  id: string | number;
   name: string;
-  npm: string;
+  nim: string;
+  npm?: string;
+  tanggal: string;
   company: string;
-  letterStatus: "approved" | "rejected";
-  submittedAt: string;
-  verified: boolean;
-  verifiedAt: string | null;
+  status: "Disetujui" | "Ditolak";
+  adminApproved: boolean;
+  role?: string;
+  memberCount: number;
+  supervisor?: string;
+  members?: Array<{
+    id: number;
+    name: string;
+    nim?: string;
+    prodi?: string;
+    role: "Ketua" | "Anggota";
+  }>;
+  responseFileUrl?: string;
+  submittedAt?: string;
+  verified?: boolean;
+  verifiedAt?: string | null;
   fileUrl?: string;
   originalName?: string;
 }
