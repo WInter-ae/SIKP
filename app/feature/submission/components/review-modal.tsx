@@ -32,9 +32,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { StatusBadge } from "./status-badge";
 
 import type { Application, DocumentFile } from "../types";
-import { STANDARD_DOCUMENT_TITLES, isSuratPengantarDocument } from "../constants/document-types";
+import {
+  STANDARD_DOCUMENT_TITLES,
+  isSuratPengantarDocument,
+} from "../constants/document-types";
 
 interface ReviewModalProps {
   application: Application | null;
@@ -59,23 +63,24 @@ function ReviewModal({
     Record<string, "approved" | "rejected">
   >({});
 
-  // Initialize docReviews from saved reviews if application is already reviewed
+  // Initialize docReviews from persisted document status and saved reviews
   useEffect(() => {
-    if (application?.documentReviews) {
-      setDocReviews(application.documentReviews);
-    } else {
-      setDocReviews({});
-    }
-
-    // ✅ FIX: Jika status PENDING_REVIEW tapi ada REJECTED sebelumnya (re-submission),
-    // clear old document reviews agar admin bisa review ulang dari awal
-    if (application?.status === "pending" && application?.statusHistory && application.statusHistory.length > 0) {
-      const hasRejection = application.statusHistory.some((entry) => entry.status === "REJECTED");
-      if (hasRejection) {
-        console.log("🔄 Clearing old document reviews for re-submission after rejection");
-        setDocReviews({});
+    const statusSeed: Record<string, "approved" | "rejected"> = {};
+    (application?.documents || []).forEach((doc) => {
+      if (doc.documentStatus === "APPROVED") {
+        statusSeed[doc.id] = "approved";
       }
-    }
+      if (doc.documentStatus === "REJECTED") {
+        statusSeed[doc.id] = "rejected";
+      }
+    });
+
+    const mergedReviews = {
+      ...statusSeed,
+      ...(application?.documentReviews || {}),
+    };
+
+    setDocReviews(mergedReviews);
 
     // Debug: log documents received by modal - VERY DETAILED
     console.log("📋 ReviewModal received application:", {
@@ -147,21 +152,23 @@ function ReviewModal({
   // agar section dokumen tetap muncul walaupun belum ada yang upload
   const allDocumentTitles = useMemo(() => {
     if (!application) return [];
-    
+
     // ✅ Gunakan constants daripada hardcoded array
     const standardDocs = [...STANDARD_DOCUMENT_TITLES];
-    
+
     const uploadedTitles = Object.keys(groupedDocuments).filter(
       (title) => title && title !== "undefined",
     );
-    
+
     // ✅ CRITICAL: Exclude SURAT_PENGANTAR menggunakan helper function
     // SURAT_PENGANTAR tidak boleh muncul di accordion upload
     const filteredUploadedTitles = uploadedTitles.filter(
-      (title) => !isSuratPengantarDocument(title)
+      (title) => !isSuratPengantarDocument(title),
     );
-    
-    const allTitles = Array.from(new Set([...standardDocs, ...filteredUploadedTitles]));
+
+    const allTitles = Array.from(
+      new Set([...standardDocs, ...filteredUploadedTitles]),
+    );
 
     console.log("📋 All document titles in modal:", {
       applicationId: application.id,
@@ -218,15 +225,13 @@ function ReviewModal({
       );
       return;
     }
-    
+
     // ✅ Backend validation: Rejection reason is REQUIRED
     if (!comment.trim()) {
-      toast.error(
-        "Alasan penolakan wajib diisi saat menolak submission.",
-      );
+      toast.error("Alasan penolakan wajib diisi saat menolak submission.");
       return;
     }
-    
+
     // ✅ Check if all docs reviewed
     if (!allDocsReviewed) {
       toast.warning(
@@ -234,7 +239,7 @@ function ReviewModal({
       );
       return;
     }
-    
+
     onReject(comment, docReviews);
     resetState();
   };
@@ -247,7 +252,7 @@ function ReviewModal({
       );
       return;
     }
-    
+
     // ✅ Check missing documents
     if (hasMissingDocs) {
       toast.error(
@@ -255,7 +260,7 @@ function ReviewModal({
       );
       return;
     }
-    
+
     // ✅ Backend validation: All docs must be reviewed (no pending)
     if (!allDocsReviewed) {
       toast.error(
@@ -263,7 +268,7 @@ function ReviewModal({
       );
       return;
     }
-    
+
     onApprove(docReviews);
     resetState();
   };
@@ -278,17 +283,28 @@ function ReviewModal({
     setDocReviews({});
   };
 
+  const getDisplayStatus = (doc: DocumentFile) => {
+    const manualStatus = docReviews[doc.id];
+    if (manualStatus === "approved") return "APPROVED";
+    if (manualStatus === "rejected") return "REJECTED";
+    if (doc.documentStatus === "APPROVED") return "APPROVED";
+    if (doc.documentStatus === "REJECTED") return "REJECTED";
+    if (doc.documentStatus === "PENDING") return "PENDING";
+    return undefined;
+  };
+
   // Helper function to render document item
   const renderDocItem = (doc: DocumentFile) => {
     const status = docReviews[doc.id];
+    const displayStatus = getDisplayStatus(doc);
     const isEditable = application && application.status === "pending";
     return (
       <div
         key={doc.id}
         className={`flex items-center justify-between p-3 bg-card rounded border ${
-          status === "rejected"
+          displayStatus === "REJECTED"
             ? "border-destructive/50 bg-destructive/10"
-            : status === "approved"
+            : displayStatus === "APPROVED"
               ? "border-green-500/50 bg-green-500/10"
               : "border-border"
         }`}
@@ -302,6 +318,11 @@ function ReviewModal({
               {doc.uploadedBy}
             </p>
             <p className="text-xs text-muted-foreground">{doc.uploadDate}</p>
+            {displayStatus && (
+              <div className="mt-2">
+                <StatusBadge status={displayStatus} size="sm" />
+              </div>
+            )}
           </div>
         </div>
 

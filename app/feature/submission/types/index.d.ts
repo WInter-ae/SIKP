@@ -28,7 +28,7 @@ export interface DocumentFile {
   status: "uploaded" | "missing";
   url?: string;
   // ✅ NEW: Database status setelah admin review
-  documentStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  documentStatus?: "PENDING" | "APPROVED" | "REJECTED";
 }
 
 export interface SubmissionDocument {
@@ -57,7 +57,7 @@ export interface SubmissionDocument {
     email: string;
   };
   // ✅ NEW: Review status dari admin (disimpan di database)
-  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status?: "PENDING" | "APPROVED" | "REJECTED";
   statusUpdatedAt?: string;
 }
 
