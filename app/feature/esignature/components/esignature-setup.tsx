@@ -1,11 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Pen, Upload, Type, Check, X, AlertCircle } from "lucide-react";
+import { Pen, Upload, Check, X, AlertCircle } from "lucide-react";
 import type { ESignatureSetupData } from "../types/esignature";
 
 interface ESignatureSetupProps {
@@ -16,6 +22,8 @@ interface ESignatureSetupProps {
   nip: string;
 }
 
+type ESignatureType = "draw" | "upload";
+
 export function ESignatureSetup({
   onSave,
   onCancel,
@@ -23,11 +31,9 @@ export function ESignatureSetup({
   dosenName,
   nip,
 }: ESignatureSetupProps) {
-  const [signatureType, setSignatureType] = useState<"draw" | "upload" | "text">("draw");
+  const [signatureType, setSignatureType] = useState<"draw" | "upload">("draw");
   const [isDrawing, setIsDrawing] = useState(false);
   const [signatureData, setSignatureData] = useState("");
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [textSignature, setTextSignature] = useState(dosenName);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -43,7 +49,7 @@ export function ESignatureSetup({
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     ctx.beginPath();
     ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
@@ -89,42 +95,28 @@ export function ESignatureSetup({
         alert("Ukuran file maksimal 2MB");
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = () => {
         setSignatureData(reader.result as string);
-        setUploadedFile(file);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleSignatureTypeChange = (value: string) => {
+    setSignatureType(value as ESignatureType);
+  };
+
   const handleSave = () => {
-    let finalData = "";
-    
-    if (signatureType === "draw") {
-      if (!signatureData) {
-        alert("Silakan buat tanda tangan terlebih dahulu");
-        return;
-      }
-      finalData = signatureData;
-    } else if (signatureType === "upload") {
-      if (!signatureData) {
-        alert("Silakan upload gambar tanda tangan");
-        return;
-      }
-      finalData = signatureData;
-    } else if (signatureType === "text") {
-      if (!textSignature.trim()) {
-        alert("Silakan masukkan nama untuk tanda tangan");
-        return;
-      }
-      finalData = textSignature;
+    if (!signatureData) {
+      alert("Silakan buat atau upload tanda tangan terlebih dahulu");
+      return;
     }
 
     onSave({
       signatureType,
-      signatureData: finalData,
+      signatureData,
       dosenName,
       nip,
     });
@@ -142,12 +134,13 @@ export function ESignatureSetup({
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            E-Signature akan digunakan untuk menandatangani berita acara sidang secara otomatis.
+            E-Signature akan digunakan untuk menandatangani berita acara sidang
+            secara otomatis.
           </AlertDescription>
         </Alert>
 
-        <Tabs value={signatureType} onValueChange={(v) => setSignatureType(v as any)}>
-          <TabsList className="grid w-full grid-cols-3">
+        <Tabs value={signatureType} onValueChange={handleSignatureTypeChange}>
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="draw" className="gap-2">
               <Pen className="h-4 w-4" />
               Gambar
@@ -155,10 +148,6 @@ export function ESignatureSetup({
             <TabsTrigger value="upload" className="gap-2">
               <Upload className="h-4 w-4" />
               Upload
-            </TabsTrigger>
-            <TabsTrigger value="text" className="gap-2">
-              <Type className="h-4 w-4" />
-              Teks
             </TabsTrigger>
           </TabsList>
 
@@ -215,29 +204,6 @@ export function ESignatureSetup({
                   />
                 </div>
               )}
-            </div>
-          </TabsContent>
-
-          {/* Text Tab */}
-          <TabsContent value="text" className="space-y-4">
-            <div>
-              <Label htmlFor="text-signature" className="mb-2 block">
-                Nama untuk Tanda Tangan
-              </Label>
-              <Input
-                id="text-signature"
-                type="text"
-                value={textSignature}
-                onChange={(e) => setTextSignature(e.target.value)}
-                placeholder="Masukkan nama Anda"
-                className="mb-3"
-              />
-              <div className="border rounded-lg p-6 bg-white text-center">
-                <p className="text-3xl font-signature" style={{ fontFamily: "Brush Script MT, cursive" }}>
-                  {textSignature || "Preview Tanda Tangan"}
-                </p>
-                <p className="text-sm text-gray-600 mt-2">NIP: {nip}</p>
-              </div>
             </div>
           </TabsContent>
         </Tabs>
