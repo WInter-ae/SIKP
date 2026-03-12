@@ -18,6 +18,7 @@ export interface Member {
 export interface Document {
   id: number;
   title: string;
+  type?: string;
 }
 
 export interface DocumentFile {

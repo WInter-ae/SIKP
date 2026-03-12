@@ -21,6 +21,7 @@ interface DocumentDropdownProps {
   documents: SubmissionDocument[];
   currentUserId?: string;
   onUpload?: (documentId: number, memberId: string, file: File) => void;
+  onSubmitRequest?: (memberId: string) => Promise<void>;
   disabled?: boolean;
 }
 
@@ -30,6 +31,7 @@ function DocumentDropdown({
   documents,
   currentUserId,
   onUpload,
+  onSubmitRequest,
   disabled,
 }: DocumentDropdownProps) {
   const [uploadingMember, setUploadingMember] = useState<{
@@ -40,12 +42,14 @@ function DocumentDropdown({
     id: string;
     name: string;
   } | null>(null);
+  const [submittingMemberId, setSubmittingMemberId] = useState<string | null>(
+    null,
+  );
 
   const getDocumentForMember = (memberId: string) => {
     return documents.find(
       (doc) =>
-        doc.documentType === (document as any).type &&
-        doc.memberUserId === memberId
+        doc.documentType === document.type && doc.memberUserId === memberId,
     );
   };
 
@@ -73,6 +77,16 @@ function DocumentDropdown({
     }
   };
 
+  const handleSubmitRequest = async (memberId: string) => {
+    if (!onSubmitRequest) return;
+    try {
+      setSubmittingMemberId(memberId);
+      await onSubmitRequest(memberId);
+    } finally {
+      setSubmittingMemberId(null);
+    }
+  };
+
   return (
     <>
       <Accordion type="single" collapsible className="mb-4">
@@ -81,13 +95,16 @@ function DocumentDropdown({
           className="border border-border rounded-lg overflow-hidden"
         >
           <AccordionTrigger className="bg-muted px-4 hover:no-underline">
-            <span className="font-medium text-foreground">{document.title}</span>
+            <span className="font-medium text-foreground">
+              {document.title}
+            </span>
           </AccordionTrigger>
           <AccordionContent className="bg-card px-4 pb-0">
             {members.map((member) => {
               const isCurrentUser = currentUserId === member.id;
               const memberDocument = getDocumentForMember(member.id);
               const isUploaded = !!memberDocument;
+              const isSuratKesediaan = document.type === "SURAT_KESEDIAAN";
 
               return (
                 <div
@@ -129,16 +146,35 @@ function DocumentDropdown({
                       )}
                     </div>
                   ) : (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={!isCurrentUser || disabled}
-                      onClick={() =>
-                        setUploadingMember({ id: member.id, name: member.name })
-                      }
-                    >
-                      Upload
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={!isCurrentUser || disabled}
+                        onClick={() =>
+                          setUploadingMember({
+                            id: member.id,
+                            name: member.name,
+                          })
+                        }
+                      >
+                        Upload
+                      </Button>
+                      {isCurrentUser && isSuratKesediaan && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={
+                            disabled || submittingMemberId === member.id
+                          }
+                          onClick={() => void handleSubmitRequest(member.id)}
+                        >
+                          {submittingMemberId === member.id
+                            ? "Mengajukan..."
+                            : "Ajukan"}
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               );

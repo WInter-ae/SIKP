@@ -1,7 +1,7 @@
 // Components
 export { BeritaAcaraForm } from "./components/berita-acara-form";
 export { BeritaAcaraStatus } from "./components/berita-acara-status";
-export { SuratPreview } from "./components/surat-preview";
+export { SuratPreview } from "./components/preview-berita-acara";
 
 // Pages
 export { default as PengujianSidangPage } from "./pages/pengujian-sidang-page";
