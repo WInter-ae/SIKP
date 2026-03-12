@@ -207,12 +207,12 @@ const dosenMenu: NavItem[] = [
   },
   {
     title: "Verifikasi",
-    url: "#",
+    url: "/dosen/kp/verifikasi-surat",
     icon: FileCheck,
     items: [
       {
         title: "Surat Mahasiswa",
-        url: "#",
+        url: "/dosen/kp/verifikasi-surat",
       },
     ],
   },
