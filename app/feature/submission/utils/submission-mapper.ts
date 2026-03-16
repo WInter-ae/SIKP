@@ -7,7 +7,10 @@ import type {
   DocumentFile,
   Member,
 } from "~/feature/submission/types";
-import { DOCUMENT_TYPE_LABELS, isSuratPengantarDocument } from "../constants/document-types";
+import {
+  DOCUMENT_TYPE_LABELS,
+  isSuratPengantarDocument,
+} from "../constants/document-types";
 
 /**
  * Mapping document type dari backend ke display title
@@ -24,21 +27,21 @@ function mapSubmissionDocumentToDocumentFile(
   memberName: string,
 ): DocumentFile {
   const title = DOCUMENT_TYPE_MAPPING[doc.documentType] || doc.documentType;
-  
+
   // Debug: Log jika documentType tidak ada di mapping
   if (!DOCUMENT_TYPE_MAPPING[doc.documentType]) {
     console.warn("⚠️ Unknown documentType:", {
       documentType: doc.documentType,
       docId: doc.id,
-      fileName: (doc as any).fileName,
+      fileName: doc.fileName,
       fallbackTitle: title,
       availableTypes: Object.keys(DOCUMENT_TYPE_MAPPING),
     });
   }
-  
+
   return {
     id: doc.id,
-    title: title,
+    title,
     uploadedBy: memberName,
     uploadDate: new Date(doc.createdAt).toLocaleDateString("id-ID", {
       day: "2-digit",
@@ -48,7 +51,7 @@ function mapSubmissionDocumentToDocumentFile(
     status: "uploaded",
     url: doc.fileUrl,
     // ✅ NEW: Map database status ke documentStatus
-    documentStatus: doc.status as 'PENDING' | 'APPROVED' | 'REJECTED' | undefined,
+    documentStatus: doc.status,
   };
 }
 
@@ -63,19 +66,29 @@ function formatDate(isoDate: string): string {
   });
 }
 
+function normalizePlaceholderValue(value?: string | null): string {
+  if (!value) return "";
+  return value.trim().toLowerCase() === "belum diisi" ? "" : value;
+}
+
 /**
  * Interface untuk Team Member dari backend
  */
 interface TeamMemberFromBackend {
-  user: {
+  user?: {
     id: string;
     name: string;
     nim: string;
     email?: string;
     prodi?: string;
   };
+  id?: string;
+  userId?: string;
+  name?: string;
+  nim?: string;
+  prodi?: string;
   role: "KETUA" | "ANGGOTA";
-  status: string;
+  status?: string;
 }
 
 /**
@@ -106,6 +119,11 @@ export interface SubmissionWithTeam extends Submission {
 export function mapSubmissionToApplication(
   submission: SubmissionWithTeam,
 ): Application | null {
+  const submissionData = submission as SubmissionWithTeam & {
+    company_phone?: string;
+    company_business_type?: string;
+  };
+
   if (!submission.team) {
     console.error("❌ Submission missing team data:", submission.id);
     return null;
@@ -136,7 +154,7 @@ export function mapSubmissionToApplication(
       "❌ No accepted members in team:",
       submission.team.id,
       "Members count:",
-      submission.team.members?.length || 0
+      submission.team.members?.length || 0,
     );
     return null;
   }
@@ -146,39 +164,36 @@ export function mapSubmissionToApplication(
 
   // Map members ke format yang dibutuhkan
   // Handle 2 struktur: nested user object OR flat user data
-  const members: Member[] = acceptedMembers
-    .map((m) => {
-      // Cek apakah user object nested atau data flat
-      const userObj = m.user;
-      
-      // Jika user object ada (nested structure)
-      if (userObj) {
-        return {
-          id: userObj.id,
-          name: userObj.name,
-          nim: userObj.nim,
-          prodi: userObj.prodi,
-          role: m.role === "KETUA" ? "Ketua" : "Anggota",
-        };
-      }
-      
-      // Fallback: user data flat di member object
-      console.warn("⚠️ Member user nested object missing, using flat structure:", {
-        memberId: (m as any).id,
-        userId: (m as any).userId,
-        name: (m as any).name,
-        nim: (m as any).nim,
-        prodi: (m as any).prodi,
-      });
-      
+  const members: Member[] = acceptedMembers.map((m) => {
+    if (m.user) {
       return {
-        id: (m as any).userId || (m as any).id,
-        name: (m as any).name,
-        nim: (m as any).nim,
-        prodi: (m as any).prodi,
+        id: m.user.id,
+        name: m.user.name,
+        nim: m.user.nim,
+        prodi: m.user.prodi,
         role: m.role === "KETUA" ? "Ketua" : "Anggota",
       };
-    });
+    }
+
+    console.warn(
+      "⚠️ Member user nested object missing, using flat structure:",
+      {
+        memberId: m.id,
+        userId: m.userId,
+        name: m.name,
+        nim: m.nim,
+        prodi: m.prodi,
+      },
+    );
+
+    return {
+      id: m.userId || m.id || "",
+      name: m.name || "Unknown",
+      nim: m.nim || "",
+      prodi: m.prodi,
+      role: m.role === "KETUA" ? "Ketua" : "Anggota",
+    };
+  });
 
   // Sort: Ketua first
   members.sort((a, b) => {
@@ -195,7 +210,7 @@ export function mapSubmissionToApplication(
     .map((doc) => {
       // ✅ Backend sekarang mengirimkan uploadedByUser object dengan name
       let uploaderName = "Unknown";
-      
+
       // Prioritas 1: Gunakan uploadedByUser.name dari backend (NEW!)
       if (doc.uploadedByUser && doc.uploadedByUser.name) {
         uploaderName = doc.uploadedByUser.name;
@@ -203,14 +218,19 @@ export function mapSubmissionToApplication(
       // Fallback 1: Cari dari team members jika uploadedByUser tidak ada
       else if (doc.uploadedByUserId) {
         const uploader = acceptedMembers.find((m) => {
-          const userId = m.user?.id || (m as any).userId;
+          const userId = m.user?.id || m.userId;
           return userId === doc.uploadedByUserId;
         });
-        uploaderName = uploader?.user?.name || (uploader as any)?.name || "Unknown";
+        uploaderName = uploader?.user?.name || uploader?.name || "Unknown";
       }
       // Fallback 2: Gunakan string uploadedBy jika ada
-      else if ("uploadedBy" in doc && typeof doc.uploadedBy === "string") {
-        uploaderName = doc.uploadedBy;
+      else {
+        const docWithUploadedBy = doc as SubmissionDocument & {
+          uploadedBy?: string;
+        };
+        if (typeof docWithUploadedBy.uploadedBy === "string") {
+          uploaderName = docWithUploadedBy.uploadedBy;
+        }
       }
 
       console.log("📄 Mapping document:", {
@@ -229,7 +249,10 @@ export function mapSubmissionToApplication(
     .filter((doc) => {
       // Filter out documents dengan title undefined
       if (doc.title === "undefined" || !doc.title) {
-        console.warn("⚠️ Filtering out document with undefined/empty title:", doc);
+        console.warn(
+          "⚠️ Filtering out document with undefined/empty title:",
+          doc,
+        );
         return false;
       }
       return true;
@@ -277,10 +300,16 @@ export function mapSubmissionToApplication(
     supervisor,
     members,
     internship: {
-      tujuanSurat: submission.letterPurpose,
-      namaTempat: submission.companyName,
-      alamatTempat: submission.companyAddress,
-      divisi: submission.division,
+      tujuanSurat: normalizePlaceholderValue(submission.letterPurpose),
+      namaTempat: normalizePlaceholderValue(submission.companyName),
+      alamatTempat: normalizePlaceholderValue(submission.companyAddress),
+      teleponPerusahaan:
+        normalizePlaceholderValue(submission.companyPhone) ||
+        normalizePlaceholderValue(submissionData.company_phone),
+      jenisProdukUsaha:
+        normalizePlaceholderValue(submission.companyBusinessType) ||
+        normalizePlaceholderValue(submissionData.company_business_type),
+      divisi: normalizePlaceholderValue(submission.division),
       tanggalMulai: formatDate(submission.startDate),
       tanggalSelesai: formatDate(submission.endDate),
     },

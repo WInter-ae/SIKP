@@ -21,6 +21,15 @@ export interface MailEntry {
   dosenNip: string;
   dosenJabatan: string;
   dosenEsignatureUrl?: string;
+  mahasiswaEsignatureUrl?: string;
   signedFileUrl?: string;
   approvedAt?: string;
+  // Fields khusus Surat Permohonan
+  jumlahSks?: string;
+  tahunAjaran?: string;
+  teleponPerusahaan?: string;
+  jenisProdukUsaha?: string;
+  divisi?: string;
+  tanggalMulai?: string;
+  tanggalSelesai?: string;
 }

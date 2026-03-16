@@ -30,13 +30,20 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import type { LucideIcon } from "lucide-react";
-import MainVerificationDosenDialog from "../components/main-verification-dosen-dialog";
+import MainVerificationDosenDialog from "../components/mail-verification-dialog";
 import type { MailEntry } from "../../hearing-dosen/types/dosen";
 import {
   approveBulkDosenSuratKesediaanRequests,
   approveDosenSuratKesediaanRequest,
   getDosenSuratKesediaanRequests,
+  rejectDosenSuratKesediaanRequest,
 } from "~/lib/services/surat-kesediaan-api";
+import {
+  approveBulkDosenSuratPermohonanRequests,
+  approveDosenSuratPermohonanRequest,
+  getDosenSuratPermohonanRequests,
+  rejectDosenSuratPermohonanRequest,
+} from "~/lib/services/surat-permohonan-api";
 import { getMyProfile } from "~/lib/services/dosen-api";
 
 interface StatCardProps {
@@ -87,6 +94,33 @@ function resolveAssetUrl(url?: string): string | undefined {
   return `${base}${path}`;
 }
 
+function pickFirstNonEmptyString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) return value;
+  }
+  return undefined;
+}
+
+function resolveMahasiswaSignatureUrl(item: Record<string, unknown>):
+  | string
+  | undefined {
+  const nestedEsignature =
+    item.mahasiswaEsignature && typeof item.mahasiswaEsignature === "object"
+      ? (item.mahasiswaEsignature as Record<string, unknown>)
+      : undefined;
+
+  const candidate = pickFirstNonEmptyString(
+    item.mahasiswaEsignatureUrl,
+    item.mahasiswa_esignature_url,
+    item.mahasiswaSignatureUrl,
+    item.mahasiswa_signature_url,
+    item.mahasiswaESignatureUrl,
+    nestedEsignature?.url,
+  );
+
+  return resolveAssetUrl(candidate);
+}
+
 function MailVerificationDosenPage() {
   const [entries, setEntries] = useState<MailEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,46 +133,109 @@ function MailVerificationDosenPage() {
   const loadRequests = async () => {
     try {
       setIsLoading(true);
-      const [response, profileResponse] = await Promise.all([
-        getDosenSuratKesediaanRequests(),
-        getMyProfile(),
-      ]);
-      if (!response.success || !response.data) {
-        toast.error(response.message || "Gagal memuat data verifikasi surat.");
-        setEntries([]);
-        return;
-      }
+      const [kesediaanResponse, permohonanResponse, profileResponse] =
+        await Promise.all([
+          getDosenSuratKesediaanRequests(),
+          getDosenSuratPermohonanRequests(),
+          getMyProfile(),
+        ]);
 
       const dosenEsignatureUrl = profileResponse.success
         ? profileResponse.data?.esignature?.url
         : undefined;
 
-      setEntries(
-        response.data.map((item) => ({
-          id: item.id,
-          tanggal: item.tanggal,
-          nim: item.nim,
-          namaMahasiswa: item.namaMahasiswa,
-          programStudi: item.programStudi,
-          angkatan: item.angkatan,
-          semester: item.semester,
-          email: item.email,
-          noHp: item.noHp,
-          jenisSurat: item.jenisSurat || "Surat Kesediaan",
-          status: normalizeStatus(item.status),
-          dosenNama: item.dosenNama,
-          dosenNip: item.dosenNip,
-          dosenJabatan: item.dosenJabatan || "-",
-          dosenEsignatureUrl:
-            item.dosenEsignatureUrl ||
-            item.dosen_esignature_url ||
-            dosenEsignatureUrl,
-          signedFileUrl: resolveAssetUrl(
-            item.signedFileUrl || item.signed_file_url,
-          ),
-          approvedAt: item.approvedAt || item.approved_at,
-        })),
-      );
+      if (!kesediaanResponse.success) {
+        console.warn(
+          "⚠️ Gagal memuat surat kesediaan:",
+          kesediaanResponse.message,
+        );
+      }
+      if (!permohonanResponse.success) {
+        console.warn(
+          "⚠️ Gagal memuat surat permohonan:",
+          permohonanResponse.message,
+        );
+      }
+
+      if (!kesediaanResponse.success && !permohonanResponse.success) {
+        toast.error("Gagal memuat data verifikasi surat.");
+        setEntries([]);
+        return;
+      }
+
+      const kesediaanEntries =
+        kesediaanResponse.success && kesediaanResponse.data
+          ? kesediaanResponse.data.map((item) => ({
+              id: item.id,
+              tanggal: item.tanggal,
+              nim: item.nim,
+              namaMahasiswa: item.namaMahasiswa,
+              programStudi: item.programStudi,
+              angkatan: item.angkatan,
+              semester: item.semester,
+              email: item.email,
+              noHp: item.noHp,
+              jenisSurat: item.jenisSurat || "Surat Kesediaan",
+              status: normalizeStatus(item.status),
+              dosenNama: item.dosenNama,
+              dosenNip: item.dosenNip,
+              dosenJabatan: item.dosenJabatan || "-",
+              dosenEsignatureUrl:
+                item.dosenEsignatureUrl ||
+                item.dosen_esignature_url ||
+                dosenEsignatureUrl,
+              mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
+                item as unknown as Record<string, unknown>,
+              ),
+              signedFileUrl: resolveAssetUrl(
+                item.signedFileUrl || item.signed_file_url,
+              ),
+              approvedAt: item.approvedAt || item.approved_at,
+            }))
+          : [];
+
+      const permohonanEntries =
+        permohonanResponse.success && permohonanResponse.data
+          ? permohonanResponse.data.map((item) => ({
+              id: item.id,
+              tanggal: item.tanggal,
+              nim: item.nim,
+              namaMahasiswa: item.namaMahasiswa,
+              programStudi: item.programStudi,
+              angkatan: item.angkatan,
+              semester: item.semester,
+              email: item.email,
+              noHp: item.noHp,
+              jenisSurat: "Surat Permohonan",
+              status: normalizeStatus(item.status),
+              dosenNama: item.dosenNama,
+              dosenNip: item.dosenNip,
+              dosenJabatan: item.dosenJabatan || "-",
+              dosenEsignatureUrl:
+                item.dosenEsignatureUrl ||
+                item.dosen_esignature_url ||
+                dosenEsignatureUrl,
+              mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
+                item as unknown as Record<string, unknown>,
+              ),
+              signedFileUrl: resolveAssetUrl(
+                item.signedFileUrl || item.signed_file_url,
+              ),
+              approvedAt: item.approvedAt || item.approved_at,
+              // Fields permohonan
+              namaPerusahaan: item.namaPerusahaan,
+              alamatPerusahaan: item.alamatPerusahaan,
+              teleponPerusahaan: item.teleponPerusahaan,
+              jenisProdukUsaha: item.jenisProdukUsaha,
+              divisi: item.divisi,
+              tanggalMulai: item.tanggalMulai,
+              tanggalSelesai: item.tanggalSelesai,
+              jumlahSks: item.jumlahSks,
+              tahunAjaran: item.tahunAjaran,
+            }))
+          : [];
+
+      setEntries([...kesediaanEntries, ...permohonanEntries]);
     } catch (error) {
       console.error("❌ Error loading surat verification data:", error);
       toast.error("Terjadi kesalahan saat memuat data verifikasi surat.");
@@ -205,8 +302,26 @@ function MailVerificationDosenPage() {
     setSelectedEntry(null);
   };
 
-  const handleApprove = async (id: string) => {
-    const response = await approveDosenSuratKesediaanRequest(id);
+  const handleApprove = async (entryOrId: MailEntry | string) => {
+    const targetEntry =
+      typeof entryOrId === "string"
+        ? entries.find((e) => e.id === entryOrId)
+        : entryOrId;
+
+    if (!targetEntry) {
+      toast.error("Data pengajuan tidak ditemukan.");
+      return;
+    }
+
+    const id = targetEntry.id;
+    const isPermohonan = targetEntry?.jenisSurat === "Surat Permohonan";
+
+    const response = isPermohonan
+      ? await approveDosenSuratPermohonanRequest(id, {
+          mahasiswaEsignatureUrl: targetEntry.mahasiswaEsignatureUrl,
+        })
+      : await approveDosenSuratKesediaanRequest(id);
+
     if (!response.success) {
       toast.error(response.message || "Gagal menyetujui pengajuan.");
       return;
@@ -237,8 +352,35 @@ function MailVerificationDosenPage() {
     await loadRequests();
   };
 
-  const handleApproveInline = async (id: string) => {
-    await handleApprove(id);
+  const handleApproveInline = async (entry: MailEntry) => {
+    await handleApprove(entry);
+  };
+
+  const handleReject = async (id: string, reason: string) => {
+    const targetEntry = entries.find((e) => e.id === id);
+    if (!targetEntry) {
+      toast.error("Data pengajuan tidak ditemukan.");
+      return;
+    }
+
+    const isPermohonan = targetEntry.jenisSurat === "Surat Permohonan";
+
+    const response = isPermohonan
+      ? await rejectDosenSuratPermohonanRequest(id, reason)
+      : await rejectDosenSuratKesediaanRequest(id, reason);
+
+    if (!response.success) {
+      toast.error(response.message || "Gagal menolak pengajuan.");
+      return;
+    }
+
+    setEntries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, status: "ditolak" as const } : e)),
+    );
+
+    toast.success("Pengajuan surat berhasil ditolak.");
+
+    await loadRequests();
   };
 
   const toggleSelect = (id: string) => {
@@ -265,11 +407,54 @@ function MailVerificationDosenPage() {
 
     if (pendingSelected.length === 0) return;
 
-    const response =
-      await approveBulkDosenSuratKesediaanRequests(pendingSelected);
-    if (!response.success) {
-      toast.error(response.message || "Gagal menyetujui pengajuan terpilih.");
-      return;
+    const kesediaanIds = pendingSelected.filter(
+      (id) =>
+        entries.find((e) => e.id === id)?.jenisSurat !== "Surat Permohonan",
+    );
+    const permohonanIds = pendingSelected.filter(
+      (id) =>
+        entries.find((e) => e.id === id)?.jenisSurat === "Surat Permohonan",
+    );
+
+    const [kesediaanResult, permohonanResult] = await Promise.all([
+      kesediaanIds.length > 0
+        ? approveBulkDosenSuratKesediaanRequests(kesediaanIds)
+        : Promise.resolve({
+            success: true,
+            message: "",
+            data: { approvedCount: 0 },
+          }),
+      permohonanIds.length > 0
+        ? approveBulkDosenSuratPermohonanRequests(permohonanIds, {
+            signatures: entries
+              .filter(
+                (e) =>
+                  permohonanIds.includes(e.id) &&
+                  typeof e.mahasiswaEsignatureUrl === "string" &&
+                  e.mahasiswaEsignatureUrl.trim().length > 0,
+              )
+              .map((e) => ({
+                requestId: e.id,
+                mahasiswaEsignatureUrl: e.mahasiswaEsignatureUrl!,
+              })),
+          })
+        : Promise.resolve({
+            success: true,
+            message: "",
+            data: { approvedCount: 0 },
+          }),
+    ]);
+
+    if (!kesediaanResult.success && kesediaanIds.length > 0) {
+      toast.error(
+        kesediaanResult.message || "Gagal menyetujui surat kesediaan terpilih.",
+      );
+    }
+    if (!permohonanResult.success && permohonanIds.length > 0) {
+      toast.error(
+        permohonanResult.message ||
+          "Gagal menyetujui surat permohonan terpilih.",
+      );
     }
 
     setEntries((prev) =>
@@ -280,11 +465,12 @@ function MailVerificationDosenPage() {
       ),
     );
     setSelectedIds(new Set());
-    const approvedCount =
-      response.data?.approvedCount || pendingSelected.length;
-    toast.success(`${approvedCount} pengajuan berhasil disetujui.`);
 
-    // Refresh data to capture signed file URLs from backend.
+    const totalApproved =
+      (kesediaanResult.data?.approvedCount ?? 0) +
+      ((permohonanResult.data?.approvedCount ?? 0) || pendingSelected.length);
+    toast.success(`${totalApproved} pengajuan berhasil disetujui.`);
+
     await loadRequests();
   };
 
@@ -457,7 +643,7 @@ function MailVerificationDosenPage() {
                         {entry.namaMahasiswa}
                       </TableCell>
                       <TableCell className="text-foreground">
-                        {entry.jenisSurat || "Surat Kesediaan"}
+                        {entry.jenisSurat}
                       </TableCell>
                       <TableCell>{getStatusBadge(entry.status)}</TableCell>
                       <TableCell className="pr-6">
@@ -475,7 +661,7 @@ function MailVerificationDosenPage() {
                             <Button
                               size="sm"
                               className="bg-green-600 hover:bg-green-700 text-white"
-                              onClick={() => void handleApproveInline(entry.id)}
+                              onClick={() => void handleApproveInline(entry)}
                             >
                               <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
                               Approve
@@ -496,7 +682,8 @@ function MailVerificationDosenPage() {
         entry={selectedEntry}
         isOpen={isDialogOpen}
         onClose={handleCloseDialog}
-        onApprove={(id) => void handleApprove(id)}
+        onApprove={(entry) => void handleApprove(entry)}
+        onReject={(id, reason) => void handleReject(id, reason)}
       />
     </div>
   );

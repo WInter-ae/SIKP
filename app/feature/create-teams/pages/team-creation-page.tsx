@@ -57,6 +57,7 @@ import {
   finalizeTeam,
   type TeamMember,
 } from "~/feature/create-teams/services/team-api";
+import { createSubmission } from "~/lib/services/submission-api";
 
 const TeamCreationPage = () => {
   const navigate = useNavigate();
@@ -1790,6 +1791,36 @@ const TeamCreationPage = () => {
   };
 
   // Handle navigasi selanjutnya
+  const ensureSubmissionDraftCreated = async (targetTeam: Team) => {
+    const createResponse = await createSubmission(targetTeam.id);
+
+    if (createResponse.success) {
+      return true;
+    }
+
+    const errorMessage = (createResponse.message || "").toLowerCase();
+    const isAlreadyExistsError =
+      errorMessage.includes("already") ||
+      errorMessage.includes("exists") ||
+      errorMessage.includes("duplicate") ||
+      errorMessage.includes("conflict");
+
+    if (isAlreadyExistsError) {
+      console.log("ℹ️ Submission draft already exists, continuing...");
+      return true;
+    }
+
+    setNotificationData({
+      type: "error",
+      title: "Gagal Menyiapkan Submission",
+      message:
+        createResponse.message ||
+        "Tim sudah difinalisasi, tetapi draft submission gagal dibuat. Silakan coba lagi.",
+    });
+    setShowNotificationDialog(true);
+    return false;
+  };
+
   const handleNext = () => {
     if (!team) {
       setNotificationData({
@@ -1803,7 +1834,17 @@ const TeamCreationPage = () => {
     }
     // Jika tim sudah FIXED, navigate langsung ke submission page
     if (team.status === "FIXED") {
-      navigate("/mahasiswa/kp/pengajuan");
+      void (async () => {
+        setIsLoading(true);
+        try {
+          const submissionReady = await ensureSubmissionDraftCreated(team);
+          if (submissionReady) {
+            navigate("/mahasiswa/kp/pengajuan");
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      })();
       return;
     }
     // Jika belum FIXED, tampilkan dialog konfirmasi
@@ -1836,6 +1877,16 @@ const TeamCreationPage = () => {
       if (response.success) {
         console.log("✅ Team finalized successfully:", response.data);
 
+        const finalizedTeam: Team = {
+          ...team,
+          status: "FIXED",
+        };
+
+        const submissionReady = await ensureSubmissionDraftCreated(finalizedTeam);
+        if (!submissionReady) {
+          return;
+        }
+
         // Update local team state
         setTeam((prev) =>
           prev
@@ -1849,7 +1900,7 @@ const TeamCreationPage = () => {
         setNotificationData({
           type: "success",
           title: "Tim Berhasil Difinalisasi",
-          message: `Tim ${team.code} sudah final dengan ${team.members.length} anggota!`,
+          message: `Tim ${team.code} sudah final dengan ${team.members.length} anggota, dan draft submission sudah disiapkan.`,
         });
         setShowNotificationDialog(true);
 

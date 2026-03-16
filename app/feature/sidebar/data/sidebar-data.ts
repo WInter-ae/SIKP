@@ -91,7 +91,7 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Profil",
-    url: "#",
+    url: "/mahasiswa/profil",
     icon: UserCircle,
   },
   {
