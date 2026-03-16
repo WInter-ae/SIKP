@@ -73,6 +73,30 @@ export async function requestSuratKesediaanApproval(
   }
 }
 
+export async function reapplySuratKesediaanApproval(
+  requestId: string,
+  memberUserId: string,
+): Promise<ApiResponse<{ requestId: string }>> {
+  try {
+    return await apiClient<{ requestId: string }>(
+      `/api/mahasiswa/surat-kesediaan/requests/${requestId}/reapply`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ memberUserId }),
+      },
+    );
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Gagal mengajukan ulang surat kesediaan",
+      data: null,
+    };
+  }
+}
+
 export async function getDosenSuratKesediaanRequests(): Promise<
   ApiResponse<SuratKesediaanRequestItem[]>
 > {
@@ -122,6 +146,43 @@ export async function approveDosenSuratKesediaanRequest(
         error instanceof Error
           ? error.message
           : "Gagal menyetujui surat kesediaan",
+      data: null,
+    };
+  }
+}
+
+export async function rejectDosenSuratKesediaanRequest(
+  requestId: string,
+  reason: string,
+): Promise<
+  ApiResponse<{
+    requestId: string;
+    status: "DITOLAK" | "REJECTED" | string;
+    rejectedAt?: string;
+    rejected_at?: string;
+    rejectionReason?: string;
+    rejection_reason?: string;
+  }>
+> {
+  try {
+    return await apiClient<{
+      requestId: string;
+      status: "DITOLAK" | "REJECTED" | string;
+      rejectedAt?: string;
+      rejected_at?: string;
+      rejectionReason?: string;
+      rejection_reason?: string;
+    }>(`/api/dosen/surat-kesediaan/requests/${requestId}/reject`, {
+      method: "PUT",
+      body: JSON.stringify({ rejection_reason: reason }),
+    });
+  } catch (error) {
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Gagal menolak surat kesediaan",
       data: null,
     };
   }

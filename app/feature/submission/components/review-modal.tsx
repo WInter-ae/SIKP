@@ -525,6 +525,30 @@ function ReviewModal({
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>Telepon Perusahaan</Label>
+                  <Input
+                    value={application.internship.teleponPerusahaan}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Jenis Produk/Usaha</Label>
+                  <Input
+                    value={application.internship.jenisProdukUsaha}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <Label>Nama Unit/Divisi</Label>
+                  <Input
+                    value={application.internship.divisi}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>Tanggal Mulai</Label>
                   <Input
                     value={application.internship.tanggalMulai}
@@ -536,14 +560,6 @@ function ReviewModal({
                   <Label>Tanggal Selesai</Label>
                   <Input
                     value={application.internship.tanggalSelesai}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <Label>Nama Unit/Divisi</Label>
-                  <Input
-                    value={application.internship.divisi}
                     readOnly
                     className="bg-muted cursor-not-allowed"
                   />

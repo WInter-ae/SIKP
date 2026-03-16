@@ -129,7 +129,26 @@ export function getCurrentUser() {
  * Get auth token dari localStorage
  */
 export function getAuthToken(): string | null {
-  return localStorage.getItem('auth_token');
+  const rawToken = localStorage.getItem('auth_token');
+  if (!rawToken) return null;
+
+  const trimmed = rawToken.trim();
+  if (!trimmed) return null;
+
+  const lowered = trimmed.toLowerCase();
+  if (lowered === 'null' || lowered === 'undefined') return null;
+
+  // Tolerate token stored as JSON string value, e.g. "eyJ..."
+  const unquoted =
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ? trimmed.slice(1, -1).trim()
+      : trimmed;
+
+  if (!unquoted) return null;
+
+  // Tolerate token stored with Bearer prefix
+  return unquoted.replace(/^Bearer\s+/i, '').trim() || null;
 }
 
 /**

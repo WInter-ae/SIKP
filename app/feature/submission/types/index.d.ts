@@ -2,6 +2,8 @@ export interface AdditionalInfoData {
   tujuanSurat: string;
   namaTempat: string;
   alamatTempat: string;
+  teleponPerusahaan: string;
+  jenisProdukUsaha: string;
   divisi: string;
   tanggalMulai: string;
   tanggalSelesai: string;
@@ -75,6 +77,8 @@ export interface Submission {
   letterPurpose: string;
   companyName: string;
   companyAddress: string;
+  companyPhone?: string;
+  companyBusinessType?: string;
   division: string;
   startDate: string;
   endDate: string;
@@ -86,6 +90,7 @@ export interface Submission {
   updatedAt: string;
   documents?: SubmissionDocument[];
   statusHistory?: StatusHistoryEntry[]; // ✅ Timeline semua perubahan status
+  documentReviews?: Record<string, "approved" | "rejected">;
 }
 
 export interface Application {

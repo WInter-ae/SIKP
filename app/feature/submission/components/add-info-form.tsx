@@ -4,6 +4,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Separator } from "~/components/ui/separator";
+import { Textarea } from "~/components/ui/textarea";
 
 import type { AdditionalInfoData } from "../types";
 
@@ -11,18 +12,24 @@ interface AdditionalInfoFormProps {
   onDataChange?: (data: AdditionalInfoData) => void;
   initialData?: AdditionalInfoData;
   isEditable?: boolean;
+  autoSaveStatus?: "idle" | "saving" | "saved" | "error";
+  autoSaveError?: string | null;
 }
 
 function AdditionalInfoForm({
   onDataChange,
   initialData,
   isEditable = true,
+  autoSaveStatus = "idle",
+  autoSaveError,
 }: AdditionalInfoFormProps) {
   const [formData, setFormData] = useState<AdditionalInfoData>(
     initialData || {
       tujuanSurat: "",
       namaTempat: "",
       alamatTempat: "",
+      teleponPerusahaan: "",
+      jenisProdukUsaha: "",
       tanggalMulai: "",
       tanggalSelesai: "",
       divisi: "",
@@ -40,7 +47,7 @@ function AdditionalInfoForm({
     }
   }, [initialData]);
 
-  // Debounced autosave: tunggu 10 detik setelah user berhenti mengetik
+  // Debounced autosave: tunggu 5 detik setelah user berhenti mengetik
   useEffect(() => {
     if (!isEditable) return;
     if (debounceTimerRef.current) {
@@ -64,7 +71,9 @@ function AdditionalInfoForm({
     };
   }, [formData, onDataChange, isEditable]);
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleInputChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) {
     if (!isEditable) return;
     const { name, value } = e.target;
     const updatedFormData = { ...formData, [name]: value };
@@ -74,9 +83,35 @@ function AdditionalInfoForm({
 
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-foreground mb-4">
-        Keterangan Lain
-      </h2>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h2 className="text-xl font-semibold text-foreground">
+          Data Pengajuan
+        </h2>
+        {autoSaveStatus !== "idle" && (
+          <div className="flex items-center gap-2">
+            {autoSaveStatus === "saving" && (
+              <>
+                <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse" />
+                <span className="text-sm text-blue-600">Menyimpan...</span>
+              </>
+            )}
+            {autoSaveStatus === "saved" && (
+              <>
+                <div className="h-2 w-2 bg-green-500 rounded-full" />
+                <span className="text-sm text-green-600">Tersimpan</span>
+              </>
+            )}
+            {autoSaveStatus === "error" && (
+              <>
+                <div className="h-2 w-2 bg-red-500 rounded-full" />
+                <span className="text-sm text-red-600">
+                  {autoSaveError || "Gagal menyimpan"}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+      </div>
       <Separator className="mb-4" />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -105,13 +140,37 @@ function AdditionalInfoForm({
         </div>
         <div className="space-y-2">
           <Label htmlFor="alamatTempat">Alamat Tempat KP</Label>
-          <Input
-            type="text"
+          <Textarea
             id="alamatTempat"
             name="alamatTempat"
             placeholder=""
             onChange={handleInputChange}
             value={formData.alamatTempat}
+            rows={3}
+            disabled={!isEditable}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="teleponPerusahaan">Telepon Perusahaan</Label>
+          <Input
+            type="text"
+            id="teleponPerusahaan"
+            name="teleponPerusahaan"
+            placeholder=""
+            onChange={handleInputChange}
+            value={formData.teleponPerusahaan}
+            disabled={!isEditable}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="jenisProdukUsaha">Jenis Produk/Usaha</Label>
+          <Input
+            type="text"
+            id="jenisProdukUsaha"
+            name="jenisProdukUsaha"
+            placeholder=""
+            onChange={handleInputChange}
+            value={formData.jenisProdukUsaha}
             disabled={!isEditable}
           />
         </div>

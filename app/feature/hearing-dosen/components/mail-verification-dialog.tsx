@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle, Download } from "lucide-react";
+import { CheckCircle, Download, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
@@ -9,14 +9,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { Textarea } from "~/components/ui/textarea";
+import { Label } from "~/components/ui/label";
 import { generateSuratKesediaanPdf } from "../lib/generate-surat-kesediaan-pdf";
-import type { MailEntry } from "../../hearing-dosen/types/dosen";
+import { generateSuratPermohonanPdf } from "../lib/generate-surat-permohonan-pdf";
+import type { MailEntry } from "../types/dosen";
 
 interface MainVerificationDosenDialogProps {
   entry: MailEntry | null;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (id: string) => void;
+  onApprove: (entry: MailEntry) => void;
+  onReject: (id: string, reason: string) => void;
 }
 
 function MainVerificationDosenDialog({
@@ -24,13 +28,36 @@ function MainVerificationDosenDialog({
   isOpen,
   onClose,
   onApprove,
+  onReject,
 }: MainVerificationDosenDialogProps) {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isRejectFormVisible, setIsRejectFormVisible] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
 
   if (!entry) return null;
 
   const handleCloseMainDialog = () => {
+    setIsRejectFormVisible(false);
+    setRejectReason("");
     onClose();
+  };
+
+  const handleOpenRejectForm = () => {
+    setIsRejectFormVisible(true);
+  };
+
+  const handleCancelReject = () => {
+    setIsRejectFormVisible(false);
+    setRejectReason("");
+  };
+
+  const handleConfirmReject = () => {
+    if (!rejectReason.trim()) {
+      toast.error("Alasan penolakan wajib diisi.");
+      return;
+    }
+    onReject(entry!.id, rejectReason.trim());
+    handleCloseMainDialog();
   };
 
   const handleDownloadPdf = async () => {
@@ -49,10 +76,18 @@ function MainVerificationDosenDialog({
         return;
       }
 
-      await generateSuratKesediaanPdf(entry);
+      const isPermohonan =
+        entry.jenisSurat === "Surat Permohonan" ||
+        entry.jenisSurat === "Form Permohonan";
+
+      if (isPermohonan) {
+        await generateSuratPermohonanPdf(entry);
+      } else {
+        await generateSuratKesediaanPdf(entry);
+      }
       toast.success("PDF berhasil diunduh.");
     } catch (error) {
-      console.error("Gagal generate PDF surat kesediaan:", error);
+      console.error("Gagal generate PDF surat:", error);
       toast.error("Gagal membuat PDF. Silakan coba lagi.");
     } finally {
       setIsGeneratingPdf(false);
@@ -116,21 +151,64 @@ function MainVerificationDosenDialog({
         </div>
 
         {/* Action Buttons */}
-        {entry.status === "menunggu" && (
+        {entry.status === "menunggu" && !isRejectFormVisible && (
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={handleCloseMainDialog}>
               Tutup
             </Button>
+            <Button variant="destructive" onClick={handleOpenRejectForm}>
+              <XCircle className="w-4 h-4 mr-2" />
+              Tolak Ajuan
+            </Button>
             <Button
               className="bg-green-600 hover:bg-green-700 text-white"
               onClick={() => {
-                onApprove(entry.id);
+                onApprove(entry);
                 handleCloseMainDialog();
               }}
             >
               <CheckCircle className="w-4 h-4 mr-2" />
               Approve
             </Button>
+          </div>
+        )}
+
+        {/* Rejection Reason Form */}
+        {entry.status === "menunggu" && isRejectFormVisible && (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <XCircle className="w-4 h-4 text-destructive" />
+              <h4 className="font-semibold text-destructive text-sm">
+                Konfirmasi Penolakan Ajuan
+              </h4>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="reject-reason" className="text-sm">
+                Alasan Penolakan <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="reject-reason"
+                placeholder="Tuliskan alasan penolakan ajuan surat ini..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={3}
+                className="resize-none"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm" onClick={handleCancelReject}>
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleConfirmReject}
+                disabled={!rejectReason.trim()}
+              >
+                <XCircle className="w-4 h-4 mr-1.5" />
+                Konfirmasi Tolak
+              </Button>
+            </div>
           </div>
         )}
         {entry.status !== "menunggu" && (

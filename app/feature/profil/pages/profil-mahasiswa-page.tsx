@@ -36,27 +36,35 @@ import {
 import type { ESignatureSetupData } from "~/feature/esignature/types/esignature";
 import { ESignatureDialog } from "~/feature/profil/components/esignature-dialog";
 import {
-  getMyProfile,
-  updateMyProfile,
-  uploadESignature,
-  deleteESignature,
+  getMyMahasiswaProfile,
+  updateMyMahasiswaProfile,
+  uploadMahasiswaESignature,
+  deleteMahasiswaESignature,
   dataUrlToFile,
-} from "~/lib/services/dosen-api";
+} from "~/lib/services/mahasiswa-api";
 
-interface DosenProfile {
+interface MahasiswaProfile {
   id: string;
   nama: string;
-  nip: string;
+  nim: string;
   email: string;
-  telepon: string;
-  jabatan: string;
+  phone: string;
   fakultas: string;
-  programStudi: string;
+  prodi: string;
+  semester: string;
+  jumlahSksSelesai: string;
+  angkatan: string;
   esignature?: {
     url: string;
     key: string;
     uploadedAt: string;
   };
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
 }
 
 function pickString(...values: unknown[]): string {
@@ -68,68 +76,74 @@ function pickString(...values: unknown[]): string {
   return "";
 }
 
+function pickNumber(...values: unknown[]): number | null {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === "string" && value.trim().length > 0) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+  return null;
+}
+
 function normalizeProfileResponse(
   rawData: unknown,
-  fallback: DosenProfile,
-): DosenProfile {
-  const data = (rawData ?? {}) as Record<string, unknown>;
-  const signature = (data.esignature ?? {}) as Record<string, unknown>;
+  fallback: MahasiswaProfile,
+): MahasiswaProfile {
+  const data = asRecord(rawData);
+  const signature = asRecord(data.esignature);
 
-  const signatureUrl = pickString(
-    signature.url,
-    signature.signatureImage,
-    data.esignature_url,
-    data.esignatureUrl,
-    data.signatureUrl,
+  const signatureUrl = pickString(signature.url, data.esignatureUrl);
+
+  const semesterValue = pickNumber(data.semester, fallback.semester);
+
+  const jumlahSksSelesaiValue = pickNumber(
+    data.jumlahSksSelesai,
+    fallback.jumlahSksSelesai,
   );
 
-  const next: DosenProfile = {
-    id: pickString(data.id, data.dosenId, fallback.id),
-    nama: pickString(data.nama, data.name, data.fullName, fallback.nama),
-    nip: pickString(data.nip, fallback.nip),
+  return {
+    id: pickString(data.id, fallback.id),
+    nama: pickString(data.nama, fallback.nama),
+    nim: pickString(data.nim, fallback.nim),
     email: pickString(data.email, fallback.email),
-    telepon: pickString(
-      data.telepon,
-      data.phone,
-      data.no_telp,
-      data.no_telepon,
-      fallback.telepon,
-    ),
-    jabatan: pickString(data.jabatan, fallback.jabatan),
+    phone: pickString(data.phone, fallback.phone),
     fakultas: pickString(data.fakultas, fallback.fakultas),
-    programStudi: pickString(
-      data.programStudi,
-      data.program_studi,
-      data.prodi,
-      fallback.programStudi,
-    ),
+    prodi: pickString(data.prodi, fallback.prodi),
+    semester: semesterValue !== null ? String(semesterValue) : "",
+    jumlahSksSelesai:
+      jumlahSksSelesaiValue !== null ? String(jumlahSksSelesaiValue) : "",
+    angkatan: pickString(data.angkatan, fallback.angkatan),
     esignature: signatureUrl
       ? {
           url: signatureUrl,
-          key: pickString(signature.key, data.esignature_key),
+          key: pickString(signature.key),
           uploadedAt: pickString(
             signature.uploadedAt,
-            signature.uploaded_at,
-            data.esignature_uploaded_at,
             new Date().toISOString(),
           ),
         }
       : undefined,
   };
-
-  return next;
 }
 
-export function DosenProfilPage() {
-  const [profile, setProfile] = useState<DosenProfile>({
+export function MahasiswaProfilPage() {
+  const [profile, setProfile] = useState<MahasiswaProfile>({
     id: "",
     nama: "",
-    nip: "",
+    nim: "",
     email: "",
-    telepon: "",
-    jabatan: "",
+    phone: "",
     fakultas: "",
-    programStudi: "",
+    prodi: "",
+    semester: "",
+    jumlahSksSelesai: "",
+    angkatan: "",
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -145,11 +159,10 @@ export function DosenProfilPage() {
     variant?: "default" | "destructive";
   } | null>(null);
 
-  // Load profile dari API
   useEffect(() => {
     const loadProfile = async () => {
       setIsLoading(true);
-      const response = await getMyProfile();
+      const response = await getMyMahasiswaProfile();
 
       if (response.success && response.data) {
         setProfile((prev) => normalizeProfileResponse(response.data, prev));
@@ -174,20 +187,29 @@ export function DosenProfilPage() {
     setIsSaving(true);
 
     try {
-      // Update profile via API
-      const response = await updateMyProfile({
-        nama: profile.nama,
-        email: profile.email,
-        telepon: profile.telepon,
-        jabatan: profile.jabatan,
-        fakultas: profile.fakultas,
-        programStudi: profile.programStudi,
+      const trimmedNama = profile.nama.trim();
+      const trimmedEmail = profile.email.trim();
+      const trimmedPhone = profile.phone.trim();
+      const trimmedFakultas = profile.fakultas.trim();
+      const trimmedProdi = profile.prodi.trim();
+      const trimmedAngkatan = profile.angkatan.trim();
+
+      const semesterNumber = pickNumber(profile.semester);
+      const jumlahSksSelesaiNumber = pickNumber(profile.jumlahSksSelesai);
+
+      const response = await updateMyMahasiswaProfile({
+        nama: trimmedNama || undefined,
+        email: trimmedEmail || undefined,
+        phone: trimmedPhone || undefined,
+        fakultas: trimmedFakultas || null,
+        prodi: trimmedProdi || null,
+        semester: semesterNumber,
+        jumlahSksSelesai: jumlahSksSelesaiNumber,
+        angkatan: trimmedAngkatan || null,
       });
 
       if (response.success && response.data) {
-        // Update state with normalized response (supports alias keys)
         setProfile((prev) => normalizeProfileResponse(response.data, prev));
-
         setIsEditing(false);
         setNotification({
           title: "✅ Profil Berhasil Disimpan",
@@ -203,7 +225,7 @@ export function DosenProfilPage() {
         setTimeout(() => setNotification(null), 4000);
       }
     } catch (error) {
-      console.error("Error saving profile:", error);
+      console.error("Error saving mahasiswa profile:", error);
       setNotification({
         title: "❌ Gagal Menyimpan Profil",
         description: "Terjadi kesalahan saat menyimpan profil",
@@ -218,28 +240,24 @@ export function DosenProfilPage() {
   const handleSaveESignature = async (data: ESignatureSetupData) => {
     try {
       setIsSaving(true);
-
-      // Convert data URL to File
       const signatureFile = await dataUrlToFile(
         data.signatureData,
         `signature-${Date.now()}.png`,
       );
 
-      // Upload to backend API
-      const response = await uploadESignature(signatureFile);
+      const response = await uploadMahasiswaESignature(signatureFile);
 
       if (response.success && response.data) {
-        // Update profile state with API response
+        const uploadedData = response.data;
         setProfile((prev) => ({
           ...prev,
           esignature: {
-            url: response.data!.url,
-            key: response.data!.key,
-            uploadedAt: response.data!.uploadedAt,
+            url: uploadedData.url,
+            key: uploadedData.key,
+            uploadedAt: uploadedData.uploadedAt,
           },
         }));
         setSignatureImageError(false);
-
         setShowESignatureDialog(false);
         setNotification({
           title: "✅ E-Signature Berhasil Disimpan",
@@ -256,7 +274,7 @@ export function DosenProfilPage() {
         setTimeout(() => setNotification(null), 4000);
       }
     } catch (error) {
-      console.error("Error saving e-signature:", error);
+      console.error("Error saving mahasiswa e-signature:", error);
       setNotification({
         title: "❌ Gagal Menyimpan E-Signature",
         description: "Terjadi kesalahan saat menyimpan tanda tangan",
@@ -271,17 +289,13 @@ export function DosenProfilPage() {
   const handleDeleteESignature = async () => {
     try {
       setIsSaving(true);
-
-      // Delete via backend API
-      const response = await deleteESignature();
+      const response = await deleteMahasiswaESignature();
 
       if (response.success) {
-        // Update profile state
         setProfile((prev) => ({
           ...prev,
           esignature: undefined,
         }));
-
         setShowDeleteSignatureDialog(false);
         setNotification({
           title: "🗑️ E-Signature Berhasil Dihapus",
@@ -297,7 +311,7 @@ export function DosenProfilPage() {
         setTimeout(() => setNotification(null), 4000);
       }
     } catch (error) {
-      console.error("Error deleting e-signature:", error);
+      console.error("Error deleting mahasiswa e-signature:", error);
       setNotification({
         title: "❌ Gagal Menghapus E-Signature",
         description: "Terjadi kesalahan saat menghapus tanda tangan",
@@ -309,7 +323,6 @@ export function DosenProfilPage() {
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -323,10 +336,9 @@ export function DosenProfilPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Profil Dosen</h1>
+          <h1 className="text-3xl font-bold">Profil Mahasiswa</h1>
           <p className="text-muted-foreground mt-1">
             Kelola data profil dan e-signature Anda
           </p>
@@ -343,7 +355,6 @@ export function DosenProfilPage() {
         )}
       </div>
 
-      {/* Notification */}
       {notification && (
         <Alert variant={notification.variant} className="shadow-md">
           <CheckCircle2 className="h-5 w-5" />
@@ -356,18 +367,16 @@ export function DosenProfilPage() {
         </Alert>
       )}
 
-      {/* Data Profil Card */}
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
             Data Profil
           </CardTitle>
-          <CardDescription>Informasi lengkap dosen pembimbing</CardDescription>
+          <CardDescription>Informasi lengkap mahasiswa</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            {/* Nama Lengkap */}
             <div className="space-y-2">
               <Label
                 htmlFor="nama"
@@ -386,34 +395,21 @@ export function DosenProfilPage() {
                   placeholder="Masukkan nama lengkap"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.nama}</p>
+                <p className="text-base font-medium">{profile.nama || "-"}</p>
               )}
             </div>
 
-            {/* NIP */}
             <div className="space-y-2">
               <Label
-                htmlFor="nip"
+                htmlFor="nim"
                 className="flex items-center gap-2 text-base font-bold"
               >
                 <IdCard className="h-5 w-5" />
-                NIP
+                NIM
               </Label>
-              {isEditing ? (
-                <Input
-                  id="nip"
-                  value={profile.nip}
-                  onChange={(e) =>
-                    setProfile({ ...profile, nip: e.target.value })
-                  }
-                  placeholder="Masukkan NIP"
-                />
-              ) : (
-                <p className="text-base font-medium">{profile.nip}</p>
-              )}
+              <Input id="nim" value={profile.nim} disabled />
             </div>
 
-            {/* Email */}
             <div className="space-y-2">
               <Label
                 htmlFor="email"
@@ -433,14 +429,13 @@ export function DosenProfilPage() {
                   placeholder="Masukkan email"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.email}</p>
+                <p className="text-base font-medium">{profile.email || "-"}</p>
               )}
             </div>
 
-            {/* Telepon */}
             <div className="space-y-2">
               <Label
-                htmlFor="telepon"
+                htmlFor="phone"
                 className="flex items-center gap-2 text-base font-bold"
               >
                 <Phone className="h-5 w-5" />
@@ -448,42 +443,18 @@ export function DosenProfilPage() {
               </Label>
               {isEditing ? (
                 <Input
-                  id="telepon"
-                  value={profile.telepon}
+                  id="phone"
+                  value={profile.phone}
                   onChange={(e) =>
-                    setProfile({ ...profile, telepon: e.target.value })
+                    setProfile({ ...profile, phone: e.target.value })
                   }
                   placeholder="Masukkan nomor telepon"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.telepon}</p>
+                <p className="text-base font-medium">{profile.phone || "-"}</p>
               )}
             </div>
 
-            {/* Jabatan */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="jabatan"
-                className="flex items-center gap-2 text-base font-bold"
-              >
-                <Building2 className="h-5 w-5" />
-                Jabatan
-              </Label>
-              {isEditing ? (
-                <Input
-                  id="jabatan"
-                  value={profile.jabatan}
-                  onChange={(e) =>
-                    setProfile({ ...profile, jabatan: e.target.value })
-                  }
-                  placeholder="Masukkan jabatan"
-                />
-              ) : (
-                <p className="text-base font-medium">{profile.jabatan}</p>
-              )}
-            </div>
-
-            {/* Fakultas */}
             <div className="space-y-2">
               <Label
                 htmlFor="fakultas"
@@ -502,14 +473,15 @@ export function DosenProfilPage() {
                   placeholder="Masukkan fakultas"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.fakultas}</p>
+                <p className="text-base font-medium">
+                  {profile.fakultas || "-"}
+                </p>
               )}
             </div>
 
-            {/* Program Studi */}
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
               <Label
-                htmlFor="programStudi"
+                htmlFor="prodi"
                 className="flex items-center gap-2 text-base font-bold"
               >
                 <Building2 className="h-5 w-5" />
@@ -517,20 +489,96 @@ export function DosenProfilPage() {
               </Label>
               {isEditing ? (
                 <Input
-                  id="programStudi"
-                  value={profile.programStudi}
+                  id="prodi"
+                  value={profile.prodi}
                   onChange={(e) =>
-                    setProfile({ ...profile, programStudi: e.target.value })
+                    setProfile({ ...profile, prodi: e.target.value })
                   }
                   placeholder="Masukkan program studi"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.programStudi}</p>
+                <p className="text-base font-medium">{profile.prodi || "-"}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="semester"
+                className="flex items-center gap-2 text-base font-bold"
+              >
+                <Building2 className="h-5 w-5" />
+                Semester
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="semester"
+                  inputMode="numeric"
+                  value={profile.semester}
+                  onChange={(e) =>
+                    setProfile({ ...profile, semester: e.target.value })
+                  }
+                  placeholder="Masukkan semester"
+                />
+              ) : (
+                <p className="text-base font-medium">
+                  {profile.semester || "-"}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="jumlahSksSelesai"
+                className="flex items-center gap-2 text-base font-bold"
+              >
+                <Building2 className="h-5 w-5" />
+                Jumlah SKS Selesai
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="jumlahSksSelesai"
+                  inputMode="numeric"
+                  value={profile.jumlahSksSelesai}
+                  onChange={(e) =>
+                    setProfile({
+                      ...profile,
+                      jumlahSksSelesai: e.target.value,
+                    })
+                  }
+                  placeholder="Masukkan jumlah SKS selesai"
+                />
+              ) : (
+                <p className="text-base font-medium">
+                  {profile.jumlahSksSelesai || "-"}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="angkatan"
+                className="flex items-center gap-2 text-base font-bold"
+              >
+                <Building2 className="h-5 w-5" />
+                Angkatan
+              </Label>
+              {isEditing ? (
+                <Input
+                  id="angkatan"
+                  value={profile.angkatan}
+                  onChange={(e) =>
+                    setProfile({ ...profile, angkatan: e.target.value })
+                  }
+                  placeholder="Masukkan angkatan"
+                />
+              ) : (
+                <p className="text-base font-medium">
+                  {profile.angkatan || "-"}
+                </p>
               )}
             </div>
           </div>
 
-          {/* Action Buttons saat Edit */}
           {isEditing && (
             <div className="flex gap-3 pt-4">
               <Button
@@ -555,7 +603,6 @@ export function DosenProfilPage() {
 
       <Separator />
 
-      {/* E-Signature Card */}
       <Card className="shadow-md">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -563,13 +610,12 @@ export function DosenProfilPage() {
             Tanda Tangan Digital (E-Signature)
           </CardTitle>
           <CardDescription>
-            Tanda tangan digital digunakan untuk menyetujui dokumen mahasiswa
+            Tanda tangan digital Anda untuk dokumen mahasiswa
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {profile.esignature ? (
             <div className="space-y-4">
-              {/* Preview Signature */}
               <div className="border rounded-lg p-6 bg-muted/30">
                 <p className="text-sm text-muted-foreground mb-3">
                   Preview Tanda Tangan:
@@ -597,7 +643,6 @@ export function DosenProfilPage() {
                 </p>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex gap-3">
                 <Button
                   onClick={() => setShowESignatureDialog(true)}
@@ -624,8 +669,8 @@ export function DosenProfilPage() {
                 <AlertDescription>
                   <p className="font-semibold">Tanda Tangan Belum Dibuat</p>
                   <p className="text-sm mt-1">
-                    Anda perlu membuat tanda tangan digital untuk dapat
-                    menyetujui dokumen mahasiswa.
+                    Anda perlu membuat tanda tangan digital untuk kebutuhan
+                    dokumen Anda.
                   </p>
                 </AlertDescription>
               </Alert>
@@ -642,17 +687,15 @@ export function DosenProfilPage() {
         </CardContent>
       </Card>
 
-      {/* E-Signature Dialog */}
       <ESignatureDialog
         open={showESignatureDialog}
         onOpenChange={setShowESignatureDialog}
         onSave={handleSaveESignature}
         dosenName={profile.nama}
-        nip={profile.nip}
+        nip={profile.nim}
         existingSignature={profile.esignature?.url}
       />
 
-      {/* Delete E-Signature Confirmation Dialog */}
       <AlertDialog
         open={showDeleteSignatureDialog}
         onOpenChange={setShowDeleteSignatureDialog}
@@ -661,9 +704,7 @@ export function DosenProfilPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Tanda Tangan Digital?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tindakan ini akan menghapus tanda tangan digital Anda. Anda tidak
-              akan bisa menyetujui dokumen mahasiswa sampai membuat tanda tangan
-              baru.
+              Tindakan ini akan menghapus tanda tangan digital Anda.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
