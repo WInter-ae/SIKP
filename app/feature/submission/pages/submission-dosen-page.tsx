@@ -80,6 +80,34 @@ type SubmissionTeamInfo = {
   };
 };
 
+function resolveSubmissionSupervisor(
+  submission: SubmissionDetailForVerifier,
+): string | undefined {
+  const team = submission.team;
+  const candidates = [
+    team?.academicSupervisor,
+    team?.academic_supervisor,
+    team?.supervisorName,
+    team?.supervisor_name,
+    team?.supervisor?.name,
+    team?.supervisor?.fullName,
+    submission.academicSupervisor,
+    submission.academic_supervisor,
+    submission.supervisorName,
+    submission.supervisor_name,
+    submission.supervisor?.name,
+    submission.supervisor?.fullName,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
 function normalizeStatus(status: string): MailEntry["status"] {
   const value = status.toLowerCase();
   if (value === "approved" || value === "disetujui") return "disetujui";
@@ -291,10 +319,10 @@ function extractTeamInfoFromSubmission(
 
   const mappedMembers: TeamMemberCard[] = acceptedMembers
     .map((member, index) => ({
-      id: member.user?.id || `${index}`,
-      name: member.user?.name || "Unknown",
-      nim: member.user?.nim || undefined,
-      prodi: member.user?.prodi || undefined,
+      id: member.user?.id || member.userId || `${index}`,
+      name: member.user?.name || member.name || "Unknown",
+      nim: member.user?.nim || member.nim || undefined,
+      prodi: member.user?.prodi || member.prodi || undefined,
       role: member.role === "KETUA" ? "Ketua" : "Anggota",
     }))
     .sort((a, b) => {
@@ -309,7 +337,7 @@ function extractTeamInfoFromSubmission(
 
   return {
     members: mappedMembers,
-    supervisor: submission.team.academicSupervisor || undefined,
+    supervisor: resolveSubmissionSupervisor(submission),
     leader: leaderRaw?.user
       ? {
           nim: leaderRaw.user.nim || undefined,

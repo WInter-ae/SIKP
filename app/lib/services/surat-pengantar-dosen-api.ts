@@ -39,11 +39,30 @@ export interface DosenSuratPengantarRequestItem {
 
 export interface SubmissionDetailForVerifier {
   id: string;
+  academicSupervisor?: string | null;
+  academic_supervisor?: string | null;
+  supervisorName?: string | null;
+  supervisor_name?: string | null;
+  supervisor?: {
+    name?: string | null;
+    fullName?: string | null;
+  } | null;
   team?: {
     academicSupervisor?: string | null;
+    academic_supervisor?: string | null;
+    supervisorName?: string | null;
+    supervisor_name?: string | null;
+    supervisor?: {
+      name?: string | null;
+      fullName?: string | null;
+    } | null;
     members?: Array<{
       role?: string;
       status?: string;
+      userId?: string | null;
+      name?: string | null;
+      nim?: string | null;
+      prodi?: string | null;
       user?: {
         id?: string;
         name?: string | null;

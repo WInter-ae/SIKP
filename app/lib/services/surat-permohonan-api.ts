@@ -20,6 +20,25 @@ export interface SuratPermohonanRequestItem {
   dosenJabatan?: string;
   dosenEsignatureUrl?: string;
   dosen_esignature_url?: string;
+  supervisor?: string;
+  academicSupervisor?: string;
+  academic_supervisor?: string;
+  supervisorName?: string;
+  supervisor_name?: string;
+  teamMembers?: Array<{
+    id?: string;
+    userId?: string;
+    name?: string;
+    nim?: string;
+    prodi?: string;
+    role?: string;
+    user?: {
+      id?: string;
+      name?: string;
+      nim?: string;
+      prodi?: string;
+    };
+  }>;
   mahasiswaEsignatureUrl?: string;
   mahasiswa_esignature_url?: string;
   signedFileUrl?: string;

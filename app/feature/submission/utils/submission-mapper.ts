@@ -119,6 +119,13 @@ interface TeamFromBackend {
   status: string;
   members: TeamMemberFromBackend[];
   academicSupervisor?: string;
+  academic_supervisor?: string;
+  supervisorName?: string;
+  supervisor_name?: string;
+  supervisor?: {
+    name?: string;
+    fullName?: string;
+  };
 }
 
 /**
@@ -126,6 +133,28 @@ interface TeamFromBackend {
  */
 export interface SubmissionWithTeam extends Submission {
   team?: TeamFromBackend;
+}
+
+function resolveAcademicSupervisorName(
+  submission: SubmissionWithTeam,
+): string {
+  const team = submission.team;
+  const candidates = [
+    team?.academicSupervisor,
+    team?.academic_supervisor,
+    team?.supervisorName,
+    team?.supervisor_name,
+    team?.supervisor?.name,
+    team?.supervisor?.fullName,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate;
+    }
+  }
+
+  return "-";
 }
 
 /**
@@ -343,9 +372,7 @@ export function mapSubmissionToApplication(
       ? "Menunggu TTD Wakil Dekan"
       : "Menunggu Review";
 
-  // Supervisor dummy (TODO: ambil dari team.academicSupervisor jika ada)
-  const supervisor =
-    submission.team?.academicSupervisor || "Dr. Ahmad Fauzi, M.Kom"; // Dummy supervisor
+  const supervisor = resolveAcademicSupervisorName(submission);
 
   return {
     id: parseInt(submission.id, 10) || Math.floor(Math.random() * 10000),
