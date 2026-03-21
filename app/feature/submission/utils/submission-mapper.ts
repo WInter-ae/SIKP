@@ -71,6 +71,24 @@ function normalizePlaceholderValue(value?: string | null): string {
   return value.trim().toLowerCase() === "belum diisi" ? "" : value;
 }
 
+function buildUploaderIdentityMap(documents: SubmissionDocument[] = []) {
+  const map = new Map<string, { name: string; nim?: string; prodi?: string }>();
+
+  documents.forEach((doc) => {
+    const uploader = doc.uploadedByUser;
+    if (!uploader?.id) return;
+
+    const existing = map.get(uploader.id);
+    map.set(uploader.id, {
+      name: uploader.name || existing?.name || "Unknown",
+      nim: uploader.nim || existing?.nim,
+      prodi: uploader.prodi || existing?.prodi,
+    });
+  });
+
+  return map;
+}
+
 /**
  * Interface untuk Team Member dari backend
  */
@@ -125,52 +143,91 @@ export function mapSubmissionToApplication(
   };
 
   if (!submission.team) {
-    console.error("❌ Submission missing team data:", submission.id);
-    return null;
+    console.warn(
+      "⚠️ Submission missing team data, using fallback mapping:",
+      submission.id,
+    );
   }
 
   // Debug: Log team structure
-  console.log("🔍 Team structure:", {
-    teamId: submission.team.id,
-    membersCount: submission.team.members?.length || 0,
-    members: submission.team.members?.map((m) => ({
-      userId: m.user?.id,
-      userName: m.user?.name,
-      userObject: m.user ? "✅ Present" : "❌ Missing",
-      role: m.role,
-      status: m.status,
-      fullMember: m,
-    })),
-  });
+  if (submission.team) {
+    console.log("🔍 Team structure:", {
+      teamId: submission.team.id,
+      membersCount: submission.team.members?.length || 0,
+      members: submission.team.members?.map((m) => ({
+        userId: m.user?.id,
+        userName: m.user?.name,
+        userObject: m.user ? "✅ Present" : "❌ Missing",
+        role: m.role,
+        status: m.status,
+        fullMember: m,
+      })),
+    });
+  }
 
   // Filter hanya accepted members, dengan fallback untuk members tanpa status
-  const acceptedMembers = (submission.team.members || []).filter((m) => {
+  const acceptedMembers = (submission.team?.members || []).filter((m) => {
     // Jika status tidak ada, anggap sebagai ACCEPTED (fallback)
     return !m.status || m.status === "ACCEPTED";
   });
+  const uploaderIdentityByUserId = buildUploaderIdentityMap(
+    submission.documents || [],
+  );
 
+  const fallbackMembers: Member[] = [];
   if (acceptedMembers.length === 0) {
-    console.error(
-      "❌ No accepted members in team:",
-      submission.team.id,
-      "Members count:",
-      submission.team.members?.length || 0,
-    );
-    return null;
+    const uploaderMap = new Map<
+      string,
+      { name: string; nim?: string; prodi?: string }
+    >();
+    (submission.documents || []).forEach((doc) => {
+      if (doc.uploadedByUser?.id) {
+        uploaderMap.set(doc.uploadedByUser.id, {
+          name: doc.uploadedByUser.name || "Unknown",
+          nim: doc.uploadedByUser.nim,
+          prodi: doc.uploadedByUser.prodi,
+        });
+      }
+    });
+
+    if (uploaderMap.size > 0) {
+      const uploaderEntries = Array.from(uploaderMap.entries());
+      uploaderEntries.forEach(([id, identity], index) => {
+        fallbackMembers.push({
+          id,
+          name: identity.name,
+          nim: identity.nim || "-",
+          prodi: identity.prodi,
+          role: index === 0 ? "Ketua" : "Anggota",
+        });
+      });
+    } else {
+      fallbackMembers.push({
+        id: `fallback-${submission.id}`,
+        name: "Data tim sudah dibubarkan",
+        nim: "-",
+        role: "Ketua",
+      });
+    }
   }
 
-  console.log("✅ Found accepted members:", acceptedMembers.length);
-  console.log("🔍 Member structure sample:", acceptedMembers[0]);
+  if (acceptedMembers.length > 0) {
+    console.log("✅ Found accepted members:", acceptedMembers.length);
+    console.log("🔍 Member structure sample:", acceptedMembers[0]);
+  } else {
+    console.warn("⚠️ Using fallback members for submission:", submission.id);
+  }
 
   // Map members ke format yang dibutuhkan
   // Handle 2 struktur: nested user object OR flat user data
-  const members: Member[] = acceptedMembers.map((m) => {
+  const members: Member[] = acceptedMembers.length > 0
+    ? acceptedMembers.map((m) => {
     if (m.user) {
       return {
         id: m.user.id,
         name: m.user.name,
         nim: m.user.nim,
-        prodi: m.user.prodi,
+        prodi: m.user.prodi || uploaderIdentityByUserId.get(m.user.id)?.prodi,
         role: m.role === "KETUA" ? "Ketua" : "Anggota",
       };
     }
@@ -189,11 +246,12 @@ export function mapSubmissionToApplication(
     return {
       id: m.userId || m.id || "",
       name: m.name || "Unknown",
-      nim: m.nim || "",
-      prodi: m.prodi,
+      nim: m.nim || uploaderIdentityByUserId.get(m.userId || "")?.nim || "",
+      prodi: m.prodi || uploaderIdentityByUserId.get(m.userId || "")?.prodi,
       role: m.role === "KETUA" ? "Ketua" : "Anggota",
     };
-  });
+  })
+    : fallbackMembers;
 
   // Sort: Ketua first
   members.sort((a, b) => {
@@ -270,17 +328,24 @@ export function mapSubmissionToApplication(
     })),
   });
 
-  // Map status
+  // Map status based on workflow stage (status final-only is controlled by dosen/wakil dekan)
+  const workflowStage = submission.workflowStage || "PENDING_ADMIN_REVIEW";
   let status: "pending" | "approved" | "rejected" = "pending";
-  if (submission.status === "APPROVED") {
+
+  if (workflowStage === "COMPLETED") {
     status = "approved";
-  } else if (submission.status === "REJECTED") {
+  } else if (workflowStage === "REJECTED_ADMIN" || workflowStage === "REJECTED_DOSEN") {
     status = "rejected";
   }
 
+  const pendingLabel: "Menunggu Review" | "Menunggu TTD Wakil Dekan" =
+    workflowStage === "PENDING_DOSEN_VERIFICATION"
+      ? "Menunggu TTD Wakil Dekan"
+      : "Menunggu Review";
+
   // Supervisor dummy (TODO: ambil dari team.academicSupervisor jika ada)
   const supervisor =
-    submission.team.academicSupervisor || "Dr. Ahmad Fauzi, M.Kom"; // Dummy supervisor
+    submission.team?.academicSupervisor || "Dr. Ahmad Fauzi, M.Kom"; // Dummy supervisor
 
   return {
     id: parseInt(submission.id, 10) || Math.floor(Math.random() * 10000),
@@ -297,6 +362,7 @@ export function mapSubmissionToApplication(
           year: "numeric",
         }),
     status,
+    pendingLabel,
     supervisor,
     members,
     internship: {

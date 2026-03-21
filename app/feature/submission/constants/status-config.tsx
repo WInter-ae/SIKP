@@ -27,6 +27,16 @@ export const STATUS_CONFIGS: Record<string, StatusConfig> = {
     iconBg: "bg-muted-foreground",
     textColor: "text-muted-foreground",
   },
+  PENDING_DOSEN_VERIFICATION: {
+    title: "Menunggu TTD Wakil Dekan",
+    description:
+      "Pengajuan sudah diverifikasi admin dan sedang menunggu persetujuan akhir wakil dekan",
+    icon: <FileText className="h-6 w-6" />,
+    bg: "bg-amber-500/10",
+    border: "border-l-amber-500",
+    iconBg: "bg-amber-500",
+    textColor: "text-amber-600",
+  },
   DRAFT: {
     title: "Mengajukan Surat Pengantar",
     description: "Pengajuan surat pengantar telah diterima dan sedang dalam proses review",

@@ -58,6 +58,8 @@ export interface SubmissionDocument {
     id: string;
     name: string;
     email: string;
+    nim?: string;
+    prodi?: string;
   };
   // ✅ NEW: Review status dari admin (disimpan di database)
   status?: "PENDING" | "APPROVED" | "REJECTED";
@@ -66,7 +68,24 @@ export interface SubmissionDocument {
 
 // ✅ Status timeline entry untuk track history perubahan status
 export interface StatusHistoryEntry {
-  status: "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "DRAFT";
+  status:
+    | "PENDING_REVIEW"
+    | "APPROVED"
+    | "REJECTED"
+    | "DRAFT"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
+  workflowStage?:
+    | "DRAFT"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
+  actor?: "ADMIN" | "DOSEN" | "MAHASISWA";
   date: string;
   reason?: string; // Rejection reason jika ada
 }
@@ -82,7 +101,23 @@ export interface Submission {
   division: string;
   startDate: string;
   endDate: string;
-  status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+  status:
+    | "DRAFT"
+    | "PENDING_REVIEW"
+    | "APPROVED"
+    | "REJECTED"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
+  workflowStage?:
+    | "DRAFT"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
   rejectionReason?: string;
   approvedAt?: string;
   submittedAt?: string;
@@ -98,6 +133,7 @@ export interface Application {
   submissionId: string; // ✅ Original submission ID from database
   date: string;
   status: "pending" | "approved" | "rejected";
+  pendingLabel?: "Menunggu Review" | "Menunggu TTD Wakil Dekan";
   rejectionComment?: string;
   documentReviews?: Record<string, "approved" | "rejected">;
   statusHistory?: StatusHistoryEntry[]; // ✅ Timeline untuk detect re-submission

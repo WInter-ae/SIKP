@@ -198,6 +198,10 @@ const dosenMenu: NavItem[] = [
         title: "Verifikasi Sidang",
         url: "/dosen/kp/verifikasi-sidang",
       },
+      {
+        title: "Surat Pengantar",
+        url: "/dosen/kp/surat-pengantar",
+      },
     ],
   },
   {

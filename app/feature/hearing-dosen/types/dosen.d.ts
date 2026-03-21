@@ -12,6 +12,14 @@ export interface MailEntry {
   noHp?: string;
   jenisSurat?: string;
   status: "menunggu" | "disetujui" | "ditolak";
+  supervisor?: string;
+  teamMembers?: Array<{
+    id: string;
+    name: string;
+    nim?: string;
+    prodi?: string;
+    role: string;
+  }>;
   namaPerusahaan?: string;
   alamatPerusahaan?: string;
   periodeKP?: string;

@@ -103,6 +103,26 @@ export async function registerMahasiswa(data: {
 }
 
 /**
+ * Register pembimbing lapangan.
+ * Endpoint backend khusus belum tersedia pada workspace ini,
+ * jadi fungsi ini mengembalikan pesan terarah agar UI tidak crash.
+ */
+export async function registerFieldMentor(_data: {
+  email: string;
+  password: string;
+  nama: string;
+  nip?: string;
+  instansi?: string;
+  jabatan?: string;
+  no_telepon?: string;
+}) {
+  return {
+    success: false,
+    message: 'Endpoint registrasi pembimbing lapangan belum tersedia di backend.',
+  };
+}
+
+/**
  * Logout dan hapus token
  */
 export function logout() {
