@@ -344,7 +344,10 @@ function SubmissionAdminPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (
+    status: string,
+    pendingLabel: "Menunggu Review" | "Menunggu TTD Wakil Dekan" = "Menunggu Review",
+  ) => {
     switch (status) {
       case "pending":
         return (
@@ -352,7 +355,7 @@ function SubmissionAdminPage() {
             variant="outline"
             className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
           >
-            Menunggu Review
+            {pendingLabel}
           </Badge>
         );
       case "approved":
@@ -493,7 +496,9 @@ function SubmissionAdminPage() {
                         <TableCell className="text-foreground">
                           {app.internship.namaTempat}
                         </TableCell>
-                        <TableCell>{getStatusBadge(app.status)}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(app.status, app.pendingLabel)}
+                        </TableCell>
                         <TableCell className="pr-6">
                           <Button
                             variant="link"

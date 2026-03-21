@@ -55,7 +55,8 @@ function CoverLetterPage() {
   /**
    * Check if next button should be enabled
    */
-  const isNextButtonEnabled = submission?.status === "APPROVED";
+  const isNextButtonEnabled =
+    submission?.status === "APPROVED" || submission?.status === "COMPLETED";
 
   return (
     <>

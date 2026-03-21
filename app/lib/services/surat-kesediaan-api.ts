@@ -2,6 +2,7 @@ import { apiClient } from "~/lib/api-client";
 
 export interface SuratKesediaanRequestItem {
   id: string;
+  submissionId?: string;
   tanggal: string;
   nim: string;
   namaMahasiswa: string;
@@ -21,6 +22,13 @@ export interface SuratKesediaanRequestItem {
   signed_file_url?: string;
   approvedAt?: string;
   approved_at?: string;
+  // Workflow fields (opsional untuk kompatibilitas backend lama)
+  isAdminApproved?: boolean;
+  adminVerificationStatus?: string;
+  admin_status?: string;
+  adminStatus?: string;
+  submissionStatus?: string;
+  submission_status?: string;
 }
 
 interface ApiResponse<T> {

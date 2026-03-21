@@ -198,12 +198,29 @@ function SubmissionPage() {
     }
   };
 
-  // Status REJECTED dianggap sudah pernah diajukan, sehingga input dikunci
-  // sampai user klik "Ajukan Ulang" di halaman surat pengantar.
-  const isSubmissionSubmitted =
-    submission?.status === "PENDING_REVIEW" ||
-    submission?.status === "APPROVED" ||
+  // Gunakan workflowStage sebagai source of truth karena backend baru memakai
+  // stage untuk membedakan pending/rejected oleh admin atau dosen.
+  const submissionStage = submission?.workflowStage || submission?.status;
+
+  const isRejectedBeforeReapply =
+    submissionStage === "REJECTED_ADMIN" ||
+    submissionStage === "REJECTED_DOSEN" ||
     submission?.status === "REJECTED";
+
+  const isPendingReviewStage =
+    submissionStage === "PENDING_ADMIN_REVIEW" ||
+    submissionStage === "PENDING_DOSEN_VERIFICATION" ||
+    submission?.status === "PENDING_REVIEW";
+
+  const isApprovedStage =
+    submissionStage === "COMPLETED" || submission?.status === "APPROVED";
+
+  // Input terkunci ketika submission sedang diproses/selesai/rejected sebelum ajukan ulang.
+  const isSubmissionSubmitted =
+    isPendingReviewStage || isApprovedStage || isRejectedBeforeReapply;
+
+  const canGoNext =
+    isPendingReviewStage || isApprovedStage || isRejectedBeforeReapply;
 
   // Fetch team data (finalized) for current user
   useEffect(() => {
@@ -829,7 +846,7 @@ function SubmissionPage() {
       )}
 
       {/* Approval Locked Alert */}
-      {submission?.status === "APPROVED" && (
+      {isApprovedStage && (
         <Alert className="mb-8 border-l-4 border-green-600 bg-green-600/5">
           <Info className="h-5 w-5 text-green-600" />
           <AlertDescription className="text-green-700 dark:text-green-400">
@@ -839,7 +856,7 @@ function SubmissionPage() {
       )}
 
       {/* ✅ NEW: Rejection Alert */}
-      {submission?.status === "REJECTED" && (
+      {isRejectedBeforeReapply && (
         <Alert className="mb-8 border-l-4 border-destructive bg-destructive/5">
           <AlertDescription className="text-destructive">
             <div className="font-semibold mb-2">
@@ -852,18 +869,28 @@ function SubmissionPage() {
               <strong>Surat Pengantar</strong>. Setelah itu, dokumen berstatus{" "}
               <strong>Ditolak</strong> dapat diupload ulang.
             </p>
-            {submission.rejectionReason && (
+            {submission?.rejectionReason && (
               <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-destructive/30">
                 <p className="text-xs font-semibold mb-1">💬 Catatan Admin:</p>
-                <p className="text-sm">{submission.rejectionReason}</p>
+                <p className="text-sm">{submission?.rejectionReason}</p>
               </div>
             )}
+            <div className="mt-4">
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                onClick={() => navigate("/mahasiswa/kp/surat-pengantar")}
+              >
+                Buka Halaman Surat Pengantar (Ajukan Ulang)
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       )}
 
       {/* Pending Review Locked Alert */}
-      {submission?.status === "PENDING_REVIEW" && (
+      {isPendingReviewStage && (
         <Alert className="mb-8 border-l-4 border-amber-600 bg-amber-600/5">
           <Info className="h-5 w-5 text-amber-600" />
           <AlertDescription className="text-amber-700 dark:text-amber-400">
@@ -1057,13 +1084,11 @@ function SubmissionPage() {
               className="px-8 py-3 font-medium text-lg"
               disabled={!isCurrentUserLeader || isSubmissionSubmitted}
             >
-              {submission?.status === "PENDING_REVIEW"
+              {isPendingReviewStage || isRejectedBeforeReapply
                 ? "Telah Diajukan"
-                : submission?.status === "APPROVED"
+                : isApprovedStage
                   ? "Telah Disetujui"
-                  : submission?.status === "REJECTED"
-                    ? "Telah Diajukan"
-                    : "Ajukan Surat Pengantar"}
+                  : "Ajukan Surat Pengantar"}
             </Button>
           </div>
         </CardContent>
@@ -1079,17 +1104,9 @@ function SubmissionPage() {
         </Button>
         <Button
           className="px-6 py-3 font-medium"
-          disabled={
-            submission?.status !== "PENDING_REVIEW" &&
-            submission?.status !== "APPROVED" &&
-            submission?.status !== "REJECTED"
-          }
+          disabled={!canGoNext}
           onClick={() => {
-            if (
-              submission?.status === "PENDING_REVIEW" ||
-              submission?.status === "APPROVED" ||
-              submission?.status === "REJECTED"
-            ) {
+            if (canGoNext) {
               navigate("/mahasiswa/kp/surat-pengantar");
             }
           }}

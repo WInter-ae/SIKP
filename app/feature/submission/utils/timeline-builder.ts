@@ -22,6 +22,20 @@ interface BuildTimelineParams {
   approvedAt?: string;
 }
 
+function normalizeTimelineStatus(
+  status: string,
+  workflowStage?: string,
+): string {
+  const stage = workflowStage ?? status;
+
+  if (stage === "PENDING_ADMIN_REVIEW") return "PENDING_REVIEW";
+  if (stage === "PENDING_DOSEN_VERIFICATION") return "PENDING_DOSEN_VERIFICATION";
+  if (stage === "COMPLETED") return "APPROVED";
+  if (stage === "REJECTED_ADMIN" || stage === "REJECTED_DOSEN") return "REJECTED";
+
+  return status;
+}
+
 /**
  * Create a timeline entry
  */
@@ -47,8 +61,13 @@ function shouldInsertPendingReview(
   lastEntry: TimelineEntry | null,
   isFirstEntry: boolean
 ): boolean {
-  const isActionStatus = status === "REJECTED" || status === "APPROVED";
-  const lastWasPendingReview = lastEntry?.status === "PENDING_REVIEW";
+  const isActionStatus =
+    status === "REJECTED" ||
+    status === "APPROVED" ||
+    status === "PENDING_DOSEN_VERIFICATION";
+  const lastWasPendingReview =
+    lastEntry?.status === "PENDING_REVIEW" ||
+    lastEntry?.status === "PENDING_DOSEN_VERIFICATION";
   
   return isActionStatus && (!lastWasPendingReview || isFirstEntry);
 }
@@ -86,12 +105,19 @@ function buildTimelineFromHistory(
   const filtered = statusHistory.filter((entry) => entry.status !== "DRAFT");
 
   filtered.forEach((entry, index, filteredArray) => {
-    const isActionStatus = entry.status === "REJECTED" || entry.status === "APPROVED";
+    const normalizedStatus = normalizeTimelineStatus(
+      entry.status,
+      entry.workflowStage,
+    );
+    const isActionStatus =
+      normalizedStatus === "REJECTED" ||
+      normalizedStatus === "APPROVED" ||
+      normalizedStatus === "PENDING_DOSEN_VERIFICATION";
     const lastTimelineEntry = timeline.length > 0 ? timeline[timeline.length - 1] : null;
     const isFirstEntry = index === 0;
 
     // Add missing PENDING_REVIEW before action status
-    if (shouldInsertPendingReview(entry.status, lastTimelineEntry, isFirstEntry)) {
+    if (shouldInsertPendingReview(normalizedStatus, lastTimelineEntry, isFirstEntry)) {
       const currentDate = new Date(entry.date);
       const pendingDate = getEstimatedPendingDate(isFirstEntry, currentDate, submittedAt);
       
@@ -101,7 +127,7 @@ function buildTimelineFromHistory(
     // Add current entry
     const isLatest = index === filteredArray.length - 1;
     timeline.push(createTimelineEntry(
-      entry.status,
+      normalizedStatus,
       new Date(entry.date),
       isLatest,
       entry.reason
@@ -121,14 +147,19 @@ function buildTimelineFromCurrentStatus(
   approvedAt?: string
 ): TimelineEntry[] {
   const timeline: TimelineEntry[] = [];
+  const normalizedCurrentStatus = normalizeTimelineStatus(currentStatus);
 
-  if (currentStatus === "PENDING_REVIEW" && submittedAt) {
+  if (
+    (normalizedCurrentStatus === "PENDING_REVIEW" ||
+      normalizedCurrentStatus === "PENDING_DOSEN_VERIFICATION") &&
+    submittedAt
+  ) {
     timeline.push(createTimelineEntry(
-      "PENDING_REVIEW",
+      normalizedCurrentStatus,
       new Date(submittedAt),
       true
     ));
-  } else if (currentStatus === "REJECTED") {
+  } else if (normalizedCurrentStatus === "REJECTED") {
     // Add PENDING_REVIEW first
     if (submittedAt) {
       timeline.push(createTimelineEntry(
@@ -145,7 +176,7 @@ function buildTimelineFromCurrentStatus(
       true,
       rejectionReason
     ));
-  } else if (currentStatus === "APPROVED") {
+  } else if (normalizedCurrentStatus === "APPROVED") {
     if (submittedAt) {
       timeline.push(createTimelineEntry(
         "PENDING_REVIEW",
@@ -174,20 +205,25 @@ function ensureCurrentStatusInTimeline(
   currentStatus: string,
   submittedAt?: string
 ): TimelineEntry[] {
-  if (currentStatus !== "PENDING_REVIEW") {
+  const normalizedCurrentStatus = normalizeTimelineStatus(currentStatus);
+
+  if (
+    normalizedCurrentStatus !== "PENDING_REVIEW" &&
+    normalizedCurrentStatus !== "PENDING_DOSEN_VERIFICATION"
+  ) {
     return timeline;
   }
 
   const lastEntry = timeline.length > 0 ? timeline[timeline.length - 1] : null;
 
-  if (!lastEntry || lastEntry.status !== "PENDING_REVIEW") {
+  if (!lastEntry || lastEntry.status !== normalizedCurrentStatus) {
     if (lastEntry) {
       lastEntry.isLatest = false;
     }
 
     const pendingDate = submittedAt ? new Date(submittedAt) : new Date();
     const newTimeline = [...timeline];
-    newTimeline.push(createTimelineEntry("PENDING_REVIEW", pendingDate, true));
+    newTimeline.push(createTimelineEntry(normalizedCurrentStatus, pendingDate, true));
     
     return newTimeline;
   }

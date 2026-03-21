@@ -101,9 +101,9 @@ function pickFirstNonEmptyString(...values: unknown[]): string | undefined {
   return undefined;
 }
 
-function resolveMahasiswaSignatureUrl(item: Record<string, unknown>):
-  | string
-  | undefined {
+function resolveMahasiswaSignatureUrl(
+  item: Record<string, unknown>,
+): string | undefined {
   const nestedEsignature =
     item.mahasiswaEsignature && typeof item.mahasiswaEsignature === "object"
       ? (item.mahasiswaEsignature as Record<string, unknown>)

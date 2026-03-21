@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle, Download, XCircle } from "lucide-react";
+import { CheckCircle, Download, Users, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
@@ -24,7 +24,7 @@ interface MainVerificationDosenDialogProps {
   onReject: (id: string, reason: string) => void;
 }
 
-function MainVerificationDosenDialog({
+function CoverLetterVerificationDialog({
   entry,
   isOpen,
   onClose,
@@ -34,9 +34,21 @@ function MainVerificationDosenDialog({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [isRejectFormVisible, setIsRejectFormVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const hasTeamMembers = Boolean(entry?.teamMembers?.length);
 
   if (!entry) return null;
+
+  const displayTeamMembers =
+    entry.teamMembers && entry.teamMembers.length > 0
+      ? entry.teamMembers
+      : [
+          {
+            id: `fallback-${entry.id}`,
+            name: entry.namaMahasiswa || "-",
+            nim: entry.nim || "-",
+            prodi: entry.programStudi || "-",
+            role: "Ketua",
+          },
+        ];
 
   const handleCloseMainDialog = () => {
     setIsRejectFormVisible(false);
@@ -101,7 +113,7 @@ function MainVerificationDosenDialog({
       open={isOpen}
       onOpenChange={(open) => !open && handleCloseMainDialog()}
     >
-      <DialogContent className="w-[96vw] max-w-[1200px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="!w-[96vw] !max-w-[96vw] sm:!max-w-[1320px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Verifikasi Surat</DialogTitle>
         </DialogHeader>
@@ -109,75 +121,50 @@ function MainVerificationDosenDialog({
         {/* Student Information */}
         <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-4">
           <div className="flex items-center gap-2">
-            <div className="w-1 h-5 rounded-full bg-primary" />
+            <Users className="w-5 h-5 text-primary" />
             <h3 className="font-semibold text-foreground">
-              Informasi Mahasiswa
+              Informasi Mahasiswa (Tim Kerja Praktik)
             </h3>
           </div>
-          {hasTeamMembers ? (
-            <>
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Dosen Pembimbing Akademik (Ketua):
-                </p>
-                <p className="font-semibold text-primary text-lg">
-                  {entry.supervisor || "-"}
-                </p>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {(entry.teamMembers || []).map((member) => (
-                  <div
-                    key={member.id}
-                    className={`p-4 rounded-lg border ${
-                      member.role === "Ketua"
-                        ? "border-primary/30 bg-primary/5"
-                        : "border-border bg-muted/50"
-                    }`}
+          <div className="bg-primary/10 p-4 rounded-lg">
+            <p className="text-sm text-muted-foreground">
+              Dosen Pembimbing Akademik (Ketua):
+            </p>
+            <p className="font-semibold text-primary text-lg">
+              {entry.supervisor || "-"}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {displayTeamMembers.map((member) => (
+              <div
+                key={member.id}
+                className={`min-w-0 p-4 rounded-lg border ${
+                  member.role === "Ketua"
+                    ? "border-primary/30 bg-primary/5"
+                    : "border-border bg-muted/50"
+                }`}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <Badge
+                    variant={member.role === "Ketua" ? "default" : "secondary"}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <Badge
-                        variant={
-                          member.role === "Ketua" ? "default" : "secondary"
-                        }
-                      >
-                        {member.role}
-                      </Badge>
-                    </div>
-                    <p className="font-bold text-foreground">{member.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {member.nim || "-"}
-                    </p>
-                    <p className="text-sm text-muted-foreground/80">
-                      {member.prodi || "-"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="grid grid-cols-1 divide-y divide-border/60 text-sm">
-              {[
-                { label: "NIM", value: entry.nim },
-                { label: "Nama Lengkap", value: entry.namaMahasiswa },
-                { label: "Program Studi", value: entry.programStudi },
-                { label: "Angkatan", value: entry.angkatan },
-                { label: "Semester", value: entry.semester },
-                { label: "Email", value: entry.email },
-                { label: "No. HP", value: entry.noHp },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-center py-2 gap-4">
-                  <span className="text-muted-foreground w-32 shrink-0">
-                    {label}
-                  </span>
-                  <span className="w-px h-4 bg-border shrink-0" />
-                  <span className="text-foreground font-medium">
-                    {value || "-"}
-                  </span>
+                    {member.role}
+                  </Badge>
                 </div>
-              ))}
-            </div>
-          )}
+                <p className="font-bold text-foreground break-words">
+                  {member.name}
+                </p>
+                <p className="text-sm text-muted-foreground break-all">
+                  {member.nim || "-"}
+                </p>
+                <p className="text-sm text-muted-foreground/80 break-words">
+                  {member.prodi || "-"}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="rounded-lg border border-border p-4 flex items-center justify-between gap-3">
@@ -268,4 +255,4 @@ function MainVerificationDosenDialog({
   );
 }
 
-export default MainVerificationDosenDialog;
+export default CoverLetterVerificationDialog;
