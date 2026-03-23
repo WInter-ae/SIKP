@@ -134,7 +134,9 @@ function normalizeTeamMembers(
     .map((raw, index) => {
       const member = raw as RawTeamMember;
       const user =
-        member.user && typeof member.user === "object" ? member.user : undefined;
+        member.user && typeof member.user === "object"
+          ? member.user
+          : undefined;
 
       const name = pickFirstNonEmptyString(member.name, user?.name);
       if (!name) return null;
@@ -169,10 +171,13 @@ function normalizeTeamMembers(
   return mapped.length > 0 ? mapped : undefined;
 }
 
-function resolveSupervisorName(item: Record<string, unknown>): string | undefined {
-  const team = item.team && typeof item.team === "object"
-    ? (item.team as Record<string, unknown>)
-    : undefined;
+function resolveSupervisorName(
+  item: Record<string, unknown>,
+): string | undefined {
+  const team =
+    item.team && typeof item.team === "object"
+      ? (item.team as Record<string, unknown>)
+      : undefined;
 
   const nestedSupervisor =
     team?.supervisor && typeof team.supervisor === "object"

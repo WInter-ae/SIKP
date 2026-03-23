@@ -12,8 +12,7 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
-import { generateSuratKesediaanPdf } from "../lib/generate-surat-kesediaan-pdf";
-import { generateSuratPermohonanPdf } from "../lib/generate-surat-permohonan-pdf";
+import { generateSuratPengantarPdf } from "../lib/generate-surat-pengantar-pdf";
 import type { MailEntry } from "../types/dosen";
 
 interface MainVerificationDosenDialogProps {
@@ -90,15 +89,7 @@ function CoverLetterVerificationDialog({
         return;
       }
 
-      const isPermohonan =
-        entry.jenisSurat === "Surat Permohonan" ||
-        entry.jenisSurat === "Form Permohonan";
-
-      if (isPermohonan) {
-        await generateSuratPermohonanPdf(entry);
-      } else {
-        await generateSuratKesediaanPdf(entry);
-      }
+      await generateSuratPengantarPdf(entry);
       toast.success("PDF berhasil diunduh.");
     } catch (error) {
       console.error("Gagal generate PDF surat:", error);

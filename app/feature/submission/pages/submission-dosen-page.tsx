@@ -40,6 +40,7 @@ import {
   getDosenSuratPengantarRequests,
   rejectDosenSuratPengantarRequest,
 } from "~/lib/services/surat-pengantar-dosen-api";
+import { getMyProfile } from "~/lib/services/dosen-api";
 
 type AdminGateCandidate = {
   isAdminApproved?: unknown;
@@ -136,6 +137,18 @@ function pickFirstNonEmptyString(...values: unknown[]): string | undefined {
     if (typeof value === "string" && value.trim().length > 0) return value;
   }
   return undefined;
+}
+
+function resolveSuratPengantarTujuan(item: DosenSuratPengantarRequestItem): string {
+  return (
+    pickFirstNonEmptyString(
+      item.tujuanSurat,
+      item.recipientName,
+      item.destination,
+      item.targetName,
+      item.companyName,
+    ) || "-"
+  );
 }
 
 function resolveMahasiswaSignatureUrl(
@@ -386,7 +399,10 @@ function SubmissionDosenPage() {
     try {
       setIsLoading(true);
 
-      const response = await getDosenSuratPengantarRequests();
+      const [response, profileResponse] = await Promise.all([
+        getDosenSuratPengantarRequests(),
+        getMyProfile(),
+      ]);
 
       if (!response.success) {
         console.warn("⚠️ Gagal memuat surat pengantar:", response.message);
@@ -394,6 +410,15 @@ function SubmissionDosenPage() {
         setEntries([]);
         return;
       }
+
+      const dosenNama = profileResponse.success ? profileResponse.data?.nama : undefined;
+      const dosenNip = profileResponse.success ? profileResponse.data?.nip : undefined;
+      const dosenJabatan = profileResponse.success
+        ? profileResponse.data?.jabatan
+        : undefined;
+      const dosenEsignatureUrl = profileResponse.success
+        ? resolveAssetUrl(profileResponse.data?.esignature?.url)
+        : undefined;
 
       const detailByNim = new Map<string, MahasiswaDetail>();
       const detailByName = new Map<string, MahasiswaDetail>();
@@ -472,16 +497,13 @@ function SubmissionDosenPage() {
                   status: normalizeStatus(item.status || "menunggu"),
                   supervisor: teamInfo?.supervisor,
                   teamMembers: teamInfo?.members,
-                  dosenNama: "-",
-                  dosenNip: "-",
-                  dosenJabatan: "-",
-                  dosenEsignatureUrl: undefined,
                   mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
                     item as unknown as Record<string, unknown>,
                   ),
                   signedFileUrl: undefined,
                   approvedAt: undefined,
                   namaPerusahaan: item.companyName,
+                  tujuanSurat: resolveSuratPengantarTujuan(item),
                   alamatPerusahaan: item.companyAddress,
                   teleponPerusahaan: undefined,
                   jenisProdukUsaha: undefined,
@@ -490,6 +512,10 @@ function SubmissionDosenPage() {
                   tanggalSelesai: item.endDate,
                   jumlahSks: undefined,
                   tahunAjaran: undefined,
+                  dosenNama: dosenNama || "-",
+                  dosenNip: dosenNip || "-",
+                  dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
+                  dosenEsignatureUrl,
                 };
               })
           : [];

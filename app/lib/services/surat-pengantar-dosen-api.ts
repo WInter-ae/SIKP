@@ -30,6 +30,10 @@ export interface DosenSuratPengantarRequestItem {
   submission_status?: string;
   companyName?: string;
   companyAddress?: string;
+  recipientName?: string;
+  destination?: string;
+  tujuanSurat?: string;
+  targetName?: string;
   division?: string;
   startDate?: string;
   endDate?: string;
