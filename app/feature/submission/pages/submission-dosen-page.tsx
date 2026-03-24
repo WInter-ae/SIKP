@@ -151,6 +151,25 @@ function resolveSuratPengantarTujuan(item: DosenSuratPengantarRequestItem): stri
   );
 }
 
+function resolveSuratPengantarSignedFileUrl(
+  item: Pick<
+    DosenSuratPengantarRequestItem,
+    | "signedFileUrl"
+    | "signed_file_url"
+    | "finalSignedFileUrl"
+    | "final_signed_file_url"
+  >,
+): string | undefined {
+  const candidate = pickFirstNonEmptyString(
+    item.signedFileUrl,
+    item.signed_file_url,
+    item.finalSignedFileUrl,
+    item.final_signed_file_url,
+  );
+
+  return resolveAssetUrl(candidate);
+}
+
 function resolveMahasiswaSignatureUrl(
   item: Record<string, unknown>,
 ): string | undefined {
@@ -500,8 +519,8 @@ function SubmissionDosenPage() {
                   mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
                     item as unknown as Record<string, unknown>,
                   ),
-                  signedFileUrl: undefined,
-                  approvedAt: undefined,
+                  signedFileUrl: resolveSuratPengantarSignedFileUrl(item),
+                  approvedAt: item.approvedAt || item.approved_at,
                   namaPerusahaan: item.companyName,
                   tujuanSurat: resolveSuratPengantarTujuan(item),
                   alamatPerusahaan: item.companyAddress,
@@ -516,6 +535,7 @@ function SubmissionDosenPage() {
                   dosenNip: dosenNip || "-",
                   dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
                   dosenEsignatureUrl,
+                  nomorSurat: item.nomorSurat || item.letterNumber,
                 };
               })
           : [];
@@ -619,9 +639,19 @@ function SubmissionDosenPage() {
           ? {
               ...entry,
               status: "disetujui" as const,
-              approvedAt: response.data?.approvedAt || entry.approvedAt,
+              approvedAt:
+                response.data?.approvedAt ||
+                response.data?.approved_at ||
+                entry.approvedAt,
               signedFileUrl:
-                response.data?.signedFileUrl || entry.signedFileUrl,
+                resolveAssetUrl(
+                  pickFirstNonEmptyString(
+                    response.data?.signedFileUrl,
+                    response.data?.signed_file_url,
+                    response.data?.finalSignedFileUrl,
+                    response.data?.final_signed_file_url,
+                  ),
+                ) || entry.signedFileUrl,
             }
           : entry,
       ),

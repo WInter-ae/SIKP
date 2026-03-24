@@ -4,22 +4,51 @@ import unsriLogoUrl from "~/assets/images/unsri.png";
 
 import type { MailEntry } from "../../hearing-dosen/types/dosen";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_APP_AUTH_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  "https://backend-sikp.backend-sikp.workers.dev";
+
 function getImageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" {
   return dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
 }
 
+function toSignatureProxyUrl(imageUrl: string): string {
+  try {
+    const parsed = new URL(imageUrl);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return `${API_BASE_URL}/api/assets/r2/${encodeURIComponent(imageUrl)}`;
+    }
+    return imageUrl;
+  } catch {
+    return imageUrl;
+  }
+}
+
 async function toDataUrlFromImageUrl(imageUrl: string): Promise<string> {
   const token = getAuthToken();
+  const fetchUrl = toSignatureProxyUrl(imageUrl);
 
-  let response = await fetch(imageUrl);
+  let response: Response;
+  try {
+    response = await fetch(fetchUrl);
+  } catch {
+    throw new Error("Gagal memuat gambar tanda tangan");
+  }
+
   if (
     !response.ok &&
     (response.status === 401 || response.status === 403) &&
     token
   ) {
-    response = await fetch(imageUrl, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      response = await fetch(fetchUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch {
+      throw new Error("Gagal memuat gambar tanda tangan");
+    }
   }
 
   if (!response.ok) throw new Error("Gagal memuat gambar tanda tangan");
@@ -242,7 +271,7 @@ export async function generateSuratPengantarPdf(
         if (segment.text.length > 0) {
           chunks.push({ text: segment.text, bold: true });
         }
-        return;
+        const nomorSurat = entry.nomorSurat || (entry as any).letterNumber || "-";
       }
 
       segment.text
@@ -313,7 +342,7 @@ export async function generateSuratPengantarPdf(
 
   const tujuanSurat = buildRecipientLine(entry);
   const alamatPerusahaan = entry.alamatPerusahaan || "-";
-  const nomorSurat = "";
+  const nomorSurat = entry.nomorSurat || "-";
   const tanggalSurat = formatDateLong(entry.approvedAt || entry.tanggal);
 
   const logoX = 12;

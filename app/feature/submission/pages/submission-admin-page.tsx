@@ -240,6 +240,7 @@ function SubmissionAdminPage() {
 
   const handleApprove = async (
     docReviews: Record<string, "approved" | "rejected">,
+    letterNumber: string,
   ) => {
     if (!selectedApplication) return;
 
@@ -250,6 +251,7 @@ function SubmissionAdminPage() {
         "APPROVED",
         undefined,
         docReviews,
+        letterNumber,
       );
 
       if (response.success) {
@@ -267,6 +269,7 @@ function SubmissionAdminPage() {
                 ? {
                     ...app,
                     status: "approved" as const,
+                    letterNumber,
                     documentReviews: docReviews,
                   }
                 : app,

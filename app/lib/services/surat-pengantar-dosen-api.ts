@@ -39,6 +39,12 @@ export interface DosenSuratPengantarRequestItem {
   endDate?: string;
   createdAt?: string;
   memberCount?: number;
+  approvedAt?: string;
+  approved_at?: string;
+  signedFileUrl?: string;
+  signed_file_url?: string;
+  finalSignedFileUrl?: string;
+  final_signed_file_url?: string;
 }
 
 export interface SubmissionDetailForVerifier {
@@ -110,7 +116,11 @@ export async function approveDosenSuratPengantarRequest(
     submissionId?: string;
     status: string;
     approvedAt?: string;
+    approved_at?: string;
     signedFileUrl?: string;
+    signed_file_url?: string;
+    finalSignedFileUrl?: string;
+    final_signed_file_url?: string;
   }>
 > {
   try {

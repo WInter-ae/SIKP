@@ -88,6 +88,7 @@ export interface StatusHistoryEntry {
   actor?: "ADMIN" | "DOSEN" | "MAHASISWA";
   date: string;
   reason?: string; // Rejection reason jika ada
+  letterNumber?: string;
 }
 
 export interface Submission {
@@ -119,6 +120,7 @@ export interface Submission {
     | "REJECTED_ADMIN"
     | "REJECTED_DOSEN";
   rejectionReason?: string;
+  letterNumber?: string;
   approvedAt?: string;
   submittedAt?: string;
   createdAt: string;
@@ -135,6 +137,7 @@ export interface Application {
   status: "pending" | "approved" | "rejected";
   pendingLabel?: "Menunggu Review" | "Menunggu TTD Wakil Dekan";
   rejectionComment?: string;
+  letterNumber?: string;
   documentReviews?: Record<string, "approved" | "rejected">;
   statusHistory?: StatusHistoryEntry[]; // ✅ Timeline untuk detect re-submission
 
@@ -143,4 +146,20 @@ export interface Application {
   supervisor: string;
   internship: AdditionalInfoData;
   documents: DocumentFile[];
+  wakilDekanSignature?: WakilDekanSignature;
 }
+
+export interface WakilDekanSignature {
+  id: string;
+  name: string;
+  nip: string;
+  position: string;
+  fakultas?: string;
+  prodi?: string;
+  esignatureUrl?: string;
+  esignatureKey?: string;
+  esignatureUploadedAt?: string;
+}
+
+// Backward compatibility for old naming.
+export type wakildekanSignature = WakilDekanSignature;

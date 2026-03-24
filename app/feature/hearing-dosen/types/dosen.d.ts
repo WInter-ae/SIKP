@@ -41,4 +41,5 @@ export interface MailEntry {
   divisi?: string;
   tanggalMulai?: string;
   tanggalSelesai?: string;
+  nomorSurat?: string;
 }

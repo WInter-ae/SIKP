@@ -6,6 +6,7 @@ import type {
   Application,
   DocumentFile,
   Member,
+  WakilDekanSignature,
 } from "~/feature/submission/types";
 import {
   DOCUMENT_TYPE_LABELS,
@@ -133,11 +134,211 @@ interface TeamFromBackend {
  */
 export interface SubmissionWithTeam extends Submission {
   team?: TeamFromBackend;
+  wakilDekanSignature?: {
+    id?: string;
+    name?: string;
+    nama?: string;
+    nip?: string;
+    position?: string;
+    jabatan?: string;
+    fakultas?: string;
+    prodi?: string;
+    esignatureUrl?: string;
+    esignature_url?: string;
+    signatureUrl?: string;
+    signature_url?: string;
+    esignatureKey?: string;
+    esignature_key?: string;
+    esignatureUploadedAt?: string;
+    esignature_uploaded_at?: string;
+  };
+  wakildekanSignature?: {
+    id?: string;
+    name?: string;
+    nama?: string;
+    nip?: string;
+    position?: string;
+    jabatan?: string;
+    fakultas?: string;
+    prodi?: string;
+    esignatureUrl?: string;
+    esignature_url?: string;
+    signatureUrl?: string;
+    signature_url?: string;
+    esignatureKey?: string;
+    esignature_key?: string;
+    esignatureUploadedAt?: string;
+    esignature_uploaded_at?: string;
+  };
 }
 
-function resolveAcademicSupervisorName(
+function getStringValue(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+function resolveLetterNumber(
   submission: SubmissionWithTeam,
-): string {
+): string | undefined {
+  const currentStage = getStringValue(
+    submission.workflowStage,
+    submission.status,
+  )?.toUpperCase();
+  const canUseLetterNumber =
+    currentStage === "PENDING_DOSEN_VERIFICATION" ||
+    currentStage === "COMPLETED" ||
+    currentStage === "APPROVED";
+
+  if (!canUseLetterNumber) {
+    return undefined;
+  }
+
+  const root = submission as SubmissionWithTeam & {
+    letterNumber?: string;
+    letter_number?: string;
+  };
+
+  const direct = getStringValue(root.letterNumber, root.letter_number);
+  if (direct) return direct;
+
+  const history = Array.isArray(submission.statusHistory)
+    ? submission.statusHistory
+    : [];
+
+  for (let i = history.length - 1; i >= 0; i -= 1) {
+    const entry = history[i] as unknown as Record<string, unknown>;
+    const number = getStringValue(
+      entry.letterNumber,
+      entry.letter_number,
+      entry.nomorSurat,
+      entry.nomor_surat,
+    );
+
+    if (!number) continue;
+
+    const actor = getStringValue(entry.actor)?.toUpperCase();
+    const stage = getStringValue(
+      entry.workflowStage,
+      entry.status,
+    )?.toUpperCase();
+    const isAdminStage =
+      stage === "APPROVED" ||
+      stage === "PENDING_DOSEN_VERIFICATION" ||
+      stage === "COMPLETED";
+
+    if (actor === "ADMIN" && isAdminStage) {
+      return number;
+    }
+  }
+
+  return undefined;
+}
+
+function resolveWakilDekanSignature(
+  submission: SubmissionWithTeam,
+): WakilDekanSignature | undefined {
+  const submissionData = submission as SubmissionWithTeam & {
+    wakil_dekan_signature?: SubmissionWithTeam["wakilDekanSignature"];
+    viceDeanSignature?: SubmissionWithTeam["wakilDekanSignature"];
+    signerProfile?: SubmissionWithTeam["wakilDekanSignature"];
+    wakilDekanName?: string;
+    wakil_dekan_name?: string;
+    wakilDekanNip?: string;
+    wakil_dekan_nip?: string;
+    wakilDekanPosition?: string;
+    wakil_dekan_position?: string;
+    wakilDekanJabatan?: string;
+    wakil_dekan_jabatan?: string;
+    wakilDekanFakultas?: string;
+    wakil_dekan_fakultas?: string;
+    wakilDekanProdi?: string;
+    wakil_dekan_prodi?: string;
+    esignatureUrl?: string;
+    esignature_url?: string;
+    signatureUrl?: string;
+    signature_url?: string;
+    esignatureKey?: string;
+    esignature_key?: string;
+    esignatureUploadedAt?: string;
+    esignature_uploaded_at?: string;
+  };
+
+  const nestedRaw =
+    submissionData.wakilDekanSignature ||
+    submissionData.wakildekanSignature ||
+    submissionData.wakil_dekan_signature ||
+    submissionData.viceDeanSignature ||
+    submissionData.signerProfile;
+
+  const rootRaw = {
+    id: submissionData.id,
+    name: submissionData.wakilDekanName || submissionData.wakil_dekan_name,
+    nip: submissionData.wakilDekanNip || submissionData.wakil_dekan_nip,
+    position:
+      submissionData.wakilDekanPosition ||
+      submissionData.wakil_dekan_position ||
+      submissionData.wakilDekanJabatan ||
+      submissionData.wakil_dekan_jabatan,
+    fakultas:
+      submissionData.wakilDekanFakultas || submissionData.wakil_dekan_fakultas,
+    prodi: submissionData.wakilDekanProdi || submissionData.wakil_dekan_prodi,
+    esignatureUrl: submissionData.esignatureUrl,
+    esignature_url: submissionData.esignature_url,
+    signatureUrl: submissionData.signatureUrl,
+    signature_url: submissionData.signature_url,
+    esignatureKey: submissionData.esignatureKey,
+    esignature_key: submissionData.esignature_key,
+    esignatureUploadedAt: submissionData.esignatureUploadedAt,
+    esignature_uploaded_at: submissionData.esignature_uploaded_at,
+  };
+
+  const raw = nestedRaw || rootRaw;
+
+  if (!raw) return undefined;
+
+  const name = getStringValue(
+    raw.name,
+    (raw as { nama?: string }).nama,
+    "Wakil Dekan Bidang Akademik",
+  );
+  const nip = getStringValue(raw.nip, "-");
+  const position = getStringValue(
+    raw.position,
+    (raw as { jabatan?: string }).jabatan,
+    "Wakil Dekan Bidang Akademik",
+  );
+  const esignatureUrl = getStringValue(
+    raw.esignatureUrl,
+    raw.esignature_url,
+    raw.signatureUrl,
+    raw.signature_url,
+  );
+
+  if (!name && !nip && !position && !esignatureUrl) {
+    return undefined;
+  }
+
+  return {
+    id: getStringValue(raw.id, submission.id) || submission.id,
+    name: name || "Wakil Dekan Bidang Akademik",
+    nip: nip || "-",
+    position: position || "Wakil Dekan Bidang Akademik",
+    fakultas: getStringValue(raw.fakultas),
+    prodi: getStringValue(raw.prodi),
+    esignatureUrl,
+    esignatureKey: getStringValue(raw.esignatureKey, raw.esignature_key),
+    esignatureUploadedAt: getStringValue(
+      raw.esignatureUploadedAt,
+      raw.esignature_uploaded_at,
+    ),
+  };
+}
+
+function resolveAcademicSupervisorName(submission: SubmissionWithTeam): string {
   const team = submission.team;
   const candidates = [
     team?.academicSupervisor,
@@ -249,38 +450,42 @@ export function mapSubmissionToApplication(
 
   // Map members ke format yang dibutuhkan
   // Handle 2 struktur: nested user object OR flat user data
-  const members: Member[] = acceptedMembers.length > 0
-    ? acceptedMembers.map((m) => {
-    if (m.user) {
-      return {
-        id: m.user.id,
-        name: m.user.name,
-        nim: m.user.nim,
-        prodi: m.user.prodi || uploaderIdentityByUserId.get(m.user.id)?.prodi,
-        role: m.role === "KETUA" ? "Ketua" : "Anggota",
-      };
-    }
+  const members: Member[] =
+    acceptedMembers.length > 0
+      ? acceptedMembers.map((m) => {
+          if (m.user) {
+            return {
+              id: m.user.id,
+              name: m.user.name,
+              nim: m.user.nim,
+              prodi:
+                m.user.prodi || uploaderIdentityByUserId.get(m.user.id)?.prodi,
+              role: m.role === "KETUA" ? "Ketua" : "Anggota",
+            };
+          }
 
-    console.warn(
-      "⚠️ Member user nested object missing, using flat structure:",
-      {
-        memberId: m.id,
-        userId: m.userId,
-        name: m.name,
-        nim: m.nim,
-        prodi: m.prodi,
-      },
-    );
+          console.warn(
+            "⚠️ Member user nested object missing, using flat structure:",
+            {
+              memberId: m.id,
+              userId: m.userId,
+              name: m.name,
+              nim: m.nim,
+              prodi: m.prodi,
+            },
+          );
 
-    return {
-      id: m.userId || m.id || "",
-      name: m.name || "Unknown",
-      nim: m.nim || uploaderIdentityByUserId.get(m.userId || "")?.nim || "",
-      prodi: m.prodi || uploaderIdentityByUserId.get(m.userId || "")?.prodi,
-      role: m.role === "KETUA" ? "Ketua" : "Anggota",
-    };
-  })
-    : fallbackMembers;
+          return {
+            id: m.userId || m.id || "",
+            name: m.name || "Unknown",
+            nim:
+              m.nim || uploaderIdentityByUserId.get(m.userId || "")?.nim || "",
+            prodi:
+              m.prodi || uploaderIdentityByUserId.get(m.userId || "")?.prodi,
+            role: m.role === "KETUA" ? "Ketua" : "Anggota",
+          };
+        })
+      : fallbackMembers;
 
   // Sort: Ketua first
   members.sort((a, b) => {
@@ -363,7 +568,10 @@ export function mapSubmissionToApplication(
 
   if (workflowStage === "COMPLETED") {
     status = "approved";
-  } else if (workflowStage === "REJECTED_ADMIN" || workflowStage === "REJECTED_DOSEN") {
+  } else if (
+    workflowStage === "REJECTED_ADMIN" ||
+    workflowStage === "REJECTED_DOSEN"
+  ) {
     status = "rejected";
   }
 
@@ -373,6 +581,8 @@ export function mapSubmissionToApplication(
       : "Menunggu Review";
 
   const supervisor = resolveAcademicSupervisorName(submission);
+  const wakilDekanSignature = resolveWakilDekanSignature(submission);
+  const letterNumber = resolveLetterNumber(submission);
 
   return {
     id: parseInt(submission.id, 10) || Math.floor(Math.random() * 10000),
@@ -407,6 +617,8 @@ export function mapSubmissionToApplication(
       tanggalSelesai: formatDate(submission.endDate),
     },
     documents,
+    wakilDekanSignature,
+    letterNumber,
     rejectionComment: submission.rejectionReason,
     statusHistory: submission.statusHistory, // ✅ Pass status history for re-submission detection
     documentReviews: submission.documentReviews, // ✅ Load from backend (requires backend setup)
