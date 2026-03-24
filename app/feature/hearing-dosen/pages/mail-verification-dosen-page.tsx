@@ -101,6 +101,106 @@ function pickFirstNonEmptyString(...values: unknown[]): string | undefined {
   return undefined;
 }
 
+type RawTeamMember = {
+  id?: string;
+  userId?: string;
+  name?: string;
+  nim?: string;
+  prodi?: string;
+  role?: string;
+  user?: {
+    id?: string;
+    name?: string;
+    nim?: string;
+    prodi?: string;
+  };
+};
+
+function normalizeMemberRole(role?: string): string {
+  const token = (role || "").trim().toUpperCase();
+  if (token === "KETUA" || token === "LEADER") return "Ketua";
+  if (token.length === 0) return "Anggota";
+  return token === "ANGGOTA" ? "Anggota" : role || "Anggota";
+}
+
+function normalizeTeamMembers(
+  teamMembers: unknown,
+): MailEntry["teamMembers"] | undefined {
+  if (!Array.isArray(teamMembers) || teamMembers.length === 0) {
+    return undefined;
+  }
+
+  const mapped = teamMembers
+    .map((raw, index) => {
+      const member = raw as RawTeamMember;
+      const user =
+        member.user && typeof member.user === "object"
+          ? member.user
+          : undefined;
+
+      const name = pickFirstNonEmptyString(member.name, user?.name);
+      if (!name) return null;
+
+      return {
+        id:
+          pickFirstNonEmptyString(member.id, member.userId, user?.id) ||
+          `member-${index}`,
+        name,
+        nim: pickFirstNonEmptyString(member.nim, user?.nim),
+        prodi: pickFirstNonEmptyString(member.prodi, user?.prodi),
+        role: normalizeMemberRole(member.role),
+      };
+    })
+    .filter(
+      (
+        item,
+      ): item is {
+        id: string;
+        name: string;
+        nim?: string;
+        prodi?: string;
+        role: string;
+      } => Boolean(item),
+    )
+    .sort((a, b) => {
+      if (a.role === "Ketua") return -1;
+      if (b.role === "Ketua") return 1;
+      return 0;
+    });
+
+  return mapped.length > 0 ? mapped : undefined;
+}
+
+function resolveSupervisorName(
+  item: Record<string, unknown>,
+): string | undefined {
+  const team =
+    item.team && typeof item.team === "object"
+      ? (item.team as Record<string, unknown>)
+      : undefined;
+
+  const nestedSupervisor =
+    team?.supervisor && typeof team.supervisor === "object"
+      ? (team.supervisor as Record<string, unknown>)
+      : item.supervisor && typeof item.supervisor === "object"
+        ? (item.supervisor as Record<string, unknown>)
+        : undefined;
+
+  return pickFirstNonEmptyString(
+    item.supervisor,
+    item.academicSupervisor,
+    item.academic_supervisor,
+    item.supervisorName,
+    item.supervisor_name,
+    team?.academicSupervisor,
+    team?.academic_supervisor,
+    team?.supervisorName,
+    team?.supervisor_name,
+    nestedSupervisor?.name,
+    nestedSupervisor?.fullName,
+  );
+}
+
 function resolveMahasiswaSignatureUrl(
   item: Record<string, unknown>,
 ): string | undefined {
@@ -184,6 +284,10 @@ function MailVerificationDosenPage() {
                 item.dosenEsignatureUrl ||
                 item.dosen_esignature_url ||
                 dosenEsignatureUrl,
+              supervisor: resolveSupervisorName(
+                item as unknown as Record<string, unknown>,
+              ),
+              teamMembers: normalizeTeamMembers(item.teamMembers),
               mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
                 item as unknown as Record<string, unknown>,
               ),
@@ -215,6 +319,10 @@ function MailVerificationDosenPage() {
                 item.dosenEsignatureUrl ||
                 item.dosen_esignature_url ||
                 dosenEsignatureUrl,
+              supervisor: resolveSupervisorName(
+                item as unknown as Record<string, unknown>,
+              ),
+              teamMembers: normalizeTeamMembers(item.teamMembers),
               mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
                 item as unknown as Record<string, unknown>,
               ),

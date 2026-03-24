@@ -40,6 +40,7 @@ import {
   getDosenSuratPengantarRequests,
   rejectDosenSuratPengantarRequest,
 } from "~/lib/services/surat-pengantar-dosen-api";
+import { getMyProfile } from "~/lib/services/dosen-api";
 
 type AdminGateCandidate = {
   isAdminApproved?: unknown;
@@ -80,6 +81,34 @@ type SubmissionTeamInfo = {
   };
 };
 
+function resolveSubmissionSupervisor(
+  submission: SubmissionDetailForVerifier,
+): string | undefined {
+  const team = submission.team;
+  const candidates = [
+    team?.academicSupervisor,
+    team?.academic_supervisor,
+    team?.supervisorName,
+    team?.supervisor_name,
+    team?.supervisor?.name,
+    team?.supervisor?.fullName,
+    submission.academicSupervisor,
+    submission.academic_supervisor,
+    submission.supervisorName,
+    submission.supervisor_name,
+    submission.supervisor?.name,
+    submission.supervisor?.fullName,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim().length > 0) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
 function normalizeStatus(status: string): MailEntry["status"] {
   const value = status.toLowerCase();
   if (value === "approved" || value === "disetujui") return "disetujui";
@@ -108,6 +137,37 @@ function pickFirstNonEmptyString(...values: unknown[]): string | undefined {
     if (typeof value === "string" && value.trim().length > 0) return value;
   }
   return undefined;
+}
+
+function resolveSuratPengantarTujuan(item: DosenSuratPengantarRequestItem): string {
+  return (
+    pickFirstNonEmptyString(
+      item.tujuanSurat,
+      item.recipientName,
+      item.destination,
+      item.targetName,
+      item.companyName,
+    ) || "-"
+  );
+}
+
+function resolveSuratPengantarSignedFileUrl(
+  item: Pick<
+    DosenSuratPengantarRequestItem,
+    | "signedFileUrl"
+    | "signed_file_url"
+    | "finalSignedFileUrl"
+    | "final_signed_file_url"
+  >,
+): string | undefined {
+  const candidate = pickFirstNonEmptyString(
+    item.signedFileUrl,
+    item.signed_file_url,
+    item.finalSignedFileUrl,
+    item.final_signed_file_url,
+  );
+
+  return resolveAssetUrl(candidate);
 }
 
 function resolveMahasiswaSignatureUrl(
@@ -291,10 +351,10 @@ function extractTeamInfoFromSubmission(
 
   const mappedMembers: TeamMemberCard[] = acceptedMembers
     .map((member, index) => ({
-      id: member.user?.id || `${index}`,
-      name: member.user?.name || "Unknown",
-      nim: member.user?.nim || undefined,
-      prodi: member.user?.prodi || undefined,
+      id: member.user?.id || member.userId || `${index}`,
+      name: member.user?.name || member.name || "Unknown",
+      nim: member.user?.nim || member.nim || undefined,
+      prodi: member.user?.prodi || member.prodi || undefined,
       role: member.role === "KETUA" ? "Ketua" : "Anggota",
     }))
     .sort((a, b) => {
@@ -309,7 +369,7 @@ function extractTeamInfoFromSubmission(
 
   return {
     members: mappedMembers,
-    supervisor: submission.team.academicSupervisor || undefined,
+    supervisor: resolveSubmissionSupervisor(submission),
     leader: leaderRaw?.user
       ? {
           nim: leaderRaw.user.nim || undefined,
@@ -358,7 +418,10 @@ function SubmissionDosenPage() {
     try {
       setIsLoading(true);
 
-      const response = await getDosenSuratPengantarRequests();
+      const [response, profileResponse] = await Promise.all([
+        getDosenSuratPengantarRequests(),
+        getMyProfile(),
+      ]);
 
       if (!response.success) {
         console.warn("⚠️ Gagal memuat surat pengantar:", response.message);
@@ -366,6 +429,15 @@ function SubmissionDosenPage() {
         setEntries([]);
         return;
       }
+
+      const dosenNama = profileResponse.success ? profileResponse.data?.nama : undefined;
+      const dosenNip = profileResponse.success ? profileResponse.data?.nip : undefined;
+      const dosenJabatan = profileResponse.success
+        ? profileResponse.data?.jabatan
+        : undefined;
+      const dosenEsignatureUrl = profileResponse.success
+        ? resolveAssetUrl(profileResponse.data?.esignature?.url)
+        : undefined;
 
       const detailByNim = new Map<string, MahasiswaDetail>();
       const detailByName = new Map<string, MahasiswaDetail>();
@@ -444,16 +516,13 @@ function SubmissionDosenPage() {
                   status: normalizeStatus(item.status || "menunggu"),
                   supervisor: teamInfo?.supervisor,
                   teamMembers: teamInfo?.members,
-                  dosenNama: "-",
-                  dosenNip: "-",
-                  dosenJabatan: "-",
-                  dosenEsignatureUrl: undefined,
                   mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
                     item as unknown as Record<string, unknown>,
                   ),
-                  signedFileUrl: undefined,
-                  approvedAt: undefined,
+                  signedFileUrl: resolveSuratPengantarSignedFileUrl(item),
+                  approvedAt: item.approvedAt || item.approved_at,
                   namaPerusahaan: item.companyName,
+                  tujuanSurat: resolveSuratPengantarTujuan(item),
                   alamatPerusahaan: item.companyAddress,
                   teleponPerusahaan: undefined,
                   jenisProdukUsaha: undefined,
@@ -462,6 +531,11 @@ function SubmissionDosenPage() {
                   tanggalSelesai: item.endDate,
                   jumlahSks: undefined,
                   tahunAjaran: undefined,
+                  dosenNama: dosenNama || "-",
+                  dosenNip: dosenNip || "-",
+                  dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
+                  dosenEsignatureUrl,
+                  nomorSurat: item.nomorSurat || item.letterNumber,
                 };
               })
           : [];
@@ -565,9 +639,19 @@ function SubmissionDosenPage() {
           ? {
               ...entry,
               status: "disetujui" as const,
-              approvedAt: response.data?.approvedAt || entry.approvedAt,
+              approvedAt:
+                response.data?.approvedAt ||
+                response.data?.approved_at ||
+                entry.approvedAt,
               signedFileUrl:
-                response.data?.signedFileUrl || entry.signedFileUrl,
+                resolveAssetUrl(
+                  pickFirstNonEmptyString(
+                    response.data?.signedFileUrl,
+                    response.data?.signed_file_url,
+                    response.data?.finalSignedFileUrl,
+                    response.data?.final_signed_file_url,
+                  ),
+                ) || entry.signedFileUrl,
             }
           : entry,
       ),

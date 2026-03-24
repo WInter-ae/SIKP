@@ -30,20 +30,49 @@ export interface DosenSuratPengantarRequestItem {
   submission_status?: string;
   companyName?: string;
   companyAddress?: string;
+  recipientName?: string;
+  destination?: string;
+  tujuanSurat?: string;
+  targetName?: string;
   division?: string;
   startDate?: string;
   endDate?: string;
   createdAt?: string;
   memberCount?: number;
+  approvedAt?: string;
+  approved_at?: string;
+  signedFileUrl?: string;
+  signed_file_url?: string;
+  finalSignedFileUrl?: string;
+  final_signed_file_url?: string;
 }
 
 export interface SubmissionDetailForVerifier {
   id: string;
+  academicSupervisor?: string | null;
+  academic_supervisor?: string | null;
+  supervisorName?: string | null;
+  supervisor_name?: string | null;
+  supervisor?: {
+    name?: string | null;
+    fullName?: string | null;
+  } | null;
   team?: {
     academicSupervisor?: string | null;
+    academic_supervisor?: string | null;
+    supervisorName?: string | null;
+    supervisor_name?: string | null;
+    supervisor?: {
+      name?: string | null;
+      fullName?: string | null;
+    } | null;
     members?: Array<{
       role?: string;
       status?: string;
+      userId?: string | null;
+      name?: string | null;
+      nim?: string | null;
+      prodi?: string | null;
       user?: {
         id?: string;
         name?: string | null;
@@ -87,7 +116,11 @@ export async function approveDosenSuratPengantarRequest(
     submissionId?: string;
     status: string;
     approvedAt?: string;
+    approved_at?: string;
     signedFileUrl?: string;
+    signed_file_url?: string;
+    finalSignedFileUrl?: string;
+    final_signed_file_url?: string;
   }>
 > {
   try {

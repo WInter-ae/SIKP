@@ -334,6 +334,7 @@ export async function updateSubmissionStatus(
   status: "APPROVED" | "REJECTED",
   rejectionReason?: string,
   documentReviews?: Record<string, "approved" | "rejected">,
+  letterNumber?: string,
 ) {
   try {
     const response = await apiClient<Submission>(
@@ -344,6 +345,7 @@ export async function updateSubmissionStatus(
           status,
           rejectionReason,
           documentReviews,
+          letterNumber,
         }),
       },
     );

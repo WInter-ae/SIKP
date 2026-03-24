@@ -5,6 +5,7 @@ import {
   Building,
   Check,
   ClipboardCheck,
+  Download,
   Eye,
   FileText,
   FolderOpen,
@@ -33,8 +34,11 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { StatusBadge } from "./status-badge";
+import { useUser } from "~/contexts/user-context";
 
 import type { Application, DocumentFile } from "../types";
+import type { MailEntry } from "~/feature/hearing-dosen/types/dosen";
+import { generateSuratPengantarPdf } from "~/feature/hearing-dosen/lib/generate-surat-pengantar-pdf";
 import {
   STANDARD_DOCUMENT_TITLES,
   isSuratPengantarDocument,
@@ -44,7 +48,10 @@ interface ReviewModalProps {
   application: Application | null;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (docReviews: Record<string, "approved" | "rejected">) => void;
+  onApprove: (
+    docReviews: Record<string, "approved" | "rejected">,
+    letterNumber: string,
+  ) => void;
   onReject: (
     comment: string,
     docReviews: Record<string, "approved" | "rejected">,
@@ -58,7 +65,12 @@ function ReviewModal({
   onApprove,
   onReject,
 }: ReviewModalProps) {
+  const { user } = useUser();
   const [comment, setComment] = useState("");
+  const [letterNumber, setLetterNumber] = useState("");
+  const [isLetterNumberDialogOpen, setIsLetterNumberDialogOpen] =
+    useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [docReviews, setDocReviews] = useState<
     Record<string, "approved" | "rejected">
   >({});
@@ -217,6 +229,100 @@ function ReviewModal({
     (status) => status === "rejected",
   );
 
+  const buildMailEntryFromApplication = (
+    currentApplication: Application,
+    customLetterNumber?: string,
+  ): MailEntry => {
+    const mappedSignature = currentApplication.wakilDekanSignature;
+    const wakilDekanName =
+      mappedSignature?.name ||
+      (user?.role === "WAKIL_DEKAN"
+        ? user?.nama || "Wakil Dekan Bidang Akademik"
+        : "Wakil Dekan Bidang Akademik");
+    const wakilDekanNip =
+      mappedSignature?.nip ||
+      (user?.role === "WAKIL_DEKAN" ? user.nip || "-" : "-");
+    const wakilDekanJabatan =
+      mappedSignature?.position || "Wakil Dekan Bidang Akademik";
+
+    const leader =
+      currentApplication.members.find((member) => member.role === "Ketua") ||
+      currentApplication.members[0];
+
+    const suratPengantarDoc = currentApplication.documents.find((doc) =>
+      isSuratPengantarDocument(doc.title),
+    );
+
+    const normalizedStatus: MailEntry["status"] =
+      currentApplication.status === "approved"
+        ? "disetujui"
+        : currentApplication.status === "rejected"
+          ? "ditolak"
+          : "menunggu";
+
+    return {
+      id: currentApplication.submissionId || String(currentApplication.id),
+      tanggal: currentApplication.date,
+      nim: leader?.nim || "-",
+      namaMahasiswa: leader?.name || "-",
+      programStudi: leader?.prodi || "-",
+      status: normalizedStatus,
+      supervisor: currentApplication.supervisor || "-",
+      teamMembers: currentApplication.members.map((member) => ({
+        id: member.id,
+        name: member.name,
+        nim: member.nim || "-",
+        prodi: member.prodi || "-",
+        role: member.role,
+      })),
+      namaPerusahaan: currentApplication.internship.namaTempat,
+      tujuanSurat: currentApplication.internship.tujuanSurat,
+      alamatPerusahaan: currentApplication.internship.alamatTempat,
+      teleponPerusahaan: currentApplication.internship.teleponPerusahaan,
+      jenisProdukUsaha: currentApplication.internship.jenisProdukUsaha,
+      divisi: currentApplication.internship.divisi,
+      tanggalMulai: currentApplication.internship.tanggalMulai,
+      tanggalSelesai: currentApplication.internship.tanggalSelesai,
+      dosenNama: wakilDekanName,
+      dosenNip: wakilDekanNip,
+      dosenJabatan: wakilDekanJabatan,
+      nomorSurat: customLetterNumber || currentApplication.letterNumber,
+      dosenEsignatureUrl: mappedSignature?.esignatureUrl,
+      signedFileUrl: suratPengantarDoc?.url,
+      approvedAt: currentApplication.date,
+    };
+  };
+
+  const handlePreviewLetter = async () => {
+    if (!application) return;
+
+    try {
+      setIsGeneratingPdf(true);
+      const mailEntry = buildMailEntryFromApplication(application);
+
+      if (mailEntry.status === "disetujui" && mailEntry.signedFileUrl) {
+        window.open(mailEntry.signedFileUrl, "_blank", "noopener,noreferrer");
+        toast.success("Membuka surat signed dari server.");
+        return;
+      }
+
+      if (mailEntry.status === "disetujui") {
+        toast.error(
+          "Surat sudah disetujui, tetapi file signed dari backend belum tersedia.",
+        );
+        return;
+      }
+
+      await generateSuratPengantarPdf(mailEntry);
+      toast.success("PDF berhasil diunduh.");
+    } catch (error) {
+      console.error("Gagal generate PDF surat:", error);
+      toast.error("Gagal membuat PDF. Silakan coba lagi.");
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   const handleRejectApplication = () => {
     // ✅ Backend validation: Must have at least 1 rejected doc
     if (!hasRejectedDocs) {
@@ -269,7 +375,17 @@ function ReviewModal({
       return;
     }
 
-    onApprove(docReviews);
+    setIsLetterNumberDialogOpen(true);
+  };
+
+  const handleConfirmApprove = () => {
+    const trimmedLetterNumber = letterNumber.trim();
+    if (!trimmedLetterNumber) {
+      toast.error("Nomor surat wajib diisi sebelum menyetujui pengajuan.");
+      return;
+    }
+
+    onApprove(docReviews, trimmedLetterNumber);
     resetState();
   };
 
@@ -280,6 +396,8 @@ function ReviewModal({
 
   const resetState = () => {
     setComment("");
+    setLetterNumber("");
+    setIsLetterNumberDialogOpen(false);
     setDocReviews({});
   };
 
@@ -676,6 +794,21 @@ function ReviewModal({
                     }
                   />
                 </div>
+
+                <div className="rounded-lg border border-border p-4 flex items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Surat tidak ditampilkan otomatis. Klik tombol untuk langsung
+                    mengunduh PDF surat.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handlePreviewLetter}
+                    disabled={isGeneratingPdf}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {isGeneratingPdf ? "Membuat PDF..." : "Preview Surat"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -705,10 +838,14 @@ function ReviewModal({
                       </p>
                       <Button
                         variant="outline"
+                        onClick={handlePreviewLetter}
+                        disabled={isGeneratingPdf}
                         className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                       >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Lihat Surat Pengantar
+                        <Download className="w-4 h-4 mr-2" />
+                        {isGeneratingPdf
+                          ? "Membuka Surat..."
+                          : "Lihat Surat Pengantar"}
                       </Button>
                     </div>
                   </div>
@@ -780,6 +917,48 @@ function ReviewModal({
           </div>
         </div>
       </DialogContent>
+
+      <Dialog
+        open={isLetterNumberDialogOpen}
+        onOpenChange={setIsLetterNumberDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Masukkan Nomor Surat</DialogTitle>
+            <DialogDescription>
+              Nomor surat wajib diisi sebelum pengajuan dapat disetujui.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="letter-number-input">Nomor Surat</Label>
+            <Input
+              id="letter-number-input"
+              value={letterNumber}
+              onChange={(e) => setLetterNumber(e.target.value)}
+              placeholder="Contoh: 1234/UN9.FASILKOM/TU/2026"
+              autoFocus
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsLetterNumberDialogOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleConfirmApprove}
+            >
+              Simpan & Setujui
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

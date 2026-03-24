@@ -21,6 +21,7 @@ export interface MailEntry {
     role: string;
   }>;
   namaPerusahaan?: string;
+  tujuanSurat?: string;
   alamatPerusahaan?: string;
   periodeKP?: string;
   fakultas?: string;
@@ -40,4 +41,5 @@ export interface MailEntry {
   divisi?: string;
   tanggalMulai?: string;
   tanggalSelesai?: string;
+  nomorSurat?: string;
 }
