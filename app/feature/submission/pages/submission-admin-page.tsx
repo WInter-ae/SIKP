@@ -240,6 +240,7 @@ function SubmissionAdminPage() {
 
   const handleApprove = async (
     docReviews: Record<string, "approved" | "rejected">,
+    letterNumber: string,
   ) => {
     if (!selectedApplication) return;
 
@@ -250,6 +251,7 @@ function SubmissionAdminPage() {
         "APPROVED",
         undefined,
         docReviews,
+        letterNumber,
       );
 
       if (response.success) {
@@ -267,6 +269,7 @@ function SubmissionAdminPage() {
                 ? {
                     ...app,
                     status: "approved" as const,
+                    letterNumber,
                     documentReviews: docReviews,
                   }
                 : app,
@@ -278,7 +281,11 @@ function SubmissionAdminPage() {
         );
         handleCloseModal();
       } else {
-        toast.error(response.message || "Gagal menyetujui pengajuan");
+        // ✅ Backend validation errors
+        console.error("❌ Backend validation error:", response.message);
+        toast.error(
+          response.message || "Gagal menyetujui pengajuan. Periksa validasi dokumen.",
+        );
       }
     } catch (error) {
       console.error("❌ Error approving submission:", error);
@@ -328,7 +335,11 @@ function SubmissionAdminPage() {
         );
         handleCloseModal();
       } else {
-        toast.error(response.message || "Gagal menolak pengajuan");
+        // ✅ Backend validation errors
+        console.error("❌ Backend validation error:", response.message);
+        toast.error(
+          response.message || "Gagal menolak pengajuan. Pastikan validasi terpenuhi.",
+        );
       }
     } catch (error) {
       console.error("❌ Error rejecting submission:", error);
@@ -336,7 +347,10 @@ function SubmissionAdminPage() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (
+    status: string,
+    pendingLabel: "Menunggu Review" | "Menunggu TTD Wakil Dekan" = "Menunggu Review",
+  ) => {
     switch (status) {
       case "pending":
         return (
@@ -344,7 +358,7 @@ function SubmissionAdminPage() {
             variant="outline"
             className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
           >
-            Menunggu Review
+            {pendingLabel}
           </Badge>
         );
       case "approved":
@@ -485,7 +499,9 @@ function SubmissionAdminPage() {
                         <TableCell className="text-foreground">
                           {app.internship.namaTempat}
                         </TableCell>
-                        <TableCell>{getStatusBadge(app.status)}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(app.status, app.pendingLabel)}
+                        </TableCell>
                         <TableCell className="pr-6">
                           <Button
                             variant="link"

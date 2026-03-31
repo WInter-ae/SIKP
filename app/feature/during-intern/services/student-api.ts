@@ -97,6 +97,7 @@ export interface CompleteInternshipData {
     company: string;
     position: string;
     phone?: string;
+    signature?: string;
   };
   lecturer?: {
     id: string;

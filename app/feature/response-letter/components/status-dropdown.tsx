@@ -10,14 +10,19 @@ import {
 interface StatusDropdownProps {
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 }
 
-function StatusDropdown({ value, onChange }: StatusDropdownProps) {
+function StatusDropdown({
+  value,
+  onChange,
+  disabled = false,
+}: StatusDropdownProps) {
   return (
     <div className="mb-6 space-y-2">
       <Label>Pilih Status</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full">
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
+        <SelectTrigger className="w-full" disabled={disabled}>
           <SelectValue placeholder="-- Pilih Status --" />
         </SelectTrigger>
         <SelectContent>

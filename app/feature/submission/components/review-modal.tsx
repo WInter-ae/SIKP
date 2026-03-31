@@ -5,6 +5,7 @@ import {
   Building,
   Check,
   ClipboardCheck,
+  Download,
   Eye,
   FileText,
   FolderOpen,
@@ -32,14 +33,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { StatusBadge } from "./status-badge";
+import { useUser } from "~/contexts/user-context";
 
 import type { Application, DocumentFile } from "../types";
+import type { MailEntry } from "~/feature/hearing-dosen/types/dosen";
+import { generateSuratPengantarPdf } from "~/feature/hearing-dosen/lib/generate-surat-pengantar-pdf";
+import {
+  STANDARD_DOCUMENT_TITLES,
+  isSuratPengantarDocument,
+} from "../constants/document-types";
 
 interface ReviewModalProps {
   application: Application | null;
   isOpen: boolean;
   onClose: () => void;
-  onApprove: (docReviews: Record<string, "approved" | "rejected">) => void;
+  onApprove: (
+    docReviews: Record<string, "approved" | "rejected">,
+    letterNumber: string,
+  ) => void;
   onReject: (
     comment: string,
     docReviews: Record<string, "approved" | "rejected">,
@@ -53,28 +65,34 @@ function ReviewModal({
   onApprove,
   onReject,
 }: ReviewModalProps) {
+  const { user } = useUser();
   const [comment, setComment] = useState("");
+  const [letterNumber, setLetterNumber] = useState("");
+  const [isLetterNumberDialogOpen, setIsLetterNumberDialogOpen] =
+    useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [docReviews, setDocReviews] = useState<
     Record<string, "approved" | "rejected">
   >({});
 
-  // Initialize docReviews from saved reviews if application is already reviewed
+  // Initialize docReviews from persisted document status and saved reviews
   useEffect(() => {
-    if (application?.documentReviews) {
-      setDocReviews(application.documentReviews);
-    } else {
-      setDocReviews({});
-    }
-
-    // ✅ FIX: Jika status PENDING_REVIEW tapi ada REJECTED sebelumnya (re-submission),
-    // clear old document reviews agar admin bisa review ulang dari awal
-    if (application?.status === "pending" && application?.statusHistory && application.statusHistory.length > 0) {
-      const hasRejection = application.statusHistory.some((entry) => entry.status === "REJECTED");
-      if (hasRejection) {
-        console.log("🔄 Clearing old document reviews for re-submission after rejection");
-        setDocReviews({});
+    const statusSeed: Record<string, "approved" | "rejected"> = {};
+    (application?.documents || []).forEach((doc) => {
+      if (doc.documentStatus === "APPROVED") {
+        statusSeed[doc.id] = "approved";
       }
-    }
+      if (doc.documentStatus === "REJECTED") {
+        statusSeed[doc.id] = "rejected";
+      }
+    });
+
+    const mergedReviews = {
+      ...statusSeed,
+      ...(application?.documentReviews || {}),
+    };
+
+    setDocReviews(mergedReviews);
 
     // Debug: log documents received by modal - VERY DETAILED
     console.log("📋 ReviewModal received application:", {
@@ -146,31 +164,30 @@ function ReviewModal({
   // agar section dokumen tetap muncul walaupun belum ada yang upload
   const allDocumentTitles = useMemo(() => {
     if (!application) return [];
-    const standardDocs = [
-      "Surat Proposal",
-      "Surat Kesediaan",
-      "Form Permohonan",
-      "KRS Semester 4",
-      "Daftar Kumpulan Nilai",
-      "Bukti Pembayaran UKT",
-    ];
+
+    // ✅ Gunakan constants daripada hardcoded array
+    const standardDocs = [...STANDARD_DOCUMENT_TITLES];
+
     const uploadedTitles = Object.keys(groupedDocuments).filter(
       (title) => title && title !== "undefined",
     );
-    
-    // ✅ EXCLUDE SURAT_PENGANTAR from upload review section
-    // It's only created by backend on approval, not uploaded by students
+
+    // ✅ CRITICAL: Exclude SURAT_PENGANTAR menggunakan helper function
+    // SURAT_PENGANTAR tidak boleh muncul di accordion upload
     const filteredUploadedTitles = uploadedTitles.filter(
-      (title) => title !== "Surat Pengantar Kerja Praktik"
+      (title) => !isSuratPengantarDocument(title),
     );
-    
-    const allTitles = Array.from(new Set([...standardDocs, ...filteredUploadedTitles]));
+
+    const allTitles = Array.from(
+      new Set([...standardDocs, ...filteredUploadedTitles]),
+    );
 
     console.log("📋 All document titles in modal:", {
       applicationId: application.id,
       standardDocsCount: standardDocs.length,
+      uploadedTitlesRaw: uploadedTitles,
+      uploadedTitlesFiltered: filteredUploadedTitles,
       uploadedTitlesCount: filteredUploadedTitles.length,
-      uploadedTitles: filteredUploadedTitles,
       allTitlesCount: allTitles.length,
       allTitles,
     });
@@ -212,54 +229,163 @@ function ReviewModal({
     (status) => status === "rejected",
   );
 
-  const handleRejectApplication = () => {
-    if (hasRejectedDocs && !comment.trim()) {
-      toast.warning(
-        "Karena ada dokumen yang ditolak, Anda wajib memberikan catatan review.",
-      );
-      return;
-    }
-    if (!comment.trim()) {
-      if (!comment.trim()) {
-        toast(
-          "Apakah Anda yakin ingin menolak tanpa catatan? (Disarankan memberikan alasan)",
-          {
-            action: {
-              label: "Tolak tanpa catatan",
-              onClick: () => {
-                onReject("", docReviews);
-                resetState();
-              },
-            },
-          },
+  const buildMailEntryFromApplication = (
+    currentApplication: Application,
+    customLetterNumber?: string,
+  ): MailEntry => {
+    const mappedSignature = currentApplication.wakilDekanSignature;
+    const wakilDekanName =
+      mappedSignature?.name ||
+      (user?.role === "WAKIL_DEKAN"
+        ? user?.nama || "Wakil Dekan Bidang Akademik"
+        : "Wakil Dekan Bidang Akademik");
+    const wakilDekanNip =
+      mappedSignature?.nip ||
+      (user?.role === "WAKIL_DEKAN" ? user.nip || "-" : "-");
+    const wakilDekanJabatan =
+      mappedSignature?.position || "Wakil Dekan Bidang Akademik";
+
+    const leader =
+      currentApplication.members.find((member) => member.role === "Ketua") ||
+      currentApplication.members[0];
+
+    const suratPengantarDoc = currentApplication.documents.find((doc) =>
+      isSuratPengantarDocument(doc.title),
+    );
+
+    const normalizedStatus: MailEntry["status"] =
+      currentApplication.status === "approved"
+        ? "disetujui"
+        : currentApplication.status === "rejected"
+          ? "ditolak"
+          : "menunggu";
+
+    return {
+      id: currentApplication.submissionId || String(currentApplication.id),
+      tanggal: currentApplication.date,
+      nim: leader?.nim || "-",
+      namaMahasiswa: leader?.name || "-",
+      programStudi: leader?.prodi || "-",
+      status: normalizedStatus,
+      supervisor: currentApplication.supervisor || "-",
+      teamMembers: currentApplication.members.map((member) => ({
+        id: member.id,
+        name: member.name,
+        nim: member.nim || "-",
+        prodi: member.prodi || "-",
+        role: member.role,
+      })),
+      namaPerusahaan: currentApplication.internship.namaTempat,
+      tujuanSurat: currentApplication.internship.tujuanSurat,
+      alamatPerusahaan: currentApplication.internship.alamatTempat,
+      teleponPerusahaan: currentApplication.internship.teleponPerusahaan,
+      jenisProdukUsaha: currentApplication.internship.jenisProdukUsaha,
+      divisi: currentApplication.internship.divisi,
+      tanggalMulai: currentApplication.internship.tanggalMulai,
+      tanggalSelesai: currentApplication.internship.tanggalSelesai,
+      dosenNama: wakilDekanName,
+      dosenNip: wakilDekanNip,
+      dosenJabatan: wakilDekanJabatan,
+      nomorSurat: customLetterNumber || currentApplication.letterNumber,
+      dosenEsignatureUrl: mappedSignature?.esignatureUrl,
+      signedFileUrl: suratPengantarDoc?.url,
+      approvedAt: currentApplication.date,
+    };
+  };
+
+  const handlePreviewLetter = async () => {
+    if (!application) return;
+
+    try {
+      setIsGeneratingPdf(true);
+      const mailEntry = buildMailEntryFromApplication(application);
+
+      if (mailEntry.status === "disetujui" && mailEntry.signedFileUrl) {
+        window.open(mailEntry.signedFileUrl, "_blank", "noopener,noreferrer");
+        toast.success("Membuka surat signed dari server.");
+        return;
+      }
+
+      if (mailEntry.status === "disetujui") {
+        toast.error(
+          "Surat sudah disetujui, tetapi file signed dari backend belum tersedia.",
         );
         return;
       }
+
+      await generateSuratPengantarPdf(mailEntry);
+      toast.success("PDF berhasil diunduh.");
+    } catch (error) {
+      console.error("Gagal generate PDF surat:", error);
+      toast.error("Gagal membuat PDF. Silakan coba lagi.");
+    } finally {
+      setIsGeneratingPdf(false);
     }
-    onReject(comment, docReviews);
-    resetState();
   };
 
-  const handleApproveApplication = () => {
-    if (hasRejectedDocs) {
-      toast.warning(
-        "Tidak dapat menyetujui pengajuan karena terdapat dokumen yang ditolak. Silakan tolak pengajuan untuk meminta revisi.",
+  const handleRejectApplication = () => {
+    // ✅ Backend validation: Must have at least 1 rejected doc
+    if (!hasRejectedDocs) {
+      toast.error(
+        "Harus ada minimal 1 dokumen yang ditolak untuk menolak submission.",
       );
       return;
     }
-    if (hasMissingDocs) {
-      toast.warning(
-        "Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.",
-      );
+
+    // ✅ Backend validation: Rejection reason is REQUIRED
+    if (!comment.trim()) {
+      toast.error("Alasan penolakan wajib diisi saat menolak submission.");
       return;
     }
+
+    // ✅ Check if all docs reviewed
     if (!allDocsReviewed) {
       toast.warning(
         "Harap review semua dokumen yang diupload terlebih dahulu.",
       );
       return;
     }
-    onApprove(docReviews);
+
+    onReject(comment, docReviews);
+    resetState();
+  };
+
+  const handleApproveApplication = () => {
+    // ✅ Backend validation: Cannot approve if ANY doc is rejected
+    if (hasRejectedDocs) {
+      toast.error(
+        "Tidak dapat approve submission jika ada dokumen yang di-reject. Harap review dokumentasi atau tolak submission.",
+      );
+      return;
+    }
+
+    // ✅ Check missing documents
+    if (hasMissingDocs) {
+      toast.error(
+        "Tidak dapat menyetujui pengajuan karena dokumen belum lengkap.",
+      );
+      return;
+    }
+
+    // ✅ Backend validation: All docs must be reviewed (no pending)
+    if (!allDocsReviewed) {
+      toast.error(
+        "Harap review semua dokumen yang diupload terlebih dahulu. Semua dokumen harus berstatus 'approved'.",
+      );
+      return;
+    }
+
+    setIsLetterNumberDialogOpen(true);
+  };
+
+  const handleConfirmApprove = () => {
+    const trimmedLetterNumber = letterNumber.trim();
+    if (!trimmedLetterNumber) {
+      toast.error("Nomor surat wajib diisi sebelum menyetujui pengajuan.");
+      return;
+    }
+
+    onApprove(docReviews, trimmedLetterNumber);
     resetState();
   };
 
@@ -270,20 +396,33 @@ function ReviewModal({
 
   const resetState = () => {
     setComment("");
+    setLetterNumber("");
+    setIsLetterNumberDialogOpen(false);
     setDocReviews({});
+  };
+
+  const getDisplayStatus = (doc: DocumentFile) => {
+    const manualStatus = docReviews[doc.id];
+    if (manualStatus === "approved") return "APPROVED";
+    if (manualStatus === "rejected") return "REJECTED";
+    if (doc.documentStatus === "APPROVED") return "APPROVED";
+    if (doc.documentStatus === "REJECTED") return "REJECTED";
+    if (doc.documentStatus === "PENDING") return "PENDING";
+    return undefined;
   };
 
   // Helper function to render document item
   const renderDocItem = (doc: DocumentFile) => {
     const status = docReviews[doc.id];
+    const displayStatus = getDisplayStatus(doc);
     const isEditable = application && application.status === "pending";
     return (
       <div
         key={doc.id}
         className={`flex items-center justify-between p-3 bg-card rounded border ${
-          status === "rejected"
+          displayStatus === "REJECTED"
             ? "border-destructive/50 bg-destructive/10"
-            : status === "approved"
+            : displayStatus === "APPROVED"
               ? "border-green-500/50 bg-green-500/10"
               : "border-border"
         }`}
@@ -297,6 +436,11 @@ function ReviewModal({
               {doc.uploadedBy}
             </p>
             <p className="text-xs text-muted-foreground">{doc.uploadDate}</p>
+            {displayStatus && (
+              <div className="mt-2">
+                <StatusBadge status={displayStatus} size="sm" />
+              </div>
+            )}
           </div>
         </div>
 
@@ -499,6 +643,30 @@ function ReviewModal({
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>Telepon Perusahaan</Label>
+                  <Input
+                    value={application.internship.teleponPerusahaan}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Jenis Produk/Usaha</Label>
+                  <Input
+                    value={application.internship.jenisProdukUsaha}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <Label>Nama Unit/Divisi</Label>
+                  <Input
+                    value={application.internship.divisi}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>Tanggal Mulai</Label>
                   <Input
                     value={application.internship.tanggalMulai}
@@ -510,14 +678,6 @@ function ReviewModal({
                   <Label>Tanggal Selesai</Label>
                   <Input
                     value={application.internship.tanggalSelesai}
-                    readOnly
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <Label>Nama Unit/Divisi</Label>
-                  <Input
-                    value={application.internship.divisi}
                     readOnly
                     className="bg-muted cursor-not-allowed"
                   />
@@ -634,6 +794,21 @@ function ReviewModal({
                     }
                   />
                 </div>
+
+                <div className="rounded-lg border border-border p-4 flex items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Surat tidak ditampilkan otomatis. Klik tombol untuk langsung
+                    mengunduh PDF surat.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handlePreviewLetter}
+                    disabled={isGeneratingPdf}
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {isGeneratingPdf ? "Membuat PDF..." : "Preview Surat"}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -663,10 +838,14 @@ function ReviewModal({
                       </p>
                       <Button
                         variant="outline"
+                        onClick={handlePreviewLetter}
+                        disabled={isGeneratingPdf}
                         className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                       >
-                        <Eye className="w-4 h-4 mr-2" />
-                        Lihat Surat Pengantar
+                        <Download className="w-4 h-4 mr-2" />
+                        {isGeneratingPdf
+                          ? "Membuka Surat..."
+                          : "Lihat Surat Pengantar"}
                       </Button>
                     </div>
                   </div>
@@ -738,6 +917,48 @@ function ReviewModal({
           </div>
         </div>
       </DialogContent>
+
+      <Dialog
+        open={isLetterNumberDialogOpen}
+        onOpenChange={setIsLetterNumberDialogOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Masukkan Nomor Surat</DialogTitle>
+            <DialogDescription>
+              Nomor surat wajib diisi sebelum pengajuan dapat disetujui.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2">
+            <Label htmlFor="letter-number-input">Nomor Surat</Label>
+            <Input
+              id="letter-number-input"
+              value={letterNumber}
+              onChange={(e) => setLetterNumber(e.target.value)}
+              placeholder="Contoh: 1234/UN9.FASILKOM/TU/2026"
+              autoFocus
+            />
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsLetterNumberDialogOpen(false)}
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={handleConfirmApprove}
+            >
+              Simpan & Setujui
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

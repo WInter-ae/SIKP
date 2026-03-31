@@ -1,4 +1,8 @@
-export type TemplateType = "Template Only" | "Generate & Template";
+export type TemplateType =
+  | "Template Only"
+  | "Generate & Template"
+  | "berita-acara"
+  | "form-nilai";
 
 export type TemplateCategory = {
   value: TemplateType;
@@ -40,6 +44,7 @@ export interface Template {
   id: string;
   name: string;
   type: TemplateType;
+  fileExtension?: string;
   description?: string;
   content: string;
   fields: TemplateField[];    // Field metadata untuk dynamic form

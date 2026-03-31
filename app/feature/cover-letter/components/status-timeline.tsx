@@ -2,11 +2,13 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
-import { FileText, XCircle, RefreshCw, Check, Download } from "lucide-react";
+import { RefreshCw, Download, FileText } from "lucide-react";
 import type {
   StatusHistoryEntry,
   SubmissionDocument,
 } from "~/feature/submission/types";
+import { buildSubmissionTimeline } from "~/feature/submission/utils/timeline-builder";
+import { getStatusConfig } from "~/feature/submission/constants/status-config";
 
 interface StatusTimelineProps {
   statusHistory?: StatusHistoryEntry[];
@@ -27,217 +29,14 @@ export function StatusTimeline({
   documents,
   onResubmit,
 }: StatusTimelineProps) {
-  // ✅ Jika tidak ada statusHistory, construct dari current status (fallback)
-  const timeline: Array<{
-    status: string;
-    date: string;
-    reason?: string;
-    isLatest: boolean;
-  }> = [];
-
-  if (statusHistory && statusHistory.length > 0) {
-    // Gunakan statusHistory dari backend, tapi filter DRAFT karena itu transisi internal
-    const filtered = statusHistory.filter((entry) => entry.status !== "DRAFT");
-
-    // ✅ SMART RECONSTRUCT: Add missing PENDING_REVIEW before REJECTED/APPROVED
-    filtered.forEach((entry, index, filteredArray) => {
-      const isActionStatus =
-        entry.status === "REJECTED" || entry.status === "APPROVED";
-      // Check timeline yang sudah kita build, bukan filteredArray!
-      const lastTimelineEntry =
-        timeline.length > 0 ? timeline[timeline.length - 1] : null;
-      const prevWasPendingReview =
-        lastTimelineEntry && lastTimelineEntry.status === "PENDING_REVIEW";
-      const isFirstEntry = index === 0;
-
-      // Jika ini action status tapi tidak ada PENDING_REVIEW sebelumnya
-      if (isActionStatus && (!prevWasPendingReview || isFirstEntry)) {
-        // Add missing PENDING_REVIEW
-        let pendingDateStr: string;
-
-        if (isFirstEntry && submittedAt) {
-          // First submission - use submittedAt
-          pendingDateStr = new Date(submittedAt).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        } else if (!isFirstEntry) {
-          // Re-submission - estimate ~45 seconds before current action
-          const currDate = new Date(entry.date);
-          const estimatedDate = new Date(currDate.getTime() - 45000);
-          pendingDateStr = estimatedDate.toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        } else {
-          // Fallback: use current entry date
-          pendingDateStr = new Date(entry.date).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-        }
-
-        timeline.push({
-          status: "PENDING_REVIEW",
-          date: pendingDateStr,
-          reason: undefined,
-          isLatest: false,
-        });
-      }
-
-      // Add current entry
-      timeline.push({
-        status: entry.status,
-        date: new Date(entry.date).toLocaleDateString("id-ID", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        reason: entry.reason,
-        isLatest: index === filteredArray.length - 1,
-      });
-    });
-  } else {
-    // Fallback: construct dari current status
-    if (currentStatus === "PENDING_REVIEW" && submittedAt) {
-      timeline.push({
-        status: "PENDING_REVIEW",
-        date: new Date(submittedAt).toLocaleDateString("id-ID", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        isLatest: true,
-      });
-    } else if (currentStatus === "REJECTED") {
-      // ✅ CRITICAL FIX: Push PENDING_REVIEW dulu sebelum REJECTED
-      if (submittedAt) {
-        timeline.push({
-          status: "PENDING_REVIEW",
-          date: new Date(submittedAt).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          isLatest: false,
-        });
-      }
-      // Baru push REJECTED
-      timeline.push({
-        status: "REJECTED",
-        date: new Date().toLocaleDateString("id-ID", {
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        reason: rejectionReason,
-        isLatest: true,
-      });
-    } else if (currentStatus === "APPROVED") {
-      if (submittedAt) {
-        timeline.push({
-          status: "PENDING_REVIEW",
-          date: new Date(submittedAt).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          isLatest: false,
-        });
-      }
-      if (approvedAt) {
-        timeline.push({
-          status: "APPROVED",
-          date: new Date(approvedAt).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          isLatest: true,
-        });
-      }
-    }
-  }
-
-  const getStatusInfo = (status: string) => {
-    switch (status) {
-      case "PENDING_REVIEW":
-        return {
-          title: "Mengajukan Surat Pengantar",
-          description:
-            "Pengajuan surat pengantar telah diterima dan sedang dalam proses review",
-          icon: <FileText className="h-6 w-6" />,
-          bg: "bg-muted",
-          border: "border-l-muted-foreground",
-          iconBg: "bg-muted-foreground",
-          textColor: "text-muted-foreground",
-        };
-      case "DRAFT":
-        return {
-          title: "Mengajukan Surat Pengantar",
-          description:
-            "Pengajuan surat pengantar telah diterima dan sedang dalam proses review",
-          icon: <FileText className="h-6 w-6" />,
-          bg: "bg-muted",
-          border: "border-l-muted-foreground",
-          iconBg: "bg-muted-foreground",
-          textColor: "text-muted-foreground",
-        };
-      case "REJECTED":
-        return {
-          title: "Pengajuan Ditolak",
-          description:
-            "Pengajuan Anda ditolak. Silakan perbaiki dan ajukan kembali.",
-          icon: <XCircle className="h-7 w-7" />,
-          bg: "bg-destructive/10",
-          border: "border-l-destructive",
-          iconBg: "bg-destructive",
-          textColor: "text-destructive",
-        };
-      case "APPROVED":
-        return {
-          title: "Surat Pengantar Telah Dibuat",
-          description:
-            "Surat pengantar kerja praktik Anda telah disetujui dan dapat diunduh",
-          icon: <Check className="h-7 w-7" />,
-          bg: "bg-green-600/10",
-          border: "border-l-green-600",
-          iconBg: "bg-green-600",
-          textColor: "text-green-600",
-        };
-      default:
-        return {
-          title: "Status",
-          description: "",
-          icon: null,
-          bg: "bg-muted",
-          border: "border-l-border",
-          iconBg: "bg-muted-foreground",
-          textColor: "text-muted-foreground",
-        };
-    }
-  };
+  // Build timeline from submission data
+  const timeline = buildSubmissionTimeline({
+    statusHistory,
+    currentStatus,
+    rejectionReason,
+    submittedAt,
+    approvedAt,
+  });
 
   // Find SURAT_PENGANTAR document
   const suratPengantar = documents?.find(
@@ -249,7 +48,7 @@ export function StatusTimeline({
       {/* Timeline */}
       <div className="relative">
         {timeline.map((entry, index) => {
-          const statusInfo = getStatusInfo(entry.status);
+          const statusInfo = getStatusConfig(entry.status);
           const isLast = index === timeline.length - 1;
 
           return (

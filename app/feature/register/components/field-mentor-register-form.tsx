@@ -120,9 +120,9 @@ export function FieldMentorRegisterForm({
         password: data.password,
         nama: data.name,
         nip: data.nip || '',
-        instansi: data.institution || '',
-        jabatan: data.jobTitle || '',
-        no_telepon: data.phoneNumber || '',
+        instansi: data.company || '',
+        jabatan: data.position || '',
+        no_telepon: data.phone || '',
       })
 
       if (!result.success) {

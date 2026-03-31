@@ -1,5 +1,5 @@
 import type { Route } from "./+types/_sidebar.dosen.profil";
-import { DosenProfilPage } from "~/feature/dosen/pages/profil-page";
+import { DosenProfilPage } from "~/feature/profil/pages/profil-dosen-page";
 
 export function meta({}: Route.MetaArgs) {
   return [

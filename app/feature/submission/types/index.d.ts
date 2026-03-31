@@ -2,6 +2,8 @@ export interface AdditionalInfoData {
   tujuanSurat: string;
   namaTempat: string;
   alamatTempat: string;
+  teleponPerusahaan: string;
+  jenisProdukUsaha: string;
   divisi: string;
   tanggalMulai: string;
   tanggalSelesai: string;
@@ -18,6 +20,12 @@ export interface Member {
 export interface Document {
   id: number;
   title: string;
+  type?: string;
+}
+
+export interface FileUploadProps {
+  label: string;
+  onFileChange?: (file: File) => void;
 }
 
 export interface DocumentFile {
@@ -27,6 +35,8 @@ export interface DocumentFile {
   uploadDate: string;
   status: "uploaded" | "missing";
   url?: string;
+  // ✅ NEW: Database status setelah admin review
+  documentStatus?: "PENDING" | "APPROVED" | "REJECTED";
 }
 
 export interface SubmissionDocument {
@@ -53,14 +63,37 @@ export interface SubmissionDocument {
     id: string;
     name: string;
     email: string;
+    nim?: string;
+    prodi?: string;
   };
+  // ✅ NEW: Review status dari admin (disimpan di database)
+  status?: "PENDING" | "APPROVED" | "REJECTED";
+  statusUpdatedAt?: string;
 }
 
 // ✅ Status timeline entry untuk track history perubahan status
 export interface StatusHistoryEntry {
-  status: "PENDING_REVIEW" | "APPROVED" | "REJECTED" | "DRAFT";
+  status:
+    | "PENDING_REVIEW"
+    | "APPROVED"
+    | "REJECTED"
+    | "DRAFT"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
+  workflowStage?:
+    | "DRAFT"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
+  actor?: "ADMIN" | "DOSEN" | "MAHASISWA";
   date: string;
   reason?: string; // Rejection reason jika ada
+  letterNumber?: string;
 }
 
 export interface Submission {
@@ -69,17 +102,37 @@ export interface Submission {
   letterPurpose: string;
   companyName: string;
   companyAddress: string;
+  companyPhone?: string;
+  companyBusinessType?: string;
   division: string;
   startDate: string;
   endDate: string;
-  status: "DRAFT" | "PENDING_REVIEW" | "APPROVED" | "REJECTED";
+  status:
+    | "DRAFT"
+    | "PENDING_REVIEW"
+    | "APPROVED"
+    | "REJECTED"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
+  workflowStage?:
+    | "DRAFT"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
   rejectionReason?: string;
+  letterNumber?: string;
   approvedAt?: string;
   submittedAt?: string;
   createdAt: string;
   updatedAt: string;
   documents?: SubmissionDocument[];
   statusHistory?: StatusHistoryEntry[]; // ✅ Timeline semua perubahan status
+  documentReviews?: Record<string, "approved" | "rejected">;
 }
 
 export interface Application {
@@ -87,7 +140,9 @@ export interface Application {
   submissionId: string; // ✅ Original submission ID from database
   date: string;
   status: "pending" | "approved" | "rejected";
+  pendingLabel?: "Menunggu Review" | "Menunggu TTD Wakil Dekan";
   rejectionComment?: string;
+  letterNumber?: string;
   documentReviews?: Record<string, "approved" | "rejected">;
   statusHistory?: StatusHistoryEntry[]; // ✅ Timeline untuk detect re-submission
 
@@ -96,4 +151,20 @@ export interface Application {
   supervisor: string;
   internship: AdditionalInfoData;
   documents: DocumentFile[];
+  wakilDekanSignature?: WakilDekanSignature;
 }
+
+export interface WakilDekanSignature {
+  id: string;
+  name: string;
+  nip: string;
+  position: string;
+  fakultas?: string;
+  prodi?: string;
+  esignatureUrl?: string;
+  esignatureKey?: string;
+  esignatureUploadedAt?: string;
+}
+
+// Backward compatibility for old naming.
+export type wakildekanSignature = WakilDekanSignature;

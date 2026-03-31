@@ -34,7 +34,9 @@ export function AnnouncementDialog({
             <CheckCircle className="h-16 w-16" />
           </div>
           <DialogTitle className="text-2xl">{title}</DialogTitle>
-          <DialogDescription className="text-xl font-semibold text-center">{description}</DialogDescription>
+          <DialogDescription className="text-xl font-semibold text-center">
+            {description}
+          </DialogDescription>
         </DialogHeader>
         <DialogFooter className="sm:justify-center pt-4">
           <Button onClick={onConfirm}>{confirmText}</Button>

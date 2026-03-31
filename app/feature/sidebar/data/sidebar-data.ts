@@ -91,7 +91,7 @@ const mahasiswaMenu: NavItem[] = [
   },
   {
     title: "Profil",
-    url: "#",
+    url: "/mahasiswa/profil",
     icon: UserCircle,
   },
   {
@@ -204,6 +204,10 @@ const dosenMenu: NavItem[] = [
         title: "Verifikasi Sidang",
         url: "/dosen/kp/verifikasi-sidang",
       },
+      {
+        title: "Surat Pengantar",
+        url: "/dosen/kp/surat-pengantar",
+      },
     ],
   },
   {
@@ -213,12 +217,12 @@ const dosenMenu: NavItem[] = [
   },
   {
     title: "Verifikasi",
-    url: "#",
+    url: "/dosen/kp/verifikasi-surat",
     icon: FileCheck,
     items: [
       {
         title: "Surat Mahasiswa",
-        url: "#",
+        url: "/dosen/kp/verifikasi-surat",
       },
     ],
   },

@@ -59,13 +59,21 @@ export async function registerMahasiswa(data: {
   nama: string;
   email: string;
   password: string;
-  phone: string;
-  fakultas: string;
+  phone?: string;
+  fakultas?: string;
   prodi: string;
-  semester: number;
-  angkatan: string;
+  semester?: number;
+  angkatan?: string;
 }) {
   try {
+    const payload = {
+      ...data,
+      phone: data.phone || "",
+      fakultas: data.fakultas || "",
+      semester: data.semester ?? 0,
+      angkatan: data.angkatan || "",
+    };
+
     const response = await fetch(
       `${API_BASE_URL}/api/auth/register/mahasiswa`,
       {
@@ -73,7 +81,7 @@ export async function registerMahasiswa(data: {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       }
     );
 
@@ -103,6 +111,26 @@ export async function registerMahasiswa(data: {
 }
 
 /**
+ * Register pembimbing lapangan.
+ * Endpoint backend khusus belum tersedia pada workspace ini,
+ * jadi fungsi ini mengembalikan pesan terarah agar UI tidak crash.
+ */
+export async function registerFieldMentor(_data: {
+  email: string;
+  password: string;
+  nama: string;
+  nip?: string;
+  instansi?: string;
+  jabatan?: string;
+  no_telepon?: string;
+}) {
+  return {
+    success: false,
+    message: 'Endpoint registrasi pembimbing lapangan belum tersedia di backend.',
+  };
+}
+
+/**
  * Logout dan hapus token
  */
 export function logout() {
@@ -129,7 +157,26 @@ export function getCurrentUser() {
  * Get auth token dari localStorage
  */
 export function getAuthToken(): string | null {
-  return localStorage.getItem('auth_token');
+  const rawToken = localStorage.getItem('auth_token');
+  if (!rawToken) return null;
+
+  const trimmed = rawToken.trim();
+  if (!trimmed) return null;
+
+  const lowered = trimmed.toLowerCase();
+  if (lowered === 'null' || lowered === 'undefined') return null;
+
+  // Tolerate token stored as JSON string value, e.g. "eyJ..."
+  const unquoted =
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ? trimmed.slice(1, -1).trim()
+      : trimmed;
+
+  if (!unquoted) return null;
+
+  // Tolerate token stored with Bearer prefix
+  return unquoted.replace(/^Bearer\s+/i, '').trim() || null;
 }
 
 /**

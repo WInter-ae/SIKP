@@ -6,6 +6,14 @@
  */
 
 import { getAuthToken as getStoredToken } from "./auth-client";
+import {
+  parseJsonResponse,
+  getErrorMessage,
+  isNetworkError,
+  logApiError,
+  ApiError,
+  API_ERROR_MESSAGES,
+} from "./api-error";
 
 // URL untuk pengajuan, teams, templates (URL lama — tetap)
 const API_BASE_URL =
@@ -69,6 +77,32 @@ function getAuthToken(): string | null {
 }
 
 /**
+ * Build request headers
+ */
+function buildHeaders(
+  token: string | null,
+  isFormData: boolean,
+  customHeaders?: Record<string, string>
+): Record<string, string> {
+  const headers: Record<string, string> = {};
+
+  // Don't force Content-Type for FormData
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  if (customHeaders) {
+    Object.assign(headers, customHeaders);
+  }
+
+  return headers;
+}
+
+/**
  * Main API client function
  *
  * @param endpoint - API endpoint (e.g., '/api/teams')
@@ -100,24 +134,18 @@ export async function apiClient<T>(
   options: RequestInit & { _baseUrl?: string } = {},
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
-  const { _baseUrl, ...fetchOptions } = options as RequestInit & { _baseUrl?: string };
+  const { _baseUrl, ...fetchOptions } = options as RequestInit & {
+    _baseUrl?: string;
+  };
   const effectiveBaseUrl = _baseUrl || API_BASE_URL;
+  const isFormData = fetchOptions.body instanceof FormData;
 
   try {
-    // Detect if body is FormData
-    const isFormData = fetchOptions.body instanceof FormData;
-
-    // Build headers - don't force Content-Type for FormData
-    const headers: Record<string, string> = {};
-    if (!isFormData && !fetchOptions.headers) {
-      headers["Content-Type"] = "application/json";
-    }
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-    if (fetchOptions.headers && typeof fetchOptions.headers === "object") {
-      Object.assign(headers, fetchOptions.headers);
-    }
+    const headers = buildHeaders(
+      token,
+      isFormData,
+      fetchOptions.headers as Record<string, string>,
+    );
 
     const response = await fetch(`${effectiveBaseUrl}${endpoint}`, {
       ...fetchOptions,
@@ -125,76 +153,70 @@ export async function apiClient<T>(
       headers,
     });
 
-    // Check if response has content
-    const contentType = response.headers.get("content-type");
-    const hasJsonContent = contentType && contentType.includes("application/json");
-    
+    // Parse response JSON
     let data;
     try {
-      // Only parse JSON if content-type is JSON and body is not empty
-      const text = await response.text();
-      
-      if (!text || text.trim() === "") {
-        console.error("❌ Empty response from backend:", {
-          endpoint,
-          status: response.status,
-          statusText: response.statusText
-        });
-        
+      data = await parseJsonResponse(response);
+    } catch (parseError) {
+      if (parseError instanceof ApiError) {
+        logApiError(parseError, endpoint);
         return {
           success: false,
-          message: `Backend error: Empty response (Status ${response.status})`,
+          message: parseError.message,
           data: null,
         };
       }
-      
-      data = JSON.parse(text);
-    } catch (jsonError) {
-      console.error("❌ Invalid JSON response:", jsonError);
-      console.error("Response endpoint:", endpoint);
-      console.error("Response status:", response.status);
-      
-      return {
-        success: false,
-        message: `Backend error: Invalid JSON response (Status ${response.status})`,
-        data: null,
-      };
+      throw parseError;
     }
 
+    // Handle non-OK responses
     if (!response.ok) {
-      // Handle 401 Unauthorized - Token expired atau invalid
+      // Handle 401 Unauthorized - token invalid/expired.
       if (response.status === 401) {
-        console.error('🔒 Unauthorized: Token invalid atau expired');
-        
-        // Auto-logout: hapus token dan user data
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('user_data');
-        
-        // Redirect ke login page
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login?reason=unauthorized';
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_data");
+
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?reason=unauthorized";
         }
-        
+
         return {
           success: false,
-          message: data.message || 'Session expired. Silakan login kembali.',
+          message:
+            (data as ApiResponse<T>).message ||
+            "Session expired. Silakan login kembali.",
           data: null,
         };
       }
-      
+
+      const errorMessage =
+        (data as ApiResponse<T>).message || getErrorMessage(response.status);
       return {
         success: false,
-        message: data.message || `Error: ${response.status}`,
+        message: errorMessage,
         data: null,
       };
     }
 
-    return data;
+    return data as ApiResponse<T>;
   } catch (error) {
-    console.error("API Client Error:", error);
+    // Handle network errors
+    if (isNetworkError(error)) {
+      console.error("❌ Network Error:", error);
+      return {
+        success: false,
+        message: API_ERROR_MESSAGES.NETWORK_ERROR,
+        data: null,
+      };
+    }
+
+    // Handle other errors
+    const errorMessage = error instanceof Error ? error.message : API_ERROR_MESSAGES.UNKNOWN_ERROR;
+    console.error("❌ API Client Error:", error);
+    
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Network error",
+      message: errorMessage,
       data: null,
     };
   }
@@ -217,37 +239,10 @@ export async function uploadFile<T>(
   endpoint: string,
   formData: FormData,
 ): Promise<ApiResponse<T>> {
-  const token = getAuthToken();
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: "POST",
-      credentials: "omit",
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: formData,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return {
-        success: false,
-        message: data.message || `Error: ${response.status}`,
-        data: null,
-      };
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Upload Error:", error);
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Upload failed",
-      data: null,
-    };
-  }
+  return apiClient<T>(endpoint, {
+    method: "POST",
+    body: formData,
+  });
 }
 
 /**

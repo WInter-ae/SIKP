@@ -56,3 +56,45 @@ export interface SuratBeritaAcara {
     jabatan: "pembimbing" | "penguji";
   }[];
 }
+
+// Types untuk halaman verifikasi dosen
+
+export interface PengajuanSidang {
+  id: string;
+  mahasiswa: {
+    id: string;
+    nama: string;
+    nim: string;
+    prodi: string;
+    foto?: string;
+  };
+  data: {
+    judulLaporan: string;
+    tempatPelaksanaan: string;
+    tanggalSidang: string;
+    waktuMulai: string;
+    waktuSelesai: string;
+    dosenPenguji?: DosenPenguji[];
+  };
+  status: "submitted" | "approved" | "rejected";
+  tanggalPengajuan: string;
+  tanggalVerifikasi?: string;
+  catatanDosen?: string;
+  nilaiAkhir?: number;
+}
+
+export interface VerifikasiFormData {
+  status: "approved" | "rejected";
+  catatanDosen: string;
+  nilaiAkhir?: number;
+}
+
+export interface ProcessStepProps {
+  title: string;
+  description: string;
+  status: "submitted" | "rejected" | "resubmitted" | "approved";
+  comment?: string;
+  onAction?: () => void;
+  actionText?: string;
+  showDocumentPreview?: boolean;
+}

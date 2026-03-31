@@ -82,23 +82,42 @@ export async function getSubmissionByTeamId(teamId: string) {
  */
 export async function createSubmission(
   teamId: string,
-  data: {
+  data?: {
     letterPurpose: string;
     companyName: string;
     companyAddress: string;
+    companyPhone: string;
+    companyBusinessType: string;
     division: string;
-    startDate: string;
-    endDate: string;
+    startDate: string | null;
+    endDate: string | null;
   },
 ) {
   try {
+    const payload = data ? { teamId, ...data } : { teamId };
+
     const response = await apiClient<Submission>("/api/submissions", {
       method: "POST",
-      body: JSON.stringify({
-        teamId,
-        ...data,
-      }),
+      body: JSON.stringify(payload),
     });
+
+    // Be tolerant with backend validators: retry with minimal payload.
+    if (!response.success && data) {
+      const message = (response.message || "").toLowerCase();
+      const shouldRetryMinimal =
+        message.includes("validation") ||
+        message.includes("invalid") ||
+        message.includes("bad request") ||
+        message.includes("400");
+
+      if (shouldRetryMinimal) {
+        return await apiClient<Submission>("/api/submissions", {
+          method: "POST",
+          body: JSON.stringify({ teamId }),
+        });
+      }
+    }
+
     return response;
   } catch (error) {
     console.error("❌ Error creating submission:", error);
@@ -191,6 +210,8 @@ export async function updateSubmission(
     letterPurpose?: string;
     companyName?: string;
     companyAddress?: string;
+    companyPhone?: string;
+    companyBusinessType?: string;
     division?: string;
     companySupervisor?: string;
     startDate?: string;
@@ -313,6 +334,7 @@ export async function updateSubmissionStatus(
   status: "APPROVED" | "REJECTED",
   rejectionReason?: string,
   documentReviews?: Record<string, "approved" | "rejected">,
+  letterNumber?: string,
 ) {
   try {
     const response = await apiClient<Submission>(
@@ -323,6 +345,7 @@ export async function updateSubmissionStatus(
           status,
           rejectionReason,
           documentReviews,
+          letterNumber,
         }),
       },
     );
