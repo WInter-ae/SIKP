@@ -7,12 +7,17 @@
 
 import { getAuthToken as getStoredToken } from "./auth-client";
 
-// Gunakan URL Workers sebagai default; bisa di-override via env
+// URL untuk pengajuan, teams, templates (URL lama — tetap)
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_APP_AUTH_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   "https://backend-sikp.backend-sikp.workers.dev";
+
+// URL untuk pelaksanaan magang: logbook, mentor, internship, penilaian (URL baru)
+export const INTERNSHIP_API_BASE_URL =
+  import.meta.env.VITE_API_INTERNSHIP_URL ||
+  "https://backend-sikp.mukarrobinujiantik.workers.dev";
 
 /**
  * Standard API Response format
@@ -92,30 +97,31 @@ function getAuthToken(): string | null {
  */
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit & { _baseUrl?: string } = {},
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
+  const { _baseUrl, ...fetchOptions } = options as RequestInit & { _baseUrl?: string };
+  const effectiveBaseUrl = _baseUrl || API_BASE_URL;
 
   try {
     // Detect if body is FormData
-    const isFormData = options.body instanceof FormData;
+    const isFormData = fetchOptions.body instanceof FormData;
 
     // Build headers - don't force Content-Type for FormData
     const headers: Record<string, string> = {};
-    if (!isFormData && !options.headers) {
+    if (!isFormData && !fetchOptions.headers) {
       headers["Content-Type"] = "application/json";
     }
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
-    if (options.headers && typeof options.headers === "object") {
-      Object.assign(headers, options.headers);
+    if (fetchOptions.headers && typeof fetchOptions.headers === "object") {
+      Object.assign(headers, fetchOptions.headers);
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      // Use cookies only when same-origin (no explicit base URL)
-      credentials: API_BASE_URL ? "omit" : "include",
+    const response = await fetch(`${effectiveBaseUrl}${endpoint}`, {
+      ...fetchOptions,
+      credentials: "omit",
       headers,
     });
 
@@ -156,6 +162,26 @@ export async function apiClient<T>(
     }
 
     if (!response.ok) {
+      // Handle 401 Unauthorized - Token expired atau invalid
+      if (response.status === 401) {
+        console.error('🔒 Unauthorized: Token invalid atau expired');
+        
+        // Auto-logout: hapus token dan user data
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user_data');
+        
+        // Redirect ke login page
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login?reason=unauthorized';
+        }
+        
+        return {
+          success: false,
+          message: data.message || 'Session expired. Silakan login kembali.',
+          data: null,
+        };
+      }
+      
       return {
         success: false,
         message: data.message || `Error: ${response.status}`,
@@ -196,10 +222,8 @@ export async function uploadFile<T>(
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: "POST",
-      // Use cookies only when same-origin
-      credentials: API_BASE_URL ? "omit" : "include",
+      credentials: "omit",
       headers: {
-        // Don't set Content-Type for FormData, browser will set it with boundary
         ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: formData,
@@ -227,7 +251,7 @@ export async function uploadFile<T>(
 }
 
 /**
- * GET request helper
+ * GET request helper (pengajuan/submission URL)
  */
 export function get<T>(endpoint: string, params?: Record<string, string>) {
   const url = params
@@ -237,7 +261,7 @@ export function get<T>(endpoint: string, params?: Record<string, string>) {
 }
 
 /**
- * POST request helper
+ * POST request helper (pengajuan/submission URL)
  */
 export function post<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -247,7 +271,7 @@ export function post<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * PUT request helper
+ * PUT request helper (pengajuan/submission URL)
  */
 export function put<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -257,7 +281,7 @@ export function put<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * PATCH request helper
+ * PATCH request helper (pengajuan/submission URL)
  */
 export function patch<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -267,11 +291,45 @@ export function patch<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * DELETE request helper
+ * DELETE request helper (pengajuan/submission URL)
  */
 export function del<T>(endpoint: string) {
   return apiClient<T>(endpoint, { method: "DELETE" });
 }
 
-// Export base URL for reference
+// ==================== INTERNSHIP CLIENT HELPERS ====================
+// Digunakan untuk: logbook, mentor, internship data, penilaian
+// URL: VITE_API_INTERNSHIP_URL (https://backend-sikp.mukarrobinujiantik.workers.dev)
+
+export function iget<T>(endpoint: string, params?: Record<string, string>) {
+  const url = params
+    ? `${endpoint}?${new URLSearchParams(params).toString()}`
+    : endpoint;
+  return apiClient<T>(url, { method: "GET", _baseUrl: INTERNSHIP_API_BASE_URL } as RequestInit & { _baseUrl: string });
+}
+
+export function ipost<T>(endpoint: string, body?: unknown) {
+  return apiClient<T>(endpoint, {
+    method: "POST",
+    body: body ? JSON.stringify(body) : undefined,
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+export function iput<T>(endpoint: string, body?: unknown) {
+  return apiClient<T>(endpoint, {
+    method: "PUT",
+    body: body ? JSON.stringify(body) : undefined,
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+export function idel<T>(endpoint: string) {
+  return apiClient<T>(endpoint, {
+    method: "DELETE",
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+// Export base URLs for reference
 export { API_BASE_URL };

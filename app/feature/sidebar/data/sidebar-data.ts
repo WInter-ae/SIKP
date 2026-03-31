@@ -162,8 +162,14 @@ const adminMenu: NavItem[] = [
   },
   {
     title: "Penilaian",
-    url: "/admin/penilaian",
+    url: "#",
     icon: Award,
+    items: [
+      {
+        title: "Kriteria & Bobot",
+        url: "/admin/penilaian-kriteria",
+      },
+    ],
   },
   {
     title: "Profil",

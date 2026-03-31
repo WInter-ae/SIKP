@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 
 import { Button } from "~/components/ui/button";
@@ -27,55 +28,53 @@ import {
   Info,
 } from "lucide-react";
 
+import { getAssessmentCriteria } from "~/lib/assessment-criteria-api";
+
+// Icon mapping per kategori (statis, sesuai tampilan)
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  Kehadiran: Clock,
+  Kerjasama: Users,
+  "Sikap, Etika dan Tingkah Laku": Users,
+  "Prestasi Kerja": CheckCircle2,
+  Kreatifitas: Lightbulb,
+};
+
+// Skor sementara dari backend (akan digantikan oleh response API penilaian)
+const PLACEHOLDER_SCORES: Record<string, number> = {
+  Kehadiran: 85,
+  Kerjasama: 90,
+  "Sikap, Etika dan Tingkah Laku": 88,
+  "Prestasi Kerja": 87,
+  Kreatifitas: 82,
+};
+
 function AssessmentPage() {
-  // Dummy data untuk penilaian
-  const assessments = [
-    {
-      id: 1,
-      category: "Kehadiran",
-      score: 85,
-      maxScore: 100,
-      weight: 20,
-      description: "Tingkat kehadiran dan ketepatan waktu",
-      icon: Clock,
-    },
-    {
-      id: 2,
-      category: "Kerjasama",
-      score: 90,
-      maxScore: 100,
-      weight: 30,
-      description: "Kemampuan bekerja dalam tim",
-      icon: Users,
-    },
-    {
-      id: 3,
-      category: "Sikap, Etika dan Tingkah Laku",
-      score: 88,
-      maxScore: 100,
-      weight: 20,
-      description: "Sikap profesional, etika kerja, dan perilaku di tempat kerja",
-      icon: Users,
-    },
-    {
-      id: 4,
-      category: "Prestasi Kerja",
-      score: 87,
-      maxScore: 100,
-      weight: 20,
-      description: "Kualitas dan hasil kerja yang dicapai",
-      icon: CheckCircle2,
-    },
-    {
-      id: 5,
-      category: "Kreatifitas",
-      score: 82,
-      maxScore: 100,
-      weight: 10,
-      description: "Kemampuan berpikir kreatif dan inovatif",
-      icon: Lightbulb,
-    },
-  ];
+  const [assessments, setAssessments] = useState<
+    Array<{
+      id: string;
+      category: string;
+      score: number;
+      maxScore: number;
+      weight: number;
+      description: string;
+      icon: React.ElementType;
+    }>
+  >([]);
+  const [criteriaLoading, setCriteriaLoading] = useState(true);
+
+  // Load bobot dari database, gabungkan dengan skor dari backend
+  useEffect(() => {
+    getAssessmentCriteria().then((criteria) => {
+      setAssessments(
+        criteria.map((c) => ({
+          ...c,
+          score: PLACEHOLDER_SCORES[c.category] ?? 0,
+          icon: CATEGORY_ICONS[c.category] ?? Award,
+        }))
+      );
+      setCriteriaLoading(false);
+    });
+  }, []);
 
   const supervisorInfo = {
     name: "Budi Santoso, S.T., M.T.",
@@ -109,6 +108,14 @@ function AssessmentPage() {
   };
 
   const gradeInfo = getGrade(totalScore);
+
+  if (criteriaLoading) {
+    return (
+      <div className="max-w-6xl mx-auto p-6">
+        <p className="text-muted-foreground text-sm">Memuat data penilaian...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">

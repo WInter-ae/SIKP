@@ -22,6 +22,7 @@ interface InternshipData {
   division?: string;
   position?: string;
   mentorName?: string;
+  mentorSignature?: string; // ← NEW: Base64 signature image from backend
   startDate: string;
   endDate: string;
 }
@@ -312,7 +313,15 @@ export const generateLogbookHTML = (data: LogbookData): string => {
   <div class="signature-section">
     <p>Mengetahui,</p>
     <p style="margin-top: 10px;">Pembimbing Lapangan</p>
-    <div style="height: 80px;"></div>
+    ${data.internship.mentorSignature ? `
+      <div style="height: 80px; margin: 10px 0; display: flex; align-items: center; justify-content: center;">
+        <img src="${data.internship.mentorSignature}" alt="Paraf Mentor" style="max-width: 200px; max-height: 80px; object-fit: contain;" />
+      </div>
+    ` : `
+      <div style="height: 80px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">
+        (Belum ada tanda tangan digital)
+      </div>
+    `}
     <p style="font-weight: bold; text-decoration: underline;">${data.internship.mentorName}</p>
   </div>
   ` : ''}

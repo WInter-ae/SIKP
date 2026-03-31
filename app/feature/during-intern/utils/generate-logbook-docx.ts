@@ -11,6 +11,7 @@ interface InternshipInfo {
   division?: string;
   position: string;
   mentorName?: string;
+  mentorSignature?: string; // ← NEW: Base64 signature image from backend
   startDate?: string;
   endDate?: string;
 }
@@ -119,7 +120,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       </w:trPr>
       <w:tc>
         <w:tcPr>
-          <w:tcW w:w="800" w:type="dxa"/>
+          <w:tcW w:w="1300" w:type="dxa"/>
           <w:vMerge w:val="restart"/>
           <w:tcBorders>
             <w:top w:val="single" w:sz="8" w:color="000000"/>
@@ -158,7 +159,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       </w:tc>
       <w:tc>
         <w:tcPr>
-          <w:tcW w:w="5000" w:type="dxa"/>
+          <w:tcW w:w="4600" w:type="dxa"/>
           <w:tcBorders>
             <w:top w:val="single" w:sz="8" w:color="000000"/>
             <w:left w:val="single" w:sz="8" w:color="000000"/>
@@ -200,7 +201,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       </w:trPr>
       <w:tc>
         <w:tcPr>
-          <w:tcW w:w="800" w:type="dxa"/>
+          <w:tcW w:w="1300" w:type="dxa"/>
           <w:vMerge/>
           <w:tcBorders>
             <w:top w:val="single" w:sz="8" w:color="000000"/>
@@ -233,7 +234,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       </w:tc>
       <w:tc>
         <w:tcPr>
-          <w:tcW w:w="5000" w:type="dxa"/>
+          <w:tcW w:w="4600" w:type="dxa"/>
           <w:tcBorders>
             <w:top w:val="single" w:sz="8" w:color="000000"/>
             <w:left w:val="single" w:sz="8" w:color="000000"/>
@@ -299,7 +300,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
     <!-- Student Info List -->
     <w:tbl>
       <w:tblPr>
-        <w:tblW w:w="9000" w:type="dxa"/>
+        <w:tblW w:w="6000" w:type="dxa"/>
         <w:jc w:val="left"/>
         <w:tblInd w:w="2160" w:type="dxa"/>
         <w:tblBorders>
@@ -320,7 +321,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       <w:tr>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="2400" w:type="dxa"/>
+            <w:tcW w:w="1800" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -329,7 +330,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
         </w:tc>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="6600" w:type="dxa"/>
+            <w:tcW w:w="4200" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -340,7 +341,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       <w:tr>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="2400" w:type="dxa"/>
+            <w:tcW w:w="1800" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -349,7 +350,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
         </w:tc>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="6600" w:type="dxa"/>
+            <w:tcW w:w="4200" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -360,7 +361,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       <w:tr>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="2400" w:type="dxa"/>
+            <w:tcW w:w="1800" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -369,7 +370,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
         </w:tc>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="6600" w:type="dxa"/>
+            <w:tcW w:w="4200" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -380,7 +381,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       <w:tr>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="2400" w:type="dxa"/>
+            <w:tcW w:w="1800" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -389,7 +390,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
         </w:tc>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="6600" w:type="dxa"/>
+            <w:tcW w:w="4200" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -400,7 +401,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
       <w:tr>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="2400" w:type="dxa"/>
+            <w:tcW w:w="1800" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -409,7 +410,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
         </w:tc>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="6600" w:type="dxa"/>
+            <w:tcW w:w="4200" w:type="dxa"/>
           </w:tcPr>
           <w:p>
             <w:pPr><w:spacing w:line="240" w:lineRule="auto"/></w:pPr>
@@ -450,7 +451,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
         </w:trPr>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="800" w:type="dxa"/>
+            <w:tcW w:w="1300" w:type="dxa"/>
             <w:tcBorders>
               <w:top w:val="single" w:sz="8" w:color="000000"/>
               <w:left w:val="single" w:sz="8" w:color="000000"/>
@@ -488,7 +489,7 @@ function createLogbookDocxTemplate(data: LogbookData, PizZip: any): ArrayBuffer 
         </w:tc>
         <w:tc>
           <w:tcPr>
-            <w:tcW w:w="5000" w:type="dxa"/>
+            <w:tcW w:w="4600" w:type="dxa"/>
             <w:tcBorders>
               <w:top w:val="single" w:sz="8" w:color="000000"/>
               <w:left w:val="single" w:sz="8" w:color="000000"/>
