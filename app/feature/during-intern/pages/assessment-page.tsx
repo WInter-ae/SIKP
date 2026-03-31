@@ -25,9 +25,17 @@ import {
   CheckCircle2,
   Download,
   Info,
+  FileCheck,
+  Archive,
 } from "lucide-react";
 
 function AssessmentPage() {
+  // Flag untuk cek apakah penilaian sudah di-generate oleh mentor
+  // Dalam implementasi real, ini dari API/database
+  const isAssessmentGenerated = true; // true jika mentor sudah simpan penilaian
+  const generatedAt = "28 Desember 2025, 14:30"; // Waktu mentor simpan penilaian
+  const archivedPdfUrl = "/api/assessment/download/12345"; // URL download dari arsip
+
   // Dummy data untuk penilaian
   const assessments = [
     {
@@ -135,6 +143,33 @@ function AssessmentPage() {
           Penilaian ini diberikan oleh pembimbing lapangan berdasarkan kinerja Anda selama masa kerja praktik.
         </AlertDescription>
       </Alert>
+
+      {/* Status Penilaian Alert */}
+      {isAssessmentGenerated ? (
+        <Alert className="border-l-4 border-green-500 bg-green-50 dark:bg-green-950/20">
+          <FileCheck className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800 dark:text-green-400">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-medium mb-1">Penilaian telah disimpan oleh Mentor Lapangan</p>
+                <p className="text-sm text-green-700 dark:text-green-500">
+                  Penilaian telah di-generate secara otomatis pada <span className="font-medium">{generatedAt}</span> dan tersimpan di arsip sistem.
+                </p>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert className="border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
+          <Clock className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800 dark:text-yellow-400">
+            <p className="font-medium mb-1">Menunggu Penilaian dari Mentor Lapangan</p>
+            <p className="text-sm text-yellow-700 dark:text-yellow-500">
+              Penilaian akan otomatis di-generate dan tersimpan setelah mentor lapangan menyimpan penilaian Anda.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Supervisor Info Card */}
       <Card>
@@ -288,19 +323,32 @@ function AssessmentPage() {
       </div>
 
       {/* Action Buttons */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              Penilaian terakhir diperbarui pada{" "}
-              <span className="font-medium">28 Desember 2025</span>
-            </p>
-            <Button onClick={() => alert("Generate data penilaian")}>
-              Generate Penilaian
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      {isAssessmentGenerated && (
+        <Card className="border-l-4 border-green-500">
+          <CardContent className="pt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+                  <Archive className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium text-foreground">Dokumen Tersedia</p>
+                  <p className="text-sm text-muted-foreground">
+                    Penilaian telah disimpan pada <span className="font-medium">{generatedAt}</span>
+                  </p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => window.open(archivedPdfUrl, '_blank')}
+                className="w-full sm:w-auto"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Unduh PDF Penilaian
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
