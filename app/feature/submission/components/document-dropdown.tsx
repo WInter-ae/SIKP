@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Eye, MessageCircle } from "lucide-react";
+import { Download, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   Accordion,
@@ -145,16 +145,108 @@ function DocumentDropdown({
     return "";
   };
 
+  // Tooltip content per document type
+  const documentTooltips: Record<
+    string,
+    { title: string; description: string; note?: string }
+  > = {
+    PROPOSAL_KETUA: {
+      title: "Surat Proposal",
+      description: "Dokumen ini hanya dapat diunggah oleh Ketua Tim.",
+      note: "Pastikan isi proposal final sebelum upload.",
+    },
+    SURAT_KESEDIAAN: {
+      title: "Surat Kesediaan",
+      description:
+        "Gunakan tombol 'Ajukan' untuk meminta surat kesediaan ke dosen pembimbing KP.",
+    },
+    FORM_PERMOHONAN: {
+      title: "Form Permohonan",
+      description:
+        "Gunakan tombol 'Ajukan' untuk mengirim permohonan ke dosen pembimbing KP.",
+      note: "Lengkapi tanda tangan pada halaman profil sebelum mengajukan.",
+    },
+    KRS_SEMESTER_4: {
+      title: "KRS Semester 4",
+      description: "Unggah Kartu Rencana Studi (KRS) semester 4.",
+    },
+    DAFTAR_KUMPULAN_NILAI: {
+      title: "Daftar Kumpulan Nilai",
+      description:
+        "Unggah KHS dari semester awal hingga terbaru, atau dokumen DKN dari PPA.",
+      note: "Pastikan seluruh halaman nilai terbaca jelas.",
+    },
+    BUKTI_PEMBAYARAN_UKT: {
+      title: "Bukti Pembayaran UKT",
+      description: "Unggah bukti pembayaran UKT terakhir.",
+      note: "Mahasiswa KIP-K: unggah SK KIP-K dan tandai nama Anda.",
+    },
+    SURAT_PENGANTAR: {
+      title: "Surat Pengantar",
+      description: "Dokumen ini dibuat otomatis oleh sistem setelah approval.",
+    },
+  };
+
+  const activeTooltip = documentTooltips[String(document.type)] || {
+    title: "Informasi Dokumen",
+    description: "Dokumen pendukung pengajuan.",
+  };
+
   return (
-    <>
+    <TooltipProvider>
       <Accordion type="single" collapsible className="mb-4">
         <AccordionItem
           value={`doc-${document.id}`}
           className="border border-border rounded-lg overflow-hidden"
         >
           <AccordionTrigger className="bg-muted px-4 hover:no-underline">
-            <span className="font-medium text-foreground">
+            <span className="font-medium text-foreground flex items-center gap-2">
               {document.title}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="ml-1 cursor-pointer text-muted-foreground">
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        fill="none"
+                      />
+                      <text
+                        x="12"
+                        y="16"
+                        textAnchor="middle"
+                        fontSize="12"
+                        fill="currentColor"
+                      >
+                        i
+                      </text>
+                    </svg>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  className="w-[22rem] max-w-[90vw] p-3"
+                >
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-foreground">
+                      {activeTooltip.title}
+                    </p>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {activeTooltip.description}
+                    </p>
+                    {activeTooltip.note && (
+                      <div className="rounded-md border border-primary/20 bg-primary/5 px-2.5 py-2">
+                        <p className="text-xs leading-relaxed text-primary">
+                          {activeTooltip.note}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             </span>
           </AccordionTrigger>
           <AccordionContent className="bg-card px-4 pb-0">
@@ -178,13 +270,12 @@ function DocumentDropdown({
                 >
                   <div className="flex flex-col gap-1">
                     <div className="font-medium text-foreground">
-                      {member.name} {member.role}
+                      {member.name} ({member.role})
                     </div>
-                    {/* ✅ NEW: Display document status badge if available */}
-                    {memberDocument?.status &&
-                      memberDocument.status !== "PENDING" && (
-                        <StatusBadge status={memberDocument.status} size="sm" />
-                      )}
+                    {/* ✅ Selalu tampilkan badge status jika ada status dokumen */}
+                    {memberDocument?.status && (
+                      <StatusBadge status={memberDocument.status} size="sm" />
+                    )}
                   </div>
                   {isUploaded ? (
                     <div className="flex items-center gap-2">
@@ -202,12 +293,11 @@ function DocumentDropdown({
                       </Button>
                       {memberDocument && (
                         <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          variant="outline"
+                          size="sm"
                           onClick={() => handlePreview(memberDocument.fileUrl)}
                         >
-                          <Eye className="h-5 w-5" />
+                          Lihat
                         </Button>
                       )}
                     </div>
@@ -374,7 +464,7 @@ function DocumentDropdown({
           cancelText="Batal"
         />
       )}
-    </>
+    </TooltipProvider>
   );
 }
 

@@ -1,17 +1,8 @@
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  LogOut,
-} from "lucide-react"
-import { useNavigate } from "react-router"
-import { useState } from "react"
+import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from "lucide-react";
+import { useNavigate } from "react-router";
+import { useState } from "react";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "~/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,13 +11,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu"
+} from "~/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "~/components/ui/sidebar"
+} from "~/components/ui/sidebar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,20 +27,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog"
-import { useUser } from "~/contexts/user-context"
-import type { User } from "../types"
+} from "~/components/ui/alert-dialog";
+import { useUser } from "~/contexts/user-context";
+import type { User } from "../types";
 
 export function NavUser({ user }: { user: User }) {
-  const { isMobile } = useSidebar()
-  const { logout } = useUser()
-  const navigate = useNavigate()
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const { isMobile } = useSidebar();
+  const { logout } = useUser();
+  const navigate = useNavigate();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const handleLogout = () => {
-    logout()
-    navigate("/")
-  }
+    logout();
+    navigate("/");
+  };
 
   return (
     <>
@@ -116,7 +107,8 @@ export function NavUser({ user }: { user: User }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Logout</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin keluar dari aplikasi? Anda perlu login kembali untuk mengakses sistem.
+              Apakah Anda yakin ingin keluar dari aplikasi? Anda perlu login
+              kembali untuk mengakses sistem.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -128,5 +120,5 @@ export function NavUser({ user }: { user: User }) {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )
+  );
 }

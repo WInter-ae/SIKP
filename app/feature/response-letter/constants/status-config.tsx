@@ -37,10 +37,10 @@ export function getResponseLetterStatusConfig(
       description:
         "Selamat! Surat balasan Anda telah diverifikasi dan disetujui oleh admin. Kerja praktik Anda telah disetujui.",
       icon: <CheckCircle2 className="size-6" />,
-      iconBg: "bg-emerald-600",
-      bg: "bg-emerald-50 dark:bg-emerald-950/20",
-      border: "border-emerald-600",
-      textColor: "text-emerald-600 dark:text-emerald-400",
+      iconBg: "bg-green-600",
+      bg: "bg-green-50 dark:bg-green-950/20",
+      border: "border-green-600",
+      textColor: "text-green-600 dark:text-green-400",
     },
     REJECTED: {
       title: "Surat Balasan Ditolak",

@@ -41,6 +41,7 @@ export interface Student {
   id: string | number;
   name: string;
   nim: string;
+  prodi: string;
   npm?: string;
   tanggal: string;
   company: string;

@@ -82,7 +82,7 @@ function AdditionalInfoForm({
   }
 
   return (
-    <div className="mb-8">
+    <div className="mb-2">
       <div className="flex items-center justify-between gap-3 mb-4">
         <h2 className="text-xl font-semibold text-foreground">
           Data Pengajuan

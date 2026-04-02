@@ -20,7 +20,8 @@ export interface StatusConfig {
 export const STATUS_CONFIGS: Record<string, StatusConfig> = {
   PENDING_REVIEW: {
     title: "Mengajukan Surat Pengantar",
-    description: "Pengajuan surat pengantar telah diterima dan sedang dalam proses review",
+    description:
+      "Pengajuan surat pengantar telah diterima dan sedang dalam proses review",
     icon: <FileText className="h-6 w-6" />,
     bg: "bg-muted",
     border: "border-l-muted-foreground",
@@ -39,7 +40,8 @@ export const STATUS_CONFIGS: Record<string, StatusConfig> = {
   },
   DRAFT: {
     title: "Mengajukan Surat Pengantar",
-    description: "Pengajuan surat pengantar telah diterima dan sedang dalam proses review",
+    description:
+      "Pengajuan surat pengantar telah diterima dan sedang dalam proses review",
     icon: <FileText className="h-6 w-6" />,
     bg: "bg-muted",
     border: "border-l-muted-foreground",
@@ -57,7 +59,8 @@ export const STATUS_CONFIGS: Record<string, StatusConfig> = {
   },
   APPROVED: {
     title: "Surat Pengantar Telah Dibuat",
-    description: "Surat pengantar kerja praktik Anda telah disetujui dan dapat diunduh",
+    description:
+      "Pengajuan Anda telah disetujui dan Surat Pengantar dapat diunduh",
     icon: <Check className="h-7 w-7" />,
     bg: "bg-green-600/10",
     border: "border-l-green-600",

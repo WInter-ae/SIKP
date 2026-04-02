@@ -1,4 +1,13 @@
-import { Eye, FileText, Users, CheckCircle, XCircle } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  CircleCheck,
+  Eye,
+  FileText,
+  Info,
+  OctagonAlert,
+  Users,
+} from "lucide-react";
 
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -9,9 +18,24 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "~/components/ui/dialog";
 
 import type { Student } from "../types";
+
+const getDisplayText = (
+  value?: string | null,
+  fallback = "Belum ditentukan",
+) => {
+  if (!value) return fallback;
+
+  const normalized = value.trim();
+  if (!normalized) return fallback;
+  if (normalized.toLowerCase() === "unknown") return fallback;
+  if (normalized === "-") return fallback;
+
+  return normalized;
+};
 
 interface DetailDialogProps {
   open: boolean;
@@ -26,6 +50,8 @@ function DetailDialog({
   student,
   onApprove,
 }: DetailDialogProps) {
+  const isApproved = student?.status === "Disetujui";
+
   const handleApproveClick = () => {
     if (student) {
       onOpenChange(false);
@@ -37,32 +63,32 @@ function DetailDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Detail Surat Balasan</DialogTitle>
+          <DialogTitle className="text-2xl">
+            Verifikasi Surat Balasan
+          </DialogTitle>
+          <DialogDescription>
+            Tinjau surat balasan dari perusahaan yang dikirimkan oleh mahasiswa.
+          </DialogDescription>
         </DialogHeader>
         {student && (
           <div className="space-y-8 py-4 flex-1 overflow-y-auto pr-1 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {/* Informasi Mahasiswa (Tim) */}
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center">
-                  <Users className="w-5 h-5 mr-2 text-primary" /> Informasi
-                  Mahasiswa (Tim Kerja Praktik)
+                  <Users className="w-5 h-5 mr-2 text-primary" />
+                  Informasi Tim Kerja Praktik
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Dosen Pembimbing Akademik (Ketua) */}
-                {student.supervisor && (
-                  <div className="bg-primary/10 p-4 rounded-lg">
-                    <p className="text-sm text-muted-foreground">
-                      Dosen Pembimbing Akademik (Ketua):
-                    </p>
-                    <p className="font-semibold text-primary text-lg">
-                      {student.supervisor}
-                    </p>
-                  </div>
-                )}
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Dosen Pembimbing Kerja Praktik:
+                  </p>
+                  <p className="font-semibold text-primary text-lg">
+                    {getDisplayText(student.supervisor)}
+                  </p>
+                </div>
 
-                {/* Anggota Tim */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {(
                     student.members ?? [
@@ -70,13 +96,14 @@ function DetailDialog({
                         id: 0,
                         name: student.name,
                         nim: student.nim,
-                        prodi: undefined,
-                        role: student.memberCount > 1 ? "Ketua" : "Ketua",
+                        prodi: student.prodi,
+                        role: "Ketua",
                       },
                     ]
                   ).map((member) => (
                     <MemberCard
                       key={`${member.id}-${member.nim ?? member.name}`}
+                      fallbackProdi={student.prodi}
                       member={member}
                     />
                   ))}
@@ -87,35 +114,55 @@ function DetailDialog({
             {/* Detail Surat Balasan */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Detail Surat Balasan</CardTitle>
+                <CardTitle className="text-lg flex items-center">
+                  <Info className="w-5 h-5 mr-2 text-blue-600" />
+                  Detail Surat Balasan
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-col md:flex-row items-start gap-6">
-                  <div className="flex-1 min-w-[220px]">
-                    <InfoItem
-                      label="Perusahaan"
-                      value={student.company || "Unknown"}
-                    />
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                    <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mb-2">
+                      Perusahaan
+                    </p>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Building2 className="h-4 w-4 text-primary" />
+                      <p className="font-semibold">
+                        {getDisplayText(student.company, "Belum tersedia")}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-[180px]">
-                    <InfoItem
-                      label="Tanggal Upload"
-                      value={student.tanggal || "Unknown"}
-                    />
+
+                  <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                    <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mb-2">
+                      Tanggal Upload
+                    </p>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <CalendarDays className="h-4 w-4 text-primary" />
+                      <p className="font-semibold">
+                        {getDisplayText(student.tanggal, "Belum tersedia")}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-[160px] space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">
+
+                  <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+                    <p className="text-xs font-semibold tracking-wide uppercase text-muted-foreground mb-2">
                       Status Surat
                     </p>
-                    <Badge
-                      variant={
-                        student.status === "Disetujui"
-                          ? "default"
-                          : "destructive"
-                      }
+                    <div
+                      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${
+                        isApproved
+                          ? "bg-green-100 text-green-600"
+                          : "bg-destructive/10 text-destructive"
+                      }`}
                     >
-                      {student.status || "Unknown"}
-                    </Badge>
+                      {isApproved ? (
+                        <CircleCheck className="h-4 w-4" />
+                      ) : (
+                        <OctagonAlert className="h-4 w-4" />
+                      )}
+                      <span>{getDisplayText(student.status, "Unknown")}</span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -124,7 +171,10 @@ function DetailDialog({
             {/* File Surat Balasan */}
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-lg">File Surat Balasan</CardTitle>
+                <CardTitle className="text-lg flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-green-600" />
+                  Surat Balasan Perusahaan
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
@@ -134,7 +184,7 @@ function DetailDialog({
                     </div>
                     <div className="flex-1">
                       <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
-                        Surat Balasan Perusahaan
+                        File Surat Balasan
                       </p>
                       <p className="text-sm text-green-800 dark:text-green-200 mb-4">
                         Surat balasan telah diupload dan siap ditinjau
@@ -180,17 +230,9 @@ function DetailDialog({
   );
 }
 
-function InfoItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="space-y-1">
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="text-foreground font-medium">{value}</p>
-    </div>
-  );
-}
-
 function MemberCard({
   member,
+  fallbackProdi,
 }: {
   member: {
     id: number;
@@ -199,29 +241,26 @@ function MemberCard({
     prodi?: string;
     role: "Ketua" | "Anggota";
   };
+  fallbackProdi?: string;
 }) {
   const isLeader = member.role === "Ketua";
+  const displayProdi = getDisplayText(member.prodi ?? fallbackProdi);
   return (
-    <div className="p-4 rounded-lg border bg-card">
-      <div className="mb-2">
-        <Badge
-          variant="outline"
-          className={
-            isLeader
-              ? "bg-primary/10 text-primary border-primary/30"
-              : "bg-destructive/10 text-destructive border-destructive/30"
-          }
-        >
+    <div
+      className={`p-4 rounded-lg border ${isLeader ? "border-primary/30 bg-primary/5" : "border-border bg-muted/50"}`}
+    >
+      <div className="flex justify-between items-start mb-2">
+        <Badge variant={isLeader ? "default" : "secondary"}>
           {isLeader ? "Ketua" : "Anggota"}
         </Badge>
       </div>
-      <p className="font-semibold text-foreground">{member.name}</p>
+      <p className="font-bold text-foreground">{member.name}</p>
       {member.nim && (
-        <p className="text-sm text-muted-foreground mt-1">{member.nim}</p>
+        <p className="text-sm text-muted-foreground">
+          {getDisplayText(member.nim)}
+        </p>
       )}
-      {member.prodi && (
-        <p className="text-sm text-muted-foreground">{member.prodi}</p>
-      )}
+      <p className="text-sm text-muted-foreground/80">{displayProdi}</p>
     </div>
   );
 }
