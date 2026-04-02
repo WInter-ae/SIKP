@@ -32,6 +32,7 @@ export interface User {
   semester?: number;
   angkatan?: string;
   phone?: string;
+  jabatan?: string;
 }
 
 interface UserContextType {

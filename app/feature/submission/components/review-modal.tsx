@@ -854,7 +854,7 @@ function ReviewModal({
 
         <div className="flex-shrink-0 border-t border-border pt-4">
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
-            <Button variant="outline" onClick={handleClose} className="flex-1">
+            <Button variant="outline" onClick={handleClose}>
               {application.status === "approved" ||
               application.status === "rejected"
                 ? "Tutup"
