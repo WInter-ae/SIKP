@@ -5,7 +5,7 @@ import { Button } from "~/components/ui/button";
 import { Avatar } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
 import { Check, XCircle, Clock, Calendar, MapPin, FileText, User } from "lucide-react";
-import type { PengajuanSidang } from "../types/dosen";
+import type { PengajuanSidang } from "../types";
 import { VerifikasiDialog } from "./verifikasi-dialog";
 
 interface PengajuanCardProps {

@@ -1,4 +1,5 @@
 import { Clock, CheckCircle2, XCircle } from "lucide-react";
+import type { ReactNode } from "react";
 
 /**
  * Configuration untuk setiap status di response letter timeline
@@ -6,7 +7,7 @@ import { Clock, CheckCircle2, XCircle } from "lucide-react";
 export interface StatusConfig {
   title: string;
   description: string;
-  icon: JSX.Element;
+  icon: ReactNode;
   iconBg: string;
   bg: string;
   border: string;

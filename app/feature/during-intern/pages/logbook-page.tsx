@@ -32,10 +32,23 @@ import {
 } from "~/components/ui/table";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Separator } from "~/components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 
 // API Services
-import { getMyProfile, getMyInternship } from "~/feature/during-intern/services";
-import type { StudentProfile, InternshipData } from "~/feature/during-intern/services/student-api";
+import { getCompleteInternshipData } from "~/feature/during-intern/services";
+import type { CompleteInternshipData } from "~/feature/during-intern/services/student-api";
+
+// Utility Functions
+import { generateLogbookDOCX } from "~/feature/during-intern/utils/generate-logbook-docx";
 
 interface LogbookEntry {
   id: string;
@@ -76,72 +89,137 @@ function LogbookPage() {
   const [description, setDescription] = useState("");
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [generatedDates, setGeneratedDates] = useState<string[]>([]);
+  const [periodSource, setPeriodSource] = useState<"auto" | "manual" | null>(null); // Track sumber periode
   
-  // Student data state
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  const [internshipData, setInternshipData] = useState<InternshipData | null>(null);
+  // Complete internship data from backend (includes student, submission, team, mentor, lecturer)
+  const [completeData, setCompleteData] = useState<CompleteInternshipData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [showEmptyDataDialog, setShowEmptyDataDialog] = useState(false);
 
-  // Fetch student profile and internship data
+  // Fetch complete internship data (⭐ ONE API CALL FOR ALL DATA)
   useEffect(() => {
-    async function fetchStudentData() {
+    async function fetchInternshipData() {
+      console.log('🔄 Fetching internship data...');
       try {
-        const [profileResponse, internshipResponse] = await Promise.all([
-          getMyProfile(),
-          getMyInternship()
-        ]);
+        const response = await getCompleteInternshipData();
+        console.log('📥 API Response:', response);
 
-        if (profileResponse.success && profileResponse.data) {
-          setStudentProfile(profileResponse.data);
-        }
-
-        if (internshipResponse.success && internshipResponse.data) {
-          setInternshipData(internshipResponse.data);
+        if (response.success && response.data) {
+          console.log('✅ Data received:', response.data);
+          setCompleteData(response.data);
           
-          // NOTE: Auto-populate periode TIDAK digunakan
-          // Mahasiswa harus input periode manual sekali
-          // Kode ini disimpan sebagai referensi jika nanti perlu:
-          /*
-          const internship = internshipResponse.data;
-          if (internship.startDate && internship.endDate) {
-            setWorkPeriod(prev => ({
-              ...prev,
-              startDate: internship.startDate,
-              endDate: internship.endDate,
-            }));
+          // ✅ AUTO-POPULATE periode dari data submission (per mahasiswa)
+          const submission = response.data.submission;
+          if (submission?.startDate && submission?.endDate) {
+            // Periode tersedia dari submission - auto-populate!
+            const autoWorkPeriod = {
+              startDate: submission.startDate,
+              endDate: submission.endDate,
+              startDay: 'senin',
+              endDay: 'jumat'
+            };
+            
+            setWorkPeriod(autoWorkPeriod);
+            setPeriodSource("auto"); // Mark sebagai auto-populate
+            
+            // Cek localStorage untuk dates yang sudah digenerate
+            const savedPeriodState = localStorage.getItem('logbook_period_saved');
+            const savedDates = localStorage.getItem('logbook_generated_dates');
+            const savedWorkPeriod = localStorage.getItem('logbook_work_period');
+            const savedEntries = localStorage.getItem('logbook_entries');
+            
+            // Jika sudah pernah generate dengan periode yang sama, restore dari localStorage
+            if (savedPeriodState === 'true' && savedDates && savedWorkPeriod) {
+              const saved = JSON.parse(savedWorkPeriod);
+              if (saved.startDate === submission.startDate && saved.endDate === submission.endDate) {
+                setIsPeriodSaved(true);
+                setGeneratedDates(JSON.parse(savedDates));
+                if (savedEntries) {
+                  setLogbookEntries(JSON.parse(savedEntries));
+                }
+                toast.success("Periode magang dan logbook berhasil dimuat!");
+                return; // Exit early karena sudah restore dari localStorage
+              }
+            }
+            
+            // Jika belum pernah generate atau periode berbeda, auto-generate sekarang!
+            const dates = generateDatesFromPeriod(
+              autoWorkPeriod.startDate,
+              autoWorkPeriod.endDate,
+              autoWorkPeriod.startDay,
+              autoWorkPeriod.endDay
+            );
+            
+            setGeneratedDates(dates);
+            setIsPeriodSaved(true);
+            
+            // Save ke localStorage
+            localStorage.setItem('logbook_period_saved', 'true');
+            localStorage.setItem('logbook_generated_dates', JSON.stringify(dates));
+            localStorage.setItem('logbook_work_period', JSON.stringify(autoWorkPeriod));
+            
+            console.log('✅ AUTO-GENERATE SUCCESS:', {
+              isPeriodSaved: true,
+              generatedDatesCount: dates.length,
+              workPeriod: autoWorkPeriod
+            });
+            
+            toast.success(`Periode otomatis dari pengajuan! ${dates.length} hari kerja telah digenerate.`);
+          } else {
+            // Tidak ada data submission - coba restore dari localStorage (input manual sebelumnya)
+            const savedPeriodState = localStorage.getItem('logbook_period_saved');
+            const savedDates = localStorage.getItem('logbook_generated_dates');
+            const savedWorkPeriod = localStorage.getItem('logbook_work_period');
+            const savedEntries = localStorage.getItem('logbook_entries');
+
+            if (savedPeriodState === 'true' && savedDates && savedWorkPeriod) {
+              // Restore input manual sebelumnya
+              setIsPeriodSaved(true);
+              setGeneratedDates(JSON.parse(savedDates));
+              setWorkPeriod(JSON.parse(savedWorkPeriod));
+              setPeriodSource("manual"); // Mark sebagai manual input
+              if (savedEntries) {
+                setLogbookEntries(JSON.parse(savedEntries));
+              }
+              toast.success('Periode logbook manual berhasil dimuat!');
+            } else {
+              // Belum ada data submission DAN belum pernah input manual
+              setPeriodSource(null);
+              toast.info("Silakan input periode kerja Anda secara manual di Step 1");
+            }
           }
-          */
+        } else {
+          console.error('❌ API returned unsuccessful:', response);
+          
+          // Check if it's an authentication error
+          if (response.message?.toLowerCase().includes('unauthorized') || 
+              response.message?.toLowerCase().includes('token')) {
+            toast.error('Session expired. Anda akan diarahkan ke halaman login...', {
+              duration: 3000,
+            });
+            // Redirect to login after 3 seconds if not already redirected
+            setTimeout(() => {
+              if (window.location.pathname !== '/login') {
+                window.location.href = '/login?reason=unauthorized';
+              }
+            }, 3000);
+          } else {
+            toast.error(response.message || "Gagal memuat data magang");
+          }
         }
       } catch (error) {
-        console.error("Error fetching student data:", error);
-        toast.error("Gagal memuat data mahasiswa");
+        console.error("❌ Error fetching internship data:", error);
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
+        toast.error("Gagal memuat data magang");
       } finally {
         setIsLoadingProfile(false);
       }
     }
 
-    fetchStudentData();
-  }, []);
-
-  // Restore state dari localStorage jika ada
-  useEffect(() => {
-    // Check localStorage untuk saved state
-    const savedPeriodState = localStorage.getItem('logbook_period_saved');
-    const savedDates = localStorage.getItem('logbook_generated_dates');
-    const savedEntries = localStorage.getItem('logbook_entries');
-    const savedWorkPeriod = localStorage.getItem('logbook_work_period');
-
-    if (savedPeriodState === 'true' && savedDates && savedWorkPeriod) {
-      // Restore dari localStorage
-      setIsPeriodSaved(true);
-      setGeneratedDates(JSON.parse(savedDates));
-      setWorkPeriod(JSON.parse(savedWorkPeriod));
-      if (savedEntries) {
-        setLogbookEntries(JSON.parse(savedEntries));
-      }
-      toast.success('Periode logbook berhasil dimuat!');
-    }
-    // Jika belum ada saved state, mahasiswa harus input manual
+    fetchInternshipData();
   }, []);
 
   // Helper function untuk generate dates
@@ -210,6 +288,7 @@ function LogbookPage() {
     
     setGeneratedDates(dates);
     setIsPeriodSaved(true);
+    setPeriodSource("manual"); // Mark sebagai manual input
     
     // Save to localStorage
     localStorage.setItem('logbook_period_saved', 'true');
@@ -223,13 +302,15 @@ function LogbookPage() {
     setIsPeriodSaved(false);
     setGeneratedDates([]);
     setLogbookEntries([]);
+    setPeriodSource(null); // Reset period source
     
     // Clear localStorage
     localStorage.removeItem('logbook_period_saved');
     localStorage.removeItem('logbook_generated_dates');
     localStorage.removeItem('logbook_entries');
+    localStorage.removeItem('logbook_work_period');
     
-    toast.info('Periode logbook direset');
+    toast.info('Periode logbook direset. Silakan input periode baru secara manual.');
   };
 
   const handleAddLogbook = () => {
@@ -358,41 +439,82 @@ function LogbookPage() {
     }
   };
 
-  const handleExportToFile = () => {
-    // TODO: Implement file generation (PDF/Excel)
-    // Fungsi ini akan diaktifkan setelah format file ditentukan
-    toast.info("Fitur generate file sedang dalam pengembangan");
+  const handleExportToFile = async () => {
+    // Validasi minimal: harus ada periode dan tanggal yang digenerate
+    if (!workPeriod.startDate || !workPeriod.endDate) {
+      toast.error("Periode kerja praktik belum diset");
+      return;
+    }
+    if (generatedDates.length === 0) {
+      toast.error("Belum ada tanggal yang digenerate");
+      return;
+    }
+
+    console.log('🔍 Export Check - completeData:', completeData);
     
-    // // Generate CSV content
-    // let csvContent = "Minggu Ke,Hari,Tanggal,Deskripsi Kegiatan,Status Paraf,Catatan Mentor\n";
-    // 
-    // generatedDates.forEach((date) => {
-    //   const entry = getLogbookForDate(date);
-    //   const weekNum = getWeekNumber(date);
-    //   const dayName = getDayName(date);
-    //   const formattedDate = formatDate(date);
-    //   const description = entry?.description || "Belum diisi";
-    //   const status = entry?.mentorSignature ? 
-    //     (entry.mentorSignature.status === "approved" ? "Disetujui" : 
-    //      entry.mentorSignature.status === "revision" ? "Perlu Revisi" : "Ditolak") : 
-    //     "Menunggu Paraf";
-    //   const notes = entry?.mentorSignature?.notes || "-";
-    //   
-    //   csvContent += `${weekNum},${dayName},"${formattedDate}","${description}",${status},"${notes}"\n`;
-    // });
-    //
-    // // Create blob and download
-    // const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    // const link = document.createElement("a");
-    // const url = URL.createObjectURL(blob);
-    // link.setAttribute("href", url);
-    // link.setAttribute("download", `logbook_${workPeriod.startDate}_${workPeriod.endDate}.csv`);
-    // link.style.visibility = "hidden";
-    // document.body.appendChild(link);
-    // link.click();
-    // document.body.removeChild(link);
-    // 
-    // toast.success("Logbook berhasil diexport ke file CSV!");
+    // Cek apakah data magang lengkap (student dan submission data)
+    const isDataMissing = !completeData || !completeData.student || !completeData.submission;
+    
+    console.log('🔍 Data Status:', {
+      hasCompleteData: !!completeData,
+      hasStudent: !!completeData?.student,
+      hasSubmission: !!completeData?.submission,
+      isDataMissing
+    });
+
+    if (isDataMissing) {
+      // Tampilkan dialog konfirmasi
+      console.log('⚠️ Data tidak lengkap, tampilkan dialog');
+      setShowEmptyDataDialog(true);
+    } else {
+      // Data lengkap, langsung generate
+      console.log('✅ Data lengkap, langsung generate');
+      await performGenerate();
+    }
+  };
+
+  const performGenerate = async () => {
+    console.log('🚀 Starting performGenerate...');
+    
+    try {
+      // Build logbookData with fallback values for missing data
+      const logbookData = {
+        student: {
+          name: completeData?.student?.name || "[Nama Mahasiswa]",
+          nim: completeData?.student?.nim || "[NIM]",
+          prodi: completeData?.student?.prodi || "Manajemen Informatika",
+          fakultas: completeData?.student?.fakultas || "Ilmu Komputer"
+        },
+        internship: {
+          company: completeData?.submission?.company || "[Nama Perusahaan]",
+          division: completeData?.submission?.division || "[Nama Divisi]",
+          position: completeData?.submission?.division || completeData?.submission?.company || "[Posisi]",
+          mentorName: completeData?.mentor?.name || "[Nama Pembimbing Lapangan]",
+          mentorSignature: completeData?.mentor?.signature, // ← NEW: Paraf mentor dari backend
+          startDate: completeData?.submission?.startDate || workPeriod.startDate!,
+          endDate: completeData?.submission?.endDate || workPeriod.endDate!
+        },
+        workPeriod: {
+          startDate: workPeriod.startDate!,
+          endDate: workPeriod.endDate!,
+          startDay: workPeriod.startDay,
+          endDay: workPeriod.endDay
+        },
+        generatedDates,
+        entries: logbookEntries
+      };
+
+      console.log('📄 Logbook Data:', logbookData);
+      console.log('🖊️ Mentor Signature:', completeData?.mentor?.signature ? 'Available ✓' : 'Not available');
+
+      // Generate and download DOCX
+      await generateLogbookDOCX(logbookData);
+      
+      toast.success("Logbook DOCX berhasil didownload!");
+    } catch (error) {
+      console.error("Error generating logbook:", error);
+      toast.error("Gagal generate logbook. Silakan coba lagi.");
+    }
   };
 
   return (
@@ -431,20 +553,20 @@ function LogbookPage() {
               <div className="space-y-4">
                 <div>
                   <Label className="text-muted-foreground">Nama</Label>
-                  <p className="font-medium">{studentProfile?.name || "-"}</p>
+                  <p className="font-medium">{completeData?.student.name || "-"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">NIM</Label>
-                  <p className="font-medium">{studentProfile?.nim || "-"}</p>
+                  <p className="font-medium">{completeData?.student.nim || "-"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Program Studi</Label>
-                  <p className="font-medium">{studentProfile?.prodi || "Manajemen Informatika"}</p>
+                  <p className="font-medium">{completeData?.student.prodi || "Manajemen Informatika"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Fakultas</Label>
                   <p className="font-medium">
-                    {studentProfile?.fakultas || "Ilmu Komputer"}
+                    {completeData?.student.fakultas || "Ilmu Komputer"}
                   </p>
                 </div>
               </div>
@@ -453,38 +575,50 @@ function LogbookPage() {
                   <Label className="text-muted-foreground">Tempat KP</Label>
                   <p className="font-medium flex items-center gap-2">
                     <Building className="h-4 w-4" />
-                    {internshipData?.company || "-"}
+                    {completeData?.submission.company || "-"}
                   </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Bagian/Bidang</Label>
-                  <p className="font-medium">{internshipData?.position || "-"}</p>
+                  <p className="font-medium">{completeData?.submission.division || "-"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Periode KP</Label>
-                  <p className="font-medium flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {workPeriod.startDate && workPeriod.endDate
-                      ? `${new Date(workPeriod.startDate).toLocaleDateString("id-ID", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })} - ${new Date(workPeriod.endDate).toLocaleDateString("id-ID", {
-                          day: "2-digit",
-                          month: "long",
-                          year: "numeric",
-                        })}`
-                      : "Belum diisi"}
-                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="font-medium flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      {workPeriod.startDate && workPeriod.endDate
+                        ? `${new Date(workPeriod.startDate).toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })} - ${new Date(workPeriod.endDate).toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })}`
+                        : "Belum diisi"}
+                    </p>
+                    {periodSource === "auto" && workPeriod.startDate && (
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
+                        Auto
+                      </Badge>
+                    )}
+                    {periodSource === "manual" && workPeriod.startDate && (
+                      <Badge variant="outline" className="text-xs bg-gray-50 text-gray-700 border-gray-300">
+                        Manual
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Status</Label>
                   <div className="mt-1">
                     <Badge
-                      variant={internshipData?.status === "AKTIF" ? "default" : "secondary"}
-                      className={internshipData?.status === "AKTIF" ? "bg-green-500" : ""}
+                      variant={completeData?.internship.status === "AKTIF" ? "default" : "secondary"}
+                      className={completeData?.internship.status === "AKTIF" ? "bg-green-500" : ""}
                     >
-                      {internshipData?.status || "PENDING"}
+                      {completeData?.internship.status || "PENDING"}
                     </Badge>
                   </div>
                 </div>
@@ -519,9 +653,23 @@ function LogbookPage() {
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
                 Periode Kerja Praktik
+                {periodSource === "auto" && (
+                  <Badge variant="default" className="ml-2 bg-green-500">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Auto dari Pengajuan
+                  </Badge>
+                )}
+                {periodSource === "manual" && (
+                  <Badge variant="secondary" className="ml-2">
+                    <Edit className="h-3 w-3 mr-1" />
+                    Input Manual
+                  </Badge>
+                )}
               </CardTitle>
               <CardDescription>
-                Tentukan periode dan hari kerja praktik Anda
+                {periodSource === "auto" 
+                  ? "Periode otomatis dimuat dari data pengajuan KP Anda"
+                  : "Tentukan periode dan hari kerja praktik Anda"}
               </CardDescription>
             </div>
             {isPeriodSaved && (
@@ -533,6 +681,26 @@ function LogbookPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Info Alert berdasarkan sumber periode */}
+          {periodSource === "auto" && (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                <strong>Periode Otomatis:</strong> Periode kerja praktik Anda sudah otomatis dimuat dari data pengajuan yang telah disetujui. 
+                Tanggal mulai dan selesai sesuai dengan submission ID: <code className="bg-green-100 px-1 py-0.5 rounded text-xs">{completeData?.submission.id.slice(0, 8)}...</code>
+              </AlertDescription>
+            </Alert>
+          )}
+          {periodSource === null && !isPeriodSaved && (
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <strong>Input Manual Diperlukan:</strong> Data pengajuan Anda belum tersedia atau belum disetujui. 
+                Silakan input periode kerja praktik secara manual di bawah ini.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label>Tanggal Mulai</Label>
@@ -739,9 +907,35 @@ function LogbookPage() {
                         <TableCell className="text-center">
                           <div className="flex flex-col items-center gap-1">
                             {getMentorSignatureBadge(entry)}
-                            {entry?.mentorSignature?.notes && (
-                              <p className="text-xs text-muted-foreground italic mt-1">
-                                {entry.mentorSignature.notes}
+                            
+                            {/* Notes dari mentor (untuk approved) */}
+                            {entry?.mentorSignature?.status === "approved" && entry?.mentorSignature?.notes && (
+                              <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded mt-1 italic">
+                                💬 {entry.mentorSignature.notes}
+                              </p>
+                            )}
+                            
+                            {/* Rejection note (untuk rejected) - Lebih prominent */}
+                            {entry?.mentorSignature?.status === "rejected" && entry?.mentorSignature?.notes && (
+                              <div className="mt-2 w-full max-w-xs">
+                                <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-left">
+                                  <p className="text-xs font-semibold text-red-900 mb-1">
+                                    📝 Catatan Revisi:
+                                  </p>
+                                  <p className="text-xs text-red-800">
+                                    {entry.mentorSignature.notes}
+                                  </p>
+                                  <p className="text-xs text-red-600 mt-1 italic">
+                                    Silakan perbaiki dan submit ulang
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Revision note (untuk revision) */}
+                            {entry?.mentorSignature?.status === "revision" && entry?.mentorSignature?.notes && (
+                              <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded mt-1 italic">
+                                ⚠️ {entry.mentorSignature.notes}
                               </p>
                             )}
                           </div>
@@ -768,13 +962,68 @@ function LogbookPage() {
                 <div>
                   <h3 className="font-semibold text-foreground">Export Logbook</h3>
                   <p className="text-sm text-muted-foreground">
-                    Generate file CSV untuk logbook Anda
+
+      {/* Confirmation Dialog for Empty Data */}
+      <AlertDialog open={showEmptyDataDialog} onOpenChange={setShowEmptyDataDialog}>
+        <AlertDialogContent className="sm:max-w-[500px]">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 bg-amber-100 rounded-full">
+                <AlertCircle className="h-6 w-6 text-amber-600" />
+              </div>
+              <AlertDialogTitle className="text-xl">Data Belum Lengkap</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-base space-y-4 pt-2">
+              <p className="text-foreground">
+                {!completeData?.student && !completeData?.submission 
+                  ? "Data mahasiswa dan data magang Anda belum tersedia."
+                  : !completeData?.student 
+                    ? "Data mahasiswa Anda belum tersedia."
+                    : "Data magang Anda belum tersedia."}
+              </p>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-900 font-medium mb-2">📋 Yang akan dihasilkan:</p>
+                <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                  <li>File DOCX logbook dengan format standar</li>
+                  <li>Field yang kosong dapat diisi manual di Word</li>
+                  <li>Periode minggu sesuai tanggal yang Anda set</li>
+                  <li>Tabel kegiatan dengan {generatedDates.length} hari kerja</li>
+                </ul>
+                <p className="text-xs text-blue-700 mt-2 italic">
+                  ⚠️ Format mungkin perlu disesuaikan setelah dibuka di Word
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                💡 <strong>Rekomendasi:</strong> Lengkapi data Anda terlebih dahulu untuk hasil yang lebih baik, atau lanjutkan untuk mendapatkan template kosong.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="mt-2 sm:mt-0">
+              Batal
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowEmptyDataDialog(false);
+                await performGenerate();
+              }}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Ya, Download Template
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+                    Generate dokumen logbook Anda
                   </p>
                 </div>
               </div>
               <Button size="lg" onClick={handleExportToFile}>
                 <Download className="mr-2 h-5 w-5" />
-                Generate File
+                Generate Logbook
               </Button>
             </div>
           </CardContent>

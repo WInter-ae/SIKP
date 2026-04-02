@@ -45,6 +45,8 @@ export interface DosenSuratPengantarRequestItem {
   signed_file_url?: string;
   finalSignedFileUrl?: string;
   final_signed_file_url?: string;
+  nomorSurat?: string;
+  letterNumber?: string;
 }
 
 export interface SubmissionDetailForVerifier {

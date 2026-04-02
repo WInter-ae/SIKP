@@ -17,36 +17,49 @@ import Card from "~/feature/during-intern/components/card";
 import { ArrowLeft, ArrowRight, BookOpen, ClipboardCheck, FileCheck, UserCircle, FileText, User, Building, Calendar } from "lucide-react";
 
 // API Services
-import { getMyProfile, getMyInternship } from "~/feature/during-intern/services";
-import type { StudentProfile, InternshipData } from "~/feature/during-intern/services/student-api";
+import { getCompleteInternshipData } from "~/feature/during-intern/services";
+import type { CompleteInternshipData } from "~/feature/during-intern/services/student-api";
 
 function DuringInternPage() {
-  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
-  const [internshipData, setInternshipData] = useState<InternshipData | null>(null);
+  const [completeData, setCompleteData] = useState<CompleteInternshipData | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
 
-  // Fetch student profile and internship data
+  // Fetch complete internship data (⭐ ONE API CALL FOR ALL DATA)
   useEffect(() => {
     async function fetchStudentData() {
+      console.log('🔄 Fetching complete internship data...');
       try {
-        const [profileResponse, internshipResponse] = await Promise.all([
-          getMyProfile(),
-          getMyInternship()
-        ]);
+        const response = await getCompleteInternshipData();
+        console.log('📥 API Response:', response);
 
-        if (profileResponse.success && profileResponse.data) {
-          setStudentProfile(profileResponse.data);
+        if (response.success && response.data) {
+          console.log('✅ Data received:', response.data);
+          setCompleteData(response.data);
+          toast.success("Data berhasil dimuat!");
         } else {
-          toast.error("Gagal memuat profil mahasiswa");
-        }
-
-        if (internshipResponse.success && internshipResponse.data) {
-          setInternshipData(internshipResponse.data);
-        } else {
-          toast.error("Gagal memuat data magang");
+          console.error('❌ API returned unsuccessful:', response);
+          
+          // Check if it's an authentication error
+          if (response.message?.toLowerCase().includes('unauthorized') || 
+              response.message?.toLowerCase().includes('token')) {
+            toast.error('Session expired. Anda akan diarahkan ke halaman login...', {
+              duration: 3000,
+            });
+            setTimeout(() => {
+              if (window.location.pathname !== '/login') {
+                window.location.href = '/login?reason=unauthorized';
+              }
+            }, 3000);
+          } else {
+            toast.error(response.message || "Gagal memuat data magang");
+          }
         }
       } catch (error) {
-        console.error("Error fetching student data:", error);
+        console.error("❌ Error fetching student data:", error);
+        console.error('Error details:', {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          stack: error instanceof Error ? error.stack : undefined
+        });
         toast.error("Terjadi kesalahan saat memuat data");
       } finally {
         setIsLoadingProfile(false);
@@ -113,20 +126,20 @@ function DuringInternPage() {
               <div className="space-y-4">
                 <div>
                   <Label className="text-muted-foreground">Nama</Label>
-                  <p className="font-medium">{studentProfile?.name || "-"}</p>
+                  <p className="font-medium">{completeData?.student?.name || completeData?.student?.email?.split('@')[0] || "-"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">NIM</Label>
-                  <p className="font-medium">{studentProfile?.nim || "-"}</p>
+                  <p className="font-medium">{completeData?.student?.nim || "-"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Program Studi</Label>
-                  <p className="font-medium">{studentProfile?.prodi || "Manajemen Informatika"}</p>
+                  <p className="font-medium">{completeData?.student?.prodi || "Manajemen Informatika"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Fakultas</Label>
                   <p className="font-medium">
-                    {studentProfile?.fakultas || "Ilmu Komputer"}
+                    {completeData?.student?.fakultas || "Ilmu Komputer"}
                   </p>
                 </div>
               </div>
@@ -135,34 +148,40 @@ function DuringInternPage() {
                   <Label className="text-muted-foreground">Tempat KP</Label>
                   <p className="font-medium flex items-center gap-2">
                     <Building className="h-4 w-4" />
-                    {internshipData?.company || "-"}
+                    {completeData?.submission?.company || "Belum tersedia"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Bagian/Bidang</Label>
+                  <p className="font-medium">
+                    {completeData?.submission?.division || "Belum tersedia"}
                   </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Waktu KP / Periode KP</Label>
                   <p className="font-medium flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
-                    {internshipData?.startDate && internshipData?.endDate
-                      ? `${new Date(internshipData.startDate).toLocaleDateString("id-ID", {
+                    {completeData?.submission?.startDate && completeData?.submission?.endDate
+                      ? `${new Date(completeData.submission.startDate).toLocaleDateString("id-ID", {
                           day: "2-digit",
                           month: "long",
                           year: "numeric",
-                        })} - ${new Date(internshipData.endDate).toLocaleDateString("id-ID", {
+                        })} - ${new Date(completeData.submission.endDate).toLocaleDateString("id-ID", {
                           day: "2-digit",
                           month: "long",
                           year: "numeric",
                         })}`
-                      : "-"}
+                      : "Belum tersedia"}
                   </p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Status</Label>
                   <div className="mt-1">
                     <Badge
-                      variant={internshipData?.status === "AKTIF" ? "default" : "secondary"}
-                      className={internshipData?.status === "AKTIF" ? "bg-green-500" : ""}
+                      variant={completeData?.internship?.status === "AKTIF" ? "default" : "secondary"}
+                      className={completeData?.internship?.status === "AKTIF" ? "bg-green-500" : ""}
                     >
-                      {internshipData?.status || "PENDING"}
+                      {completeData?.internship?.status || "PENDING"}
                     </Badge>
                   </div>
                 </div>

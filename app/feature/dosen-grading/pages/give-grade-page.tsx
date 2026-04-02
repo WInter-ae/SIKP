@@ -104,27 +104,30 @@ export default function GiveGradePage() {
 
     if (!reportGrade || !presentationGrade) return undefined;
 
+    const presentationScores = [
+      presentationGrade.components.find((c) => c.name === "Penyampaian Materi")
+        ?.score || 0,
+      presentationGrade.components.find((c) => c.name === "Penguasaan Materi")
+        ?.score || 0,
+      presentationGrade.components.find((c) => c.name === "Kemampuan Menjawab")
+        ?.score || 0,
+    ];
+
     return {
-      reportSystematics:
+      reportFormat:
         reportGrade.components.find((c) => c.name === "Sistematika Penulisan")
           ?.score || 0,
-      reportContent:
+      materialMastery:
         reportGrade.components.find((c) => c.name === "Isi dan Pembahasan")
           ?.score || 0,
-      reportAnalysis:
+      analysisDesign:
         reportGrade.components.find((c) => c.name === "Analisis dan Kesimpulan")
           ?.score || 0,
-      presentationDelivery:
-        presentationGrade.components.find(
-          (c) => c.name === "Penyampaian Materi",
-        )?.score || 0,
-      presentationMastery:
-        presentationGrade.components.find((c) => c.name === "Penguasaan Materi")
-          ?.score || 0,
-      presentationQA:
-        presentationGrade.components.find(
-          (c) => c.name === "Kemampuan Menjawab",
-        )?.score || 0,
+      attitudeEthics:
+        Math.round(
+          presentationScores.reduce((sum, value) => sum + value, 0) /
+            Math.max(1, presentationScores.length),
+        ) || 0,
       notes: studentInfo.notes || "",
     };
   };

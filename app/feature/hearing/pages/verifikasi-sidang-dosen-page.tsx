@@ -14,7 +14,7 @@ import {
   Download,
   Eye,
 } from "lucide-react";
-import type { PengajuanSidang } from "../types/dosen";
+import type { PengajuanSidang } from "../types";
 import type { DosenESignature } from "~/feature/esignature/types/esignature";
 import { PengajuanCard } from "../components/pengajuan-card";
 import {

@@ -1,5 +1,5 @@
 // External dependencies
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import { Save } from "lucide-react";
 
@@ -27,52 +27,10 @@ import BackButton from "../components/back-button";
 
 // API Services
 import { submitAssessment } from "~/feature/field-mentor/services";
+import { getAssessmentCriteria, DEFAULT_CRITERIA } from "~/lib/assessment-criteria-api";
 
 // Types
 import type { AssessmentCriteria, MenteeOption } from "../types";
-
-const DEFAULT_ASSESSMENTS: AssessmentCriteria[] = [
-  {
-    id: "1",
-    category: "Kehadiran",
-    score: 0,
-    maxScore: 100,
-    weight: 20,
-    description: "Tingkat kehadiran dan ketepatan waktu",
-  },
-  {
-    id: "2",
-    category: "Kerjasama",
-    score: 0,
-    maxScore: 100,
-    weight: 30,
-    description: "Kemampuan bekerja dalam tim",
-  },
-  {
-    id: "3",
-    category: "Sikap, Etika dan Tingkah Laku",
-    score: 0,
-    maxScore: 100,
-    weight: 20,
-    description: "Sikap profesional, etika kerja, dan perilaku di tempat kerja",
-  },
-  {
-    id: "4",
-    category: "Prestasi Kerja",
-    score: 0,
-    maxScore: 100,
-    weight: 20,
-    description: "Kualitas dan hasil kerja yang dicapai",
-  },
-  {
-    id: "5",
-    category: "Kreatifitas",
-    score: 0,
-    maxScore: 100,
-    weight: 10,
-    description: "Kemampuan berpikir kreatif dan inovatif",
-  },
-];
 
 const MENTEE_LIST: MenteeOption[] = [
   { id: "1", name: "Ahmad Fauzi", nim: "12250111001" },
@@ -83,9 +41,19 @@ const MENTEE_LIST: MenteeOption[] = [
 function AssessmentPage() {
   const [selectedMentee, setSelectedMentee] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [assessments, setAssessments] =
-    useState<AssessmentCriteria[]>(DEFAULT_ASSESSMENTS);
+  const [assessments, setAssessments] = useState<AssessmentCriteria[]>(
+    DEFAULT_CRITERIA.map((c) => ({ ...c, score: 0 }))
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [criteriaLoading, setCriteriaLoading] = useState(true);
+
+  // Load bobot kriteria dari database saat komponen mount
+  useEffect(() => {
+    getAssessmentCriteria().then((criteria) => {
+      setAssessments(criteria.map((c) => ({ ...c, score: 0 })));
+      setCriteriaLoading(false);
+    });
+  }, []);
 
   function handleScoreChange(id: string, value: string) {
     const numValue = parseInt(value) || 0;
@@ -116,7 +84,7 @@ function AssessmentPage() {
     try {
       // Prepare assessment data
       const assessmentData = {
-        studentId: selectedMentee,
+        studentUserId: selectedMentee,
         kehadiran: assessments.find((a) => a.category === "Kehadiran")?.score || 0,
         kerjasama: assessments.find((a) => a.category === "Kerjasama")?.score || 0,
         sikapEtika: assessments.find((a) => a.category === "Sikap, Etika dan Tingkah Laku")?.score || 0,
@@ -137,6 +105,7 @@ function AssessmentPage() {
         // Reset form
         setSelectedMentee("");
         setFeedback("");
+        // Reset scores tapi pertahankan bobot dari database
         setAssessments((prev) => prev.map((a) => ({ ...a, score: 0 })));
       } else {
         toast.error(response.message || "Gagal menyimpan penilaian");
@@ -147,6 +116,18 @@ function AssessmentPage() {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (criteriaLoading) {
+    return (
+      <div className="p-6">
+        <PageHeader
+          title="Penilaian Mahasiswa Magang"
+          description="Berikan penilaian untuk mahasiswa yang magang di perusahaan Anda"
+        />
+        <p className="text-muted-foreground text-sm">Memuat kriteria penilaian...</p>
+      </div>
+    );
   }
 
   return (

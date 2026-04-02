@@ -74,6 +74,7 @@ export interface PengajuanSidang {
     tanggalSidang: string;
     waktuMulai: string;
     waktuSelesai: string;
+    dosenPenguji?: DosenPenguji[];
   };
   status: "submitted" | "approved" | "rejected";
   tanggalPengajuan: string;
@@ -86,4 +87,14 @@ export interface VerifikasiFormData {
   status: "approved" | "rejected";
   catatanDosen: string;
   nilaiAkhir?: number;
+}
+
+export interface ProcessStepProps {
+  title: string;
+  description: string;
+  status: "submitted" | "rejected" | "resubmitted" | "approved";
+  comment?: string;
+  onAction?: () => void;
+  actionText?: string;
+  showDocumentPreview?: boolean;
 }

@@ -15,12 +15,17 @@ import {
   API_ERROR_MESSAGES,
 } from "./api-error";
 
-// Gunakan URL Workers sebagai default; bisa di-override via env
+// URL untuk pengajuan, teams, templates (URL lama — tetap)
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_APP_AUTH_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   "https://backend-sikp.backend-sikp.workers.dev";
+
+// URL untuk pelaksanaan magang: logbook, mentor, internship, penilaian (URL baru)
+export const INTERNSHIP_API_BASE_URL =
+  import.meta.env.VITE_API_INTERNSHIP_URL ||
+  "https://backend-sikp.mukarrobinujiantik.workers.dev";
 
 /**
  * Standard API Response format
@@ -126,22 +131,25 @@ function buildHeaders(
  */
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit & { _baseUrl?: string } = {},
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
-  const isFormData = options.body instanceof FormData;
+  const { _baseUrl, ...fetchOptions } = options as RequestInit & {
+    _baseUrl?: string;
+  };
+  const effectiveBaseUrl = _baseUrl || API_BASE_URL;
+  const isFormData = fetchOptions.body instanceof FormData;
 
   try {
     const headers = buildHeaders(
       token,
       isFormData,
-      options.headers as Record<string, string>
+      fetchOptions.headers as Record<string, string>,
     );
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      // Use cookies only when same-origin (no explicit base URL)
-      credentials: API_BASE_URL ? "omit" : "include",
+    const response = await fetch(`${effectiveBaseUrl}${endpoint}`, {
+      ...fetchOptions,
+      credentials: "omit",
       headers,
     });
 
@@ -163,7 +171,26 @@ export async function apiClient<T>(
 
     // Handle non-OK responses
     if (!response.ok) {
-      const errorMessage = (data as ApiResponse<T>).message || getErrorMessage(response.status);
+      // Handle 401 Unauthorized - token invalid/expired.
+      if (response.status === 401) {
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_data");
+
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?reason=unauthorized";
+        }
+
+        return {
+          success: false,
+          message:
+            (data as ApiResponse<T>).message ||
+            "Session expired. Silakan login kembali.",
+          data: null,
+        };
+      }
+
+      const errorMessage =
+        (data as ApiResponse<T>).message || getErrorMessage(response.status);
       return {
         success: false,
         message: errorMessage,
@@ -219,7 +246,7 @@ export async function uploadFile<T>(
 }
 
 /**
- * GET request helper
+ * GET request helper (pengajuan/submission URL)
  */
 export function get<T>(endpoint: string, params?: Record<string, string>) {
   const url = params
@@ -229,7 +256,7 @@ export function get<T>(endpoint: string, params?: Record<string, string>) {
 }
 
 /**
- * POST request helper
+ * POST request helper (pengajuan/submission URL)
  */
 export function post<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -239,7 +266,7 @@ export function post<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * PUT request helper
+ * PUT request helper (pengajuan/submission URL)
  */
 export function put<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -249,7 +276,7 @@ export function put<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * PATCH request helper
+ * PATCH request helper (pengajuan/submission URL)
  */
 export function patch<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -259,11 +286,45 @@ export function patch<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * DELETE request helper
+ * DELETE request helper (pengajuan/submission URL)
  */
 export function del<T>(endpoint: string) {
   return apiClient<T>(endpoint, { method: "DELETE" });
 }
 
-// Export base URL for reference
+// ==================== INTERNSHIP CLIENT HELPERS ====================
+// Digunakan untuk: logbook, mentor, internship data, penilaian
+// URL: VITE_API_INTERNSHIP_URL (https://backend-sikp.mukarrobinujiantik.workers.dev)
+
+export function iget<T>(endpoint: string, params?: Record<string, string>) {
+  const url = params
+    ? `${endpoint}?${new URLSearchParams(params).toString()}`
+    : endpoint;
+  return apiClient<T>(url, { method: "GET", _baseUrl: INTERNSHIP_API_BASE_URL } as RequestInit & { _baseUrl: string });
+}
+
+export function ipost<T>(endpoint: string, body?: unknown) {
+  return apiClient<T>(endpoint, {
+    method: "POST",
+    body: body ? JSON.stringify(body) : undefined,
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+export function iput<T>(endpoint: string, body?: unknown) {
+  return apiClient<T>(endpoint, {
+    method: "PUT",
+    body: body ? JSON.stringify(body) : undefined,
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+export function idel<T>(endpoint: string) {
+  return apiClient<T>(endpoint, {
+    method: "DELETE",
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+// Export base URLs for reference
 export { API_BASE_URL };

@@ -7,6 +7,7 @@ import { apiClient } from "~/lib/api-client";
 import { getAuthToken } from "~/lib/auth-client";
 import type {
   Template,
+  TemplateType,
   TemplateField,
 } from "~/feature/template/types/template.types";
 
@@ -15,7 +16,7 @@ import type {
 export interface CreateTemplateRequest {
   file: File;
   name: string;
-  type: "Template Only" | "Generate & Template";
+  type: TemplateType;
   description?: string;
   fields?: TemplateField[];
   isActive?: boolean;
@@ -24,7 +25,7 @@ export interface CreateTemplateRequest {
 export interface UpdateTemplateRequest {
   file?: File;
   name?: string;
-  type?: "Template Only" | "Generate & Template";
+  type?: TemplateType;
   description?: string;
   fields?: TemplateField[];
   isActive?: boolean;
@@ -66,7 +67,7 @@ const ALLOWED_FILE_TYPES = [
  * Mahasiswa: hanya template dengan isActive = true
  */
 export async function getAllTemplates(params?: {
-  type?: "Template Only" | "Generate & Template";
+  type?: TemplateType;
   isActive?: boolean;
   search?: string;
 }): Promise<ApiResponse<TemplateResponse[]>> {
