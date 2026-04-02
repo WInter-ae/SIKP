@@ -322,12 +322,19 @@ export function DosenProfilPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="relative space-y-8 overflow-hidden p-4 md:p-6 lg:p-8">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -left-16 -top-24 h-56 w-56 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -right-16 top-24 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Profil Dosen</h1>
-          <p className="text-muted-foreground mt-1">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            Profil Dosen
+          </h1>
+          <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
             Kelola data profil dan e-signature Anda
           </p>
         </div>
@@ -335,7 +342,7 @@ export function DosenProfilPage() {
           <Button
             onClick={() => setIsEditing(true)}
             variant="outline"
-            className="gap-2"
+            className="gap-2 self-start"
           >
             <Edit className="h-4 w-4" />
             Edit Profil
@@ -345,7 +352,10 @@ export function DosenProfilPage() {
 
       {/* Notification */}
       {notification && (
-        <Alert variant={notification.variant} className="shadow-md">
+        <Alert
+          variant={notification.variant}
+          className="border-border/70 shadow-sm backdrop-blur"
+        >
           <CheckCircle2 className="h-5 w-5" />
           <AlertDescription>
             <div>
@@ -357,28 +367,28 @@ export function DosenProfilPage() {
       )}
 
       {/* Data Profil Card */}
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+      <Card className="border-border/70 bg-card/90 shadow-sm">
+        <CardHeader className="">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <User className="h-6 w-6" />
             Data Profil
           </CardTitle>
-          <CardDescription>Informasi lengkap dosen pembimbing</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
+        <CardContent className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-2 md:gap-5">
             {/* Nama Lengkap */}
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="nama"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4" />
                 Nama Lengkap
               </Label>
               {isEditing ? (
                 <Input
                   id="nama"
+                  className="h-11 bg-background/80"
                   value={profile.nama}
                   onChange={(e) =>
                     setProfile({ ...profile, nama: e.target.value })
@@ -386,22 +396,25 @@ export function DosenProfilPage() {
                   placeholder="Masukkan nama lengkap"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.nama}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.nama}
+                </p>
               )}
             </div>
 
             {/* NIP */}
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="nip"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <IdCard className="h-5 w-5" />
+                <IdCard className="h-4 w-4" />
                 NIP
               </Label>
               {isEditing ? (
                 <Input
                   id="nip"
+                  className="h-11 bg-background/80"
                   value={profile.nip}
                   onChange={(e) =>
                     setProfile({ ...profile, nip: e.target.value })
@@ -409,23 +422,26 @@ export function DosenProfilPage() {
                   placeholder="Masukkan NIP"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.nip}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.nip}
+                </p>
               )}
             </div>
 
             {/* Email */}
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="email"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Mail className="h-5 w-5" />
+                <Mail className="h-4 w-4" />
                 Email
               </Label>
               {isEditing ? (
                 <Input
                   id="email"
                   type="email"
+                  className="h-11 bg-background/80"
                   value={profile.email}
                   onChange={(e) =>
                     setProfile({ ...profile, email: e.target.value })
@@ -433,22 +449,25 @@ export function DosenProfilPage() {
                   placeholder="Masukkan email"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.email}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.email}
+                </p>
               )}
             </div>
 
             {/* Telepon */}
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="telepon"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Phone className="h-5 w-5" />
+                <Phone className="h-4 w-4" />
                 Telepon
               </Label>
               {isEditing ? (
                 <Input
                   id="telepon"
+                  className="h-11 bg-background/80"
                   value={profile.telepon}
                   onChange={(e) =>
                     setProfile({ ...profile, telepon: e.target.value })
@@ -456,45 +475,25 @@ export function DosenProfilPage() {
                   placeholder="Masukkan nomor telepon"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.telepon}</p>
-              )}
-            </div>
-
-            {/* Jabatan */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="jabatan"
-                className="flex items-center gap-2 text-base font-bold"
-              >
-                <Building2 className="h-5 w-5" />
-                Jabatan
-              </Label>
-              {isEditing ? (
-                <Input
-                  id="jabatan"
-                  value={profile.jabatan}
-                  onChange={(e) =>
-                    setProfile({ ...profile, jabatan: e.target.value })
-                  }
-                  placeholder="Masukkan jabatan"
-                />
-              ) : (
-                <p className="text-base font-medium">{profile.jabatan}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.telepon}
+                </p>
               )}
             </div>
 
             {/* Fakultas */}
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="fakultas"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Building2 className="h-5 w-5" />
+                <Building2 className="h-4 w-4" />
                 Fakultas
               </Label>
               {isEditing ? (
                 <Input
                   id="fakultas"
+                  className="h-11 bg-background/80"
                   value={profile.fakultas}
                   onChange={(e) =>
                     setProfile({ ...profile, fakultas: e.target.value })
@@ -502,22 +501,25 @@ export function DosenProfilPage() {
                   placeholder="Masukkan fakultas"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.fakultas}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.fakultas}
+                </p>
               )}
             </div>
 
             {/* Program Studi */}
-            <div className="space-y-2 md:col-span-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="programStudi"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Building2 className="h-5 w-5" />
+                <Building2 className="h-4 w-4" />
                 Program Studi
               </Label>
               {isEditing ? (
                 <Input
                   id="programStudi"
+                  className="h-11 bg-background/80"
                   value={profile.programStudi}
                   onChange={(e) =>
                     setProfile({ ...profile, programStudi: e.target.value })
@@ -525,18 +527,45 @@ export function DosenProfilPage() {
                   placeholder="Masukkan program studi"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.programStudi}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.programStudi}
+                </p>
               )}
             </div>
           </div>
 
+          {/* Jabatan */}
+          <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:col-span-2">
+            <Label
+              htmlFor="jabatan"
+              className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
+            >
+              <Building2 className="h-4 w-4" />
+              Jabatan
+            </Label>
+            {isEditing ? (
+              <Input
+                id="jabatan"
+                className="h-11 bg-background/80"
+                value={profile.jabatan}
+                onChange={(e) =>
+                  setProfile({ ...profile, jabatan: e.target.value })
+                }
+                placeholder="Masukkan jabatan"
+              />
+            ) : (
+              <p className="text-base font-semibold tracking-tight">
+                {profile.jabatan}
+              </p>
+            )}
+          </div>
           {/* Action Buttons saat Edit */}
           {isEditing && (
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:justify-end">
               <Button
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                className="flex-1 gap-2"
+                className="gap-2 sm:min-w-44"
               >
                 <Save className="h-4 w-4" />
                 {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
@@ -545,6 +574,7 @@ export function DosenProfilPage() {
                 onClick={() => setIsEditing(false)}
                 variant="outline"
                 disabled={isSaving}
+                className="sm:min-w-28"
               >
                 Batal
               </Button>
@@ -556,8 +586,8 @@ export function DosenProfilPage() {
       <Separator />
 
       {/* E-Signature Card */}
-      <Card className="shadow-md">
-        <CardHeader>
+      <Card className="border-border/70 bg-card/90 shadow-sm">
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <FileSignature className="h-5 w-5" />
             Tanda Tangan Digital (E-Signature)
@@ -570,11 +600,11 @@ export function DosenProfilPage() {
           {profile.esignature ? (
             <div className="space-y-4">
               {/* Preview Signature */}
-              <div className="border rounded-lg p-6 bg-muted/30">
-                <p className="text-sm text-muted-foreground mb-3">
+              <div className="rounded-xl border border-border/70 bg-muted/20 p-5">
+                <p className="mb-3 text-sm font-medium text-muted-foreground">
                   Preview Tanda Tangan:
                 </p>
-                <div className="bg-white border-2 border-dashed rounded-lg p-4 flex items-center justify-center">
+                <div className="flex min-h-32 items-center justify-center rounded-lg border-2 border-dashed bg-white p-4">
                   {signatureImageError ? (
                     <p className="text-xs text-red-600 break-all text-center">
                       Preview tanda tangan gagal dimuat. URL:{" "}
@@ -598,7 +628,7 @@ export function DosenProfilPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
                   onClick={() => setShowESignatureDialog(true)}
                   variant="outline"

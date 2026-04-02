@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import {
   Tooltip,
-  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
@@ -29,12 +28,20 @@ import { ResponseLetterTimeline } from "../components/response-letter-timeline";
 import { ConfirmDialog } from "../components/confirm-dialog";
 import { FileUploadDialog } from "../components/file-upload-dialog";
 
-import { ArrowLeft, ArrowRight, Eye, Info } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Info } from "lucide-react";
 
 function ResponseLetterPage() {
   const navigate = useNavigate();
-  const { responseLetter, isLoading, error, refetch, isLeader } =
-    useResponseLetterStatus();
+  const {
+    responseLetter,
+    isLoading,
+    error,
+    refetch,
+    isLeader,
+    hasTeam,
+    canManageResponseLetter,
+    blockedReason,
+  } = useResponseLetterStatus();
 
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string>("");
@@ -60,7 +67,7 @@ function ResponseLetterPage() {
       const dropdownValue =
         responseLetter.letterStatus === "approved" ? "disetujui" : "ditolak";
       setStatus(dropdownValue);
-      
+
       // Set verification status
       setVerificationStatus({
         verified: responseLetter.verified || false,
@@ -158,8 +165,18 @@ function ResponseLetterPage() {
         return;
       }
 
-      const team = teamsResponse.data[0];
-      const teamIdValue = team.id;
+      const fixedTeam = teamsResponse.data.find(
+        (team) => team.status?.toUpperCase() === "FIXED",
+      );
+
+      if (!fixedTeam) {
+        toast.error(
+          "Tim tidak ditemukan. Silakan tetapkan tim terlebih dahulu.",
+        );
+        return;
+      }
+
+      const teamIdValue = fixedTeam.id;
 
       // 2. Get submission for this team
       const submissionResponse = await getSubmissionByTeamId(teamIdValue);
@@ -167,6 +184,27 @@ function ResponseLetterPage() {
       if (!submissionResponse.success || !submissionResponse.data) {
         toast.error(
           "Data pengajuan tidak ditemukan. Silakan buat pengajuan terlebih dahulu.",
+        );
+        return;
+      }
+
+      const submission =
+        submissionResponse.data as typeof submissionResponse.data & {
+          workflowStage?: string;
+        };
+      const submissionStatus = submission.status?.toUpperCase();
+      const submissionStage = submission.workflowStage?.toUpperCase();
+      const isSubmissionApproved =
+        submissionStatus === "APPROVED" ||
+        submissionStatus === "COMPLETED" ||
+        submissionStage === "COMPLETED";
+
+      if (!isSubmissionApproved) {
+        const isDraftSubmission = submissionStatus === "DRAFT";
+        toast.error(
+          isDraftSubmission
+            ? "Pengajuan belum diajukan. Silakan ajukan pengajuan terlebih dahulu."
+            : "Surat pengantar belum disetujui. Anda belum dapat mengisi surat balasan.",
         );
         return;
       }
@@ -189,9 +227,7 @@ function ResponseLetterPage() {
         // Restore status value immediately from response (response.data contains letterStatus)
         if (response.data?.letterStatus) {
           const dropdownValue =
-            response.data.letterStatus === "approved"
-              ? "disetujui"
-              : "ditolak";
+            response.data.letterStatus === "approved" ? "disetujui" : "ditolak";
           setStatus(dropdownValue);
         }
 
@@ -249,17 +285,19 @@ function ResponseLetterPage() {
       setShowResetConfirm(false);
 
       // Call reset endpoint
-      const teamsResponse = await post<{ success: boolean }>("/api/teams/reset");
+      const teamsResponse = await post<{ success: boolean }>(
+        "/api/teams/reset",
+      );
 
       if (teamsResponse.success) {
-        toast.success(
-          "Tim berhasil direset. Silakan mulai proses dari awal.",
-        );
+        toast.success("Tim berhasil direset. Silakan mulai proses dari awal.");
         setTimeout(() => {
           navigate("/mahasiswa/kp/buat-tim");
         }, 1500);
       } else {
-        toast.error(teamsResponse.message || "Gagal mereset tim. Silakan coba lagi.");
+        toast.error(
+          teamsResponse.message || "Gagal mereset tim. Silakan coba lagi.",
+        );
       }
     } catch (error) {
       console.error("Reset error:", error);
@@ -282,22 +320,64 @@ function ResponseLetterPage() {
       </div>
 
       {/* Info Alert */}
-      <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
-        <Info className="h-5 w-5 text-primary" />
-        <AlertDescription className="text-foreground">
-          {verificationStatus.verified && verificationStatus.letterStatus === "approved"
-            ? "Surat balasan telah diverifikasi. Anda dapat melanjutkan ke tahap berikutnya."
-            : isLeader
-              ? "Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan ke admin"
-              : "Anda dapat melihat informasi surat balasan. Hanya ketua tim yang dapat melakukan perubahan."}
-        </AlertDescription>
-      </Alert>
+      {hasTeam && canManageResponseLetter && (
+        <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
+          <Info className="h-5 w-5 text-primary" />
+          <AlertDescription className="text-foreground">
+            {verificationStatus.verified &&
+            verificationStatus.letterStatus === "approved"
+              ? "Surat balasan telah diverifikasi. Anda dapat melanjutkan ke tahap berikutnya."
+              : isLeader
+                ? "Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan ke admin"
+                : "Anda dapat melihat informasi surat balasan. Hanya ketua tim yang dapat melakukan perubahan."}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Main Form Card */}
       {isLoading ? (
         <Card className="mb-8">
           <CardContent className="p-6">
             <ResponseLetterLoadingState />
+          </CardContent>
+        </Card>
+      ) : !hasTeam ? (
+        <Card className="mb-8">
+          <CardContent className="flex min-h-[220px] items-center justify-center p-6">
+            <div className="flex flex-col items-center gap-4">
+              <Alert
+                variant="destructive"
+                className="w-full max-w-md items-start border-l-4 border-destructive bg-destructive/5 px-4 py-3"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                <AlertDescription className="text-sm text-destructive">
+                  Tim tidak ditemukan. Silakan tetapkan tim terlebih dahulu.
+                </AlertDescription>
+              </Alert>
+              <Button onClick={() => navigate("/mahasiswa/kp/buat-tim")}>
+                Kembali ke Buat Tim
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : !canManageResponseLetter ? (
+        <Card className="mb-8">
+          <CardContent className="flex min-h-[220px] items-center justify-center p-6">
+            <div className="flex flex-col items-center gap-4">
+              <Alert
+                variant="destructive"
+                className="w-full max-w-md items-start border-l-4 border-destructive bg-destructive/5 px-4 py-3"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                <AlertDescription className="text-sm text-destructive">
+                  {blockedReason ||
+                    "Akses surat balasan belum tersedia. Silakan ajukan pengajuan terlebih dahulu."}
+                </AlertDescription>
+              </Alert>
+              <Button onClick={() => navigate("/mahasiswa/kp/pengajuan")}>
+                Kembali ke Pengajuan
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : error && !responseLetter ? (
@@ -450,37 +530,41 @@ function ResponseLetterPage() {
       )}
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between mt-8">
-        <Button variant="secondary" asChild className="px-6 py-3 font-medium">
-          <Link to="/mahasiswa/kp/surat-pengantar">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Sebelumnya
-          </Link>
-        </Button>
-        {/* Next Button - Different behavior based on verification status */}
-        {verificationStatus.verified && verificationStatus.letterStatus === "approved" ? (
-          <Button
-            onClick={() => setShowAnnouncement(true)}
-            className="px-6 py-3 font-medium"
-          >
-            Selanjutnya
-            <ArrowRight className="ml-2 h-4 w-4" />
+      {hasTeam && canManageResponseLetter && (
+        <div className="flex justify-between mt-8">
+          <Button variant="secondary" asChild className="px-6 py-3 font-medium">
+            <Link to="/mahasiswa/kp/surat-pengantar">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Sebelumnya
+            </Link>
           </Button>
-        ) : verificationStatus.verified && verificationStatus.letterStatus === "rejected" ? (
-          <Button
-            onClick={handleResetTeam}
-            disabled={isResettingTeam}
-            className="px-6 py-3 font-medium bg-amber-600 hover:bg-amber-700"
-          >
-            {isResettingTeam ? "Mereset..." : "Mulai Ulang"}
-          </Button>
-        ) : (
-          <Button disabled className="px-6 py-3 font-medium opacity-50">
-            Selanjutnya
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        )}
-      </div>
+          {/* Next Button - Different behavior based on verification status */}
+          {verificationStatus.verified &&
+          verificationStatus.letterStatus === "approved" ? (
+            <Button
+              onClick={() => setShowAnnouncement(true)}
+              className="px-6 py-3 font-medium"
+            >
+              Selanjutnya
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : verificationStatus.verified &&
+            verificationStatus.letterStatus === "rejected" ? (
+            <Button
+              onClick={handleResetTeam}
+              disabled={isResettingTeam}
+              className="px-6 py-3 font-medium bg-amber-600 hover:bg-amber-700"
+            >
+              {isResettingTeam ? "Mereset..." : "Mulai Ulang"}
+            </Button>
+          ) : (
+            <Button disabled className="px-6 py-3 font-medium opacity-50">
+              Selanjutnya
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
 
       <AnnouncementDialog
         open={showAnnouncement}

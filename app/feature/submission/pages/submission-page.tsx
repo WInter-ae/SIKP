@@ -51,7 +51,7 @@ import {
 } from "~/lib/services/surat-permohonan-api";
 import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa-api";
 import { useUser } from "~/contexts/user-context";
-import { ArrowLeft, ArrowRight, Info } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Info } from "lucide-react";
 
 function normalizePlaceholderValue(value?: string | null): string {
   if (!value) return "";
@@ -72,8 +72,6 @@ function SubmissionPage() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [teamName, setTeamName] = useState<string>("");
-  const [teamStatus, setTeamStatus] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
   const [isCurrentUserLeader, setIsCurrentUserLeader] =
     useState<boolean>(false);
@@ -237,15 +235,17 @@ function SubmissionPage() {
         const response = await getMyTeams();
 
         if (response.success && Array.isArray(response.data)) {
-          const fixedTeam =
-            response.data.find((t) => t.status?.toUpperCase() === "FIXED") ||
-            response.data[0];
+          const fixedTeam = response.data.find(
+            (t) => t.status?.toUpperCase() === "FIXED",
+          );
 
           if (!fixedTeam) {
             setLoadError(
-              "Tim tidak ditemukan. Silakan buat tim terlebih dahulu.",
+              "Tim tidak ditemukan. Silakan tetapkan tim terlebih dahulu.",
             );
             setTeamMembers([]);
+            setSubmission(null);
+            setSubmissionDocuments([]);
             return;
           }
 
@@ -268,8 +268,6 @@ function SubmissionPage() {
           });
 
           setTeamMembers(mappedMembers);
-          setTeamName(fixedTeam.name || fixedTeam.code || "Tim KP");
-          setTeamStatus(fixedTeam.status || "");
           setTeamId(fixedTeam.id);
 
           // Tentukan apakah user adalah ketua
@@ -803,14 +801,36 @@ function SubmissionPage() {
 
   if (loadError) {
     return (
-      <div className="space-y-4">
-        <Alert variant="destructive">
-          <AlertDescription>{loadError}</AlertDescription>
-        </Alert>
-        <Button onClick={() => navigate("/mahasiswa/kp/buat-tim")}>
-          Kembali ke Buat Tim
-        </Button>
-      </div>
+      <>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Halaman Pengajuan Syarat Kerja Praktik
+          </h1>
+          <p className="text-muted-foreground">
+            Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
+            Praktik
+          </p>
+        </div>
+
+        <Card className="mb-8">
+          <CardContent className="flex min-h-[220px] items-center justify-center p-6">
+            <div className="flex flex-col items-center gap-4">
+              <Alert
+                variant="destructive"
+                className="w-full max-w-md items-start border-l-4 border-destructive bg-destructive/5 px-4 py-3"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                <AlertDescription className="text-sm text-destructive">
+                  {loadError}
+                </AlertDescription>
+              </Alert>
+              <Button onClick={() => navigate("/mahasiswa/kp/buat-tim")}>
+                Kembali ke Buat Tim
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
