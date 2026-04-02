@@ -1,5 +1,23 @@
 import type { ResponseLetterStatusHistoryEntry } from "~/feature/response-letter/types";
 
+function formatDateTime(value: string) {
+  const date = new Date(value);
+
+  const formattedDate = date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const formattedTime = date.toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  return `${formattedDate} pukul ${formattedTime}`;
+}
+
 /**
  * Build timeline untuk response letter status
  *
@@ -25,11 +43,7 @@ export function buildResponseLetterTimeline(data: {
   // Step 1: PENDING status - always show first (saat submit)
   timeline.push({
     status: "PENDING",
-    date: new Date(data.submittedAt).toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }),
+    date: formatDateTime(data.submittedAt),
     isLatest: !data.verified, // Latest jika belum verified
   });
 
@@ -40,11 +54,7 @@ export function buildResponseLetterTimeline(data: {
 
     timeline.push({
       status: finalStatus,
-      date: new Date(data.verifiedAt).toLocaleDateString("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
+      date: formatDateTime(data.verifiedAt),
       isLatest: true, // Latest setelah verified
     });
   }

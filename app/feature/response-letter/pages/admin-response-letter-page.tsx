@@ -30,11 +30,107 @@ import {
 
 import type { Student } from "../types";
 
+type ResponseLetterAdminApiItem = Partial<Student> & {
+  npm?: string | null;
+  programStudi?: string | null;
+  academicSupervisor?: string | null;
+  academic_supervisor?: string | null;
+  supervisorName?: string | null;
+  supervisor_name?: string | null;
+  teamMembers?: Array<{
+    id?: number | string;
+    name?: string | null;
+    nim?: string | null;
+    npm?: string | null;
+    prodi?: string | null;
+    programStudi?: string | null;
+    role?: string | null;
+    user?: {
+      name?: string | null;
+      nim?: string | null;
+      npm?: string | null;
+      prodi?: string | null;
+      programStudi?: string | null;
+    } | null;
+  }>;
+};
+
+const getFirstNonEmptyText = (...values: Array<string | null | undefined>) =>
+  values.find((value) => typeof value === "string" && value.trim())?.trim();
+
+const normalizeResponseLetterStudent = (
+  student: ResponseLetterAdminApiItem,
+): Student => {
+  const members =
+    student.members ??
+    student.teamMembers?.map((member, index) => {
+      const resolvedName = getFirstNonEmptyText(member.name, member.user?.name);
+      const resolvedNim = getFirstNonEmptyText(
+        member.nim,
+        member.npm,
+        member.user?.nim,
+        member.user?.npm,
+      );
+      const resolvedProdi = getFirstNonEmptyText(
+        member.prodi,
+        member.programStudi,
+        member.user?.prodi,
+        member.user?.programStudi,
+      );
+
+      return {
+        id: Number(member.id ?? index + 1),
+        name: resolvedName || "Unknown",
+        nim: resolvedNim,
+        prodi: resolvedProdi,
+        role: member.role === "Anggota" ? "Anggota" : "Ketua",
+      };
+    });
+
+  const leaderMember = members?.find((member) => member.role === "Ketua");
+  const fallbackMember = members?.[0];
+  const resolvedProdi = getFirstNonEmptyText(
+    student.prodi,
+    student.programStudi,
+    leaderMember?.prodi,
+    fallbackMember?.prodi,
+  );
+  const resolvedSupervisor = getFirstNonEmptyText(
+    student.supervisor,
+    student.academicSupervisor,
+    student.academic_supervisor,
+    student.supervisorName,
+    student.supervisor_name,
+  );
+
+  return {
+    id: student.id ?? "-",
+    name: student.name || "Unknown",
+    nim: getFirstNonEmptyText(student.nim, student.npm) || "Unknown",
+    prodi: resolvedProdi || "Unknown",
+    tanggal: student.tanggal || "Unknown",
+    company: student.company || "Unknown",
+    status: student.status || "Ditolak",
+    adminApproved: student.adminApproved ?? false,
+    role: student.role,
+    memberCount: student.memberCount ?? members?.length ?? 1,
+    supervisor: resolvedSupervisor,
+    members,
+    responseFileUrl: student.responseFileUrl,
+    submittedAt: student.submittedAt,
+    verified: student.verified,
+    verifiedAt: student.verifiedAt,
+    fileUrl: student.fileUrl,
+    originalName: student.originalName,
+  };
+};
+
 function AdminResponseLetterPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const getSafeText = (value?: string) => (value && value.trim() ? value : "Unknown");
+  const getSafeText = (value?: string) =>
+    value && value.trim() ? value : "Unknown";
   const getStudentNim = (student: Student) =>
     getSafeText(student.nim || student.npm);
   const isApprovedStatus = (status?: string) =>
@@ -46,6 +142,10 @@ function AdminResponseLetterPage() {
     if (isRejectedStatus(status)) return "Ditolak";
     return "Unknown";
   };
+  const getStatusBadgeClass = (status?: string) =>
+    isApprovedStatus(status)
+      ? "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400"
+      : "border-destructive/30 bg-destructive/10 text-destructive";
 
   useEffect(() => {
     const loadResponseLetters = async () => {
@@ -60,7 +160,13 @@ function AdminResponseLetterPage() {
             "✅ Loaded response letters from backend:",
             response.data,
           );
-          setStudents(response.data as Student[]);
+          setStudents(
+            response.data.map((item) =>
+              normalizeResponseLetterStudent(
+                item as ResponseLetterAdminApiItem,
+              ),
+            ),
+          );
         } else if (
           response.success &&
           (!response.data || response.data.length === 0)
@@ -360,24 +466,28 @@ function AdminResponseLetterPage() {
                         {getSafeText(student.company)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Badge
                             variant="outline"
-                            className={
-                              isApprovedStatus(student.status)
-                                ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
-                                : "bg-destructive/10 text-destructive border-destructive/30"
-                            }
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 ${getStatusBadgeClass(student.status)}`}
                           >
+                            <span
+                              className={`mr-1.5 h-1.5 w-1.5 rounded-full ${isApprovedStatus(student.status) ? "bg-green-500" : "bg-destructive"}`}
+                            />
                             {getDisplayStatus(student.status)}
                           </Badge>
                           {student.adminApproved && (
                             <Badge
                               variant="outline"
-                              className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30 text-xs"
+                              className="rounded-full border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs px-2.5 py-0.5"
                             >
                               Terverifikasi
                             </Badge>
+                          )}
+                          {!student.adminApproved && (
+                            <span className="text-xs text-muted-foreground">
+                              Belum diverifikasi
+                            </span>
                           )}
                         </div>
                       </TableCell>

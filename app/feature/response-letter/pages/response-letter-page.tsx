@@ -285,9 +285,11 @@ function ResponseLetterPage() {
       <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
         <Info className="h-5 w-5 text-primary" />
         <AlertDescription className="text-foreground">
-          {isLeader
-            ? "Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan ke admin"
-            : "Anda dapat melihat informasi surat balasan. Hanya ketua tim yang dapat melakukan perubahan."}
+          {verificationStatus.verified && verificationStatus.letterStatus === "approved"
+            ? "Surat balasan telah diverifikasi. Anda dapat melanjutkan ke tahap berikutnya."
+            : isLeader
+              ? "Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan ke admin"
+              : "Anda dapat melihat informasi surat balasan. Hanya ketua tim yang dapat melakukan perubahan."}
         </AlertDescription>
       </Alert>
 
@@ -306,9 +308,9 @@ function ResponseLetterPage() {
         </Card>
       ) : (
         <Card className="mb-8">
-          <CardContent className="p-6">
+          <CardContent>
             {/* Upload Surat Balasan Section */}
-            <CardHeader className="px-0 pt-0">
+            <CardHeader className="px-0 pt-0 mb-2">
               <CardTitle className="text-xl font-semibold text-foreground">
                 Upload Surat Balasan
               </CardTitle>
@@ -352,16 +354,13 @@ function ResponseLetterPage() {
                             <TooltipTrigger asChild>
                               <Button
                                 variant="ghost"
-                                size="icon"
+                                size="sm"
                                 onClick={handlePreview}
-                                className="text-muted-foreground hover:text-foreground"
+                                className="border border-border hover:bg-muted"
                               >
-                                <Eye className="size-5" />
+                                Lihat
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Preview File</p>
-                            </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
                       )}

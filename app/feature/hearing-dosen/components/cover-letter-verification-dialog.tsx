@@ -114,13 +114,13 @@ function CoverLetterVerificationDialog({
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             <h3 className="font-semibold text-foreground">
-              Informasi Mahasiswa (Tim Kerja Praktik)
+              Informasi Tim Kerja Praktik
             </h3>
           </div>
 
           <div className="bg-primary/10 p-4 rounded-lg">
             <p className="text-sm text-muted-foreground">
-              Dosen Pembimbing Akademik (Ketua):
+              Dosen Pembimbing Kerja Praktik:
             </p>
             <p className="font-semibold text-primary text-lg">
               {entry.supervisor || "-"}
@@ -169,7 +169,7 @@ function CoverLetterVerificationDialog({
             disabled={isGeneratingPdf}
           >
             <Download className="w-4 h-4 mr-2" />
-            {isGeneratingPdf ? "Membuat PDF..." : "Preview Surat"}
+            {isGeneratingPdf ? "Membuat PDF..." : "Preview Surat Pengantar"}
           </Button>
         </div>
 

@@ -17,13 +17,31 @@ import { resetSubmissionToDraft } from "~/lib/services/submission-api";
 
 /**
  * Cover Letter Page - Display submission status timeline
- * 
+ *
  * This page shows the status of cover letter submission with visual timeline,
  * allowing students to track their submission progress and download approved documents.
  */
 function CoverLetterPage() {
   const navigate = useNavigate();
   const { submission, isLoading, error, refetch } = useSubmissionStatus();
+
+  const signedFileUrl = (() => {
+    if (!submission) return undefined;
+
+    const submissionWithSigned = submission as typeof submission & {
+      signedFileUrl?: string;
+      signed_file_url?: string;
+      finalSignedFileUrl?: string;
+      final_signed_file_url?: string;
+    };
+
+    return (
+      submissionWithSigned.finalSignedFileUrl ||
+      submissionWithSigned.final_signed_file_url ||
+      submissionWithSigned.signedFileUrl ||
+      submissionWithSigned.signed_file_url
+    );
+  })();
 
   /**
    * Handle resubmit action after rejection
@@ -35,13 +53,15 @@ function CoverLetterPage() {
     }
 
     const response = await resetSubmissionToDraft(submission.id);
-    
+
     if (!response.success) {
       toast.error(response.message || "Gagal mengembalikan status ke draft");
       return;
     }
 
-    toast.success("Status berhasil dikembalikan ke draft");
+    toast.success(
+      "Pengajuan Ulang berhasil. Silakan lakukan perbaikan dan ajukan kembali.",
+    );
     navigate("/mahasiswa/kp/pengajuan");
   };
 
@@ -86,7 +106,9 @@ function CoverLetterPage() {
 
           {/* Render empty state */}
           {!isLoading && !error && !submission && (
-            <SubmissionEmptyState onNavigateToSubmission={navigateToSubmission} />
+            <SubmissionEmptyState
+              onNavigateToSubmission={navigateToSubmission}
+            />
           )}
 
           {/* Render timeline */}
@@ -98,6 +120,7 @@ function CoverLetterPage() {
               submittedAt={submission.submittedAt}
               approvedAt={submission.approvedAt}
               documents={submission.documents}
+              signedFileUrl={signedFileUrl}
               onResubmit={handleResubmit}
             />
           )}

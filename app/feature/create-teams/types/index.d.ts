@@ -29,6 +29,8 @@ export interface Team {
   id: string;
   name: string;
   code: string;
+  dosen_kp_id?: string;
+  dosen_kp_name?: string;
   leaderId: string;
   isLeader?: boolean;
   status?: string;

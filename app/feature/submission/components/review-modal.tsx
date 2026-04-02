@@ -288,7 +288,7 @@ function ReviewModal({
       dosenJabatan: wakilDekanJabatan,
       nomorSurat: customLetterNumber || currentApplication.letterNumber,
       dosenEsignatureUrl: mappedSignature?.esignatureUrl,
-      signedFileUrl: suratPengantarDoc?.url,
+      signedFileUrl: currentApplication.signedFileUrl || suratPengantarDoc?.url,
       approvedAt: currentApplication.date,
     };
   };
@@ -324,14 +324,6 @@ function ReviewModal({
   };
 
   const handleRejectApplication = () => {
-    // ✅ Backend validation: Must have at least 1 rejected doc
-    if (!hasRejectedDocs) {
-      toast.error(
-        "Harus ada minimal 1 dokumen yang ditolak untuk menolak submission.",
-      );
-      return;
-    }
-
     // ✅ Backend validation: Rejection reason is REQUIRED
     if (!comment.trim()) {
       toast.error("Alasan penolakan wajib diisi saat menolak submission.");
@@ -411,15 +403,22 @@ function ReviewModal({
     return undefined;
   };
 
+  const isAdminReviewStage =
+    application?.status === "pending" &&
+    !["PENDING_DOSEN_VERIFICATION", "COMPLETED", "REJECTED_DOSEN"].includes(
+      application?.workflowStage || "",
+    );
+
   // Helper function to render document item
   const renderDocItem = (doc: DocumentFile) => {
     const status = docReviews[doc.id];
     const displayStatus = getDisplayStatus(doc);
-    const isEditable = application && application.status === "pending";
+    const isEditable = isAdminReviewStage;
     return (
       <div
         key={doc.id}
-        className={`flex items-center justify-between p-3 bg-card rounded border ${
+        onClick={() => window.open(doc.url || "#", "_blank")}
+        className={`flex items-center justify-between p-3 bg-card rounded border cursor-pointer transition-opacity hover:opacity-80 ${
           displayStatus === "REJECTED"
             ? "border-destructive/50 bg-destructive/10"
             : displayStatus === "APPROVED"
@@ -445,72 +444,40 @@ function ReviewModal({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-            title="Lihat Dokumen"
-            onClick={() => window.open(doc.url || "#", "_blank")}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
-
           {isEditable && (
             <>
               <Button
                 variant="ghost"
-                size="icon"
-                onClick={() => handleDocAction(doc.id, "approved")}
-                className={`h-8 w-8 ${
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDocAction(doc.id, "approved");
+                }}
+                className={`font-medium transition-all duration-200 transform active:translate-y-1 active:shadow-sm ${
                   status === "approved"
-                    ? "bg-green-600 text-white hover:bg-green-700"
-                    : "text-muted-foreground hover:text-green-600 hover:bg-green-500/10"
+                    ? "bg-gradient-to-b from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl hover:from-green-400 hover:to-green-500 active:shadow-none"
+                    : "border border-green-200 text-green-600 hover:border-green-400 hover:bg-green-50 shadow-md hover:shadow-lg active:shadow-none"
                 }`}
-                title="Setujui Dokumen"
               >
-                <Check className="w-4 h-4" />
+                Setuju
               </Button>
 
               <Button
                 variant="ghost"
-                size="icon"
-                onClick={() => handleDocAction(doc.id, "rejected")}
-                className={`h-8 w-8 ${
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDocAction(doc.id, "rejected");
+                }}
+                className={`font-medium transition-all duration-200 transform active:translate-y-1 active:shadow-sm ${
                   status === "rejected"
-                    ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    : "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    ? "bg-gradient-to-b from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl hover:from-red-400 hover:to-red-500 active:shadow-none"
+                    : "border border-red-200 text-red-600 hover:border-red-400 hover:bg-red-50 shadow-md hover:shadow-lg active:shadow-none"
                 }`}
                 title="Tolak Dokumen"
               >
-                <X className="w-4 h-4" />
+                Tolak
               </Button>
-            </>
-          )}
-
-          {!isEditable && status && (
-            <>
-              {status === "approved" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled
-                  className="h-8 w-8 bg-green-600 text-white"
-                  title="Dokumen Disetujui"
-                >
-                  <Check className="w-4 h-4" />
-                </Button>
-              )}
-              {status === "rejected" && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  disabled
-                  className="h-8 w-8 bg-destructive text-destructive-foreground"
-                  title="Dokumen Ditolak"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
             </>
           )}
         </div>
@@ -542,17 +509,14 @@ function ReviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent
-        className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
-        aria-label="Review Pengajuan Surat Pengantar"
-      >
+      <DialogContent className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-xl">
-            Review Pengajuan Surat Pengantar
+          <DialogTitle className="text-2xl">
+            Verifikasi Pengajuan Surat Pengantar KP
           </DialogTitle>
           <DialogDescription>
-            Modal untuk admin meninjau dan menyetujui atau menolak pengajuan
-            surat pengantar dari mahasiswa dengan dokumen lengkap.
+            Tinjau pengajuan surat pengantar kerja praktik mahasiswa. Pastikan
+            semua data sudah lengkap dan sesuai sebelum memberikan persetujuan.
           </DialogDescription>
         </DialogHeader>
 
@@ -562,13 +526,13 @@ function ReviewModal({
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center">
                 <Users className="w-5 h-5 mr-2 text-primary" />
-                Informasi Mahasiswa (Tim Kerja Praktik)
+                Informasi Tim Kerja Praktik
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-primary/10 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  Dosen Pembimbing Akademik (Ketua):
+                  Dosen Pembimbing Kerja Praktik:
                 </p>
                 <p className="font-semibold text-primary text-lg">
                   {application.supervisor}
@@ -607,12 +571,12 @@ function ReviewModal({
             </CardContent>
           </Card>
 
-          {/* 2. Informasi Kerja Praktik */}
+          {/* 2. Informasi Pengajuan */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center">
                 <Building className="w-5 h-5 mr-2 text-primary" />
-                Informasi Kerja Praktik
+                Informasi Pengajuan
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -686,12 +650,12 @@ function ReviewModal({
             </CardContent>
           </Card>
 
-          {/* 3. Dokumen yang Diupload */}
+          {/* 3. Dokumen Persyaratan */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center">
                 <FileText className="w-5 h-5 mr-2 text-primary" />
-                Dokumen yang Diupload
+                Dokumen Persyaratan
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -764,9 +728,11 @@ function ReviewModal({
                   <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
                     <AlertDescription>
-                      Terdapat dokumen yang ditolak. Anda <strong>wajib</strong>{" "}
-                      memberikan catatan review untuk menjelaskan alasan
-                      penolakan kepada mahasiswa.
+                      <p className="md:whitespace-nowrap">
+                        Terdapat dokumen yang ditolak. Anda{" "}
+                        <strong>wajib</strong> memberikan catatan review untuk
+                        menjelaskan alasan penolakan kepada mahasiswa.
+                      </p>
                     </AlertDescription>
                   </Alert>
                 )}
@@ -794,23 +760,25 @@ function ReviewModal({
                     }
                   />
                 </div>
-
-                <div className="rounded-lg border border-border p-4 flex items-center justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">
-                    Surat tidak ditampilkan otomatis. Klik tombol untuk langsung
-                    mengunduh PDF surat.
-                  </p>
-                  <Button
-                    type="button"
-                    onClick={handlePreviewLetter}
-                    disabled={isGeneratingPdf}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    {isGeneratingPdf ? "Membuat PDF..." : "Preview Surat"}
-                  </Button>
-                </div>
               </CardContent>
             </Card>
+          )}
+
+          {application.status !== "approved" && (
+            <div className="rounded-lg border border-border p-4 flex items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                Surat tidak ditampilkan otomatis. Klik tombol untuk langsung
+                mengunduh PDF surat.
+              </p>
+              <Button
+                type="button"
+                onClick={handlePreviewLetter}
+                disabled={isGeneratingPdf}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isGeneratingPdf ? "Membuat PDF..." : "Preview Surat Pengantar"}
+              </Button>
+            </div>
           )}
 
           {/* 5. Surat Pengantar (hanya tampil jika status approved) */}
@@ -842,7 +810,7 @@ function ReviewModal({
                         disabled={isGeneratingPdf}
                         className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
                       >
-                        <Download className="w-4 h-4 mr-2" />
+                        <Eye className="w-4 h-4 mr-2" />
                         {isGeneratingPdf
                           ? "Membuka Surat..."
                           : "Lihat Surat Pengantar"}
@@ -886,13 +854,13 @@ function ReviewModal({
 
         <div className="flex-shrink-0 border-t border-border pt-4">
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
-            <Button variant="outline" onClick={handleClose}>
+            <Button variant="outline" onClick={handleClose} className="flex-1">
               {application.status === "approved" ||
               application.status === "rejected"
                 ? "Tutup"
                 : "Batal"}
             </Button>
-            {application.status === "pending" && (
+            {isAdminReviewStage && (
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   variant="destructive"
@@ -910,7 +878,7 @@ function ReviewModal({
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   <Check className="w-4 h-4 mr-2" />
-                  Setujui & Generate Surat
+                  Setujui Pengajuan
                 </Button>
               </div>
             )}

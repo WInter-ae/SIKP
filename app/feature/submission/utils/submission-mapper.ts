@@ -184,8 +184,13 @@ function getStringValue(...values: unknown[]): string | undefined {
 function resolveLetterNumber(
   submission: SubmissionWithTeam,
 ): string | undefined {
+  const submissionWithStage = submission as SubmissionWithTeam & {
+    workflow_stage?: string;
+  };
+
   const currentStage = getStringValue(
     submission.workflowStage,
+    submissionWithStage.workflow_stage,
     submission.status,
   )?.toUpperCase();
   const canUseLetterNumber =
@@ -223,6 +228,7 @@ function resolveLetterNumber(
     const actor = getStringValue(entry.actor)?.toUpperCase();
     const stage = getStringValue(
       entry.workflowStage,
+      entry.workflow_stage,
       entry.status,
     )?.toUpperCase();
     const isAdminStage =
@@ -370,6 +376,11 @@ export function mapSubmissionToApplication(
   const submissionData = submission as SubmissionWithTeam & {
     company_phone?: string;
     company_business_type?: string;
+    workflow_stage?: string;
+    signedFileUrl?: string;
+    signed_file_url?: string;
+    finalSignedFileUrl?: string;
+    final_signed_file_url?: string;
   };
 
   if (!submission.team) {
@@ -563,7 +574,21 @@ export function mapSubmissionToApplication(
   });
 
   // Map status based on workflow stage (status final-only is controlled by dosen/wakil dekan)
-  const workflowStage = submission.workflowStage || "PENDING_ADMIN_REVIEW";
+  const rawWorkflowStage = getStringValue(
+    submission.workflowStage,
+    submissionData.workflow_stage,
+    submission.status,
+  )?.toUpperCase();
+
+  const workflowStage: Application["workflowStage"] =
+    rawWorkflowStage === "PENDING_DOSEN_VERIFICATION" ||
+    rawWorkflowStage === "COMPLETED" ||
+    rawWorkflowStage === "REJECTED_ADMIN" ||
+    rawWorkflowStage === "REJECTED_DOSEN" ||
+    rawWorkflowStage === "DRAFT"
+      ? rawWorkflowStage
+      : "PENDING_ADMIN_REVIEW";
+
   let status: "pending" | "approved" | "rejected" = "pending";
 
   if (workflowStage === "COMPLETED") {
@@ -583,6 +608,12 @@ export function mapSubmissionToApplication(
   const supervisor = resolveAcademicSupervisorName(submission);
   const wakilDekanSignature = resolveWakilDekanSignature(submission);
   const letterNumber = resolveLetterNumber(submission);
+  const signedFileUrl = getStringValue(
+    submissionData.finalSignedFileUrl,
+    submissionData.final_signed_file_url,
+    submissionData.signedFileUrl,
+    submissionData.signed_file_url,
+  );
 
   return {
     id: parseInt(submission.id, 10) || Math.floor(Math.random() * 10000),
@@ -599,6 +630,7 @@ export function mapSubmissionToApplication(
           year: "numeric",
         }),
     status,
+    workflowStage,
     pendingLabel,
     supervisor,
     members,
@@ -619,6 +651,7 @@ export function mapSubmissionToApplication(
     documents,
     wakilDekanSignature,
     letterNumber,
+    signedFileUrl,
     rejectionComment: submission.rejectionReason,
     statusHistory: submission.statusHistory, // ✅ Pass status history for re-submission detection
     documentReviews: submission.documentReviews, // ✅ Load from backend (requires backend setup)

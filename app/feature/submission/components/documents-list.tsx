@@ -53,7 +53,7 @@ export function DocumentsList({
         `/api/submissions/${submissionId}/documents`,
         {
           method: "GET",
-        }
+        },
       );
 
       if (!response.success) {
@@ -65,7 +65,8 @@ export function DocumentsList({
       setDocuments(docs);
       onDocumentsLoaded?.(docs);
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Error fetching documents";
+      const errorMsg =
+        err instanceof Error ? err.message : "Error fetching documents";
       setError(errorMsg);
     } finally {
       setIsLoading(false);
@@ -99,7 +100,9 @@ export function DocumentsList({
         <CardContent>
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-muted-foreground">Loading documents...</span>
+            <span className="ml-2 text-muted-foreground">
+              Loading documents...
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -125,11 +128,11 @@ export function DocumentsList({
   // ✅ CRITICAL FIX: Pisahkan dokumen yang diupload dari SURAT_PENGANTAR
   // Sesuai guide: SURAT_PENGANTAR harus di section TERPISAH
   const uploadedDocuments = documents.filter(
-    (doc) => doc.documentType !== "SURAT_PENGANTAR"
+    (doc) => doc.documentType !== "SURAT_PENGANTAR",
   );
-  
+
   const suratPengantar = documents.find(
-    (doc) => doc.documentType === "SURAT_PENGANTAR"
+    (doc) => doc.documentType === "SURAT_PENGANTAR",
   );
 
   return (
@@ -156,7 +159,7 @@ export function DocumentsList({
             <div className="space-y-3">
               {uploadedDocuments.map((doc) => {
                 const badgeColorClass = "bg-primary/10 text-primary";
-                
+
                 return (
                   <div
                     key={doc.id}
@@ -164,8 +167,11 @@ export function DocumentsList({
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className={`inline-block px-2 py-1 text-xs font-medium rounded ${badgeColorClass}`}>
-                          {documentTypeLabels[doc.documentType] || doc.documentType}
+                        <span
+                          className={`inline-block px-2 py-1 text-xs font-medium rounded ${badgeColorClass}`}
+                        >
+                          {documentTypeLabels[doc.documentType] ||
+                            doc.documentType}
                         </span>
                       </div>
                       <p className="font-medium text-sm break-words">
@@ -177,7 +183,8 @@ export function DocumentsList({
                           {formatFileSize(doc.fileSize)}
                         </div>
                         <div>
-                          <span className="font-medium">Type:</span> {doc.fileType}
+                          <span className="font-medium">Type:</span>{" "}
+                          {doc.fileType}
                         </div>
                         <div>
                           <span className="font-medium">Member:</span>{" "}
@@ -231,9 +238,12 @@ export function DocumentsList({
             <Alert className="bg-emerald-100 border-emerald-300 dark:bg-emerald-950 dark:border-emerald-700">
               <Sparkles className="h-4 w-4 text-emerald-700 dark:text-emerald-100" />
               <AlertDescription className="text-emerald-800 dark:text-emerald-100">
-                <p className="font-semibold mb-1">✅ Surat Pengantar Telah Disetujui</p>
+                <p className="font-semibold mb-1">
+                  ✅ Surat Pengantar Telah Disetujui
+                </p>
                 <p className="text-sm">
-                  Surat pengantar kerja praktik telah berhasil dibuat dan dapat diunduh oleh mahasiswa.
+                  Surat pengantar kerja praktik telah berhasil dibuat dan dapat
+                  diunduh oleh mahasiswa.
                 </p>
               </AlertDescription>
             </Alert>
@@ -242,7 +252,10 @@ export function DocumentsList({
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Badge variant="secondary" className="bg-emerald-600 text-white hover:bg-emerald-700">
+                    <Badge
+                      variant="secondary"
+                      className="bg-emerald-600 text-white hover:bg-emerald-700"
+                    >
                       <Sparkles className="w-3 h-3 mr-1" />
                       Dibuat Otomatis oleh Sistem
                     </Badge>
@@ -256,7 +269,8 @@ export function DocumentsList({
                       {formatFileSize(suratPengantar.fileSize)}
                     </div>
                     <div>
-                      <span className="font-medium">Type:</span> {suratPengantar.fileType}
+                      <span className="font-medium">Type:</span>{" "}
+                      {suratPengantar.fileType}
                     </div>
                     <div className="col-span-2">
                       <span className="font-medium">Created:</span>{" "}
@@ -281,7 +295,10 @@ export function DocumentsList({
                     className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     title="Download document"
                   >
-                    <a href={suratPengantar.fileUrl} download={suratPengantar.originalName}>
+                    <a
+                      href={suratPengantar.fileUrl}
+                      download={suratPengantar.originalName}
+                    >
                       <Download className="h-4 w-4 mr-1" />
                       Download
                     </a>
@@ -293,15 +310,23 @@ export function DocumentsList({
         </Card>
       )}
 
-      <Dialog open={!!previewDoc} onOpenChange={(open) => !open && setPreviewDoc(null)}>
+      <Dialog
+        open={!!previewDoc}
+        onOpenChange={(open) => !open && setPreviewDoc(null)}
+      >
         <DialogContent className="max-w-5xl h-[85vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between gap-4">
-              <span className="truncate">{previewDoc?.originalName || "Document preview"}</span>
+              <span className="truncate">
+                {previewDoc?.originalName || "Document preview"}
+              </span>
               <div className="flex items-center gap-2">
                 {previewDoc?.fileUrl && (
                   <Button asChild size="sm" variant="outline">
-                    <a href={previewDoc.fileUrl} download={previewDoc.originalName}>
+                    <a
+                      href={previewDoc.fileUrl}
+                      download={previewDoc.originalName}
+                    >
                       <Download className="h-4 w-4 mr-1" /> Download
                     </a>
                   </Button>
@@ -314,7 +339,8 @@ export function DocumentsList({
               </div>
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              {previewDoc?.documentType} • {previewDoc?.fileType} • {previewDoc?.memberUserId}
+              {previewDoc?.documentType} • {previewDoc?.fileType} •{" "}
+              {previewDoc?.memberUserId}
             </DialogDescription>
           </DialogHeader>
 

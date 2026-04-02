@@ -76,7 +76,7 @@ export function FileUploadDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Upload {documentTitle}</DialogTitle>
-          <DialogDescription>Untuk anggota: {memberName}</DialogDescription>
+          {/* <DialogDescription>Untuk: {memberName}</DialogDescription> */}
         </DialogHeader>
 
         <div
