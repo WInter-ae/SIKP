@@ -1,6 +1,6 @@
 import { Button } from "~/components/ui/button";
 import { AlertCircle, FileQuestion, Loader2 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { Alert, AlertDescription } from "~/components/ui/alert";
 
 /**
  * Loading state component for submission status
@@ -29,24 +29,19 @@ export function SubmissionErrorState({
   onNavigateToSubmission,
 }: SubmissionErrorStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 space-y-4">
-      <Alert variant="destructive" className="max-w-md">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Terjadi Kesalahan</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
+    <div className="flex flex-col items-center justify-center py-8 space-y-3">
+      <Alert
+        variant="destructive"
+        className="w-full max-w-md items-start border-l-4 border-destructive bg-destructive/5 px-3 py-2.5"
+      >
+        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+        <AlertDescription className="text-sm text-destructive">
+          {error}
+        </AlertDescription>
       </Alert>
-      <div className="flex gap-2">
-        {onRetry && (
-          <Button onClick={onRetry} variant="outline">
-            Coba Lagi
-          </Button>
-        )}
-        {onNavigateToSubmission && (
-          <Button onClick={onNavigateToSubmission}>
-            Kembali ke Pengajuan
-          </Button>
-        )}
-      </div>
+      {onNavigateToSubmission && (
+        <Button onClick={onNavigateToSubmission}>Kembali ke Buat Tim</Button>
+      )}
     </div>
   );
 }

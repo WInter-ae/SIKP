@@ -335,11 +335,18 @@ export function MahasiswaProfilPage() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Profil Mahasiswa</h1>
-          <p className="text-muted-foreground mt-1">
+    <div className="relative space-y-8 overflow-hidden p-4 md:p-6 lg:p-8">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -left-16 -top-24 h-56 w-56 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -right-16 top-24 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl" />
+      </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
+            Profil Mahasiswa
+          </h1>
+          <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
             Kelola data profil dan e-signature Anda
           </p>
         </div>
@@ -347,7 +354,7 @@ export function MahasiswaProfilPage() {
           <Button
             onClick={() => setIsEditing(true)}
             variant="outline"
-            className="gap-2"
+            className="gap-2 self-start"
           >
             <Edit className="h-4 w-4" />
             Edit Profil
@@ -356,7 +363,10 @@ export function MahasiswaProfilPage() {
       </div>
 
       {notification && (
-        <Alert variant={notification.variant} className="shadow-md">
+        <Alert
+          variant={notification.variant}
+          className="border-border/70 shadow-sm backdrop-blur"
+        >
           <CheckCircle2 className="h-5 w-5" />
           <AlertDescription>
             <div>
@@ -367,27 +377,27 @@ export function MahasiswaProfilPage() {
         </Alert>
       )}
 
-      <Card className="shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
+      <Card className="border-border/70 bg-card/90 shadow-sm">
+        <CardHeader className="">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <User className="h-6 w-6" />
             Data Profil
           </CardTitle>
-          <CardDescription>Informasi lengkap mahasiswa</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+        <CardContent className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="nama"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <User className="h-5 w-5" />
+                <User className="h-4 w-4" />
                 Nama Lengkap
               </Label>
               {isEditing ? (
                 <Input
                   id="nama"
+                  className="h-11 bg-background/80"
                   value={profile.nama}
                   onChange={(e) =>
                     setProfile({ ...profile, nama: e.target.value })
@@ -395,33 +405,47 @@ export function MahasiswaProfilPage() {
                   placeholder="Masukkan nama lengkap"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.nama || "-"}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.nama || "-"}
+                </p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="nim"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <IdCard className="h-5 w-5" />
+                <IdCard className="h-4 w-4" />
                 NIM
               </Label>
-              <Input id="nim" value={profile.nim} disabled />
+              {isEditing ? (
+                <Input
+                  id="nim"
+                  className="h-11 bg-muted/40 text-muted-foreground"
+                  value={profile.nim}
+                  disabled
+                />
+              ) : (
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.nim}
+                </p>
+              )}
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="email"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Mail className="h-5 w-5" />
+                <Mail className="h-4 w-4" />
                 Email
               </Label>
               {isEditing ? (
                 <Input
                   id="email"
                   type="email"
+                  className="h-11 bg-background/80"
                   value={profile.email}
                   onChange={(e) =>
                     setProfile({ ...profile, email: e.target.value })
@@ -429,21 +453,24 @@ export function MahasiswaProfilPage() {
                   placeholder="Masukkan email"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.email || "-"}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.email || "-"}
+                </p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="phone"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Phone className="h-5 w-5" />
+                <Phone className="h-4 w-4" />
                 Telepon
               </Label>
               {isEditing ? (
                 <Input
                   id="phone"
+                  className="h-11 bg-background/80"
                   value={profile.phone}
                   onChange={(e) =>
                     setProfile({ ...profile, phone: e.target.value })
@@ -451,21 +478,24 @@ export function MahasiswaProfilPage() {
                   placeholder="Masukkan nomor telepon"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.phone || "-"}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.phone || "-"}
+                </p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="fakultas"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Building2 className="h-5 w-5" />
+                <Building2 className="h-4 w-4" />
                 Fakultas
               </Label>
               {isEditing ? (
                 <Input
                   id="fakultas"
+                  className="h-11 bg-background/80"
                   value={profile.fakultas}
                   onChange={(e) =>
                     setProfile({ ...profile, fakultas: e.target.value })
@@ -473,23 +503,24 @@ export function MahasiswaProfilPage() {
                   placeholder="Masukkan fakultas"
                 />
               ) : (
-                <p className="text-base font-medium">
+                <p className="text-base font-semibold tracking-tight">
                   {profile.fakultas || "-"}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="prodi"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Building2 className="h-5 w-5" />
+                <Building2 className="h-4 w-4" />
                 Program Studi
               </Label>
               {isEditing ? (
                 <Input
                   id="prodi"
+                  className="h-11 bg-background/80"
                   value={profile.prodi}
                   onChange={(e) =>
                     setProfile({ ...profile, prodi: e.target.value })
@@ -497,22 +528,25 @@ export function MahasiswaProfilPage() {
                   placeholder="Masukkan program studi"
                 />
               ) : (
-                <p className="text-base font-medium">{profile.prodi || "-"}</p>
+                <p className="text-base font-semibold tracking-tight">
+                  {profile.prodi || "-"}
+                </p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="semester"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Building2 className="h-5 w-5" />
+                <Building2 className="h-4 w-4" />
                 Semester
               </Label>
               {isEditing ? (
                 <Input
                   id="semester"
                   inputMode="numeric"
+                  className="h-11 bg-background/80"
                   value={profile.semester}
                   onChange={(e) =>
                     setProfile({ ...profile, semester: e.target.value })
@@ -520,24 +554,25 @@ export function MahasiswaProfilPage() {
                   placeholder="Masukkan semester"
                 />
               ) : (
-                <p className="text-base font-medium">
+                <p className="text-base font-semibold tracking-tight">
                   {profile.semester || "-"}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
               <Label
                 htmlFor="jumlahSksSelesai"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Building2 className="h-5 w-5" />
+                <Building2 className="h-4 w-4" />
                 Jumlah SKS Selesai
               </Label>
               {isEditing ? (
                 <Input
                   id="jumlahSksSelesai"
                   inputMode="numeric"
+                  className="h-11 bg-background/80"
                   value={profile.jumlahSksSelesai}
                   onChange={(e) =>
                     setProfile({
@@ -548,23 +583,24 @@ export function MahasiswaProfilPage() {
                   placeholder="Masukkan jumlah SKS selesai"
                 />
               ) : (
-                <p className="text-base font-medium">
+                <p className="text-base font-semibold tracking-tight">
                   {profile.jumlahSksSelesai || "-"}
                 </p>
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:col-span-2">
               <Label
                 htmlFor="angkatan"
-                className="flex items-center gap-2 text-base font-bold"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
               >
-                <Building2 className="h-5 w-5" />
+                <Building2 className="h-4 w-4" />
                 Angkatan
               </Label>
               {isEditing ? (
                 <Input
                   id="angkatan"
+                  className="h-11 bg-background/80"
                   value={profile.angkatan}
                   onChange={(e) =>
                     setProfile({ ...profile, angkatan: e.target.value })
@@ -572,7 +608,7 @@ export function MahasiswaProfilPage() {
                   placeholder="Masukkan angkatan"
                 />
               ) : (
-                <p className="text-base font-medium">
+                <p className="text-base font-semibold tracking-tight">
                   {profile.angkatan || "-"}
                 </p>
               )}
@@ -580,11 +616,11 @@ export function MahasiswaProfilPage() {
           </div>
 
           {isEditing && (
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:justify-end">
               <Button
                 onClick={handleSaveProfile}
                 disabled={isSaving}
-                className="flex-1 gap-2"
+                className="gap-2 sm:min-w-44"
               >
                 <Save className="h-4 w-4" />
                 {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
@@ -593,6 +629,7 @@ export function MahasiswaProfilPage() {
                 onClick={() => setIsEditing(false)}
                 variant="outline"
                 disabled={isSaving}
+                className="sm:min-w-28"
               >
                 Batal
               </Button>
@@ -603,8 +640,8 @@ export function MahasiswaProfilPage() {
 
       <Separator />
 
-      <Card className="shadow-md">
-        <CardHeader>
+      <Card className="border-border/70 bg-card/90 shadow-sm">
+        <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
             <FileSignature className="h-5 w-5" />
             Tanda Tangan Digital (E-Signature)
@@ -616,11 +653,11 @@ export function MahasiswaProfilPage() {
         <CardContent className="space-y-4">
           {profile.esignature ? (
             <div className="space-y-4">
-              <div className="border rounded-lg p-6 bg-muted/30">
-                <p className="text-sm text-muted-foreground mb-3">
+              <div className="rounded-xl border border-border/70 bg-muted/20 p-5">
+                <p className="mb-3 text-sm font-medium text-muted-foreground">
                   Preview Tanda Tangan:
                 </p>
-                <div className="bg-white border-2 border-dashed rounded-lg p-4 flex items-center justify-center">
+                <div className="flex min-h-32 items-center justify-center rounded-lg border-2 border-dashed bg-white p-4">
                   {signatureImageError ? (
                     <p className="text-xs text-red-600 break-all text-center">
                       Preview tanda tangan gagal dimuat. URL:{" "}
@@ -643,7 +680,7 @@ export function MahasiswaProfilPage() {
                 </p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <Button
                   onClick={() => setShowESignatureDialog(true)}
                   variant="outline"
@@ -677,7 +714,7 @@ export function MahasiswaProfilPage() {
 
               <Button
                 onClick={() => setShowESignatureDialog(true)}
-                className="w-full gap-2 h-11"
+                className="h-11 w-full gap-2"
               >
                 <FileSignature className="h-5 w-5" />
                 Buat Tanda Tangan Digital

@@ -72,9 +72,15 @@ function CoverLetterPage() {
     navigate("/mahasiswa/kp/pengajuan");
   };
 
+  const navigateToCreateTeam = () => {
+    navigate("/mahasiswa/kp/buat-tim");
+  };
+
   /**
    * Check if next button should be enabled
    */
+  const isDraftSubmission = submission?.status === "DRAFT";
+
   const isNextButtonEnabled =
     submission?.status === "APPROVED" || submission?.status === "COMPLETED";
 
@@ -100,19 +106,19 @@ function CoverLetterPage() {
             <SubmissionErrorState
               error={error}
               onRetry={refetch}
-              onNavigateToSubmission={navigateToSubmission}
+              onNavigateToSubmission={navigateToCreateTeam}
             />
           )}
 
           {/* Render empty state */}
-          {!isLoading && !error && !submission && (
+          {!isLoading && !error && (!submission || isDraftSubmission) && (
             <SubmissionEmptyState
               onNavigateToSubmission={navigateToSubmission}
             />
           )}
 
           {/* Render timeline */}
-          {!isLoading && submission && (
+          {!isLoading && submission && !isDraftSubmission && (
             <StatusTimeline
               statusHistory={submission.statusHistory}
               currentStatus={submission.status}
@@ -128,7 +134,7 @@ function CoverLetterPage() {
       </Card>
 
       {/* Navigation Buttons - Only show if there's a submission */}
-      {submission && !isLoading && (
+      {submission && !isLoading && !isDraftSubmission && (
         <div className="flex justify-between mt-8">
           <Button
             variant="secondary"

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import type { ResponseLetter } from "~/feature/response-letter/types";
 import { getMyResponseLetter } from "~/lib/services/response-letter-api";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
+import { getSubmissionByTeamId } from "~/lib/services/submission-api";
 
 /**
  * Result of the useResponseLetterStatus hook
@@ -13,6 +14,9 @@ interface UseResponseLetterStatusResult {
   error: string | null;
   refetch: () => Promise<void>;
   isLeader: boolean;
+  hasTeam: boolean;
+  canManageResponseLetter: boolean;
+  blockedReason: string | null;
 }
 
 /**
@@ -40,11 +44,16 @@ export function useResponseLetterStatus(): UseResponseLetterStatusResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLeader, setIsLeader] = useState(false);
+  const [hasTeam, setHasTeam] = useState(true);
+  const [canManageResponseLetter, setCanManageResponseLetter] = useState(true);
+  const [blockedReason, setBlockedReason] = useState<string | null>(null);
 
   const loadResponseLetterStatus = async () => {
     try {
       setIsLoading(true);
       setError(null);
+      setBlockedReason(null);
+      setCanManageResponseLetter(true);
 
       // Get user's team to check if they're a leader AND to get team data
       const teamsResponse = await getMyTeams();
@@ -57,24 +66,84 @@ export function useResponseLetterStatus(): UseResponseLetterStatusResult {
         console.log("📭 User is not part of any team");
         setResponseLetter(null);
         setIsLeader(false);
+        setHasTeam(false);
+        setCanManageResponseLetter(false);
+        setBlockedReason(
+          "Tim tidak ditemukan. Silakan buat tim terlebih dahulu.",
+        );
         setIsLoading(false);
         return;
       }
 
-      const team = teamsResponse.data[0];
-      const teamIsLeader = team.isLeader || false;
+      const fixedTeam = teamsResponse.data.find(
+        (team) => team.status?.toUpperCase() === "FIXED",
+      );
+
+      if (!fixedTeam) {
+        console.log("📭 User has no FIXED team yet");
+        setResponseLetter(null);
+        setIsLeader(false);
+        setHasTeam(false);
+        setCanManageResponseLetter(false);
+        setBlockedReason(
+          "Tim belum berstatus FIXED. Silakan finalisasi tim terlebih dahulu.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const teamIsLeader = fixedTeam.isLeader || false;
       setIsLeader(teamIsLeader);
+      setHasTeam(true);
+
+      const submissionResponse = await getSubmissionByTeamId(fixedTeam.id);
+      if (!submissionResponse.success || !submissionResponse.data) {
+        setResponseLetter(null);
+        setCanManageResponseLetter(false);
+        setBlockedReason(
+          "Pengajuan belum diajukan. Silakan lengkapi data lalu ajukan pada halaman Pengajuan terlebih dahulu.",
+        );
+        setIsLoading(false);
+        return;
+      }
+
+      const submission =
+        submissionResponse.data as typeof submissionResponse.data & {
+          workflowStage?: string;
+        };
+      const submissionStatus = submission.status?.toUpperCase();
+      const submissionStage = submission.workflowStage?.toUpperCase();
+
+      const isSubmissionApproved =
+        submissionStatus === "APPROVED" ||
+        submissionStatus === "COMPLETED" ||
+        submissionStage === "COMPLETED";
+
+      if (!isSubmissionApproved) {
+        const isDraftSubmission = submissionStatus === "DRAFT";
+        setResponseLetter(null);
+        setCanManageResponseLetter(false);
+        setBlockedReason(
+          isDraftSubmission
+            ? "Pengajuan belum diajukan. Silakan lengkapi data lalu ajukan pada halaman Pengajuan terlebih dahulu."
+            : "Surat pengantar belum disetujui. Halaman surat balasan akan terbuka setelah status pengajuan APPROVED.",
+        );
+        setIsLoading(false);
+        return;
+      }
 
       const response = await getMyResponseLetter();
 
       if (response.success && response.data) {
         setResponseLetter(response.data);
         setIsLeader(response.data.isLeader ?? teamIsLeader);
+        setCanManageResponseLetter(true);
         console.log("✅ Loaded response letter status:", response.data);
       } else {
         console.log("📭 No response letter found for this team");
         setResponseLetter(null);
         setIsLeader(teamIsLeader);
+        setCanManageResponseLetter(true);
       }
     } catch (err) {
       console.error("❌ Error loading response letter:", err);
@@ -97,5 +166,8 @@ export function useResponseLetterStatus(): UseResponseLetterStatusResult {
     error,
     refetch: loadResponseLetterStatus,
     isLeader,
+    hasTeam,
+    canManageResponseLetter,
+    blockedReason,
   };
 }
