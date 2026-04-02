@@ -10,11 +10,10 @@ import {
   UserCircle,
   Users,
   FileCheck,
-  ClipboardList,
   BookMarked,
   Award,
-} from "lucide-react"
-import type { NavItem, UserRole } from "../types"
+} from "lucide-react";
+import type { NavItem, UserRole } from "../types";
 
 // Menu untuk Mahasiswa
 const mahasiswaMenu: NavItem[] = [
@@ -24,26 +23,32 @@ const mahasiswaMenu: NavItem[] = [
     icon: Home,
   },
   {
-    title: "Magang",
+    title: "Kerja Praktik",
     url: "#",
     icon: GraduationCap,
     isActive: true,
     items: [
       {
-        title: "Buat Tim",
-        url: "/mahasiswa/kp/buat-tim",
-      },
-      {
         title: "Pengajuan",
-        url: "/mahasiswa/kp/pengajuan",
-      },
-      {
-        title: "Surat Pengantar",
-        url: "/mahasiswa/kp/surat-pengantar",
-      },
-      {
-        title: "Surat Balasan",
-        url: "/mahasiswa/kp/surat-balasan",
+        url: "#",
+        items: [
+          {
+            title: "Buat Tim",
+            url: "/mahasiswa/kp/buat-tim",
+          },
+          {
+            title: "Pengajuan",
+            url: "/mahasiswa/kp/pengajuan",
+          },
+          {
+            title: "Surat Pengantar",
+            url: "/mahasiswa/kp/surat-pengantar",
+          },
+          {
+            title: "Surat Balasan",
+            url: "/mahasiswa/kp/surat-balasan",
+          },
+        ],
       },
       {
         title: "Saat Magang",
@@ -75,11 +80,6 @@ const mahasiswaMenu: NavItem[] = [
     icon: FolderKanban,
   },
   {
-    title: "Tim",
-    url: "#",
-    icon: Users,
-  },
-  {
     title: "Mentor Lapangan",
     url: "/mahasiswa/mentor-lapangan",
     icon: UserCircle,
@@ -99,7 +99,7 @@ const mahasiswaMenu: NavItem[] = [
     url: "#",
     icon: Settings,
   },
-]
+];
 
 // Menu untuk Admin Prodi
 const adminMenu: NavItem[] = [
@@ -109,21 +109,14 @@ const adminMenu: NavItem[] = [
     icon: Home,
   },
   {
-    title: "Pengajuan",
-    url: "#",
-    icon: ClipboardList,
-    items: [
-      {
-        title: "Surat Pengantar",
-        url: "/admin/pengajuan-surat-pengantar",
-      },
-    ],
-  },
-  {
     title: "Verifikasi",
     url: "#",
     icon: FileCheck,
     items: [
+      {
+        title: "Pengajuan Surat Pengantar",
+        url: "/admin/pengajuan-surat-pengantar",
+      },
       {
         title: "Surat Balasan",
         url: "/admin/surat-balasan",
@@ -175,7 +168,7 @@ const adminMenu: NavItem[] = [
     url: "#",
     icon: Settings,
   },
-]
+];
 
 // Menu untuk Dosen
 const dosenMenu: NavItem[] = [
@@ -188,7 +181,6 @@ const dosenMenu: NavItem[] = [
     title: "Kerja Praktik",
     url: "#",
     icon: GraduationCap,
-    isActive: true,
     items: [
       {
         title: "Verifikasi Judul",
@@ -198,9 +190,16 @@ const dosenMenu: NavItem[] = [
         title: "Verifikasi Sidang",
         url: "/dosen/kp/verifikasi-sidang",
       },
+    ],
+  },
+  {
+    title: "Verifikasi",
+    url: "#",
+    icon: FileCheck,
+    items: [
       {
-        title: "Surat Pengantar",
-        url: "/dosen/kp/surat-pengantar",
+        title: "Surat Ajuan Mahasiswa",
+        url: "/dosen/kp/verifikasi-surat",
       },
     ],
   },
@@ -210,13 +209,32 @@ const dosenMenu: NavItem[] = [
     icon: Award,
   },
   {
+    title: "Profil",
+    url: "/dosen/profil",
+    icon: UserCircle,
+  },
+  {
+    title: "Pengaturan",
+    url: "#",
+    icon: Settings,
+  },
+];
+
+// Menu untuk Wakil Dekan Bidang Akademik
+const wakilDekanMenu: NavItem[] = [
+  {
+    title: "Dashboard",
+    url: "/dosen",
+    icon: Home,
+  },
+  {
     title: "Verifikasi",
-    url: "/dosen/kp/verifikasi-surat",
+    url: "#",
     icon: FileCheck,
     items: [
       {
-        title: "Surat Mahasiswa",
-        url: "/dosen/kp/verifikasi-surat",
+        title: "Pengajuan Surat Pengantar",
+        url: "/dosen/kp/surat-pengantar",
       },
     ],
   },
@@ -230,7 +248,7 @@ const dosenMenu: NavItem[] = [
     url: "#",
     icon: Settings,
   },
-]
+];
 
 // Menu untuk Pembimbing Lapangan (Mentor)
 const mentorMenu: NavItem[] = [
@@ -274,36 +292,44 @@ const mentorMenu: NavItem[] = [
     url: "/mentor/pengaturan",
     icon: Settings,
   },
-]
+];
 
 export function getSidebarMenuByRole(role: UserRole): NavItem[] {
   switch (role) {
     case "mahasiswa":
-      return mahasiswaMenu
+      return mahasiswaMenu;
     case "admin":
-      return adminMenu
+      return adminMenu;
     case "dosen":
-      return dosenMenu
+      return dosenMenu;
     case "mentor":
-      return mentorMenu
+      return mentorMenu;
     default:
-      return mahasiswaMenu
+      return mahasiswaMenu;
   }
 }
 
-export function getSidebarMenuByUrl(pathname: string): NavItem[] {
+export function getSidebarMenuByUrl(
+  pathname: string,
+  userRole?: string,
+  userJabatan?: string,
+): NavItem[] {
   if (pathname.startsWith("/admin")) {
-    return adminMenu
+    return adminMenu;
   }
   if (pathname.startsWith("/dosen")) {
-    return dosenMenu
+    // Check if user is Wakil Dekan Bidang Akademik by checking jabatan
+    if (userJabatan && userJabatan.toLowerCase().includes("wakil dekan")) {
+      return wakilDekanMenu;
+    }
+    return dosenMenu;
   }
   if (pathname.startsWith("/mentor")) {
-    return mentorMenu
+    return mentorMenu;
   }
   if (pathname.startsWith("/mahasiswa")) {
-    return mahasiswaMenu
+    return mahasiswaMenu;
   }
   // Default ke mahasiswa jika tidak ada yang cocok
-  return mahasiswaMenu
+  return mahasiswaMenu;
 }

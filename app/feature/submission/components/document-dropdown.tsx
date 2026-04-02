@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, MessageCircle } from "lucide-react";
+import { AlertTriangle, Download, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import {
   Accordion,
@@ -79,6 +79,12 @@ function DocumentDropdown({
       (doc) =>
         doc.documentType === document.type && doc.memberUserId === memberId,
     );
+  };
+
+  const isRejectedStatus = (status?: string) => {
+    if (!status) return false;
+    const normalizedStatus = status.toUpperCase();
+    return normalizedStatus === "REJECTED" || normalizedStatus === "DITOLAK";
   };
 
   const handleFileUpload = (file: File) => {
@@ -192,6 +198,11 @@ function DocumentDropdown({
     description: "Dokumen pendukung pengajuan.",
   };
 
+  const hasRejectedDocument = members.some((member) => {
+    const memberDocument = getDocumentForMember(member.id);
+    return isRejectedStatus(memberDocument?.status);
+  });
+
   return (
     <TooltipProvider>
       <Accordion type="single" collapsible className="mb-4">
@@ -202,6 +213,20 @@ function DocumentDropdown({
           <AccordionTrigger className="bg-muted px-4 hover:no-underline">
             <span className="font-medium text-foreground flex items-center gap-2">
               {document.title}
+              {hasRejectedDocument && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center justify-center text-red-500">
+                      <AlertTriangle className="h-4 w-4" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p className="text-xs leading-relaxed">
+                      {"Ada dokumen yang ditolak oleh admin pada dropdown ini."}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="ml-1 cursor-pointer text-muted-foreground">

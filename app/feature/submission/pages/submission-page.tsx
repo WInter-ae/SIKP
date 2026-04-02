@@ -474,9 +474,7 @@ function SubmissionPage() {
       );
 
       if (response.success && response.data) {
-        toast.success(
-          `${docInfo.title} berhasil diupload dengan status PENDING`,
-        );
+        toast.success(`${docInfo.title} berhasil diupload`);
 
         // ✅ KEY FIX: Re-fetch semua documents dari server
         // Ini memastikan dokumen dari user lain juga terlihat
