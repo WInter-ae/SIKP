@@ -35,6 +35,25 @@ export interface ApiResponse<T> {
   data: T | null;
 }
 
+export interface DosenDashboardData {
+  totalMahasiswaBimbingan: number;
+  totalSuratAjuanMasuk: number;
+  activities: Array<{
+    action: string;
+    time: string;
+    status: "success" | "info";
+  }>;
+}
+
+export interface WakdekDashboardData {
+  totalAjuanSuratPengantarMasuk: number;
+  activities: Array<{
+    action: string;
+    time: string;
+    status: "success" | "info";
+  }>;
+}
+
 // ==================== API FUNCTIONS ====================
 
 /**
@@ -51,6 +70,54 @@ export async function getMyProfile(): Promise<ApiResponse<DosenProfile>> {
       success: false,
       message:
         error instanceof Error ? error.message : "Failed to fetch profile",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Get dosen dashboard data (authenticated user)
+ * Endpoint: GET /api/dosen/dashboard
+ */
+export async function getDosenDashboard(): Promise<
+  ApiResponse<DosenDashboardData>
+> {
+  try {
+    const response = await apiClient<DosenDashboardData>("/api/dosen/dashboard");
+    return response;
+  } catch (error) {
+    console.error("Error fetching dosen dashboard:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch dosen dashboard",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Get wakil dekan dashboard data (authenticated user)
+ * Endpoint: GET /api/dosen/dashboard/wakdek
+ */
+export async function getWakdekDashboard(): Promise<
+  ApiResponse<WakdekDashboardData>
+> {
+  try {
+    const response = await apiClient<WakdekDashboardData>(
+      "/api/dosen/dashboard/wakdek",
+    );
+    return response;
+  } catch (error) {
+    console.error("Error fetching wakdek dashboard:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch wakdek dashboard",
       data: null,
     };
   }
