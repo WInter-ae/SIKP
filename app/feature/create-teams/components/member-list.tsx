@@ -31,14 +31,18 @@ function MemberList({
     return 0;
   });
 
+  const isDaftarAnggotaCard = title === "Daftar Anggota";
+
   return (
     <Card className="mb-6">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <CardTitle className="text-base font-semibold">{title}</CardTitle>
-          <Badge variant="outline" className="ml-2">
-            {members.length}/3
-          </Badge>
+          {isDaftarAnggotaCard && (
+            <Badge variant="outline" className="ml-2">
+              {members.length}/3
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent>
