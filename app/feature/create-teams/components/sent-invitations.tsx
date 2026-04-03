@@ -193,9 +193,6 @@ export function SentInvitations({
             <CardTitle className="text-base font-semibold">
               Undangan yang Dikirim
             </CardTitle>
-            <Badge variant="outline" className="ml-2">
-              {members.length}/3
-            </Badge>
           </div>
         </CardHeader>
         <CardContent>
@@ -237,9 +234,7 @@ export function SentInvitations({
                       </div>
                       <div className="text-sm text-muted-foreground">
                         <span>{invitation.nim}</span>
-                        {invitation.email && (
-                          <span> • {invitation.email}</span>
-                        )}
+                        {invitation.email && <span> • {invitation.email}</span>}
                       </div>
                     </div>
                   </div>

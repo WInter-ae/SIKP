@@ -2590,7 +2590,7 @@ const TeamCreationPage = () => {
                             size="sm"
                             onClick={() => handleDeleteTeam("manual_delete")}
                             disabled={isDeletingTeam}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 mt-4"
                             title="Hapus tim"
                           >
                             {isDeletingTeam ? (
