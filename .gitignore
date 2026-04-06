@@ -11,3 +11,6 @@ nul
 
 # NPM Lock
 package-lock.json
+
+# Docs for External APPs
+/docs-local/
