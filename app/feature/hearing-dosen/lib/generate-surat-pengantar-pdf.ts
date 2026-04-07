@@ -102,7 +102,10 @@ function formatDateLong(dateStr?: string): string {
 }
 
 function formatRangeDate(startDate?: string, endDate?: string): string {
-  return `${formatDateLong(startDate)}   -   ${formatDateLong(endDate)}`;
+  const start = formatDateLong(startDate).replace(/\s+/g, ' ').trim();
+  const end = formatDateLong(endDate).replace(/\s+/g, ' ').trim();
+  if (start === end) return start;
+  return `${start} - ${end}`;
 }
 
 function sanitizeText(value?: string): string {
@@ -250,9 +253,10 @@ export async function generateSuratPengantarPdf(
     lineHeight = lineHeight115,
   ) => {
     const marker = "__BOLD_TOKEN__";
-    const normalizedText = fullText.includes(boldToken)
-      ? fullText.replace(boldToken, marker)
-      : fullText;
+    // Gunakan regex agar semua variasi spasi tergantikan
+    const escaped = boldToken.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(escaped.replace(/\s+/g, '\\s+'), 'g');
+    const normalizedText = fullText.replace(regex, marker);
 
     const segments = normalizedText
       .split(marker)
@@ -271,7 +275,6 @@ export async function generateSuratPengantarPdf(
         if (segment.text.length > 0) {
           chunks.push({ text: segment.text, bold: true });
         }
-        const nomorSurat = entry.nomorSurat || (entry as any).letterNumber || "-";
       }
 
       segment.text
@@ -486,18 +489,76 @@ export async function generateSuratPengantarPdf(
 
   ensureSpace(65);
 
-  const periodText = formatRangeDate(entry.tanggalMulai, entry.tanggalSelesai);
-  const penutupText = `Merencanakan Kerja Praktik (KP) di unit/bagian/subbagian ${
-    entry.divisi || "-"
-  } yang Bapak/Ibu pimpin pada tanggal ${periodText} dengan proposal KP terlampir. Mohon kiranya Bapak/Ibu dapat memperkenankan/memfasilitasi mahasiswa tersebut.`;
-  writeParagraphWithBoldToken(
-    penutupText,
-    periodText,
-    contentLeft,
-    contentWidth,
-    lineHeight115,
-  );
-  state.y += 8;
+  const periodText = formatRangeDate(entry.tanggalMulai, entry.tanggalSelesai).replace(/\s+/g, ' ').trim();
+  const penutupText = `Merencanakan Kerja Praktik (KP) di unit/bagian/subbagian ${entry.divisi || "-"} yang Bapak/Ibu pimpin pada tanggal ${periodText} dengan proposal KP terlampir. Mohon kiranya Bapak/Ibu dapat memperkenankan/memfasilitasi mahasiswa tersebut.`.replace(/\s+/g, ' ');
+
+  // Word wrap manual dengan highlight bold pada periodText
+  const words = penutupText.split(' ');
+  let line = '';
+  let y = state.y;
+  const spaceWidth = pdf.getTextWidth(' ');
+  pdf.setFontSize(12);
+  for (let i = 0; i < words.length; i++) {
+    let testLine = line.length > 0 ? line + ' ' + words[i] : words[i];
+    let testWidth = pdf.getTextWidth(testLine);
+    if (testWidth > contentWidth && line.length > 0) {
+      // Render line
+      let x = contentLeft;
+      let idx = 0;
+      while (idx < line.length) {
+        // Cari periodText di line
+        const periodIdx = line.indexOf(periodText, idx);
+        if (periodIdx === -1) {
+          pdf.setFont("times", "normal");
+          pdf.text(line.substring(idx), x, y);
+          break;
+        } else {
+          // Render sebelum periodText
+          if (periodIdx > idx) {
+            pdf.setFont("times", "normal");
+            const before = line.substring(idx, periodIdx);
+            pdf.text(before, x, y);
+            x += pdf.getTextWidth(before);
+          }
+          // Render periodText bold
+          pdf.setFont("times", "bold");
+          pdf.text(periodText, x, y);
+          x += pdf.getTextWidth(periodText);
+          idx = periodIdx + periodText.length;
+        }
+      }
+      y += lineHeight115;
+      line = words[i];
+    } else {
+      line = testLine;
+    }
+  }
+  // Render sisa line terakhir
+  if (line.length > 0) {
+    let x = contentLeft;
+    let idx = 0;
+    while (idx < line.length) {
+      const periodIdx = line.indexOf(periodText, idx);
+      if (periodIdx === -1) {
+        pdf.setFont("times", "normal");
+        pdf.text(line.substring(idx), x, y);
+        break;
+      } else {
+        if (periodIdx > idx) {
+          pdf.setFont("times", "normal");
+          const before = line.substring(idx, periodIdx);
+          pdf.text(before, x, y);
+          x += pdf.getTextWidth(before);
+        }
+        pdf.setFont("times", "bold");
+        pdf.text(periodText, x, y);
+        x += pdf.getTextWidth(periodText);
+        idx = periodIdx + periodText.length;
+      }
+    }
+    y += lineHeight115;
+  }
+  state.y = y + 3;
 
   writeJustifiedParagraph(
     "Atas perkenan dan bantuannya, kami mengucapkan terima kasih.",

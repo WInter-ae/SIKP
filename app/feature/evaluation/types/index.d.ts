@@ -84,27 +84,27 @@ export interface NilaiKP {
   id: string;
   mahasiswaId: string;
   dosenPembimbingId: string;
-  
+
   // Komponen Nilai
   nilaiPembimbingLapangan?: number; // Dari mentor
   nilaiLaporanKP?: number;
   nilaiPresentasi?: number;
   nilaiSidang?: number;
-  
+
   // Nilai Akhir
   nilaiAkhir?: number;
   nilaiHuruf?: string; // A, B+, B, C+, C, D, E
-  
+
   // Status dan Catatan
   status: "belum_dinilai" | "sedang_dinilai" | "perlu_revisi" | "selesai";
   catatanRevisi?: string;
   catatanUmum?: string;
-  
+
   // Metadata
   tanggalPenilaian?: string;
   tanggalRevisiDiminta?: string;
   tanggalRevisiSelesai?: string;
-  
+
   // Info Dosen
   dosenPenguji?: {
     nama: string;
@@ -116,23 +116,23 @@ export interface RevisiKP {
   id: string;
   nilaiKPId: string;
   mahasiswaId: string;
-  
+
   // Revisi Request
   jenisRevisi: "laporan" | "kode" | "dokumentasi" | "presentasi" | "lainnya";
   deskripsiRevisi: string;
   prioritas: "rendah" | "sedang" | "tinggi";
-  
+
   // File Upload
   fileUrl?: string;
   fileName?: string;
   fileSize?: number;
   uploadedAt?: string;
-  
+
   // Status
   status: "menunggu_upload" | "menunggu_review" | "disetujui" | "ditolak";
   catatanMahasiswa?: string;
   catatanDosen?: string;
-  
+
   // Metadata
   createdAt: string;
   updatedAt: string;
@@ -143,7 +143,13 @@ export interface RevisiKP {
 export interface HistoryRevisi {
   id: string;
   revisiId: string;
-  action: "dibuat" | "diupload" | "direview" | "disetujui" | "ditolak" | "direvisi";
+  action:
+    | "dibuat"
+    | "diupload"
+    | "direview"
+    | "disetujui"
+    | "ditolak"
+    | "direvisi";
   deskripsi: string;
   actor: {
     id: string;

@@ -17,13 +17,31 @@ import { resetSubmissionToDraft } from "~/lib/services/submission-api";
 
 /**
  * Cover Letter Page - Display submission status timeline
- * 
+ *
  * This page shows the status of cover letter submission with visual timeline,
  * allowing students to track their submission progress and download approved documents.
  */
 function CoverLetterPage() {
   const navigate = useNavigate();
   const { submission, isLoading, error, refetch } = useSubmissionStatus();
+
+  const signedFileUrl = (() => {
+    if (!submission) return undefined;
+
+    const submissionWithSigned = submission as typeof submission & {
+      signedFileUrl?: string;
+      signed_file_url?: string;
+      finalSignedFileUrl?: string;
+      final_signed_file_url?: string;
+    };
+
+    return (
+      submissionWithSigned.finalSignedFileUrl ||
+      submissionWithSigned.final_signed_file_url ||
+      submissionWithSigned.signedFileUrl ||
+      submissionWithSigned.signed_file_url
+    );
+  })();
 
   /**
    * Handle resubmit action after rejection
@@ -35,13 +53,15 @@ function CoverLetterPage() {
     }
 
     const response = await resetSubmissionToDraft(submission.id);
-    
+
     if (!response.success) {
       toast.error(response.message || "Gagal mengembalikan status ke draft");
       return;
     }
 
-    toast.success("Status berhasil dikembalikan ke draft");
+    toast.success(
+      "Pengajuan Ulang berhasil. Silakan lakukan perbaikan dan ajukan kembali.",
+    );
     navigate("/mahasiswa/kp/pengajuan");
   };
 
@@ -52,9 +72,15 @@ function CoverLetterPage() {
     navigate("/mahasiswa/kp/pengajuan");
   };
 
+  const navigateToCreateTeam = () => {
+    navigate("/mahasiswa/kp/buat-tim");
+  };
+
   /**
    * Check if next button should be enabled
    */
+  const isDraftSubmission = submission?.status === "DRAFT";
+
   const isNextButtonEnabled =
     submission?.status === "APPROVED" || submission?.status === "COMPLETED";
 
@@ -80,17 +106,19 @@ function CoverLetterPage() {
             <SubmissionErrorState
               error={error}
               onRetry={refetch}
-              onNavigateToSubmission={navigateToSubmission}
+              onNavigateToSubmission={navigateToCreateTeam}
             />
           )}
 
           {/* Render empty state */}
-          {!isLoading && !error && !submission && (
-            <SubmissionEmptyState onNavigateToSubmission={navigateToSubmission} />
+          {!isLoading && !error && (!submission || isDraftSubmission) && (
+            <SubmissionEmptyState
+              onNavigateToSubmission={navigateToSubmission}
+            />
           )}
 
           {/* Render timeline */}
-          {!isLoading && submission && (
+          {!isLoading && submission && !isDraftSubmission && (
             <StatusTimeline
               statusHistory={submission.statusHistory}
               currentStatus={submission.status}
@@ -98,6 +126,7 @@ function CoverLetterPage() {
               submittedAt={submission.submittedAt}
               approvedAt={submission.approvedAt}
               documents={submission.documents}
+              signedFileUrl={signedFileUrl}
               onResubmit={handleResubmit}
             />
           )}
@@ -105,7 +134,7 @@ function CoverLetterPage() {
       </Card>
 
       {/* Navigation Buttons - Only show if there's a submission */}
-      {submission && !isLoading && (
+      {submission && !isLoading && !isDraftSubmission && (
         <div className="flex justify-between mt-8">
           <Button
             variant="secondary"

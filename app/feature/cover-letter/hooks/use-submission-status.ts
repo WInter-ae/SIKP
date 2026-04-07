@@ -16,19 +16,19 @@ interface UseSubmissionStatusResult {
 
 /**
  * Custom hook to fetch and manage submission status for the current user's team
- * 
+ *
  * This hook handles:
  * - Fetching the user's teams
  * - Getting submission status for the active team
  * - Loading and error states
  * - Ability to refetch data
- * 
+ *
  * @returns Object containing submission, loading state, error, and refetch function
- * 
+ *
  * @example
  * ```tsx
  * const { submission, isLoading, error, refetch } = useSubmissionStatus();
- * 
+ *
  * if (isLoading) return <LoadingSpinner />;
  * if (error) return <ErrorMessage message={error} />;
  * ```
@@ -51,7 +51,7 @@ export function useSubmissionStatus(): UseSubmissionStatusResult {
         !teamsResponse.data ||
         teamsResponse.data.length === 0
       ) {
-        setError("Anda belum bergabung dengan tim manapun");
+        setError("Tidak ada pengajuan. Silahkan buat tim terlebih dahulu");
         setSubmission(null);
         return;
       }
@@ -70,7 +70,8 @@ export function useSubmissionStatus(): UseSubmissionStatusResult {
       }
     } catch (err) {
       console.error("❌ Error loading submission:", err);
-      const errorMessage = err instanceof Error ? err.message : "Gagal memuat data";
+      const errorMessage =
+        err instanceof Error ? err.message : "Gagal memuat data";
       setError(errorMessage);
       toast.error("Gagal memuat status pengajuan");
     } finally {

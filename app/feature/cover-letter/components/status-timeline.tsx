@@ -17,6 +17,7 @@ interface StatusTimelineProps {
   submittedAt?: string;
   approvedAt?: string;
   documents?: SubmissionDocument[];
+  signedFileUrl?: string;
   onResubmit?: () => void;
 }
 
@@ -27,6 +28,7 @@ export function StatusTimeline({
   submittedAt,
   approvedAt,
   documents,
+  signedFileUrl,
   onResubmit,
 }: StatusTimelineProps) {
   // Build timeline from submission data
@@ -42,6 +44,7 @@ export function StatusTimeline({
   const suratPengantar = documents?.find(
     (doc): doc is SubmissionDocument => doc.documentType === "SURAT_PENGANTAR",
   );
+  const suratPengantarUrl = signedFileUrl || suratPengantar?.fileUrl;
 
   return (
     <div className="space-y-4">
@@ -113,31 +116,33 @@ export function StatusTimeline({
                     )}
 
                     {/* Document preview for APPROVED status */}
-                    {entry.status === "APPROVED" && suratPengantar && (
+                    {entry.status === "APPROVED" && suratPengantarUrl && (
                       <div className="bg-muted p-4 rounded-lg border border-border hover:bg-muted/80 transition">
-                        <div className="flex items-start gap-3">
-                          <div className="bg-emerald-600 w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0">
+                        <div className="flex items-center gap-3">
+                          <div className="bg-green-700 w-10 h-10 rounded-lg flex items-center justify-center text-white flex-shrink-0">
                             <FileText className="size-5" />
                           </div>
                           <div className="flex-1">
                             <div className="font-semibold text-foreground">
                               Surat Pengantar Kerja Praktik
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                              {suratPengantar.originalName}
-                            </div>
                           </div>
                           <Button
                             asChild
                             size="sm"
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white flex-shrink-0"
+                            className="bg-green-700 hover:bg-green-700 text-white flex-shrink-0"
                           >
                             <a
-                              href={suratPengantar.fileUrl}
-                              download={suratPengantar.originalName}
+                              href={suratPengantarUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download={
+                                suratPengantar?.originalName ||
+                                "surat-pengantar-kerja-praktik.pdf"
+                              }
                             >
                               <Download className="h-4 w-4 mr-1" />
-                              Unduh
+                              Unduh Surat Pengantar
                             </a>
                           </Button>
                         </div>

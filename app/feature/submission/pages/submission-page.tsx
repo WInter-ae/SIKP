@@ -51,7 +51,7 @@ import {
 } from "~/lib/services/surat-permohonan-api";
 import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa-api";
 import { useUser } from "~/contexts/user-context";
-import { ArrowLeft, ArrowRight, Eye, Info } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Info } from "lucide-react";
 
 function normalizePlaceholderValue(value?: string | null): string {
   if (!value) return "";
@@ -72,8 +72,6 @@ function SubmissionPage() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [teamName, setTeamName] = useState<string>("");
-  const [teamStatus, setTeamStatus] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
   const [isCurrentUserLeader, setIsCurrentUserLeader] =
     useState<boolean>(false);
@@ -237,15 +235,17 @@ function SubmissionPage() {
         const response = await getMyTeams();
 
         if (response.success && Array.isArray(response.data)) {
-          const fixedTeam =
-            response.data.find((t) => t.status?.toUpperCase() === "FIXED") ||
-            response.data[0];
+          const fixedTeam = response.data.find(
+            (t) => t.status?.toUpperCase() === "FIXED",
+          );
 
           if (!fixedTeam) {
             setLoadError(
-              "Tim tidak ditemukan. Silakan buat tim terlebih dahulu.",
+              "Tim tidak ditemukan. Silakan tetapkan tim terlebih dahulu.",
             );
             setTeamMembers([]);
+            setSubmission(null);
+            setSubmissionDocuments([]);
             return;
           }
 
@@ -268,8 +268,6 @@ function SubmissionPage() {
           });
 
           setTeamMembers(mappedMembers);
-          setTeamName(fixedTeam.name || fixedTeam.code || "Tim KP");
-          setTeamStatus(fixedTeam.status || "");
           setTeamId(fixedTeam.id);
 
           // Tentukan apakah user adalah ketua
@@ -474,9 +472,7 @@ function SubmissionPage() {
       );
 
       if (response.success && response.data) {
-        toast.success(
-          `${docInfo.title} berhasil diupload dengan status PENDING`,
-        );
+        toast.success(`${docInfo.title} berhasil diupload`);
 
         // ✅ KEY FIX: Re-fetch semua documents dari server
         // Ini memastikan dokumen dari user lain juga terlihat
@@ -691,7 +687,7 @@ function SubmissionPage() {
       console.log("📥 Submit response:", submitResponse);
 
       if (submitResponse.success) {
-        toast.success("Surat pengantar berhasil diajukan!");
+        toast.success("Pengajuan telah dikirimkan!");
         console.log("✅ Submission berhasil di-submit:", submitResponse.data);
         navigate("/mahasiswa/kp/surat-pengantar");
       } else {
@@ -805,14 +801,36 @@ function SubmissionPage() {
 
   if (loadError) {
     return (
-      <div className="space-y-4">
-        <Alert variant="destructive">
-          <AlertDescription>{loadError}</AlertDescription>
-        </Alert>
-        <Button onClick={() => navigate("/mahasiswa/kp/buat-tim")}>
-          Kembali ke Buat Tim
-        </Button>
-      </div>
+      <>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Halaman Pengajuan Syarat Kerja Praktik
+          </h1>
+          <p className="text-muted-foreground">
+            Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
+            Praktik
+          </p>
+        </div>
+
+        <Card className="mb-8">
+          <CardContent className="flex min-h-[220px] items-center justify-center p-6">
+            <div className="flex flex-col items-center gap-4">
+              <Alert
+                variant="destructive"
+                className="w-full max-w-md items-start border-l-4 border-destructive bg-destructive/5 px-4 py-3"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                <AlertDescription className="text-sm text-destructive">
+                  {loadError}
+                </AlertDescription>
+              </Alert>
+              <Button onClick={() => navigate("/mahasiswa/kp/buat-tim")}>
+                Kembali ke Buat Tim
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </>
     );
   }
 
@@ -827,12 +845,12 @@ function SubmissionPage() {
           Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
           Praktik
         </p>
-        {teamName && (
+        {/* {teamName && (
           <p className="text-sm text-muted-foreground mt-2">
             Tim: {teamName} ({teamMembers.length} anggota, status{" "}
             {teamStatus || "-"})
           </p>
-        )}
+        )} */}
       </div>
 
       {/* Info Alert */}
@@ -866,8 +884,7 @@ function SubmissionPage() {
               Beberapa dokumen yang Anda ajukan perlu diperbaiki. Sebelum
               melakukan perbaikan di halaman ini, Anda wajib menekan tombol{" "}
               <strong>Ajukan Ulang</strong> terlebih dahulu pada halaman{" "}
-              <strong>Surat Pengantar</strong>. Setelah itu, dokumen berstatus{" "}
-              <strong>Ditolak</strong> dapat diupload ulang.
+              <strong>Surat Pengantar</strong>.
             </p>
             {submission?.rejectionReason && (
               <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-destructive/30">
@@ -882,7 +899,7 @@ function SubmissionPage() {
                 variant="destructive"
                 onClick={() => navigate("/mahasiswa/kp/surat-pengantar")}
               >
-                Buka Halaman Surat Pengantar (Ajukan Ulang)
+                Buka Halaman Surat Pengantar
               </Button>
             </div>
           </AlertDescription>
@@ -901,7 +918,7 @@ function SubmissionPage() {
       )}
 
       <Card className="mb-8">
-        <CardContent className="p-6">
+        <CardContent>
           {/* Keterangan Lain Section */}
           <div className="mb-8">
             <AdditionalInfoForm
@@ -931,7 +948,7 @@ function SubmissionPage() {
                   proposalDocument ? (
                     <div className="mb-2">
                       <p className="block font-medium mb-2">
-                        Upload Surat Proposal (Ketua Tim)
+                        Upload Surat Proposal
                       </p>
                       <div className="flex items-center gap-2 flex-wrap">
                         <Button
@@ -947,16 +964,16 @@ function SubmissionPage() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
-                                  variant="ghost"
-                                  size="icon"
+                                  variant="outline"
+                                  size="sm"
                                   onClick={handlePreviewProposal}
                                   className="text-muted-foreground hover:text-foreground"
                                 >
-                                  <Eye className="size-5" />
+                                  Lihat
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p>Preview File</p>
+                                <p>Lihat Proposal</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -965,7 +982,7 @@ function SubmissionPage() {
                       <p className="text-xs text-muted-foreground mt-2">
                         {submission?.status === "REJECTED"
                           ? "Proposal dikunci sementara. Klik Ajukan Ulang di halaman Surat Pengantar terlebih dahulu."
-                          : "Klik untuk upload ulang proposal ketua tim."}
+                          : "Klik lagi untuk upload ulang proposal."}
                       </p>
                       {proposalDocument?.status &&
                         proposalDocument.status !== "PENDING" && (
@@ -979,7 +996,7 @@ function SubmissionPage() {
                     </div>
                   ) : (
                     <FileUpload
-                      label="Upload Surat Proposal (Ketua Tim)"
+                      label="Upload Surat Proposal"
                       onFileChange={handleProposalUpload}
                       disabled={isSubmissionSubmitted}
                     />
@@ -987,7 +1004,7 @@ function SubmissionPage() {
                 ) : (
                   <div className="mb-2">
                     <p className="block font-medium mb-2">
-                      Upload Surat Proposal (Ketua Tim)
+                      Upload Surat Proposal
                     </p>
                     <div className="flex items-center gap-2 flex-wrap">
                       <Button
@@ -1002,25 +1019,6 @@ function SubmissionPage() {
                       >
                         {proposalDocument ? "Terupload" : "Belum diupload"}
                       </Button>
-                      {proposalDocument && (
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={handlePreviewProposal}
-                                className="text-muted-foreground hover:text-foreground"
-                              >
-                                <Eye className="size-5" />
-                              </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Preview File</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                       Proposal hanya bisa diupload oleh ketua tim.

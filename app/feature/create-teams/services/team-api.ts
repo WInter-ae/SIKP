@@ -12,6 +12,8 @@ export interface Team {
   id: string;
   name: string;
   code: string;
+  dosen_kp_id?: string;
+  dosen_kp_name?: string;
   leaderId: string;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +40,8 @@ export interface MyTeamsResponse {
   id: string;
   name: string;
   code: string;
+  dosen_kp_id?: string;
+  dosen_kp_name?: string;
   leaderId: string;
   isLeader: boolean;
   status: string;

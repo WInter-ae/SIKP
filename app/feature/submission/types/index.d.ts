@@ -140,9 +140,17 @@ export interface Application {
   submissionId: string; // ✅ Original submission ID from database
   date: string;
   status: "pending" | "approved" | "rejected";
+  workflowStage?:
+    | "DRAFT"
+    | "PENDING_ADMIN_REVIEW"
+    | "PENDING_DOSEN_VERIFICATION"
+    | "COMPLETED"
+    | "REJECTED_ADMIN"
+    | "REJECTED_DOSEN";
   pendingLabel?: "Menunggu Review" | "Menunggu TTD Wakil Dekan";
   rejectionComment?: string;
   letterNumber?: string;
+  signedFileUrl?: string;
   documentReviews?: Record<string, "approved" | "rejected">;
   statusHistory?: StatusHistoryEntry[]; // ✅ Timeline untuk detect re-submission
 
