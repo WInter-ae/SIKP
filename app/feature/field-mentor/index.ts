@@ -7,7 +7,7 @@ export * from "./types/logbook.d";
 // Components
 export { ApproveLogbookButton } from "./components/approve-logbook-button";
 export { RejectLogbookButton } from "./components/reject-logbook-button";
-export { SignatureSetup } from "./components/signature-setup";
+export { SignatureSetup, SignatureDialog, SignatureCanvas, type SignatureDialogProps } from "./components/signature-setup";
 
 // Services - Export only functions, not types (to avoid conflict with types folder)
 export {

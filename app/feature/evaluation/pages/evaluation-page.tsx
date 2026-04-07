@@ -1,7 +1,6 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { StudentList } from "../components/student-list";
-import { MOCK_EVALUATIONS } from "../data/mock-evaluations";
 import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import {
@@ -21,16 +20,56 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { toast } from "sonner";
+import { getAssessmentCriteria } from "~/lib/assessment-criteria-api";
+import { getAdminEvaluations } from "../services/evaluation-api";
+import type { StudentEvaluation } from "../types";
 
 const ITEMS_PER_PAGE = 5;
 
 export default function EvaluationPage() {
   const navigate = useNavigate();
-  const [evaluations] = useState(MOCK_EVALUATIONS);
+  const [evaluations, setEvaluations] = useState<StudentEvaluation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadEvaluations() {
+      setIsLoading(true);
+
+      try {
+        const criteria = await getAssessmentCriteria();
+        const response = await getAdminEvaluations(criteria);
+
+        if (!isMounted) return;
+
+        if (!response.success || !response.data) {
+          setEvaluations([]);
+          toast.error(response.message || "Gagal memuat data penilaian admin.");
+          return;
+        }
+
+        setEvaluations(response.data);
+      } catch (error) {
+        if (!isMounted) return;
+        setEvaluations([]);
+        toast.error(error instanceof Error ? error.message : "Gagal memuat data penilaian admin.");
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    void loadEvaluations();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleStudentClick = (id: string) => {
     navigate(`/admin/penilaian/${id}`);
@@ -79,11 +118,13 @@ export default function EvaluationPage() {
     (e) => e.summary.status === "passed",
   ).length;
   const averageScore =
-    evaluations.reduce((acc, e) => acc + e.summary.finalScore, 0) /
-    totalStudents;
-  const highestScore = Math.max(
-    ...evaluations.map((e) => e.summary.finalScore),
-  );
+    totalStudents > 0
+      ? evaluations.reduce((acc, e) => acc + e.summary.finalScore, 0) / totalStudents
+      : 0;
+  const highestScore =
+    totalStudents > 0
+      ? Math.max(...evaluations.map((e) => e.summary.finalScore))
+      : 0;
 
   const stats = [
     {
@@ -140,7 +181,7 @@ export default function EvaluationPage() {
                       {stat.title}
                     </p>
                     <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                      {stat.value}
+                      {isLoading ? "..." : stat.value}
                     </p>
                   </div>
                   <div className={`p-3 rounded-lg ${stat.bgColor}`}>
@@ -227,6 +268,7 @@ export default function EvaluationPage() {
           <StudentList
             evaluations={paginatedEvaluations}
             onStudentClick={handleStudentClick}
+            isLoading={isLoading}
           />
 
           {/* Pagination */}

@@ -4,6 +4,16 @@ import { Badge } from "~/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import type { StudentCardProps } from "../types";
 
+function getScoreBadgeClass(score: number): string {
+  if (score >= 85) {
+    return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300";
+  }
+  if (score >= 70) {
+    return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300";
+  }
+  return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300";
+}
+
 export function StudentCard({ student, summary, onClick }: StudentCardProps) {
   const getGradeBadgeColor = (grade: string) => {
     switch (grade) {
@@ -122,16 +132,22 @@ export function StudentCard({ student, summary, onClick }: StudentCardProps) {
 
         {/* Grade Summary */}
         <div className="grid grid-cols-2 gap-3 pt-2 border-t dark:border-gray-700">
-          <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
-            <div className="text-lg font-bold text-blue-700 dark:text-blue-400">
+          <div className="text-center p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-md space-y-1">
+            <Badge
+              variant="outline"
+              className={`${getScoreBadgeClass(summary.fieldSupervisorTotal)} font-bold text-xs min-w-12 h-6 justify-center mx-auto`}
+            >
               {summary.fieldSupervisorTotal.toFixed(1)}
-            </div>
+            </Badge>
             <div className="text-xs text-gray-600 dark:text-gray-400">Nilai Pembimbing</div>
           </div>
-          <div className="text-center p-2 bg-purple-50 dark:bg-purple-900/20 rounded">
-            <div className="text-lg font-bold text-purple-700 dark:text-purple-400">
+          <div className="text-center p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-md space-y-1">
+            <Badge
+              variant="outline"
+              className={`${getScoreBadgeClass(summary.academicSupervisorTotal)} font-bold text-xs min-w-12 h-6 justify-center mx-auto`}
+            >
               {summary.academicSupervisorTotal.toFixed(1)}
-            </div>
+            </Badge>
             <div className="text-xs text-gray-600 dark:text-gray-400">Nilai Dosen</div>
           </div>
         </div>

@@ -19,7 +19,27 @@ interface MenteeCardProps {
   mentee: Mentee;
 }
 
+function getStatusClasses(status: string) {
+  const normalized = status.toLowerCase();
+
+  if (normalized.includes("aktif") || normalized.includes("approved")) {
+    return "bg-green-100 text-green-800";
+  }
+
+  if (normalized.includes("pending") || normalized.includes("menunggu")) {
+    return "bg-amber-100 text-amber-800";
+  }
+
+  if (normalized.includes("selesai") || normalized.includes("completed")) {
+    return "bg-blue-100 text-blue-800";
+  }
+
+  return "bg-muted text-muted-foreground";
+}
+
 function MenteeCard({ mentee }: MenteeCardProps) {
+  const progress = mentee.progress ?? 0;
+
   return (
     <Card>
       <CardHeader>
@@ -28,7 +48,7 @@ function MenteeCard({ mentee }: MenteeCardProps) {
             <CardTitle className="text-lg">{mentee.name}</CardTitle>
             <CardDescription>NIM: {mentee.nim}</CardDescription>
           </div>
-          <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800">
+          <span className={`px-3 py-1 text-sm rounded-full ${getStatusClasses(mentee.status)}`}>
             {mentee.status}
           </span>
         </div>
@@ -52,12 +72,12 @@ function MenteeCard({ mentee }: MenteeCardProps) {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Progress Magang</span>
-            <span className="font-medium">{mentee.progress}%</span>
+            <span className="font-medium">{progress}%</span>
           </div>
           <div className="w-full bg-muted rounded-full h-2">
             <div
               className="bg-primary h-2 rounded-full transition-all"
-              style={{ width: `${mentee.progress}%` }}
+              style={{ width: `${progress}%` }}
             />
           </div>
         </div>

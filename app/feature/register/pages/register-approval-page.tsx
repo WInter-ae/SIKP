@@ -1,5 +1,6 @@
 // 1. External dependencies
 import { useState } from "react"
+import { toast } from "sonner"
 import {
   CheckCircle,
   XCircle,
@@ -52,7 +53,6 @@ import { Input } from "~/components/ui/input"
 // Tipe data untuk pendaftaran dosen
 interface PendingRegistration {
   id: string
-  registrationCode: string
   name: string
   email: string
   nip?: string
@@ -67,12 +67,22 @@ interface PendingRegistration {
   studentEmail: string
 }
 
+interface PendingEmailChangeRequest {
+  id: string
+  mentorName: string
+  currentEmail: string
+  requestedEmail: string
+  reason: string
+  requestedAt: string
+  studentName: string
+  status: "pending" | "approved" | "rejected"
+}
+
 export default function RegisterApprovalPage() {
   // Data dummy - nanti akan diganti dengan API call
   const [registrations, setRegistrations] = useState<PendingRegistration[]>([
     {
       id: "1",
-      registrationCode: "MNT-123456-0001",
       name: "Ahmad Fauzi",
       email: "ahmad.fauzi@company.com",
       nip: "198501012010011001",
@@ -87,7 +97,6 @@ export default function RegisterApprovalPage() {
     },
     {
       id: "2",
-      registrationCode: "MNT-234567-0002",
       name: "Siti Nurhaliza",
       email: "siti.nurhaliza@enterprise.co.id",
       nip: "198703202011012002",
@@ -102,7 +111,6 @@ export default function RegisterApprovalPage() {
     },
     {
       id: "3",
-      registrationCode: "MNT-345678-0003",
       name: "Budi Hartono",
       email: "budi.hartono@startup.id",
       nip: "197912152008011003",
@@ -125,6 +133,30 @@ export default function RegisterApprovalPage() {
   )
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState<string>("")
+  const [emailChangeRequests, setEmailChangeRequests] = useState<
+    PendingEmailChangeRequest[]
+  >([
+    {
+      id: "ec-1",
+      mentorName: "Ahmad Fauzi",
+      currentEmail: "ahmad.fauzi@company.com",
+      requestedEmail: "a.fauzi@company.com",
+      reason: "Menggunakan email kerja resmi yang aktif",
+      requestedAt: "2026-03-28T09:30:00",
+      studentName: "Budi Santoso",
+      status: "pending",
+    },
+    {
+      id: "ec-2",
+      mentorName: "Siti Nurhaliza",
+      currentEmail: "siti.nurhaliza@enterprise.co.id",
+      requestedEmail: "s.nurhaliza@enterprise.co.id",
+      reason: "Perubahan domain email divisi",
+      requestedAt: "2026-03-29T13:10:00",
+      studentName: "Dewi Lestari",
+      status: "pending",
+    },
+  ])
 
   // Handler untuk membuka dialog konfirmasi
   const handleOpenDialog = (
@@ -210,8 +242,7 @@ export default function RegisterApprovalPage() {
       reg.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       reg.nip?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       reg.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      reg.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      reg.registrationCode.toLowerCase().includes(searchQuery.toLowerCase())
+      reg.studentName.toLowerCase().includes(searchQuery.toLowerCase())
 
     return matchesStatus && matchesSearch
   })
@@ -224,15 +255,44 @@ export default function RegisterApprovalPage() {
     total: registrations.length,
   }
 
+  const emailRequestStats = {
+    pending: emailChangeRequests.filter((r) => r.status === "pending").length,
+    approved: emailChangeRequests.filter((r) => r.status === "approved").length,
+    rejected: emailChangeRequests.filter((r) => r.status === "rejected").length,
+    total: emailChangeRequests.length,
+  }
+
+  const processEmailChangeRequest = (
+    requestId: string,
+    action: "approve" | "reject"
+  ) => {
+    setEmailChangeRequests((prev) =>
+      prev.map((item) =>
+        item.id === requestId
+          ? {
+              ...item,
+              status: action === "approve" ? "approved" : "rejected",
+            }
+          : item
+      )
+    )
+
+    toast.success(
+      action === "approve"
+        ? "Pengajuan perubahan email disetujui."
+        : "Pengajuan perubahan email ditolak."
+    )
+  }
+
   return (
     <div className="flex flex-col gap-6 p-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-          Persetujuan Pembimbing Lapangan
+          Persetujuan Pembimbing Lapangan (Dosen PA)
         </h1>
         <p className="text-muted-foreground">
-          Kelola dan setujui pendaftaran pembimbing lapangan dari mahasiswa
+          Tinjau pengajuan pembimbing lapangan yang diajukan mahasiswa
         </p>
       </div>
 
@@ -297,7 +357,7 @@ export default function RegisterApprovalPage() {
           <div className="flex flex-col gap-4 pt-4 sm:flex-row">
             <div className="flex-1">
               <Input
-                placeholder="Cari nama mentor, mahasiswa, perusahaan, kode..."
+                placeholder="Cari nama mentor, mahasiswa, atau perusahaan..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="max-w-sm"
@@ -338,7 +398,6 @@ export default function RegisterApprovalPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Kode</TableHead>
                     <TableHead>Pembimbing Lapangan</TableHead>
                     <TableHead>Perusahaan</TableHead>
                     <TableHead>Posisi</TableHead>
@@ -351,11 +410,6 @@ export default function RegisterApprovalPage() {
                 <TableBody>
                   {filteredRegistrations.map((registration) => (
                     <TableRow key={registration.id}>
-                      <TableCell>
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {registration.registrationCode}
-                        </code>
-                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{registration.name}</span>
@@ -461,6 +515,108 @@ export default function RegisterApprovalPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Pengajuan Perubahan Email Mentor</CardTitle>
+          <CardDescription>
+            Setujui atau tolak pengajuan perubahan email dari pembimbing lapangan.
+            Endpoint backend masih disiapkan, saat ini menggunakan simulasi data.
+          </CardDescription>
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-1">
+            <span>Total: {emailRequestStats.total}</span>
+            <span>Menunggu: {emailRequestStats.pending}</span>
+            <span>Disetujui: {emailRequestStats.approved}</span>
+            <span>Ditolak: {emailRequestStats.rejected}</span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {emailChangeRequests.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Belum ada pengajuan perubahan email.
+            </p>
+          ) : (
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Mentor</TableHead>
+                    <TableHead>Email Saat Ini</TableHead>
+                    <TableHead>Email Diajukan</TableHead>
+                    <TableHead>Alasan</TableHead>
+                    <TableHead>Mahasiswa Terkait</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Aksi</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {emailChangeRequests.map((request) => (
+                    <TableRow key={request.id}>
+                      <TableCell className="font-medium">{request.mentorName}</TableCell>
+                      <TableCell>{request.currentEmail}</TableCell>
+                      <TableCell>{request.requestedEmail}</TableCell>
+                      <TableCell>{request.reason}</TableCell>
+                      <TableCell>{request.studentName}</TableCell>
+                      <TableCell>{formatDate(request.requestedAt)}</TableCell>
+                      <TableCell>
+                        {request.status === "pending" && (
+                          <Badge variant="secondary">
+                            <Clock className="mr-1 h-3 w-3" />
+                            Menunggu
+                          </Badge>
+                        )}
+                        {request.status === "approved" && (
+                          <Badge variant="default" className="bg-green-500">
+                            <CheckCircle className="mr-1 h-3 w-3" />
+                            Disetujui
+                          </Badge>
+                        )}
+                        {request.status === "rejected" && (
+                          <Badge variant="destructive">
+                            <XCircle className="mr-1 h-3 w-3" />
+                            Ditolak
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {request.status === "pending" ? (
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              size="sm"
+                              className="bg-green-500 hover:bg-green-600"
+                              onClick={() =>
+                                processEmailChangeRequest(request.id, "approve")
+                              }
+                            >
+                              <CheckCircle className="mr-1 h-4 w-4" />
+                              Setujui
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() =>
+                                processEmailChangeRequest(request.id, "reject")
+                              }
+                            >
+                              <XCircle className="mr-1 h-4 w-4" />
+                              Tolak
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">
+                            Sudah diproses
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Confirmation Dialog */}
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>
@@ -474,8 +630,8 @@ export default function RegisterApprovalPage() {
               {dialogAction === "approve" ? (
                 <>
                   Anda akan menyetujui pendaftaran{" "}
-                  <strong>{selectedRegistration?.name}</strong>. Dosen ini akan
-                  mendapatkan akses ke sistem sebagai dosen pembimbing.
+                  <strong>{selectedRegistration?.name}</strong>. Pembimbing lapangan ini akan
+                  terkait ke mahasiswa pemohon setelah proses persetujuan selesai.
                 </>
               ) : (
                 <>

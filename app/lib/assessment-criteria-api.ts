@@ -17,10 +17,15 @@ const API_BASE_URL = INTERNSHIP_API_BASE_URL;
 
 export interface AssessmentCriterion {
   id: string;
+  categoryId?: string;
   category: string;
+  categoryKey?: string;
+  label?: string;
   weight: number; // Bobot dalam persen (total harus = 100)
   description: string;
   maxScore: number;
+  sortOrder?: number;
+  isActive?: boolean;
 }
 
 // ==================== FALLBACK (jika API belum ready) ====================
@@ -65,6 +70,13 @@ export const DEFAULT_CRITERIA: AssessmentCriterion[] = [
 
 // ==================== HELPERS ====================
 
+export function extractKriteria(raw: any): AssessmentCriterion[] {
+  if (Array.isArray(raw?.data) && raw.data[0]?.kriteria) return raw.data[0].kriteria as AssessmentCriterion[];
+  if (raw?.data?.kriteria) return raw.data.kriteria as AssessmentCriterion[];
+  if (Array.isArray(raw?.kriteria)) return raw.kriteria as AssessmentCriterion[];
+  return [];
+}
+
 function getAuthHeaders(): Record<string, string> {
   const token = localStorage.getItem("auth_token");
   return {
@@ -89,15 +101,31 @@ export async function getAssessmentCriteria(): Promise<AssessmentCriterion[]> {
 
     const json = await response.json();
 
-    // Docs response: { success, data: { kriteria: [...], totalWeight, note } }
-    const list = json?.data?.kriteria;
+    // Final contract supports: { data: { kriteria: [...] } } and wrapper variants.
+    const list = extractKriteria(json);
     if (json.success && Array.isArray(list) && list.length > 0) {
-      return list.map((c: { id: string; label: string; description: string; weight: number; maxScore: number }) => ({
+      return list.map((c: {
+        id: string;
+        categoryId?: string;
+        category?: string;
+        categoryKey?: string;
+        label?: string;
+        description?: string;
+        weight: number;
+        maxScore: number;
+        sortOrder?: number;
+        isActive?: boolean;
+      }) => ({
         id: c.id,
-        category: c.label,   // API uses "label" for display name
+        categoryId: c.categoryId || c.id,
+        category: c.label || c.category || c.categoryKey || "Kategori",
+        categoryKey: c.categoryKey || c.category,
+        label: c.label,
         weight: c.weight,
-        description: c.description,
+        description: c.description || "-",
         maxScore: c.maxScore,
+        sortOrder: c.sortOrder,
+        isActive: typeof c.isActive === "boolean" ? c.isActive : true,
       })) as AssessmentCriterion[];
     }
 
@@ -135,7 +163,8 @@ export async function updateAssessmentCriteria(
         // Docs request body: { kriteria: [...] }
         body: JSON.stringify({
           kriteria: criteria.map((c) => ({
-            category: c.id || c.category.toLowerCase().replace(/ /g, "_"),
+            categoryId: c.categoryId || c.id,
+            category: c.categoryKey || c.category.toLowerCase().replace(/ /g, "_"),
             label: c.category,
             weight: c.weight,
             maxScore: c.maxScore,

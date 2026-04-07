@@ -4,5 +4,6 @@
  */
 
 export * from "./logbook-api";
+export * from "./assessment-api";
 export * from "./report-api";
 export * from "./student-api";

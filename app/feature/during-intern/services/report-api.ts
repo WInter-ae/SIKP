@@ -56,9 +56,10 @@ export async function uploadKPReport(
   // Use fetch directly for file upload with FormData
   const token = await getAuthToken();
   const API_BASE_URL =
+    import.meta.env.VITE_API_INTERNSHIP_URL ||
     import.meta.env.VITE_API_URL ||
     import.meta.env.VITE_API_BASE_URL ||
-    "";
+    "https://backend-sikp.mukarrobinujiantik.workers.dev";
   
   try {
     const response = await fetch(`${API_BASE_URL}/api/report/upload`, {
@@ -166,8 +167,9 @@ export async function deleteReport(
  */
 export function getReportDownloadUrl(reportId: string): string {
   const API_BASE_URL =
+    import.meta.env.VITE_API_INTERNSHIP_URL ||
     import.meta.env.VITE_API_URL ||
     import.meta.env.VITE_API_BASE_URL ||
-    "";
+    "https://backend-sikp.mukarrobinujiantik.workers.dev";
   return `${API_BASE_URL}/api/report/${reportId}/download`;
 }

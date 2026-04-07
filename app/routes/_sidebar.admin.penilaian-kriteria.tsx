@@ -1,9 +1,16 @@
-// External dependencies
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Save, RotateCcw, Settings2, Info } from "lucide-react";
+import {
+  Save,
+  RotateCcw,
+  Settings2,
+  AlertCircle,
+  CheckCircle2,
+  Scaling,
+  Plus,
+  Trash2,
+} from "lucide-react";
 
-// Components
 import {
   Card,
   CardContent,
@@ -16,9 +23,15 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Separator } from "~/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
 
-// API
 import {
   getAssessmentCriteria,
   updateAssessmentCriteria,
@@ -31,8 +44,12 @@ export default function PenilaianKriteriaPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  const totalWeight = criteria.reduce((sum, c) => sum + (Number(c.weight) || 0), 0);
+  const totalWeight = useMemo(
+    () => criteria.reduce((sum, c) => sum + (Number(c.weight) || 0), 0),
+    [criteria]
+  );
   const isValid = totalWeight === 100;
+  const weightDifference = 100 - totalWeight;
 
   useEffect(() => {
     getAssessmentCriteria().then((data) => {
@@ -52,6 +69,35 @@ export default function PenilaianKriteriaPage() {
     setCriteria((prev) =>
       prev.map((c) => (c.id === id ? { ...c, description: value } : c))
     );
+  }
+
+  function handleCategoryNameChange(id: string, value: string) {
+    setCriteria((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, category: value } : c))
+    );
+  }
+
+  function handleAddCategory() {
+    const newId = `custom-${Date.now()}`;
+    setCriteria((prev) => [
+      ...prev,
+      {
+        id: newId,
+        category: "Kategori Baru",
+        description: "Deskripsi kategori baru",
+        weight: 0,
+        maxScore: 100,
+      },
+    ]);
+    toast.success("Kategori baru ditambahkan. Silakan sesuaikan nama, bobot, dan deskripsi.");
+  }
+
+  function handleRemoveCategory(id: string) {
+    setCriteria((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((c) => c.id !== id);
+    });
+    toast.info("Kategori dihapus dari daftar.");
   }
 
   function handleReset() {
@@ -78,161 +124,248 @@ export default function PenilaianKriteriaPage() {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <p className="text-muted-foreground text-sm">Memuat kriteria penilaian...</p>
+      <div className="flex items-center justify-center p-8">
+        <p className="text-muted-foreground">Memuat kriteria penilaian...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-3xl space-y-6">
+    <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <Settings2 className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Kriteria Penilaian</h1>
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary/10 p-2.5">
+              <Settings2 className="h-6 w-6 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">Kriteria Penilaian</h1>
           </div>
-          <p className="text-muted-foreground text-sm">
-            Kelola bobot indikator penilaian untuk mahasiswa magang. Perubahan berlaku untuk semua penilaian baru.
+          <p className="text-sm text-muted-foreground">
+            Kelola bobot indikator penilaian untuk mahasiswa magang
           </p>
         </div>
       </div>
 
-      <Separator />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Total Kriteria */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Total Kriteria</p>
+                <p className="text-2xl font-bold">{criteria.length}</p>
+              </div>
+              <div className="rounded-lg bg-blue-500/10 p-3">
+                <Scaling className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Validasi total bobot */}
+        {/* Total Bobot */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Total Bobot</p>
+                <p className={`text-2xl font-bold ${isValid ? "text-green-600" : "text-amber-600"}`}>
+                  {totalWeight}%
+                </p>
+              </div>
+              <div className={`rounded-lg p-3 ${isValid ? "bg-green-500/10" : "bg-amber-500/10"}`}>
+                {isValid ? (
+                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-6 w-6 text-amber-600" />
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Status */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Status</p>
+                <Badge
+                  variant={isValid ? "default" : "destructive"}
+                  className="w-fit text-xs font-medium"
+                >
+                  {isValid ? "Siap Disimpan" : `Selisih ${Math.abs(weightDifference)}%`}
+                </Badge>
+              </div>
+              <div className={`rounded-lg p-3 ${isValid ? "bg-green-500/10" : "bg-red-500/10"}`}>
+                {isValid ? (
+                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-6 w-6 text-red-600" />
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Kriteria Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Kriteria</CardTitle>
+          <CardDescription>
+            Edit bobot dan deskripsi untuk setiap kriteria penilaian
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-4">
+            <Button variant="outline" onClick={handleAddCategory}>
+              <Plus className="mr-2 h-4 w-4" />
+              Tambah Kategori
+            </Button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Kategori</TableHead>
+                  <TableHead>Deskripsi</TableHead>
+                  <TableHead className="w-28">Bobot (%)</TableHead>
+                  <TableHead className="text-right">Nilai Max</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {criteria.map((criterion) => (
+                  <TableRow key={criterion.id}>
+                    <TableCell>
+                      <Input
+                        value={criterion.category}
+                        onChange={(e) =>
+                          handleCategoryNameChange(criterion.id, e.target.value)
+                        }
+                        placeholder="Nama kategori"
+                        className="text-sm h-8"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={criterion.description}
+                        onChange={(e) =>
+                          handleDescriptionChange(criterion.id, e.target.value)
+                        }
+                        placeholder="Tambahkan deskripsi..."
+                        className="text-xs h-8"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={criterion.weight}
+                          onChange={(e) =>
+                            handleWeightChange(criterion.id, e.target.value)
+                          }
+                          className="h-8 pr-6 text-center font-medium"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                          %
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-sm font-medium">
+                      {criterion.maxScore}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveCategory(criterion.id)}
+                        disabled={criteria.length <= 1}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Weight Summary */}
+          <div className="mt-4 space-y-3 pt-4 border-t">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">Progress Bobot</span>
+                <span className="text-xs text-muted-foreground">
+                  {totalWeight} dari 100%
+                </span>
+              </div>
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    isValid && "bg-green-500"
+                  } ${!isValid && totalWeight > 100 && "bg-red-500"} ${
+                    !isValid && totalWeight < 100 && "bg-amber-500"
+                  }`}
+                  style={{ width: `${Math.min(totalWeight, 100)}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Kriteria Breakdown */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {criteria.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between rounded-md bg-muted px-2 py-1.5"
+                >
+                  <span className="text-xs text-muted-foreground truncate">
+                    {c.category}
+                  </span>
+                  <Badge variant="secondary" className="text-xs ml-1">
+                    {c.weight}%
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Validasi Alert */}
       {!isValid && (
         <Alert variant="destructive">
-          <Info className="h-4 w-4" />
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Total bobot saat ini <strong>{totalWeight}%</strong>. Harus tepat{" "}
-            <strong>100%</strong> sebelum bisa disimpan. Selisih:{" "}
-            {totalWeight > 100 ? `+${totalWeight - 100}` : `${totalWeight - 100}`}%
+            <strong>100%</strong> sebelum disimpan. Sesuaikan bobot kriteria untuk
+            menambah <strong>{weightDifference}%</strong>.
           </AlertDescription>
         </Alert>
       )}
 
       {isValid && (
         <Alert className="border-green-500/50 bg-green-50 dark:bg-green-950/20">
-          <Info className="h-4 w-4 text-green-600" />
+          <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-700 dark:text-green-400">
-            Total bobot <strong>100%</strong> — siap disimpan.
+            Total bobot <strong>100%</strong> — Siap untuk disimpan.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Daftar kriteria */}
-      <div className="space-y-4">
-        {criteria.map((criterion) => (
-          <Card key={criterion.id}>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">{criterion.category}</CardTitle>
-                <Badge
-                  variant={
-                    Number(criterion.weight) > 0 ? "default" : "secondary"
-                  }
-                  className="text-sm px-3"
-                >
-                  {criterion.weight}%
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Bobot */}
-                <div className="space-y-2">
-                  <Label htmlFor={`weight-${criterion.id}`}>
-                    Bobot (%)
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      id={`weight-${criterion.id}`}
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={criterion.weight}
-                      onChange={(e) =>
-                        handleWeightChange(criterion.id, e.target.value)
-                      }
-                      className="pr-8"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                      %
-                    </span>
-                  </div>
-                </div>
-
-                {/* Nilai maks */}
-                <div className="space-y-2">
-                  <Label>Nilai Maksimal</Label>
-                  <Input
-                    value={criterion.maxScore}
-                    disabled
-                    className="bg-muted cursor-not-allowed"
-                  />
-                </div>
-              </div>
-
-              {/* Deskripsi */}
-              <div className="space-y-2">
-                <Label htmlFor={`desc-${criterion.id}`}>Deskripsi</Label>
-                <Input
-                  id={`desc-${criterion.id}`}
-                  value={criterion.description}
-                  onChange={(e) =>
-                    handleDescriptionChange(criterion.id, e.target.value)
-                  }
-                  placeholder="Deskripsi kriteria..."
-                />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Total bobot indicator */}
-      <Card className={isValid ? "border-green-500/50" : "border-destructive/50"}>
-        <CardContent className="pt-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Total Bobot</span>
-            <span
-              className={`text-xl font-bold ${
-                isValid ? "text-green-600" : "text-destructive"
-              }`}
-            >
-              {totalWeight}%
-            </span>
-          </div>
-          {/* Progress bar */}
-          <div className="mt-2 w-full bg-muted rounded-full h-2 overflow-hidden">
-            <div
-              className={`h-2 rounded-full transition-all duration-300 ${
-                isValid
-                  ? "bg-green-500"
-                  : totalWeight > 100
-                  ? "bg-destructive"
-                  : "bg-yellow-500"
-              }`}
-              style={{ width: `${Math.min(totalWeight, 100)}%` }}
-            />
-          </div>
-          {criteria.map((c) => (
-            <div key={c.id} className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>{c.category}</span>
-              <span>{c.weight}%</span>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
       {/* Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         <Button
           onClick={handleSave}
           disabled={!isValid || isSaving}
-          className="flex-1"
+          size="lg"
+          className="sm:flex-1"
         >
           <Save className="mr-2 h-4 w-4" />
           {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
@@ -241,17 +374,19 @@ export default function PenilaianKriteriaPage() {
           variant="outline"
           onClick={handleReset}
           disabled={isSaving}
+          size="lg"
         >
           <RotateCcw className="mr-2 h-4 w-4" />
-          Reset Default
+          Reset ke Default
         </Button>
       </div>
 
-      {/* Info */}
       <Alert>
-        <Info className="h-4 w-4" />
+        <AlertCircle className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>Catatan:</strong> Perubahan bobot hanya berlaku untuk penilaian yang dilakukan setelah perubahan disimpan. Penilaian yang sudah ada tidak terpengaruh.
+          <strong>Catatan:</strong> Perubahan bobot/nama kategori hanya berlaku untuk penilaian
+          yang dilakukan setelah perubahan disimpan. Penilaian yang sudah ada tidak
+          terpengaruh kecuali dilakukan penilaian ulang.
         </AlertDescription>
       </Alert>
     </div>

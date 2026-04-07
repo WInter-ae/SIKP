@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -31,162 +32,163 @@ import {
 } from "lucide-react";
 
 import type { LogbookEntry, Student } from "../types/logbook";
+import {
+  getMentorProfile,
+  getMentees,
+  getStudentLogbook,
+  type LogbookEntry as MentorLogbookEntry,
+  type MenteeData,
+  type MentorProfile,
+} from "../services";
 
-// Mock data - mahasiswa yang sedang magang di PT ini
-const MOCK_STUDENTS: Student[] = [
-    {
-      id: "1",
-      name: "Adam Ramadhan",
-      nim: "1234567890",
-      email: "adam@student.ac.id",
-      university: "Universitas Indonesia",
-      major: "Teknik Informatika",
-      fakultas: "Fakultas Sains dan Teknologi",
-      company: "PT. Tech Innovate Indonesia",
-      position: "Frontend Developer",
-      startDate: "2024-01-01",
-      endDate: "2024-03-31",
-    },
-    {
-      id: "2",
-      name: "Robin Setiawan",
-      nim: "1234567891",
-      email: "robin@student.ac.id",
-      university: "Universitas Indonesia",
-      major: "Teknik Informatika",
-      fakultas: "Fakultas Sains dan Teknologi",
-      company: "PT. Tech Innovate Indonesia",
-      position: "Backend Developer",
-      startDate: "2024-01-01",
-      endDate: "2024-03-31",
-    },
-  ];
+function mapBackendStudent(mentee: MenteeData): Student | null {
+  if (!mentee.userId) return null;
 
-// Mock data - logbook entries yang perlu diparaf
-const MOCK_LOGBOOK_ENTRIES: LogbookEntry[] = [
-    {
-      id: "1",
-      studentId: "1",
-      studentName: "Adam Ramadhan",
-      date: "2024-01-02",
-      description: "Hari Pertama - Orientasi",
-      activities:
-        "Orientasi kantor dan pengenalan tim\nSetup workstation dan akun email\nMempelajari struktur organisasi perusahaan",
-      createdAt: "2024-01-02T10:00:00",
-      mentorSignature: {
-        signedAt: "2024-01-03T14:30:00",
-        signedBy: "mentor1",
-        mentorName: "Budi Santoso",
-        mentorPosition: "Senior Developer",
-        status: "approved",
-        notes: "Orientasi berjalan baik",
-      },
-    },
-    {
-      id: "2",
-      studentId: "1",
-      studentName: "Adam Ramadhan",
-      date: "2024-01-03",
-      description: "Setup Development Environment",
-      activities:
-        "Install tools development (VS Code, Git, Node.js)\nSetup database lokal\nClone repository project",
-      createdAt: "2024-01-03T10:00:00",
-      mentorSignature: {
-        signedAt: "2024-01-04T09:00:00",
-        signedBy: "mentor1",
-        mentorName: "Budi Santoso",
-        mentorPosition: "Senior Developer",
-        status: "approved",
-        notes: "Setup berhasil dilakukan",
-      },
-    },
-    {
-      id: "3",
-      studentId: "1",
-      studentName: "Adam Ramadhan",
-      date: "2024-01-04",
-      description: "Mempelajari Codebase",
-      activities:
-        "Membaca dokumentasi project\nMempelajari struktur folder dan arsitektur\nMemahami flow aplikasi",
-      createdAt: "2024-01-04T10:00:00",
-    },
-    {
-      id: "4",
-      studentId: "1",
-      studentName: "Adam Ramadhan",
-      date: "2024-01-08",
-      description: "Implementasi Fitur Login",
-      activities:
-        "Membuat form login UI\nImplementasi validasi form\nIntegrasi dengan API backend",
-      createdAt: "2024-01-08T10:00:00",
-      mentorSignature: {
-        signedAt: "2024-01-09T11:00:00",
-        signedBy: "mentor1",
-        mentorName: "Budi Santoso",
-        mentorPosition: "Senior Developer",
-        status: "revision",
-        notes: "Perlu perbaikan pada error handling",
-      },
-    },
-    {
-      id: "5",
-      studentId: "1",
-      studentName: "Adam Ramadhan",
-      date: "2024-01-09",
-      description: "Revisi Fitur Login",
-      activities:
-        "Memperbaiki error handling sesuai feedback\nMenambahkan loading state\nTesting berbagai skenario error",
-      createdAt: "2024-01-09T10:00:00",
-      mentorSignature: {
-        signedAt: "2024-01-10T14:00:00",
-        signedBy: "mentor1",
-        mentorName: "Budi Santoso",
-        mentorPosition: "Senior Developer",
-        status: "approved",
-        notes: "Sudah bagus, approved!",
-      },
-    },
-    {
-      id: "6",
-      studentId: "2",
-      studentName: "Robin Setiawan",
-      date: "2024-01-02",
-      description: "Orientasi Perusahaan",
-      activities:
-        "Tour kantor\nPengenalan dengan tim\nPenjelasan budaya kerja perusahaan",
-      createdAt: "2024-01-02T09:00:00",
-      mentorSignature: {
-        signedAt: "2024-01-03T10:00:00",
-        signedBy: "mentor1",
-        mentorName: "Budi Santoso",
-        mentorPosition: "Senior Developer",
-        status: "approved",
-      },
-    },
-    {
-      id: "7",
-      studentId: "2",
-      studentName: "Robin Setiawan",
-      date: "2024-01-03",
-      description: "Setup & Training",
-      activities:
-        "Setup development tools\nTraining penggunaan version control\nMempelajari workflow tim",
-      createdAt: "2024-01-03T09:00:00",
-    },
-    {
-      id: "8",
-      studentId: "1",
-      studentName: "Adam Ramadhan",
-      date: "2024-01-15",
-      description: "Dashboard UI Development",
-      activities:
-        "Membuat layout dashboard\nImplementasi navigation sidebar\nMenambahkan chart components",
-      createdAt: "2024-01-15T10:00:00",
-    },
-  ];
+  return {
+    id: mentee.userId,
+    name: mentee.nama || mentee.name || "-",
+    nim: mentee.nim,
+    email: mentee.email,
+    university: mentee.fakultas || "-",
+    major: mentee.prodi || "-",
+    fakultas: mentee.fakultas,
+    company: mentee.companyName || mentee.company || "-",
+    position: mentee.division || "-",
+    startDate: mentee.internshipStartDate || "",
+    endDate: mentee.internshipEndDate || "",
+    photo: undefined,
+  };
+}
 
 export default function MentorLogbookPage() {
-  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>(MOCK_LOGBOOK_ENTRIES);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
+  const [mentorProfile, setMentorProfile] = useState<MentorProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadData() {
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const [profileResponse, menteeResponse] = await Promise.all([
+          getMentorProfile(),
+          getMentees(),
+        ]);
+
+        if (!isMounted) return;
+
+        if (profileResponse.success && profileResponse.data) {
+          setMentorProfile(profileResponse.data);
+        }
+
+        if (!menteeResponse.success || !menteeResponse.data) {
+          setStudents([]);
+          setLogbookEntries([]);
+          setErrorMessage(menteeResponse.message || "Gagal memuat mahasiswa mentor.");
+          return;
+        }
+
+        const backendStudents = menteeResponse.data
+          .map(mapBackendStudent)
+          .filter((student): student is Student => Boolean(student));
+
+        setStudents(backendStudents);
+
+        const backendEntries = await Promise.all(
+          backendStudents.map(async (student) => {
+            try {
+              const menteeData = menteeResponse.data?.find((m) => m.userId === student.id);
+              
+                // Backend expects userId for GET /api/mentor/logbook/:studentId
+                const studentUserId = menteeData?.userId || student.id;
+                if (!studentUserId) {
+                  return [] as LogbookEntry[];
+                }
+              
+                let response = await getStudentLogbook(studentUserId);
+              
+              if (!response.success || !response.data?.entries || response.data.entries.length === 0) {
+                // no-op: empty logbook is valid for some students
+              }
+
+              if (!response.success) {
+                console.warn(
+                  `❌ Logbook fetch failed for student ${student.id}:`,
+                  response.message,
+                  {menteeData}
+                );
+                return [] as LogbookEntry[];
+              }
+
+              const entries = response.data?.entries || [];
+              
+              if (!entries || entries.length === 0) {
+                return [] as LogbookEntry[];
+              }
+
+              return entries.map((entry) => ({
+                id: entry.id,
+                studentId: student.id,
+                studentName: student.name,
+                date: entry.date,
+                description: entry.description || entry.activity,
+                activities: entry.activity || entry.description || "",
+                createdAt: entry.createdAt,
+                mentorSignature:
+                  entry.status === "APPROVED"
+                    ? {
+                        signedAt: entry.mentorSignedAt || entry.updatedAt,
+                        signedBy: "backend",
+                        mentorName: mentorProfile?.name || "Mentor",
+                        mentorPosition: mentorProfile?.position || "",
+                        status: "approved",
+                        notes: entry.rejectionNote,
+                      }
+                    : entry.status === "REJECTED"
+                      ? {
+                          signedAt: entry.mentorSignedAt || entry.updatedAt,
+                          signedBy: "backend",
+                          mentorName: mentorProfile?.name || "Mentor",
+                          mentorPosition: mentorProfile?.position || "",
+                          status: "rejected",
+                          notes: entry.rejectionNote,
+                        }
+                      : undefined,
+              })) as LogbookEntry[];
+            } catch (error) {
+              console.error(`❌ Error loading logbook for student ${student.id}:`, error);
+              return [] as LogbookEntry[];
+            }
+          })
+        );
+
+        setLogbookEntries(backendEntries.flat());
+      } catch (error) {
+        if (!isMounted) return;
+
+        const message = error instanceof Error ? error.message : "Gagal memuat logbook mentor.";
+        setErrorMessage(message);
+        setStudents([]);
+        setLogbookEntries([]);
+        toast.error(message);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Calculate statistics per student
   const getStudentStats = (studentId: string) => {
@@ -219,31 +221,38 @@ export default function MentorLogbookPage() {
             </p>
           </div>
 
+          {errorMessage && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          )}
+
           {/* Company Info */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Building2 className="h-5 w-5" />
-                Informasi Perusahaan
+                Informasi Pembimbing Lapangan
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">
-                    Nama Perusahaan
+                    Nama Mentor
                   </p>
-                  <p className="font-medium">PT. Teknologi Digital Indonesia</p>
+                  <p className="font-medium">{mentorProfile?.name || "-"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">
-                    Pembimbing Lapangan
+                    Perusahaan
                   </p>
-                  <p className="font-medium">Budi Santoso</p>
+                  <p className="font-medium">{mentorProfile?.company || "-"}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Jabatan</p>
-                  <p className="font-medium">Senior Developer</p>
+                  <p className="font-medium">{mentorProfile?.position || "-"}</p>
                 </div>
               </div>
             </CardContent>
@@ -258,7 +267,7 @@ export default function MentorLogbookPage() {
                     <p className="text-sm text-muted-foreground">
                       Total Mahasiswa
                     </p>
-                    <p className="text-3xl font-bold">{MOCK_STUDENTS.length}</p>
+                    <p className="text-3xl font-bold">{students.length}</p>
                   </div>
                   <User className="h-8 w-8 text-blue-500" />
                 </div>
@@ -320,7 +329,13 @@ export default function MentorLogbookPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {MOCK_STUDENTS.length === 0 ? (
+                    {isLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                          Memuat data mahasiswa dan logbook dari backend...
+                        </TableCell>
+                      </TableRow>
+                    ) : students.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={9} className="text-center py-8">
                           <User className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
@@ -330,7 +345,7 @@ export default function MentorLogbookPage() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      MOCK_STUDENTS.map((student) => {
+                      students.map((student) => {
                         const stats = getStudentStats(student.id);
                         return (
                           <TableRow key={student.id}>

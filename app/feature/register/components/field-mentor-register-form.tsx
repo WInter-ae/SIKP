@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Building2, Phone, Briefcase, KeyRound } from "lucide-react"
+import { Building2, Phone, Briefcase } from "lucide-react"
 import { toast } from "sonner"
 
 // 2. Internal utilities
@@ -26,13 +26,6 @@ import { Input } from "~/components/ui/input"
 // Schema validasi untuk form register pembimbing lapangan
 const fieldMentorRegisterSchema = z
   .object({
-    registrationCode: z
-      .string()
-      .min(1, "Kode registrasi wajib diisi")
-      .regex(
-        /^MNT-\d{6}-\d{4}$/,
-        "Format kode tidak valid (contoh: MNT-123456-0001)"
-      ),
     name: z
       .string()
       .min(1, "Nama lengkap wajib diisi")
@@ -91,7 +84,6 @@ export function FieldMentorRegisterForm({
   const form = useForm<FieldMentorRegisterFormData>({
     resolver: zodResolver(fieldMentorRegisterSchema),
     defaultValues: {
-      registrationCode: "",
       name: "",
       email: "",
       nip: "",
@@ -107,13 +99,6 @@ export function FieldMentorRegisterForm({
   const onSubmit = async (data: FieldMentorRegisterFormData) => {
     try {
       setError(null)
-
-      // TODO: Validate registration code with API
-      // const codeValidation = await fetch(`/api/validate-mentor-code/${data.registrationCode}`)
-      // if (!codeValidation.ok) {
-      //   setError("Kode registrasi tidak valid atau sudah digunakan")
-      //   return
-      // }
 
       const result = await registerFieldMentor({
         email: data.email,
@@ -135,7 +120,6 @@ export function FieldMentorRegisterForm({
       //   method: 'POST',
       //   body: JSON.stringify({
       //     userId: result.data.user.id,
-      //     registrationCode: data.registrationCode,
       //     nip: data.nip,
       //     company: data.company,
       //     position: data.position,
@@ -144,7 +128,7 @@ export function FieldMentorRegisterForm({
       //   })
       // })
 
-      toast.success("Registrasi berhasil! Menunggu persetujuan admin.")
+      toast.success("Registrasi berhasil! Menunggu persetujuan Dosen PA.")
       navigate("/login")
     } catch (err) {
       setError("Terjadi kesalahan. Silakan coba lagi.")
@@ -164,8 +148,7 @@ export function FieldMentorRegisterForm({
             Registrasi Pembimbing Lapangan
           </h1>
           <p className="text-muted-foreground text-sm text-balance">
-            Gunakan kode registrasi yang diberikan oleh mahasiswa untuk
-            mendaftar
+            Lengkapi data pembimbing lapangan untuk diajukan ke Dosen PA
           </p>
         </div>
 
@@ -177,36 +160,6 @@ export function FieldMentorRegisterForm({
             {error}
           </div>
         )}
-
-        <Controller
-          name="registrationCode"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="registrationCode">
-                Kode Registrasi
-              </FieldLabel>
-              <div className="relative">
-                <KeyRound className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  {...field}
-                  id="registrationCode"
-                  type="text"
-                  placeholder="MNT-123456-0001"
-                  aria-invalid={fieldState.invalid}
-                  className="pl-10"
-                />
-              </div>
-              {fieldState.invalid ? (
-                <FieldError errors={[fieldState.error]} />
-              ) : (
-                <FieldDescription>
-                  Masukkan kode yang diberikan oleh mahasiswa
-                </FieldDescription>
-              )}
-            </Field>
-          )}
-        />
 
         <FieldSeparator />
 

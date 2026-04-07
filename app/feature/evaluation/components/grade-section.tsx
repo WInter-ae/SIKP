@@ -1,6 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Progress } from "~/components/ui/progress";
+import { Badge } from "~/components/ui/badge";
 import type { GradeSectionProps } from "../types";
+
+function getScoreBadgeClass(score: number, maxScore: number): string {
+  const ratio = maxScore > 0 ? score / maxScore : 0;
+
+  if (ratio >= 0.85) {
+    return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300";
+  }
+  if (ratio >= 0.7) {
+    return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-300";
+  }
+  return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300";
+}
 
 export function GradeSection({
   title,
@@ -58,20 +71,14 @@ export function GradeSection({
                       </span>
                     )}
                   </div>
-                  <div className="font-medium">
-                    <span
-                      className={
-                        component.score >= component.maxScore * 0.8
-                          ? "text-green-600 dark:text-green-400"
-                          : component.score >= component.maxScore * 0.6
-                            ? "text-yellow-600 dark:text-yellow-400"
-                            : "text-red-600 dark:text-red-400"
-                      }
+                  <div className="font-medium flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={`${getScoreBadgeClass(component.score, component.maxScore)} font-bold min-w-10 justify-center`}
                     >
                       {component.score}
-                    </span>
+                    </Badge>
                     <span className="text-gray-500 dark:text-gray-400">
-                      {" "}
                       / {component.maxScore}
                     </span>
                   </div>

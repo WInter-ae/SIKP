@@ -46,6 +46,7 @@ import {
 // API Services
 import { getCompleteInternshipData } from "~/feature/during-intern/services";
 import type { CompleteInternshipData } from "~/feature/during-intern/services/student-api";
+import { createLogbookEntry, getLogbookEntries } from "~/feature/during-intern/services/logbook-api";
 
 // Utility Functions
 import { generateLogbookDOCX } from "~/feature/during-intern/utils/generate-logbook-docx";
@@ -54,6 +55,8 @@ interface LogbookEntry {
   id: string;
   date: string;
   description: string;
+  activity?: string;
+  hours?: number;
   mentorSignature?: {
     status: "approved" | "revision" | "rejected";
     signedAt: string;
@@ -79,6 +82,46 @@ const DAYS_OPTIONS = [
   { value: "minggu", label: "Minggu" },
 ];
 
+function mapBackendLogbookEntry(entry: {
+  id: string;
+  date: string;
+  activity?: string;
+  description?: string;
+  hours?: number;
+  status?: string;
+  rejectionReason?: string | null;
+  verifiedBy?: string | null;
+  verifiedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}) {
+  const normalizedStatus = String(entry.status || "").toUpperCase();
+  const signatureStatus =
+    normalizedStatus === "APPROVED"
+      ? "approved"
+      : normalizedStatus === "REJECTED"
+        ? "rejected"
+        : normalizedStatus === "REVISION" || normalizedStatus === "REVISED"
+          ? "revision"
+          : null;
+
+  return {
+    id: entry.id,
+    date: entry.date,
+    description: entry.description || entry.activity || "",
+    activity: entry.activity || entry.description || "",
+    hours: entry.hours,
+    mentorSignature: signatureStatus
+      ? {
+          status: signatureStatus,
+          signedAt: entry.verifiedAt || entry.updatedAt || entry.createdAt || new Date().toISOString(),
+          mentorName: entry.verifiedBy || "Backend",
+          notes: entry.rejectionReason || undefined,
+        }
+      : undefined,
+  } satisfies LogbookEntry;
+}
+
 function LogbookPage() {
   const [isPeriodSaved, setIsPeriodSaved] = useState(false);
   const [workPeriod, setWorkPeriod] = useState<WorkPeriod>({
@@ -88,6 +131,7 @@ function LogbookPage() {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [description, setDescription] = useState("");
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
+  const [isSavingLogbook, setIsSavingLogbook] = useState(false);
   const [generatedDates, setGeneratedDates] = useState<string[]>([]);
   const [periodSource, setPeriodSource] = useState<"auto" | "manual" | null>(null); // Track sumber periode
   
@@ -99,13 +143,10 @@ function LogbookPage() {
   // Fetch complete internship data (⭐ ONE API CALL FOR ALL DATA)
   useEffect(() => {
     async function fetchInternshipData() {
-      console.log('🔄 Fetching internship data...');
       try {
         const response = await getCompleteInternshipData();
-        console.log('📥 API Response:', response);
 
         if (response.success && response.data) {
-          console.log('✅ Data received:', response.data);
           setCompleteData(response.data);
           
           // ✅ AUTO-POPULATE periode dari data submission (per mahasiswa)
@@ -126,17 +167,12 @@ function LogbookPage() {
             const savedPeriodState = localStorage.getItem('logbook_period_saved');
             const savedDates = localStorage.getItem('logbook_generated_dates');
             const savedWorkPeriod = localStorage.getItem('logbook_work_period');
-            const savedEntries = localStorage.getItem('logbook_entries');
-            
             // Jika sudah pernah generate dengan periode yang sama, restore dari localStorage
             if (savedPeriodState === 'true' && savedDates && savedWorkPeriod) {
               const saved = JSON.parse(savedWorkPeriod);
               if (saved.startDate === submission.startDate && saved.endDate === submission.endDate) {
                 setIsPeriodSaved(true);
                 setGeneratedDates(JSON.parse(savedDates));
-                if (savedEntries) {
-                  setLogbookEntries(JSON.parse(savedEntries));
-                }
                 toast.success("Periode magang dan logbook berhasil dimuat!");
                 return; // Exit early karena sudah restore dari localStorage
               }
@@ -158,29 +194,18 @@ function LogbookPage() {
             localStorage.setItem('logbook_generated_dates', JSON.stringify(dates));
             localStorage.setItem('logbook_work_period', JSON.stringify(autoWorkPeriod));
             
-            console.log('✅ AUTO-GENERATE SUCCESS:', {
-              isPeriodSaved: true,
-              generatedDatesCount: dates.length,
-              workPeriod: autoWorkPeriod
-            });
-            
             toast.success(`Periode otomatis dari pengajuan! ${dates.length} hari kerja telah digenerate.`);
           } else {
             // Tidak ada data submission - coba restore dari localStorage (input manual sebelumnya)
             const savedPeriodState = localStorage.getItem('logbook_period_saved');
             const savedDates = localStorage.getItem('logbook_generated_dates');
             const savedWorkPeriod = localStorage.getItem('logbook_work_period');
-            const savedEntries = localStorage.getItem('logbook_entries');
-
             if (savedPeriodState === 'true' && savedDates && savedWorkPeriod) {
               // Restore input manual sebelumnya
               setIsPeriodSaved(true);
               setGeneratedDates(JSON.parse(savedDates));
               setWorkPeriod(JSON.parse(savedWorkPeriod));
               setPeriodSource("manual"); // Mark sebagai manual input
-              if (savedEntries) {
-                setLogbookEntries(JSON.parse(savedEntries));
-              }
               toast.success('Periode logbook manual berhasil dimuat!');
             } else {
               // Belum ada data submission DAN belum pernah input manual
@@ -189,8 +214,6 @@ function LogbookPage() {
             }
           }
         } else {
-          console.error('❌ API returned unsuccessful:', response);
-          
           // Check if it's an authentication error
           if (response.message?.toLowerCase().includes('unauthorized') || 
               response.message?.toLowerCase().includes('token')) {
@@ -208,11 +231,6 @@ function LogbookPage() {
           }
         }
       } catch (error) {
-        console.error("❌ Error fetching internship data:", error);
-        console.error('Error details:', {
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : undefined
-        });
         toast.error("Gagal memuat data magang");
       } finally {
         setIsLoadingProfile(false);
@@ -221,6 +239,27 @@ function LogbookPage() {
 
     fetchInternshipData();
   }, []);
+
+  useEffect(() => {
+    async function fetchLogbookFromBackend() {
+      if (!completeData?.student?.userId) return;
+
+      try {
+        const response = await getLogbookEntries();
+        if (!response.success || !response.data) {
+          return;
+        }
+
+        const backendEntries = response.data.entries.map(mapBackendLogbookEntry);
+
+        setLogbookEntries(backendEntries);
+      } catch {
+        // keep current UI state when fetch fails
+      }
+    }
+
+    fetchLogbookFromBackend();
+  }, [completeData?.student?.userId]);
 
   // Helper function untuk generate dates
   const generateDatesFromPeriod = (
@@ -307,32 +346,55 @@ function LogbookPage() {
     // Clear localStorage
     localStorage.removeItem('logbook_period_saved');
     localStorage.removeItem('logbook_generated_dates');
-    localStorage.removeItem('logbook_entries');
     localStorage.removeItem('logbook_work_period');
     
     toast.info('Periode logbook direset. Silakan input periode baru secara manual.');
   };
 
   const handleAddLogbook = () => {
+    if (isSavingLogbook) return;
+
     if (!selectedDate || !description.trim()) {
       toast.error("Mohon lengkapi tanggal dan deskripsi!");
       return;
     }
 
-    const newEntry: LogbookEntry = {
-      id: Date.now().toString(),
-      date: selectedDate,
-      description: description.trim(),
+    const activityText = description.trim();
+
+    const submitEntry = async () => {
+      if (!completeData?.student?.userId) {
+        toast.error("Data mahasiswa belum siap.");
+        return;
+      }
+
+      try {
+        setIsSavingLogbook(true);
+
+        const response = await createLogbookEntry({
+          date: selectedDate,
+          activity: activityText,
+          description: activityText,
+        });
+
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Gagal menyimpan logbook ke backend.");
+        }
+
+        const createdEntry = mapBackendLogbookEntry(response.data);
+        const updatedEntries = [...logbookEntries.filter((entry) => entry.id !== createdEntry.id), createdEntry];
+
+        setLogbookEntries(updatedEntries);
+        setSelectedDate("");
+        setDescription("");
+        toast.success("Logbook berhasil disimpan ke backend!");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Gagal menyimpan logbook ke backend.");
+      } finally {
+        setIsSavingLogbook(false);
+      }
     };
 
-    const updatedEntries = [...logbookEntries, newEntry];
-    setLogbookEntries(updatedEntries);
-    
-    // Save to localStorage
-    localStorage.setItem('logbook_entries', JSON.stringify(updatedEntries));
-    setSelectedDate("");
-    setDescription("");
-    toast.success("Logbook berhasil ditambahkan!");
+    void submitEntry();
   };
 
   const getLogbookForDate = (date: string) => {
@@ -450,32 +512,19 @@ function LogbookPage() {
       return;
     }
 
-    console.log('🔍 Export Check - completeData:', completeData);
-    
     // Cek apakah data magang lengkap (student dan submission data)
     const isDataMissing = !completeData || !completeData.student || !completeData.submission;
-    
-    console.log('🔍 Data Status:', {
-      hasCompleteData: !!completeData,
-      hasStudent: !!completeData?.student,
-      hasSubmission: !!completeData?.submission,
-      isDataMissing
-    });
 
     if (isDataMissing) {
       // Tampilkan dialog konfirmasi
-      console.log('⚠️ Data tidak lengkap, tampilkan dialog');
       setShowEmptyDataDialog(true);
     } else {
       // Data lengkap, langsung generate
-      console.log('✅ Data lengkap, langsung generate');
       await performGenerate();
     }
   };
 
   const performGenerate = async () => {
-    console.log('🚀 Starting performGenerate...');
-    
     try {
       // Build logbookData with fallback values for missing data
       const logbookData = {
@@ -504,15 +553,11 @@ function LogbookPage() {
         entries: logbookEntries
       };
 
-      console.log('📄 Logbook Data:', logbookData);
-      console.log('🖊️ Mentor Signature:', completeData?.mentor?.signature ? 'Available ✓' : 'Not available');
-
       // Generate and download DOCX
       await generateLogbookDOCX(logbookData);
       
       toast.success("Logbook DOCX berhasil didownload!");
-    } catch (error) {
-      console.error("Error generating logbook:", error);
+    } catch {
       toast.error("Gagal generate logbook. Silakan coba lagi.");
     }
   };
@@ -814,6 +859,7 @@ function LogbookPage() {
                 id="tanggal"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
+                disabled={isSavingLogbook}
               />
             </div>
             <div className="md:col-span-2 space-y-2">
@@ -824,14 +870,15 @@ function LogbookPage() {
                 placeholder="Masukkan deskripsi kegiatan..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                disabled={isSavingLogbook}
               />
             </div>
           </div>
 
           <div className="flex justify-end">
-            <Button onClick={handleAddLogbook}>
+            <Button onClick={handleAddLogbook} disabled={isSavingLogbook}>
               <Plus className="mr-2 h-4 w-4" />
-              Tambah Logbook
+              {isSavingLogbook ? "Menyimpan..." : "Tambah Logbook"}
             </Button>
           </div>
         </CardContent>

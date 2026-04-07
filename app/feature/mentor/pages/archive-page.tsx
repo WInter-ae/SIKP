@@ -1,9 +1,7 @@
-// External dependencies
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
 import { Archive, FileText, Eye, Download, Calendar } from "lucide-react";
+import { toast } from "sonner";
 
-// UI Components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
@@ -11,90 +9,170 @@ import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
-// Types
+import { getMentees, getStudentAssessment, getStudentLogbook, type MenteeData } from "~/feature/field-mentor/services";
+
 import type { ArchivedDocument } from "../types";
 
-// Mock data - should be fetched from API in real implementation
-const MOCK_ARCHIVED_DOCUMENTS: ArchivedDocument[] = [
-  {
-    id: "1",
-    type: "penilaian",
-    title: "Penilaian - Ahmad Fauzi",
-    mentee: "Ahmad Fauzi",
-    date: "2024-12-01",
-    semester: "Ganjil 2024/2025",
-    status: "completed",
-  },
-  {
-    id: "2",
-    type: "logbook",
-    title: "Logbook Lengkap - Siti Aminah (12 Minggu)",
-    mentee: "Siti Aminah",
-    date: "2024-11-28",
-    semester: "Ganjil 2024/2025",
-    status: "completed",
-  },
-  {
-    id: "3",
-    type: "laporan",
-    title: "Laporan Magang - Budi Santoso",
-    mentee: "Budi Santoso",
-    date: "2024-11-25",
-    semester: "Ganjil 2024/2025",
-    status: "archived",
-  },
-  {
-    id: "4",
-    type: "penilaian",
-    title: "Penilaian - Dewi Kartika",
-    mentee: "Dewi Kartika",
-    date: "2024-06-15",
-    semester: "Genap 2023/2024",
-    status: "completed",
-  },
-  {
-    id: "5",
-    type: "logbook",
-    title: "Logbook Lengkap - Eko Prasetyo (12 Minggu)",
-    mentee: "Eko Prasetyo",
-    date: "2024-06-10",
-    semester: "Genap 2023/2024",
-    status: "completed",
-  },
-  {
-    id: "6",
-    type: "laporan",
-    title: "Laporan Magang - Rina Wulandari",
-    mentee: "Rina Wulandari",
-    date: "2024-06-05",
-    semester: "Genap 2023/2024",
-    status: "archived",
-  },
-];
+function semesterFromDate(dateString?: string) {
+  if (!dateString) return "-";
 
-const MOCK_SEMESTERS = ["Ganjil 2024/2025", "Genap 2023/2024", "Ganjil 2023/2024"];
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) return "-";
+
+  const month = parsed.getMonth() + 1;
+  const year = parsed.getFullYear();
+  if (month >= 8 || month <= 1) {
+    return `Ganjil ${year}/${year + 1}`;
+  }
+
+  return `Genap ${year - 1}/${year}`;
+}
+
+function buildArchiveItems(
+  mentees: MenteeData[],
+  logbookCounts: Record<string, number>,
+  hasAssessment: Record<string, boolean>
+): ArchivedDocument[] {
+  const rows: ArchivedDocument[] = [];
+
+  mentees.forEach((mentee) => {
+    if (!mentee.userId) return;
+
+    const studentName = mentee.nama || mentee.name || "Mahasiswa";
+    const semester = semesterFromDate(mentee.internshipEndDate || mentee.internshipStartDate);
+    const archiveDate = mentee.internshipEndDate || mentee.internshipStartDate || new Date().toISOString();
+
+    if (hasAssessment[mentee.userId]) {
+      rows.push({
+        id: `assessment-${mentee.userId}`,
+        type: "penilaian",
+        title: `Penilaian - ${studentName}`,
+        mentee: studentName,
+        date: archiveDate,
+        semester,
+        status: "completed",
+      });
+    }
+
+    if ((logbookCounts[mentee.userId] || 0) > 0) {
+      rows.push({
+        id: `logbook-${mentee.userId}`,
+        type: "logbook",
+        title: `Logbook Lengkap - ${studentName}`,
+        mentee: studentName,
+        date: archiveDate,
+        semester,
+        status: "completed",
+      });
+    }
+
+    rows.push({
+      id: `laporan-${mentee.userId}`,
+      type: "laporan",
+      title: `Ringkasan Magang - ${studentName}`,
+      mentee: studentName,
+      date: archiveDate,
+      semester,
+      status: "archived",
+    });
+  });
+
+  return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
 
 function ArchivePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterSemester, setFilterSemester] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("all");
+  const [documents, setDocuments] = useState<ArchivedDocument[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredDocuments = MOCK_ARCHIVED_DOCUMENTS.filter((doc) => {
-    const matchesSearch =
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.mentee.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || doc.type === filterType;
-    const matchesSemester =
-      filterSemester === "all" || doc.semester === filterSemester;
-    const matchesTab = activeTab === "all" || doc.type === activeTab;
+  useEffect(() => {
+    let isMounted = true;
 
-    return matchesSearch && matchesType && matchesSemester && matchesTab;
-  });
+    async function loadArchive() {
+      setIsLoading(true);
 
-  function getDocumentIcon(type: string) {
-    return <FileText className="h-5 w-5" />;
-  }
+      try {
+        const menteesRes = await getMentees();
+
+        if (!isMounted) return;
+
+        if (!menteesRes.success || !menteesRes.data) {
+          setDocuments([]);
+          toast.error(menteesRes.message || "Gagal memuat arsip mentor.");
+          return;
+        }
+
+        const validMentees = menteesRes.data.filter((mentee) => Boolean(mentee.userId));
+
+        const tuples = await Promise.all(
+          validMentees.map(async (mentee) => {
+            try {
+              const [logbookRes, assessmentRes] = await Promise.all([
+                getStudentLogbook(mentee.userId),
+                getStudentAssessment(mentee.userId),
+              ]);
+
+              const logbookCount = logbookRes.success && logbookRes.data?.entries ? logbookRes.data.entries.length : 0;
+              const assessmentExists = Boolean(assessmentRes.success && assessmentRes.data);
+
+              return [mentee.userId, logbookCount, assessmentExists] as const;
+            } catch {
+              return [mentee.userId, 0, false] as const;
+            }
+          })
+        );
+
+        if (!isMounted) return;
+
+        const logbookCounts: Record<string, number> = {};
+        const hasAssessment: Record<string, boolean> = {};
+
+        tuples.forEach(([studentId, count, assessment]) => {
+          logbookCounts[studentId] = count;
+          hasAssessment[studentId] = assessment;
+        });
+
+        setDocuments(buildArchiveItems(validMentees, logbookCounts, hasAssessment));
+      } catch (error) {
+        if (!isMounted) return;
+        setDocuments([]);
+        toast.error(error instanceof Error ? error.message : "Gagal memuat arsip mentor.");
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadArchive();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const semesters = useMemo(
+    () => Array.from(new Set(documents.map((doc) => doc.semester))).filter((semester) => semester !== "-"),
+    [documents]
+  );
+
+  const filteredDocuments = useMemo(
+    () =>
+      documents.filter((doc) => {
+        const matchesSearch =
+          doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          doc.mentee.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesType = filterType === "all" || doc.type === filterType;
+        const matchesSemester = filterSemester === "all" || doc.semester === filterSemester;
+        const matchesTab = activeTab === "all" || doc.type === activeTab;
+
+        return matchesSearch && matchesType && matchesSemester && matchesTab;
+      }),
+    [activeTab, documents, filterSemester, filterType, searchQuery]
+  );
 
   function getDocumentColor(type: string) {
     switch (type) {
@@ -103,29 +181,36 @@ function ArchivePage() {
       case "logbook":
         return "bg-green-500/10 text-green-500";
       case "laporan":
-        return "bg-purple-500/10 text-purple-500";
+        return "bg-orange-500/10 text-orange-500";
       default:
         return "bg-gray-500/10 text-gray-500";
     }
   }
 
-  function handleView(docId: string) {
-    // Implement document view logic
-    console.log("View document:", docId);
+  function handleView(doc: ArchivedDocument) {
+    if (doc.type === "penilaian") {
+      window.location.href = "/mentor/penilaian";
+      return;
+    }
+
+    if (doc.type === "logbook") {
+      window.location.href = "/mentor/logbook";
+      return;
+    }
+
+    toast.info("Dokumen ringkasan dapat diakses dari halaman detail mahasiswa.");
   }
 
-  function handleDownload(docId: string) {
-    // Implement download logic
-    console.log("Download document:", docId);
+  function handleDownload(doc: ArchivedDocument) {
+    toast.info(`Unduh dokumen ${doc.title} akan diaktifkan setelah endpoint export tersedia.`);
   }
 
-  const totalPenilaian = MOCK_ARCHIVED_DOCUMENTS.filter((d) => d.type === "penilaian").length;
-  const totalLogbook = MOCK_ARCHIVED_DOCUMENTS.filter((d) => d.type === "logbook").length;
-  const totalLaporan = MOCK_ARCHIVED_DOCUMENTS.filter((d) => d.type === "laporan").length;
+  const totalPenilaian = documents.filter((d) => d.type === "penilaian").length;
+  const totalLogbook = documents.filter((d) => d.type === "logbook").length;
+  const totalLaporan = documents.filter((d) => d.type === "laporan").length;
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="space-y-2">
         <h1 className="text-2xl sm:text-3xl font-bold">Arsip Dokumen</h1>
         <p className="text-muted-foreground">
@@ -133,35 +218,33 @@ function ArchivePage() {
         </p>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Total Arsip</CardDescription>
-            <CardTitle className="text-3xl">{MOCK_ARCHIVED_DOCUMENTS.length}</CardTitle>
+            <CardTitle className="text-3xl">{isLoading ? "..." : documents.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Penilaian</CardDescription>
-            <CardTitle className="text-3xl">{totalPenilaian}</CardTitle>
+            <CardTitle className="text-3xl">{isLoading ? "..." : totalPenilaian}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Logbook</CardDescription>
-            <CardTitle className="text-3xl">{totalLogbook}</CardTitle>
+            <CardTitle className="text-3xl">{isLoading ? "..." : totalLogbook}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Laporan</CardDescription>
-            <CardTitle className="text-3xl">{totalLaporan}</CardTitle>
+            <CardTitle className="text-3xl">{isLoading ? "..." : totalLaporan}</CardTitle>
           </CardHeader>
         </Card>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -196,7 +279,7 @@ function ArchivePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Semester</SelectItem>
-                  {MOCK_SEMESTERS.map((semester) => (
+                  {semesters.map((semester) => (
                     <SelectItem key={semester} value={semester}>
                       {semester}
                     </SelectItem>
@@ -208,7 +291,6 @@ function ArchivePage() {
         </CardContent>
       </Card>
 
-      {/* Documents with Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="all">Semua</TabsTrigger>
@@ -218,7 +300,11 @@ function ArchivePage() {
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
-          {filteredDocuments.length > 0 ? (
+          {isLoading ? (
+            <Card>
+              <CardContent className="py-8 text-muted-foreground">Memuat arsip dari backend...</CardContent>
+            </Card>
+          ) : filteredDocuments.length > 0 ? (
             <div className="grid grid-cols-1 gap-4">
               {filteredDocuments.map((doc) => (
                 <Card key={doc.id} className="hover:shadow-md transition-shadow">
@@ -226,7 +312,7 @@ function ArchivePage() {
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex items-start gap-4 flex-1">
                         <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${getDocumentColor(doc.type)}`}>
-                          {getDocumentIcon(doc.type)}
+                          <FileText className="h-5 w-5" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold mb-1 truncate">{doc.title}</h3>
@@ -248,20 +334,13 @@ function ArchivePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleView(doc.id)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleView(doc)}>
                           <Eye className="h-4 w-4 mr-2" />
                           Lihat
                         </Button>
-                        <Button 
-                          size="sm"
-                          onClick={() => handleDownload(doc.id)}
-                        >
+                        <Button size="sm" onClick={() => handleDownload(doc)}>
                           <Download className="h-4 w-4 mr-2" />
-                          Download
+                          Unduh
                         </Button>
                       </div>
                     </div>
@@ -271,38 +350,15 @@ function ArchivePage() {
             </div>
           ) : (
             <Card>
-              <CardContent className="py-12">
-                <div className="text-center">
-                  <Archive className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium mb-2">
-                    Tidak ada dokumen ditemukan
-                  </p>
-                  <p className="text-muted-foreground">
-                    Coba ubah filter atau kata kunci pencarian
-                  </p>
-                </div>
+              <CardContent className="py-12 text-center">
+                <Archive className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-lg font-medium mb-2">Tidak ada dokumen ditemukan</p>
+                <p className="text-muted-foreground">Coba ubah filter atau kata kunci pencarian</p>
               </CardContent>
             </Card>
           )}
         </TabsContent>
       </Tabs>
-
-      {/* Info Card */}
-      <Card className="bg-muted/50">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-3">
-            <Archive className="h-5 w-5 text-muted-foreground mt-0.5" />
-            <div>
-              <p className="font-medium mb-1">Tentang Arsip</p>
-              <p className="text-sm text-muted-foreground">
-                Halaman ini menyimpan semua dokumen penilaian, logbook, dan laporan dari mahasiswa 
-                yang telah menyelesaikan periode magang di perusahaan Anda. Anda dapat mencari, melihat, dan 
-                mengunduh dokumen untuk referensi atau keperluan administrasi.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
