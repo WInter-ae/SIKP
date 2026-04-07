@@ -5,6 +5,7 @@
 
 import { post, get, put } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
+import { getAuthToken } from "~/lib/auth-client";
 
 // ==================== TYPES ====================
 
@@ -41,11 +42,11 @@ export async function uploadKPReport(
   metadata?: {
     description?: string;
     notes?: string;
-  }
+  },
 ): Promise<ApiResponse<UploadReportResponse>> {
   const formData = new FormData();
   formData.append("file", file);
-  
+
   if (metadata?.description) {
     formData.append("description", metadata.description);
   }
@@ -54,12 +55,10 @@ export async function uploadKPReport(
   }
 
   // Use fetch directly for file upload with FormData
-  const token = await getAuthToken();
+  const token = getAuthToken();
   const API_BASE_URL =
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    "";
-  
+    import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/report/upload`, {
       method: "POST",
@@ -96,18 +95,6 @@ export async function uploadKPReport(
 }
 
 /**
- * Get auth token for file upload
- */
-async function getAuthToken(): Promise<string | null> {
-  try {
-    const token = localStorage.getItem('auth_token');
-    return token;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Get current student's report
  * GET /api/report
  */
@@ -120,7 +107,7 @@ export async function getMyReport(): Promise<ApiResponse<KPReport>> {
  * GET /api/report/student/:studentId
  */
 export async function getStudentReport(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<KPReport>> {
   return get<KPReport>(`/api/report/student/${studentId}`);
 }
@@ -130,7 +117,7 @@ export async function getStudentReport(
  * POST /api/report/:reportId/submit
  */
 export async function submitReport(
-  reportId: string
+  reportId: string,
 ): Promise<ApiResponse<KPReport>> {
   return post<KPReport>(`/api/report/${reportId}/submit`, {});
 }
@@ -144,7 +131,7 @@ export async function updateReportMetadata(
   data: {
     description?: string;
     notes?: string;
-  }
+  },
 ): Promise<ApiResponse<KPReport>> {
   return put<KPReport>(`/api/report/${reportId}`, data);
 }
@@ -154,7 +141,7 @@ export async function updateReportMetadata(
  * DELETE /api/report/:reportId
  */
 export async function deleteReport(
-  reportId: string
+  reportId: string,
 ): Promise<ApiResponse<void>> {
   // Using post with delete action since del might not be defined
   return post<void>(`/api/report/${reportId}/delete`, {});
@@ -166,8 +153,6 @@ export async function deleteReport(
  */
 export function getReportDownloadUrl(reportId: string): string {
   const API_BASE_URL =
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    "";
+    import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
   return `${API_BASE_URL}/api/report/${reportId}/download`;
 }

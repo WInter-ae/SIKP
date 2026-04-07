@@ -331,6 +331,24 @@ export function getSidebarMenuByUrl(
   if (pathname.startsWith("/mahasiswa")) {
     return mahasiswaMenu;
   }
+
+  const normalizedRole = userRole?.toUpperCase();
+
+  if (normalizedRole === "ADMIN") return adminMenu;
+  if (normalizedRole === "PEMBIMBING_LAPANGAN") return mentorMenu;
+  if (
+    normalizedRole === "DOSEN" ||
+    normalizedRole === "KAPRODI" ||
+    normalizedRole === "WAKIL_DEKAN"
+  ) {
+    if (userJabatan && userJabatan.toLowerCase().includes("wakil dekan")) {
+      return wakilDekanMenu;
+    }
+    return dosenMenu;
+  }
+
+  if (normalizedRole === "MAHASISWA") return mahasiswaMenu;
+
   // Default ke mahasiswa jika tidak ada yang cocok
   return mahasiswaMenu;
 }

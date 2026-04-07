@@ -1,60 +1,754 @@
-/**
- * Auth Client untuk SIKP Backend
- * 
- * Menangani authentication dengan backend Hono API
- * API: POST /api/auth/login, POST /api/auth/register/mahasiswa, etc.
- */
+import {
+  type ApiEnvelope,
+  type AuthSessionSnapshot,
+  type CallbackResponseData,
+  type EffectiveRole,
+  type SSOIdentity,
+  getDashboardPath,
+  normalizeIdentity,
+  normalizeRoles,
+  pickPrimaryRole,
+  toSessionUser,
+} from "~/lib/sso-types";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_APP_AUTH_URL ||
-  'https://backend-sikp.backend-sikp.workers.dev';
+interface PKCEState {
+  state: string;
+  codeVerifier: string;
+  codeChallenge: string;
+  redirectUri: string;
+  createdAt: number;
+  expiresAt: number;
+}
 
-/**
- * Login dengan email dan password
- * @param email Email pengguna
- * @param password Kata sandi pengguna
- * @returns User data dan JWT token
- */
-export async function login(email: string, password: string) {
+interface CallbackRequest {
+  code: string;
+  state: string;
+  redirectUri?: string;
+}
+
+interface SessionResult {
+  success: boolean;
+  message: string;
+  session: AuthSessionSnapshot | null;
+  requiresIdentitySelection: boolean;
+}
+
+interface IdentitySelectionPayload {
+  activeIdentity?: unknown;
+  effectiveRoles?: unknown[];
+  user?: unknown;
+  availableIdentities?: unknown[];
+  identities?: unknown[];
+  token?: unknown;
+  accessToken?: unknown;
+  sessionToken?: unknown;
+}
+
+const DEFAULT_API_BASE_URL = "https://backend-sikp.backend-sikp.workers.dev";
+
+const STORAGE_KEYS = {
+  session: "sikp_auth_session",
+  pkce: "sikp_pkce_state",
+  legacyToken: "auth_token",
+  legacyUser: "user_data",
+} as const;
+
+const PKCE_TTL_MS = 5 * 60 * 1000;
+
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
+function pickString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function getApiBaseUrl() {
+  return (
+    import.meta.env.VITE_SIKP_API_BASE_URL ||
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.VITE_APP_AUTH_URL ||
+    DEFAULT_API_BASE_URL
+  );
+}
+
+function getSsoAuthorizeEndpoint() {
+  const baseUrl = pickString(import.meta.env.VITE_SSO_BASE_URL);
+  if (!baseUrl) {
+    throw new Error("VITE_SSO_BASE_URL belum diatur.");
+  }
+
+  const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
+  if (normalizedBaseUrl.endsWith("/authorize")) {
+    return normalizedBaseUrl;
+  }
+
+  if (normalizedBaseUrl.endsWith("/oauth")) {
+    return `${normalizedBaseUrl}/authorize`;
+  }
+
+  return `${normalizedBaseUrl}/oauth/authorize`;
+}
+
+function getSsoClientId() {
+  const clientId = pickString(import.meta.env.VITE_SSO_CLIENT_ID);
+  if (!clientId) {
+    throw new Error("VITE_SSO_CLIENT_ID belum diatur.");
+  }
+
+  return clientId;
+}
+
+export function getRedirectUri() {
+  const redirectUri = pickString(import.meta.env.VITE_SSO_REDIRECT_URI);
+  if (redirectUri) {
+    return redirectUri;
+  }
+
+  if (isBrowser()) {
+    return `${window.location.origin}/callback`;
+  }
+
+  return "/callback";
+}
+
+function normalizeToken(rawToken: unknown): string | null {
+  const token = pickString(rawToken);
+  if (!token) return null;
+
+  const lowered = token.toLowerCase();
+  if (lowered === "null" || lowered === "undefined") {
+    return null;
+  }
+
+  const unquoted =
+    (token.startsWith('"') && token.endsWith('"')) ||
+    (token.startsWith("'") && token.endsWith("'"))
+      ? token.slice(1, -1).trim()
+      : token;
+
+  if (!unquoted) return null;
+
+  return unquoted.replace(/^Bearer\s+/i, "").trim() || null;
+}
+
+function extractToken(
+  data: Record<string, unknown>,
+  seed: AuthSessionSnapshot | null,
+) {
+  return (
+    normalizeToken(data.token) ||
+    normalizeToken(data.accessToken) ||
+    normalizeToken(data.sessionToken) ||
+    seed?.token ||
+    getLegacyStoredToken()
+  );
+}
+
+function normalizeIdentities(
+  data: Record<string, unknown>,
+  seed: AuthSessionSnapshot | null,
+): SSOIdentity[] {
+  const rawIdentities =
+    (Array.isArray(data.availableIdentities)
+      ? data.availableIdentities
+      : null) ||
+    (Array.isArray(data.identities) ? data.identities : null) ||
+    [];
+
+  const normalized = rawIdentities
+    .map((identity) => normalizeIdentity(identity))
+    .filter((identity): identity is SSOIdentity => Boolean(identity));
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  return seed?.availableIdentities || [];
+}
+
+function normalizeActiveIdentity(
+  data: Record<string, unknown>,
+  availableIdentities: SSOIdentity[],
+  seed: AuthSessionSnapshot | null,
+) {
+  const parsedActiveIdentity = normalizeIdentity(data.activeIdentity);
+  if (parsedActiveIdentity) {
+    return parsedActiveIdentity;
+  }
+
+  if (seed?.activeIdentity) {
+    const matched = availableIdentities.find(
+      (identity) => identity.identityType === seed.activeIdentity?.identityType,
+    );
+
+    if (matched) {
+      return matched;
+    }
+  }
+
+  if (availableIdentities.length === 1) {
+    return availableIdentities[0];
+  }
+
+  return null;
+}
+
+function normalizeEffectiveRoles(
+  data: Record<string, unknown>,
+  activeIdentity: SSOIdentity | null,
+  seed: AuthSessionSnapshot | null,
+) {
+  const rawRoles = Array.isArray(data.effectiveRoles)
+    ? data.effectiveRoles
+    : [];
+  const normalizedRoles = normalizeRoles(rawRoles);
+
+  if (
+    activeIdentity?.identityType &&
+    !normalizedRoles.includes(activeIdentity.identityType)
+  ) {
+    normalizedRoles.push(activeIdentity.identityType);
+  }
+
+  if (normalizedRoles.length > 0) {
+    return normalizedRoles;
+  }
+
+  if (seed?.effectiveRoles?.length) {
+    return normalizeRoles(seed.effectiveRoles);
+  }
+
+  return activeIdentity ? normalizeRoles([activeIdentity.identityType]) : [];
+}
+
+function fallbackUserFromIdentity(
+  identity: SSOIdentity | null,
+  roles: EffectiveRole[],
+) {
+  if (!identity) return null;
+
+  const role = pickPrimaryRole(roles, identity);
+  if (!role) return null;
+
+  const email = identity.profile.email || "unknown@example.com";
+  const nama = identity.profile.nama || "User SSO";
+  const id = identity.profile.id || `${identity.identityType}:${email}`;
+
+  return {
+    id,
+    nama,
+    email,
+    role,
+    nim: identity.profile.nim,
+    nip: identity.profile.nip,
+    fakultas: identity.profile.fakultas,
+    prodi: identity.profile.prodi,
+    semester: identity.profile.semester,
+    angkatan: identity.profile.angkatan,
+    phone: identity.profile.phone,
+    jabatan: identity.profile.jabatan,
+  };
+}
+
+function buildSessionFromPayload(
+  payload: Record<string, unknown>,
+  seed?: AuthSessionSnapshot | null,
+): AuthSessionSnapshot {
+  const previousSession = seed ?? getAuthSession();
+  const availableIdentities = normalizeIdentities(payload, previousSession);
+  const activeIdentity = normalizeActiveIdentity(
+    payload,
+    availableIdentities,
+    previousSession,
+  );
+  const effectiveRoles = normalizeEffectiveRoles(
+    payload,
+    activeIdentity,
+    previousSession,
+  );
+
+  const rawUser = payload.user;
+  const normalizedUser =
+    toSessionUser(rawUser, activeIdentity, effectiveRoles) ||
+    fallbackUserFromIdentity(activeIdentity, effectiveRoles) ||
+    previousSession?.user ||
+    null;
+
+  const token = extractToken(payload, previousSession);
+
+  const sessionEstablished =
+    typeof payload.sessionEstablished === "boolean"
+      ? payload.sessionEstablished
+      : previousSession?.sessionEstablished || Boolean(normalizedUser || token);
+
+  const requiresIdentitySelection =
+    typeof payload.requiresIdentitySelection === "boolean"
+      ? payload.requiresIdentitySelection
+      : sessionEstablished && availableIdentities.length > 1 && !activeIdentity;
+
+  return {
+    user: normalizedUser,
+    token,
+    availableIdentities,
+    activeIdentity,
+    effectiveRoles,
+    sessionEstablished,
+    requiresIdentitySelection,
+  };
+}
+
+function getLegacyStoredToken() {
+  if (!isBrowser()) return null;
+  return normalizeToken(localStorage.getItem(STORAGE_KEYS.legacyToken));
+}
+
+function getHeaders(extraHeaders?: HeadersInit): HeadersInit {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (extraHeaders && typeof extraHeaders === "object") {
+    Object.assign(headers, extraHeaders as Record<string, string>);
+  }
+
+  return headers;
+}
+
+async function requestAuth<T>(
+  endpoint: string,
+  options: RequestInit = {},
+): Promise<ApiEnvelope<T>> {
+  const baseUrl = getApiBaseUrl();
+
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email, password }),
+    const response = await fetch(`${baseUrl}${endpoint}`, {
+      ...options,
+      credentials: "include",
+      headers: getHeaders(options.headers),
     });
 
-    const data = await response.json();
+    const text = await response.text();
+    const parsed = text ? (JSON.parse(text) as Partial<ApiEnvelope<T>>) : null;
 
     if (!response.ok) {
-      throw new Error(data.message || 'Login gagal');
-    }
-
-    // Simpan token ke localStorage
-    if (data.data?.token) {
-      localStorage.setItem('auth_token', data.data.token);
-      localStorage.setItem('user_data', JSON.stringify(data.data.user));
+      return {
+        success: false,
+        message:
+          parsed?.message ||
+          (response.status === 401
+            ? "Sesi Anda telah berakhir. Silakan login kembali."
+            : `Request gagal dengan status ${response.status}`),
+        data: (parsed?.data as T) || (null as T),
+      };
     }
 
     return {
-      success: true,
-      user: data.data?.user,
-      token: data.data?.token,
+      success: Boolean(parsed?.success ?? true),
+      message: parsed?.message || "OK",
+      data: (parsed?.data as T) || ({} as T),
     };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Login gagal',
+      message:
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat menghubungi auth endpoint.",
+      data: null as T,
     };
   }
 }
 
+function readPKCEState(): PKCEState | null {
+  if (!isBrowser()) return null;
+
+  const raw = sessionStorage.getItem(STORAGE_KEYS.pkce);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as PKCEState;
+    if (!parsed.state || !parsed.codeVerifier || !parsed.redirectUri) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function savePKCEState(state: PKCEState) {
+  if (!isBrowser()) return;
+  sessionStorage.setItem(STORAGE_KEYS.pkce, JSON.stringify(state));
+}
+
+export function clearPKCEState() {
+  if (!isBrowser()) return;
+  sessionStorage.removeItem(STORAGE_KEYS.pkce);
+}
+
+function randomString(length: number) {
+  const charset =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+  const random = new Uint8Array(length);
+  crypto.getRandomValues(random);
+
+  return Array.from(random)
+    .map((value) => charset[value % charset.length])
+    .join("");
+}
+
+async function sha256Base64Url(value: string) {
+  const encoder = new TextEncoder();
+  const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value));
+  const bytes = Array.from(new Uint8Array(digest));
+  const base64 = btoa(String.fromCharCode(...bytes));
+  return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+export async function generatePKCE() {
+  const codeVerifier = randomString(96);
+  const codeChallenge = await sha256Base64Url(codeVerifier);
+  return { codeVerifier, codeChallenge };
+}
+
+export function generateState() {
+  return randomString(48);
+}
+
+export async function initiateSsoLogin(): Promise<void> {
+  if (!isBrowser()) return;
+
+  const { codeVerifier, codeChallenge } = await generatePKCE();
+  const state = generateState();
+  const redirectUri = getRedirectUri();
+  const authorizeEndpoint = getSsoAuthorizeEndpoint();
+  const clientId = getSsoClientId();
+
+  savePKCEState({
+    state,
+    codeVerifier,
+    codeChallenge,
+    redirectUri,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + PKCE_TTL_MS,
+  });
+
+  const authorizeUrl = new URL(authorizeEndpoint);
+  authorizeUrl.searchParams.set("response_type", "code");
+  authorizeUrl.searchParams.set("client_id", clientId);
+  authorizeUrl.searchParams.set("redirect_uri", redirectUri);
+  authorizeUrl.searchParams.set("code_challenge", codeChallenge);
+  authorizeUrl.searchParams.set("code_challenge_method", "S256");
+  authorizeUrl.searchParams.set("state", state);
+
+  window.location.assign(authorizeUrl.toString());
+}
+
+export async function exchangeAuthorizationCode(
+  payload: CallbackRequest,
+): Promise<SessionResult> {
+  const storedPKCEState = readPKCEState();
+
+  if (!storedPKCEState) {
+    return {
+      success: false,
+      message: "State PKCE tidak ditemukan. Silakan login ulang.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
+  if (storedPKCEState.state !== payload.state) {
+    clearPKCEState();
+    return {
+      success: false,
+      message: "State callback tidak valid. Silakan login ulang.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
+  if (Date.now() > storedPKCEState.expiresAt) {
+    clearPKCEState();
+    return {
+      success: false,
+      message: "Sesi login sudah kedaluwarsa. Silakan login ulang.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
+  const response = await requestAuth<CallbackResponseData>(
+    "/api/auth/callback",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        code: payload.code,
+        state: payload.state,
+        codeVerifier: storedPKCEState.codeVerifier,
+        redirectUri: payload.redirectUri || storedPKCEState.redirectUri,
+      }),
+    },
+  );
+
+  clearPKCEState();
+
+  if (!response.success || !response.data) {
+    return {
+      success: false,
+      message: response.message || "Callback SSO gagal diproses.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
+  const session = buildSessionFromPayload(
+    response.data as unknown as Record<string, unknown>,
+    getAuthSession(),
+  );
+  storeAuthSession(session);
+
+  return {
+    success: true,
+    message: response.message || "Login SSO berhasil.",
+    session,
+    requiresIdentitySelection: session.requiresIdentitySelection,
+  };
+}
+
+export async function getAuthMe(): Promise<SessionResult> {
+  const response = await requestAuth<Record<string, unknown>>("/api/auth/me", {
+    method: "GET",
+  });
+
+  if (!response.success || !response.data) {
+    return {
+      success: false,
+      message: response.message || "Gagal mengambil sesi pengguna.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
+  const session = buildSessionFromPayload(response.data, getAuthSession());
+  storeAuthSession(session);
+
+  return {
+    success: true,
+    message: response.message || "Sesi pengguna valid.",
+    session,
+    requiresIdentitySelection: session.requiresIdentitySelection,
+  };
+}
+
+export async function getIdentities(): Promise<SessionResult> {
+  const response = await requestAuth<Record<string, unknown>>(
+    "/api/auth/identities",
+    {
+      method: "GET",
+    },
+  );
+
+  if (!response.success || !response.data) {
+    return {
+      success: false,
+      message: response.message || "Gagal mengambil daftar identity.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
+  const session = buildSessionFromPayload(response.data, getAuthSession());
+  storeAuthSession(session);
+
+  return {
+    success: true,
+    message: response.message || "Daftar identity berhasil diambil.",
+    session,
+    requiresIdentitySelection: session.requiresIdentitySelection,
+  };
+}
+
+export async function selectIdentity(
+  identityType: string,
+): Promise<SessionResult> {
+  const response = await requestAuth<IdentitySelectionPayload>(
+    "/api/auth/select-identity",
+    {
+      method: "POST",
+      body: JSON.stringify({ identityType }),
+    },
+  );
+
+  if (!response.success || !response.data) {
+    return {
+      success: false,
+      message: response.message || "Gagal memilih identity aktif.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
+  const session = buildSessionFromPayload(
+    response.data as unknown as Record<string, unknown>,
+    getAuthSession(),
+  );
+  storeAuthSession(session);
+
+  return {
+    success: true,
+    message: response.message || "Identity aktif berhasil diperbarui.",
+    session,
+    requiresIdentitySelection: session.requiresIdentitySelection,
+  };
+}
+
+export function getAuthSession(): AuthSessionSnapshot | null {
+  if (!isBrowser()) return null;
+
+  const rawSession = sessionStorage.getItem(STORAGE_KEYS.session);
+  if (!rawSession) return null;
+
+  try {
+    const parsed = JSON.parse(rawSession) as AuthSessionSnapshot;
+    const normalized = buildSessionFromPayload(
+      parsed as unknown as Record<string, unknown>,
+      null,
+    );
+    return normalized;
+  } catch {
+    return null;
+  }
+}
+
+export function storeAuthSession(session: AuthSessionSnapshot) {
+  if (!isBrowser()) return;
+
+  sessionStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
+
+  if (session.token) {
+    sessionStorage.setItem(STORAGE_KEYS.legacyToken, session.token);
+  } else {
+    sessionStorage.removeItem(STORAGE_KEYS.legacyToken);
+  }
+
+  if (session.user) {
+    sessionStorage.setItem(
+      STORAGE_KEYS.legacyUser,
+      JSON.stringify(session.user),
+    );
+  } else {
+    sessionStorage.removeItem(STORAGE_KEYS.legacyUser);
+  }
+
+  // Cleanup legacy localStorage auth keys to avoid stale persistence across sessions.
+  localStorage.removeItem(STORAGE_KEYS.legacyToken);
+  localStorage.removeItem(STORAGE_KEYS.legacyUser);
+}
+
+export function clearAuthSession() {
+  if (!isBrowser()) return;
+
+  sessionStorage.removeItem(STORAGE_KEYS.session);
+  sessionStorage.removeItem(STORAGE_KEYS.pkce);
+  sessionStorage.removeItem(STORAGE_KEYS.legacyToken);
+  sessionStorage.removeItem(STORAGE_KEYS.legacyUser);
+
+  localStorage.removeItem(STORAGE_KEYS.legacyToken);
+  localStorage.removeItem(STORAGE_KEYS.legacyUser);
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await requestAuth<{ success: boolean; message?: string }>(
+      "/api/auth/logout",
+      {
+        method: "POST",
+        body: JSON.stringify({}),
+      },
+    );
+  } finally {
+    clearAuthSession();
+  }
+}
+
+export function getCurrentUser() {
+  const session = getAuthSession();
+  if (session?.user) {
+    return session.user;
+  }
+
+  if (!isBrowser()) return null;
+
+  const rawUser = sessionStorage.getItem(STORAGE_KEYS.legacyUser);
+  if (!rawUser) return null;
+
+  try {
+    return JSON.parse(rawUser);
+  } catch {
+    return null;
+  }
+}
+
+export function getAuthToken(): string | null {
+  const session = getAuthSession();
+  if (session?.token) {
+    return normalizeToken(session.token);
+  }
+
+  if (!isBrowser()) return null;
+
+  const sessionToken = sessionStorage.getItem(STORAGE_KEYS.legacyToken);
+  if (sessionToken) {
+    return normalizeToken(sessionToken);
+  }
+
+  return getLegacyStoredToken();
+}
+
+export function isAuthenticated(): boolean {
+  const session = getAuthSession();
+  if (session?.sessionEstablished) {
+    return true;
+  }
+
+  return Boolean(getAuthToken() || getCurrentUser());
+}
+
+export function getDashboardPathFromSession() {
+  const session = getAuthSession();
+  if (!session) return "/login";
+  return getDashboardPath(session.effectiveRoles, session.activeIdentity);
+}
+
 /**
- * Register mahasiswa baru
+ * Flow auth lokal diputus di mode SSO big-bang.
+ * Fungsi dipertahankan sementara untuk kompatibilitas compile.
  */
-export async function registerMahasiswa(data: {
+export async function login(_email: string, _password: string) {
+  void _email;
+  void _password;
+
+  return {
+    success: false,
+    error: "Login lokal dinonaktifkan. Gunakan Login dengan SSO UNSRI.",
+  };
+}
+
+/**
+ * Flow register lokal diputus di mode SSO big-bang.
+ * Fungsi dipertahankan sementara untuk kompatibilitas compile.
+ */
+export async function registerMahasiswa(_data: {
   nim: string;
   nama: string;
   email: string;
@@ -65,47 +759,17 @@ export async function registerMahasiswa(data: {
   semester: number;
   angkatan: string;
 }) {
-  try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/auth/register/mahasiswa`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      }
-    );
+  void _data;
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || 'Registrasi gagal');
-    }
-
-    // Simpan token ke localStorage
-    if (result.data?.token) {
-      localStorage.setItem('auth_token', result.data.token);
-      localStorage.setItem('user_data', JSON.stringify(result.data.user));
-    }
-
-    return {
-      success: true,
-      user: result.data?.user,
-      token: result.data?.token,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Registrasi gagal',
-    };
-  }
+  return {
+    success: false,
+    error: "Registrasi lokal dinonaktifkan. Silakan login via SSO UNSRI.",
+  };
 }
 
 /**
- * Register pembimbing lapangan.
- * Endpoint backend khusus belum tersedia pada workspace ini,
- * jadi fungsi ini mengembalikan pesan terarah agar UI tidak crash.
+ * Flow register lokal diputus di mode SSO big-bang.
+ * Fungsi dipertahankan sementara untuk kompatibilitas compile.
  */
 export async function registerFieldMentor(_data: {
   email: string;
@@ -116,64 +780,10 @@ export async function registerFieldMentor(_data: {
   jabatan?: string;
   no_telepon?: string;
 }) {
+  void _data;
+
   return {
     success: false,
-    message: 'Endpoint registrasi pembimbing lapangan belum tersedia di backend.',
+    message: "Registrasi lokal dinonaktifkan. Silakan login via SSO UNSRI.",
   };
-}
-
-/**
- * Logout dan hapus token
- */
-export function logout() {
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('user_data');
-}
-
-/**
- * Get current user dari localStorage
- */
-export function getCurrentUser() {
-  const userData = localStorage.getItem('user_data');
-  if (userData) {
-    try {
-      return JSON.parse(userData);
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-/**
- * Get auth token dari localStorage
- */
-export function getAuthToken(): string | null {
-  const rawToken = localStorage.getItem('auth_token');
-  if (!rawToken) return null;
-
-  const trimmed = rawToken.trim();
-  if (!trimmed) return null;
-
-  const lowered = trimmed.toLowerCase();
-  if (lowered === 'null' || lowered === 'undefined') return null;
-
-  // Tolerate token stored as JSON string value, e.g. "eyJ..."
-  const unquoted =
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-      ? trimmed.slice(1, -1).trim()
-      : trimmed;
-
-  if (!unquoted) return null;
-
-  // Tolerate token stored with Bearer prefix
-  return unquoted.replace(/^Bearer\s+/i, '').trim() || null;
-}
-
-/**
- * Check apakah user sudah login
- */
-export function isAuthenticated(): boolean {
-  return !!getAuthToken();
 }

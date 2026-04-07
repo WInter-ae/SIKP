@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
 import { useUser } from "~/contexts/user-context";
+import { type EffectiveRole } from "~/lib/sso-types";
 
 /**
  * Protected Route Wrapper
@@ -11,10 +12,21 @@ export function ProtectedRoute({
   requiredRoles,
 }: {
   children: React.ReactNode;
-  requiredRoles?: string[];
+  requiredRoles?: EffectiveRole[];
 }) {
   const navigate = useNavigate();
-  const { user, isLoading, isAuthenticated } = useUser();
+  const {
+    isLoading,
+    isAuthenticated,
+    effectiveRoles,
+    activeIdentity,
+    availableIdentities,
+  } = useUser();
+
+  const hasRoleAccess =
+    !requiredRoles ||
+    requiredRoles.length === 0 ||
+    requiredRoles.some((role) => effectiveRoles.includes(role));
 
   useEffect(() => {
     if (isLoading) return;
@@ -25,12 +37,24 @@ export function ProtectedRoute({
       return;
     }
 
+    if (availableIdentities.length > 1 && !activeIdentity) {
+      navigate("/identity-chooser", { replace: true });
+      return;
+    }
+
     // Check role-based access
-    if (requiredRoles && user && !requiredRoles.includes(user.role)) {
+    if (!hasRoleAccess) {
       navigate("/unauthorized", { replace: true });
       return;
     }
-  }, [isLoading, isAuthenticated, user, requiredRoles, navigate]);
+  }, [
+    activeIdentity,
+    availableIdentities.length,
+    hasRoleAccess,
+    isAuthenticated,
+    isLoading,
+    navigate,
+  ]);
 
   // Show loading state
   if (isLoading) {
@@ -48,8 +72,12 @@ export function ProtectedRoute({
     return null;
   }
 
+  if (availableIdentities.length > 1 && !activeIdentity) {
+    return null;
+  }
+
   // Check role
-  if (requiredRoles && user && !requiredRoles.includes(user.role)) {
+  if (!hasRoleAccess) {
     return null;
   }
 

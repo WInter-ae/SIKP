@@ -1,23 +1,24 @@
-import type { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react";
 
-export type UserRole = "mahasiswa" | "dosen" | "admin" | "mentor"
+export type UserRole = "mahasiswa" | "dosen" | "admin" | "mentor";
 
 export interface User {
-  name: string
-  email: string
-  avatar: string
-  role: UserRole
+  name: string;
+  email: string;
+  avatar: string;
+  role: UserRole;
+  activeIdentityLabel?: string;
 }
 
 export interface NavItem {
-  title: string
-  url: string
-  icon?: LucideIcon
-  isActive?: boolean
-  items?: NavItem[]
+  title: string;
+  url: string;
+  icon?: LucideIcon;
+  isActive?: boolean;
+  items?: NavItem[];
 }
 
 export interface SidebarData {
-  user: User
-  navMain: NavItem[]
+  user: User;
+  navMain: NavItem[];
 }

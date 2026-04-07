@@ -1,174 +1,103 @@
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator,
-} from "~/components/ui/field";
-import { Input } from "~/components/ui/input";
-import { Github } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { login } from "~/lib/auth-client";
-import { useState } from "react";
+import { Loader2, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useUser } from "~/contexts/user-context";
-
-// Schema validasi untuk form login
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email wajib diisi")
-    .email("Format email tidak valid"),
-  password: z.string().min(1, "Kata sandi wajib diisi"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { getDashboardPath } from "~/lib/sso-types";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
   const navigate = useNavigate();
-  const { setUser } = useUser();
+  const {
+    initiateLogin,
+    isLoading,
+    isAuthenticated,
+    effectiveRoles,
+    activeIdentity,
+    callbackError,
+    setCallbackError,
+  } = useUser();
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-    mode: "onBlur", // Validasi saat blur
-  });
+  useEffect(() => {
+    if (!isAuthenticated || !activeIdentity) return;
+    navigate(getDashboardPath(effectiveRoles, activeIdentity), {
+      replace: true,
+    });
+  }, [isAuthenticated, activeIdentity, effectiveRoles, navigate]);
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     try {
       setError(null);
-
-      // Call backend API
-      const result = await login(data.email, data.password);
-
-      if (!result.success) {
-        setError(result.error || "Login gagal. Silakan coba lagi.");
-        return;
-      }
-
-      // Update user context
-      if (result.user) {
-        setUser(result.user);
-      }
-
-      // Redirect berdasarkan role
-      const user = result.user;
-      if (user?.role === "MAHASISWA") {
-        navigate("/mahasiswa");
-      } else if (user?.role === "ADMIN") {
-        navigate("/admin");
-      } else if (user?.role === "DOSEN") {
-        navigate("/dosen");
-      } else {
-        navigate("/dashboard");
-      }
+      setCallbackError(null);
+      setIsSubmitting(true);
+      await initiateLogin();
     } catch (err) {
-      setError("Terjadi kesalahan. Silakan coba lagi.");
-      console.error("Login error:", err);
+      const message =
+        err instanceof Error ? err.message : "Gagal mengarahkan ke SSO.";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <form
       className={cn("flex flex-col gap-6", className)}
-      onSubmit={form.handleSubmit(onSubmit)}
+      onSubmit={onSubmit}
       {...props}
     >
-      <FieldGroup>
-        <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">Masuk ke Akun Anda</h1>
-          <p className="text-muted-foreground text-sm text-balance">
-            Masukkan email Anda di bawah ini untuk masuk ke akun Anda
+      <div className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card p-6 shadow-sm">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">
+            <ShieldCheck className="h-6 w-6" />
+          </div>
+          <h1 className="text-2xl font-bold">Masuk dengan SSO UNSRI</h1>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Autentikasi akun SIKP sekarang menggunakan SSO UNSRI dengan keamanan
+            Authorization Code + PKCE.
           </p>
         </div>
 
-        {error && (
+        {(error || callbackError) && (
           <div
             role="alert"
             className="rounded-md bg-destructive/15 p-3 text-sm text-destructive"
           >
-            {error}
+            {error || callbackError}
           </div>
         )}
 
-        <Controller
-          name="email"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
-                {...field}
-                id="email"
-                type="email"
-                placeholder="m@example.com"
-                aria-invalid={fieldState.invalid}
-                autoComplete="email"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
+        <Button type="submit" disabled={isSubmitting || isLoading}>
+          {isSubmitting || isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Memproses...
+            </>
+          ) : (
+            <>
+              <ShieldCheck className="h-4 w-4" />
+              Login dengan SSO UNSRI
+            </>
           )}
-        />
+        </Button>
 
-        <Controller
-          name="password"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <div className="flex items-center">
-                <FieldLabel htmlFor="password">Kata Sandi</FieldLabel>
-                <Link
-                  to="#"
-                  className="ml-auto text-sm underline-offset-4 hover:underline"
-                >
-                  Lupa kata sandi?
-                </Link>
-              </div>
-              <Input
-                {...field}
-                id="password"
-                type="password"
-                aria-invalid={fieldState.invalid}
-                autoComplete="current-password"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
+        <p className="text-muted-foreground text-center text-xs">
+          Login email/password lokal sudah dinonaktifkan pada mode integrasi
+          SSO.
+        </p>
 
-        <Field>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Memproses..." : "Masuk"}
-          </Button>
-        </Field>
-
-        <FieldSeparator>Atau lanjutkan dengan</FieldSeparator>
-
-        <Field>
-          <Button variant="outline" type="button">
-            <Github />
-            Masuk dengan GitHub
-          </Button>
-          <FieldDescription className="text-center">
-            Belum punya akun?{" "}
-            <Link to="/register" className="underline underline-offset-4">
-              Daftar
-            </Link>
-          </FieldDescription>
-        </Field>
-      </FieldGroup>
+        <div className="text-center text-sm">
+          <Link to="/" className="text-primary underline underline-offset-4">
+            Kembali ke beranda
+          </Link>
+        </div>
+      </div>
     </form>
   );
 }

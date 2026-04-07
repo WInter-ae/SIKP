@@ -6,6 +6,7 @@
  */
 
 import { getAuthToken as getStoredToken } from "./auth-client";
+import { clearAuthSession } from "./auth-client";
 import {
   parseJsonResponse,
   getErrorMessage,
@@ -17,10 +18,26 @@ import {
 
 // Gunakan URL Workers sebagai default; bisa di-override via env
 const API_BASE_URL =
+  import.meta.env.VITE_SIKP_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_APP_AUTH_URL ||
   import.meta.env.VITE_API_BASE_URL ||
   "https://backend-sikp.backend-sikp.workers.dev";
+
+function handleUnauthorized() {
+  clearAuthSession();
+
+  if (typeof window !== "undefined") {
+    const currentPath = window.location.pathname;
+    if (
+      currentPath !== "/login" &&
+      currentPath !== "/callback" &&
+      currentPath !== "/identity-chooser"
+    ) {
+      window.location.assign("/login?reason=session_expired");
+    }
+  }
+}
 
 /**
  * Standard API Response format
@@ -77,7 +94,7 @@ function getAuthToken(): string | null {
 function buildHeaders(
   token: string | null,
   isFormData: boolean,
-  customHeaders?: Record<string, string>
+  customHeaders?: Record<string, string>,
 ): Record<string, string> {
   const headers: Record<string, string> = {};
 
@@ -135,7 +152,7 @@ export async function apiClient<T>(
     const headers = buildHeaders(
       token,
       isFormData,
-      options.headers as Record<string, string>
+      options.headers as Record<string, string>,
     );
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -163,7 +180,12 @@ export async function apiClient<T>(
 
     // Handle non-OK responses
     if (!response.ok) {
-      const errorMessage = (data as ApiResponse<T>).message || getErrorMessage(response.status);
+      if (response.status === 401) {
+        handleUnauthorized();
+      }
+
+      const errorMessage =
+        (data as ApiResponse<T>).message || getErrorMessage(response.status);
       return {
         success: false,
         message: errorMessage,
@@ -184,9 +206,10 @@ export async function apiClient<T>(
     }
 
     // Handle other errors
-    const errorMessage = error instanceof Error ? error.message : API_ERROR_MESSAGES.UNKNOWN_ERROR;
+    const errorMessage =
+      error instanceof Error ? error.message : API_ERROR_MESSAGES.UNKNOWN_ERROR;
     console.error("❌ API Client Error:", error);
-    
+
     return {
       success: false,
       message: errorMessage,

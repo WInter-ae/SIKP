@@ -18,13 +18,12 @@ import {
 import { getSidebarMenuByUrl } from "../data/sidebar-data";
 import type { User, UserRole } from "../types";
 import { useUser } from "~/contexts/user-context";
+import type { EffectiveRole } from "~/lib/sso-types";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: User;
 }
 
-// Default user untuk development/testing
-// Nanti bisa diganti dengan data user dari authentication context
 const getDefaultUser = (pathname: string): User => {
   let role: UserRole = "mahasiswa";
   if (pathname.startsWith("/admin")) {
@@ -48,31 +47,67 @@ const getDefaultUser = (pathname: string): User => {
 
 export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
   const location = useLocation();
-  const { user: contextUser } = useUser();
-  const defaultUser = getDefaultUser(location.pathname);
+  const { user: contextUser, effectiveRoles, activeIdentity } = useUser();
 
-  // Prioritize user from context, fall back to prop, then default
+  const defaultUser = React.useMemo(
+    () => getDefaultUser(location.pathname),
+    [location.pathname],
+  );
+
+  const contextRole = React.useMemo<UserRole>(() => {
+    const hasRole = (role: EffectiveRole) => effectiveRoles.includes(role);
+
+    if (hasRole("ADMIN")) return "admin";
+    if (hasRole("PEMBIMBING_LAPANGAN")) return "mentor";
+    if (hasRole("DOSEN") || hasRole("KAPRODI") || hasRole("WAKIL_DEKAN")) {
+      return "dosen";
+    }
+    if (hasRole("MAHASISWA")) return "mahasiswa";
+
+    return defaultUser.role;
+  }, [defaultUser.role, effectiveRoles]);
+
+  const primaryRole = React.useMemo(() => {
+    if (effectiveRoles.length === 0) return undefined;
+
+    return (
+      effectiveRoles.find((role) => role === "ADMIN") ||
+      effectiveRoles.find((role) => role === "PEMBIMBING_LAPANGAN") ||
+      effectiveRoles.find(
+        (role) =>
+          role === "DOSEN" || role === "KAPRODI" || role === "WAKIL_DEKAN",
+      ) ||
+      effectiveRoles[0]
+    );
+  }, [effectiveRoles]);
+
   const user = React.useMemo(() => {
     if (contextUser) {
       return {
         name: contextUser.nama,
         email: contextUser.email,
         avatar: "/avatars/default.jpg",
-        role: contextUser.role.toLowerCase() as UserRole,
+        role: contextRole,
+        activeIdentityLabel: activeIdentity?.label,
       };
     }
-    return userProp || defaultUser;
-  }, [contextUser, userProp, defaultUser]);
 
-  // Get menu items based on current URL path and user role/jabatan
+    return userProp || defaultUser;
+  }, [activeIdentity?.label, contextRole, contextUser, defaultUser, userProp]);
+
   const navItems = React.useMemo(
     () =>
       getSidebarMenuByUrl(
         location.pathname,
-        contextUser?.role,
-        contextUser?.jabatan,
+        primaryRole,
+        contextUser?.jabatan || activeIdentity?.profile.jabatan,
       ),
-    [location.pathname, contextUser?.role, contextUser?.jabatan],
+    [
+      activeIdentity?.profile.jabatan,
+      contextUser?.jabatan,
+      location.pathname,
+      primaryRole,
+    ],
   );
 
   return (
@@ -87,7 +122,9 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
             <GraduationCap className="size-6" />
           </div>
           <div className="grid flex-1 text-left leading-tight">
-            <span className="truncate text-base font-bold tracking-tight">SIKP</span>
+            <span className="truncate text-base font-bold tracking-tight">
+              SIKP
+            </span>
             <span className="truncate text-xs font-medium text-muted-foreground">
               Sistem Informasi Kerja Praktik
             </span>
