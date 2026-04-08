@@ -3,9 +3,8 @@
  * Handles internship report upload and management
  */
 
-import { post, get, put } from "~/lib/api-client";
+import { post, get, put, API_BASE_URL } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
-import { getAuthToken } from "~/lib/auth-client";
 
 // ==================== TYPES ====================
 
@@ -54,20 +53,11 @@ export async function uploadKPReport(
     formData.append("notes", metadata.notes);
   }
 
-  // Use fetch directly for file upload with FormData
-  const token = getAuthToken();
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
-
   try {
     const response = await fetch(`${API_BASE_URL}/api/report/upload`, {
       method: "POST",
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
       body: formData,
-      // Use cookies only when same-origin
-      credentials: API_BASE_URL ? "omit" : "include",
+      credentials: "include",
     });
 
     if (!response.ok) {
@@ -152,7 +142,5 @@ export async function deleteReport(
  * GET /api/report/:reportId/download
  */
 export function getReportDownloadUrl(reportId: string): string {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "";
   return `${API_BASE_URL}/api/report/${reportId}/download`;
 }

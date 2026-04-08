@@ -16,6 +16,10 @@ import {
   API_ERROR_MESSAGES,
 } from "./api-error";
 
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
 // Gunakan URL Workers sebagai default; bisa di-override via env
 const API_BASE_URL =
   import.meta.env.VITE_SIKP_API_BASE_URL ||
@@ -35,6 +39,17 @@ function handleUnauthorized() {
       currentPath !== "/identity-chooser"
     ) {
       window.location.assign("/login?reason=session_expired");
+    }
+  }
+}
+
+function handleLegacyAuthCutover() {
+  clearAuthSession();
+
+  if (typeof window !== "undefined") {
+    const currentPath = window.location.pathname;
+    if (currentPath !== "/login" && currentPath !== "/callback") {
+      window.location.assign("/login?reason=auth_legacy_cutover");
     }
   }
 }
@@ -103,7 +118,8 @@ function buildHeaders(
     headers["Content-Type"] = "application/json";
   }
 
-  if (token) {
+  // Browser app authenticates via httpOnly cookie session.
+  if (token && !isBrowser()) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -157,8 +173,7 @@ export async function apiClient<T>(
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      // Use cookies only when same-origin (no explicit base URL)
-      credentials: API_BASE_URL ? "omit" : "include",
+      credentials: "include",
       headers,
     });
 
@@ -182,6 +197,10 @@ export async function apiClient<T>(
     if (!response.ok) {
       if (response.status === 401) {
         handleUnauthorized();
+      }
+
+      if (response.status === 410) {
+        handleLegacyAuthCutover();
       }
 
       const errorMessage =

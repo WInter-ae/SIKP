@@ -26,6 +26,11 @@ interface CallbackRequest {
   redirectUri?: string;
 }
 
+interface PrepareResponseData {
+  state?: unknown;
+  authorizeUrl?: unknown;
+}
+
 interface SessionResult {
   success: boolean;
   message: string;
@@ -73,33 +78,6 @@ function getApiBaseUrl() {
     import.meta.env.VITE_APP_AUTH_URL ||
     DEFAULT_API_BASE_URL
   );
-}
-
-function getSsoAuthorizeEndpoint() {
-  const baseUrl = pickString(import.meta.env.VITE_SSO_BASE_URL);
-  if (!baseUrl) {
-    throw new Error("VITE_SSO_BASE_URL belum diatur.");
-  }
-
-  const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
-  if (normalizedBaseUrl.endsWith("/authorize")) {
-    return normalizedBaseUrl;
-  }
-
-  if (normalizedBaseUrl.endsWith("/oauth")) {
-    return `${normalizedBaseUrl}/authorize`;
-  }
-
-  return `${normalizedBaseUrl}/oauth/authorize`;
-}
-
-function getSsoClientId() {
-  const clientId = pickString(import.meta.env.VITE_SSO_CLIENT_ID);
-  if (!clientId) {
-    throw new Error("VITE_SSO_CLIENT_ID belum diatur.");
-  }
-
-  return clientId;
 }
 
 export function getRedirectUri() {
@@ -312,7 +290,8 @@ function getHeaders(extraHeaders?: HeadersInit): HeadersInit {
     "Content-Type": "application/json",
   };
 
-  if (token) {
+  // Browser app relies on httpOnly session cookie.
+  if (token && !isBrowser()) {
     headers.Authorization = `Bearer ${token}`;
   }
 
@@ -428,10 +407,28 @@ export async function initiateSsoLogin(): Promise<void> {
   if (!isBrowser()) return;
 
   const { codeVerifier, codeChallenge } = await generatePKCE();
-  const state = generateState();
   const redirectUri = getRedirectUri();
-  const authorizeEndpoint = getSsoAuthorizeEndpoint();
-  const clientId = getSsoClientId();
+
+  const prepareResponse = await requestAuth<PrepareResponseData>(
+    "/api/auth/prepare",
+    {
+      method: "POST",
+      body: JSON.stringify({ codeChallenge, redirectUri }),
+    },
+  );
+
+  if (!prepareResponse.success || !prepareResponse.data) {
+    throw new Error(
+      prepareResponse.message || "Gagal memulai login SSO. Coba lagi.",
+    );
+  }
+
+  const state = pickString(prepareResponse.data.state);
+  const authorizeUrl = pickString(prepareResponse.data.authorizeUrl);
+
+  if (!state || !authorizeUrl) {
+    throw new Error("Response /api/auth/prepare tidak lengkap.");
+  }
 
   savePKCEState({
     state,
@@ -442,15 +439,7 @@ export async function initiateSsoLogin(): Promise<void> {
     expiresAt: Date.now() + PKCE_TTL_MS,
   });
 
-  const authorizeUrl = new URL(authorizeEndpoint);
-  authorizeUrl.searchParams.set("response_type", "code");
-  authorizeUrl.searchParams.set("client_id", clientId);
-  authorizeUrl.searchParams.set("redirect_uri", redirectUri);
-  authorizeUrl.searchParams.set("code_challenge", codeChallenge);
-  authorizeUrl.searchParams.set("code_challenge_method", "S256");
-  authorizeUrl.searchParams.set("state", state);
-
-  window.location.assign(authorizeUrl.toString());
+  window.location.assign(authorizeUrl);
 }
 
 export async function exchangeAuthorizationCode(
@@ -516,6 +505,18 @@ export async function exchangeAuthorizationCode(
     getAuthSession(),
   );
   storeAuthSession(session);
+
+  if (!session.requiresIdentitySelection) {
+    const meResult = await getAuthMe();
+    if (meResult.success && meResult.session) {
+      return {
+        success: true,
+        message: response.message || "Login SSO berhasil.",
+        session: meResult.session,
+        requiresIdentitySelection: meResult.requiresIdentitySelection,
+      };
+    }
+  }
 
   return {
     success: true,
@@ -603,6 +604,16 @@ export async function selectIdentity(
     getAuthSession(),
   );
   storeAuthSession(session);
+
+  const meResult = await getAuthMe();
+  if (meResult.success && meResult.session) {
+    return {
+      success: true,
+      message: response.message || "Identity aktif berhasil diperbarui.",
+      session: meResult.session,
+      requiresIdentitySelection: meResult.requiresIdentitySelection,
+    };
+  }
 
   return {
     success: true,
@@ -717,11 +728,11 @@ export function getAuthToken(): string | null {
 
 export function isAuthenticated(): boolean {
   const session = getAuthSession();
-  if (session?.sessionEstablished) {
+  if (session?.sessionEstablished || session?.user) {
     return true;
   }
 
-  return Boolean(getAuthToken() || getCurrentUser());
+  return false;
 }
 
 export function getDashboardPathFromSession() {
