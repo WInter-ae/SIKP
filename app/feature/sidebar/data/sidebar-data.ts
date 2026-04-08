@@ -91,6 +91,11 @@ const mahasiswaMenu: NavItem[] = [
     icon: BookMarked,
   },
   {
+    title: "Penilaian KP",
+    url: "/mahasiswa/penilaian",
+    icon: Award,
+  },
+  {
     title: "Profil",
     url: "/mahasiswa/profil",
     icon: UserCircle,
