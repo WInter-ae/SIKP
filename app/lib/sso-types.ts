@@ -4,7 +4,7 @@ export type EffectiveRole =
   | "DOSEN"
   | "KAPRODI"
   | "WAKIL_DEKAN"
-  | "PEMBIMBING_LAPANGAN";
+  | "MENTOR";
 
 export type AuthStatus =
   | "idle"
@@ -80,21 +80,30 @@ export const ROLE_PRIORITY: EffectiveRole[] = [
   "WAKIL_DEKAN",
   "KAPRODI",
   "DOSEN",
-  "PEMBIMBING_LAPANGAN",
+  "MENTOR",
   "MAHASISWA",
 ];
 
 export function normalizeRole(raw: unknown): EffectiveRole | null {
   if (typeof raw !== "string") return null;
 
-  const normalized = raw.trim().toUpperCase();
+  const normalized = raw.trim().toUpperCase().replace(/[-\s]/g, "_");
+
+  if (normalized === "WAKILDEKAN") {
+    return "WAKIL_DEKAN";
+  }
+
+  if (normalized === "PEMBIMBING_LAPANGAN") {
+    return "MENTOR";
+  }
+
   if (
     normalized === "MAHASISWA" ||
     normalized === "ADMIN" ||
     normalized === "DOSEN" ||
     normalized === "KAPRODI" ||
     normalized === "WAKIL_DEKAN" ||
-    normalized === "PEMBIMBING_LAPANGAN"
+    normalized === "MENTOR"
   ) {
     return normalized;
   }
@@ -205,7 +214,7 @@ export function getDashboardPathByRole(role: EffectiveRole | null): string {
   if (!role) return "/login";
 
   if (role === "ADMIN") return "/admin";
-  if (role === "PEMBIMBING_LAPANGAN") return "/mentor";
+  if (role === "MENTOR") return "/mentor";
   if (role === "DOSEN" || role === "KAPRODI" || role === "WAKIL_DEKAN") {
     return "/dosen";
   }

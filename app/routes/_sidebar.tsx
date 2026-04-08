@@ -15,7 +15,7 @@ function getRequiredRoles(pathname: string): EffectiveRole[] {
   }
 
   if (pathname.startsWith("/mentor")) {
-    return ["PEMBIMBING_LAPANGAN"];
+    return ["MENTOR"];
   }
 
   if (pathname.startsWith("/mahasiswa")) {

@@ -207,7 +207,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         token,
         authStatus,
         isLoading,
-        isAuthenticated: authStatus === "authenticated" && !!user,
+        isAuthenticated: authStatus === "authenticated",
         availableIdentities,
         activeIdentity,
         effectiveRoles,

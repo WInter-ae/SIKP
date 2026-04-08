@@ -335,7 +335,7 @@ export function getSidebarMenuByUrl(
   const normalizedRole = userRole?.toUpperCase();
 
   if (normalizedRole === "ADMIN") return adminMenu;
-  if (normalizedRole === "PEMBIMBING_LAPANGAN") return mentorMenu;
+  if (normalizedRole === "MENTOR") return mentorMenu;
   if (
     normalizedRole === "DOSEN" ||
     normalizedRole === "KAPRODI" ||

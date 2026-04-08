@@ -58,7 +58,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
     const hasRole = (role: EffectiveRole) => effectiveRoles.includes(role);
 
     if (hasRole("ADMIN")) return "admin";
-    if (hasRole("PEMBIMBING_LAPANGAN")) return "mentor";
+    if (hasRole("MENTOR")) return "mentor";
     if (hasRole("DOSEN") || hasRole("KAPRODI") || hasRole("WAKIL_DEKAN")) {
       return "dosen";
     }
@@ -72,7 +72,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
 
     return (
       effectiveRoles.find((role) => role === "ADMIN") ||
-      effectiveRoles.find((role) => role === "PEMBIMBING_LAPANGAN") ||
+      effectiveRoles.find((role) => role === "MENTOR") ||
       effectiveRoles.find(
         (role) =>
           role === "DOSEN" || role === "KAPRODI" || role === "WAKIL_DEKAN",

@@ -59,6 +59,7 @@ const STORAGE_KEYS = {
 } as const;
 
 const PKCE_TTL_MS = 5 * 60 * 1000;
+const FORBIDDEN_SSO_ROLES = new Set(["SUPERADMIN", "ADMIN"]);
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -68,6 +69,33 @@ function pickString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
+}
+
+function normalizeSsoRoleTag(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const normalized = raw.trim().toUpperCase().replace(/[-\s]/g, "_");
+  return normalized || null;
+}
+
+function hasForbiddenSsoRole(payload: Record<string, unknown>) {
+  const user =
+    payload.user && typeof payload.user === "object"
+      ? (payload.user as Record<string, unknown>)
+      : null;
+
+  const rawRoles: unknown[] = [];
+
+  if (user?.role) rawRoles.push(user.role);
+  if (Array.isArray(user?.roles)) rawRoles.push(...user.roles);
+
+  for (const role of rawRoles) {
+    const normalizedRole = normalizeSsoRoleTag(role);
+    if (normalizedRole && FORBIDDEN_SSO_ROLES.has(normalizedRole)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function getApiBaseUrl() {
@@ -253,7 +281,6 @@ function buildSessionFromPayload(
   const normalizedUser =
     toSessionUser(rawUser, activeIdentity, effectiveRoles) ||
     fallbackUserFromIdentity(activeIdentity, effectiveRoles) ||
-    previousSession?.user ||
     null;
 
   const token = extractToken(payload, previousSession);
@@ -264,9 +291,10 @@ function buildSessionFromPayload(
       : previousSession?.sessionEstablished || Boolean(normalizedUser || token);
 
   const requiresIdentitySelection =
-    typeof payload.requiresIdentitySelection === "boolean"
+    (typeof payload.requiresIdentitySelection === "boolean"
       ? payload.requiresIdentitySelection
-      : sessionEstablished && availableIdentities.length > 1 && !activeIdentity;
+      : false) ||
+    (sessionEstablished && availableIdentities.length > 1 && !activeIdentity);
 
   return {
     user: normalizedUser,
@@ -500,6 +528,18 @@ export async function exchangeAuthorizationCode(
     };
   }
 
+  if (
+    hasForbiddenSsoRole(response.data as unknown as Record<string, unknown>)
+  ) {
+    clearAuthSession();
+    return {
+      success: false,
+      message: "Role SSO Anda tidak diizinkan mengakses SIKP.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
   const session = buildSessionFromPayload(
     response.data as unknown as Record<string, unknown>,
     getAuthSession(),
@@ -540,6 +580,16 @@ export async function getAuthMe(): Promise<SessionResult> {
     };
   }
 
+  if (hasForbiddenSsoRole(response.data)) {
+    clearAuthSession();
+    return {
+      success: false,
+      message: "Role SSO Anda tidak diizinkan mengakses SIKP.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
   const session = buildSessionFromPayload(response.data, getAuthSession());
   storeAuthSession(session);
 
@@ -563,6 +613,18 @@ export async function getIdentities(): Promise<SessionResult> {
     return {
       success: false,
       message: response.message || "Gagal mengambil daftar identity.",
+      session: null,
+      requiresIdentitySelection: false,
+    };
+  }
+
+  if (
+    hasForbiddenSsoRole(response.data as unknown as Record<string, unknown>)
+  ) {
+    clearAuthSession();
+    return {
+      success: false,
+      message: "Role SSO Anda tidak diizinkan mengakses SIKP.",
       session: null,
       requiresIdentitySelection: false,
     };
