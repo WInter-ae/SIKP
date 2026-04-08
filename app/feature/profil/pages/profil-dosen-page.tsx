@@ -35,13 +35,14 @@ import {
 } from "lucide-react";
 import type { ESignatureSetupData } from "~/feature/esignature/types/esignature";
 import { ESignatureDialog } from "~/feature/profil/components/esignature-dialog";
+import { getMyProfile, updateMyProfile } from "~/lib/services/dosen-api";
 import {
-  getMyProfile,
-  updateMyProfile,
-  uploadESignature,
-  deleteESignature,
+  activateProfileSignature,
   dataUrlToFile,
-} from "~/lib/services/dosen-api";
+  deleteActiveProfileSignature,
+  getActiveProfileSignature,
+  uploadProfileSignature,
+} from "~/lib/services/signature-api";
 
 interface DosenProfile {
   id: string;
@@ -145,6 +146,26 @@ export function DosenProfilPage() {
     variant?: "default" | "destructive";
   } | null>(null);
 
+  const syncActiveSignature = async () => {
+    const response = await getActiveProfileSignature();
+
+    if (!response.success) {
+      return;
+    }
+
+    setProfile((prev) => ({
+      ...prev,
+      esignature: response.data
+        ? {
+            url: response.data.signatureImage,
+            key: response.data.id,
+            uploadedAt: response.data.uploadedAt || new Date().toISOString(),
+          }
+        : undefined,
+    }));
+    setSignatureImageError(false);
+  };
+
   // Load profile dari API
   useEffect(() => {
     const loadProfile = async () => {
@@ -153,7 +174,7 @@ export function DosenProfilPage() {
 
       if (response.success && response.data) {
         setProfile((prev) => normalizeProfileResponse(response.data, prev));
-        setSignatureImageError(false);
+        await syncActiveSignature();
       } else {
         setNotification({
           title: "⚠️ Gagal Memuat Profil",
@@ -225,20 +246,14 @@ export function DosenProfilPage() {
         `signature-${Date.now()}.png`,
       );
 
-      // Upload to backend API
-      const response = await uploadESignature(signatureFile);
+      const response = await uploadProfileSignature(signatureFile);
 
       if (response.success && response.data) {
-        // Update profile state with API response
-        setProfile((prev) => ({
-          ...prev,
-          esignature: {
-            url: response.data!.url,
-            key: response.data!.key,
-            uploadedAt: response.data!.uploadedAt,
-          },
-        }));
-        setSignatureImageError(false);
+        if (response.data.isActive === false) {
+          await activateProfileSignature(response.data.id);
+        }
+
+        await syncActiveSignature();
 
         setShowESignatureDialog(false);
         setNotification({
@@ -272,15 +287,10 @@ export function DosenProfilPage() {
     try {
       setIsSaving(true);
 
-      // Delete via backend API
-      const response = await deleteESignature();
+      const response = await deleteActiveProfileSignature();
 
       if (response.success) {
-        // Update profile state
-        setProfile((prev) => ({
-          ...prev,
-          esignature: undefined,
-        }));
+        await syncActiveSignature();
 
         setShowDeleteSignatureDialog(false);
         setNotification({

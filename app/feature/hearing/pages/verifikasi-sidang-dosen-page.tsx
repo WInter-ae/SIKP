@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent } from "~/components/ui/card";
@@ -15,7 +14,6 @@ import {
   Eye,
 } from "lucide-react";
 import type { PengajuanSidang } from "../types/dosen";
-import type { DosenESignature } from "~/feature/esignature/types/esignature";
 import { PengajuanCard } from "../components/pengajuan-card";
 import {
   Dialog,
@@ -26,6 +24,12 @@ import {
 } from "~/components/ui/dialog";
 import { ESignatureSetup } from "~/feature/esignature/components/esignature-setup";
 import type { ESignatureSetupData } from "~/feature/esignature/types/esignature";
+import {
+  activateProfileSignature,
+  dataUrlToFile,
+  getActiveProfileSignature,
+  uploadProfileSignature,
+} from "~/lib/services/signature-api";
 
 // Mock data pengajuan dari mahasiswa
 const mockPengajuanList: PengajuanSidang[] = [
@@ -86,12 +90,10 @@ const mockPengajuanList: PengajuanSidang[] = [
 ];
 
 export default function VerifikasiSidangDosenPage() {
-  const navigate = useNavigate();
   const [pengajuanList, setPengajuanList] = useState<PengajuanSidang[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("menunggu");
-  const [dosenESignature, setDosenESignature] =
-    useState<DosenESignature | null>(null);
+  const [signatureImage, setSignatureImage] = useState<string | null>(null);
   const [showESignatureDialog, setShowESignatureDialog] = useState(false);
   const [pendingApprovalId, setPendingApprovalId] = useState<string | null>(
     null,
@@ -124,7 +126,9 @@ export default function VerifikasiSidangDosenPage() {
             );
             console.log(
               "📋 DOSEN: Pengajuan IDs:",
-              pengajuanFromStorage.map((p: any) => p.id),
+              pengajuanFromStorage.map(
+                (p: { id?: string }) => p.id || "unknown",
+              ),
             );
             setPengajuanList(pengajuanFromStorage);
           } catch (error) {
@@ -138,10 +142,11 @@ export default function VerifikasiSidangDosenPage() {
           setPengajuanList(mockPengajuanList);
         }
 
-        // Load e-signature dari localStorage
-        const savedSignature = localStorage.getItem("dosen-esignature");
-        if (savedSignature) {
-          setDosenESignature(JSON.parse(savedSignature));
+        const signatureResponse = await getActiveProfileSignature();
+        if (signatureResponse.success && signatureResponse.data) {
+          setSignatureImage(signatureResponse.data.signatureImage);
+        } else {
+          setSignatureImage(null);
         }
       } else {
         setPengajuanList(mockPengajuanList);
@@ -162,12 +167,12 @@ export default function VerifikasiSidangDosenPage() {
     console.log("🔵 DOSEN: handleVerifikasi called", {
       id,
       status,
-      hasSig: !!dosenESignature,
+      hasSig: !!signatureImage,
     });
 
     // Jika approval, cek e-signature dulu
     if (status === "approved") {
-      if (!dosenESignature) {
+      if (!signatureImage) {
         setPendingApprovalId(id);
         setShowESignatureDialog(true);
         setNotification({
@@ -372,20 +377,37 @@ export default function VerifikasiSidangDosenPage() {
   };
 
   // Handler untuk save e-signature
-  const handleESignatureSave = (data: ESignatureSetupData) => {
+  const handleESignatureSave = async (data: ESignatureSetupData) => {
     console.log("✍️ DOSEN: E-Signature saved", data);
-    
-    // Convert ESignatureSetupData to DosenESignature
-    const signature: DosenESignature = {
-      id: `sig-${Date.now()}`,
-      dosenId: "dosen-001", // TODO: Get from actual user context
-      signatureImage: data.signatureData,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    
-    setDosenESignature(signature);
-    localStorage.setItem("dosen-esignature", JSON.stringify(signature));
+
+    const signatureFile = await dataUrlToFile(data.signatureData);
+    const uploadResponse = await uploadProfileSignature(signatureFile);
+
+    if (!uploadResponse.success || !uploadResponse.data) {
+      setNotification({
+        title: "❌ Gagal Menyimpan E-Signature",
+        description:
+          uploadResponse.message ||
+          "Terjadi kesalahan saat menyimpan e-signature.",
+        variant: "destructive",
+      });
+      setTimeout(() => setNotification(null), 4000);
+      return;
+    }
+
+    if (!uploadResponse.data.isActive) {
+      await activateProfileSignature(uploadResponse.data.id);
+    }
+
+    const refreshedSignature = await getActiveProfileSignature();
+    if (refreshedSignature.success && refreshedSignature.data) {
+      setSignatureImage(refreshedSignature.data.signatureImage);
+    } else {
+      setSignatureImage(
+        uploadResponse.data.signatureImage || data.signatureData,
+      );
+    }
+
     setShowESignatureDialog(false);
 
     // Jika ada pending approval, proses sekarang
@@ -772,7 +794,7 @@ export default function VerifikasiSidangDosenPage() {
               onCancel={() => setShowESignatureDialog(false)}
               dosenName="Dosen Pembimbing" // TODO: Get from actual user context
               nip="198501012010121001" // TODO: Get from actual user context
-              existingSignature={dosenESignature?.signatureImage}
+              existingSignature={signatureImage || undefined}
             />
           </DialogContent>
         </Dialog>

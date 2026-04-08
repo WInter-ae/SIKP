@@ -59,7 +59,7 @@ const STORAGE_KEYS = {
 } as const;
 
 const PKCE_TTL_MS = 5 * 60 * 1000;
-const FORBIDDEN_SSO_ROLES = new Set(["SUPERADMIN", "ADMIN"]);
+const FORBIDDEN_SSO_ROLES = new Set(["SUPERADMIN", "USER"]);
 
 function isBrowser() {
   return typeof window !== "undefined";

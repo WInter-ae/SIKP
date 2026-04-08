@@ -5,6 +5,11 @@
 
 import { post, get, put } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
+import {
+  deleteActiveProfileSignature,
+  getActiveProfileSignature,
+  uploadProfileSignature,
+} from "~/lib/services/signature-api";
 
 // ==================== TYPES ====================
 
@@ -84,7 +89,9 @@ export async function getMentorProfile(): Promise<ApiResponse<MentorProfile>> {
  * PUT /api/mentor/profile
  */
 export async function updateMentorProfile(
-  data: Partial<Omit<MentorProfile, "id" | "userId" | "createdAt" | "updatedAt">>
+  data: Partial<
+    Omit<MentorProfile, "id" | "userId" | "createdAt" | "updatedAt">
+  >,
 ): Promise<ApiResponse<MentorProfile>> {
   return put<MentorProfile>("/api/mentor/profile", data);
 }
@@ -102,7 +109,7 @@ export async function getMentees(): Promise<ApiResponse<MenteeData[]>> {
  * GET /api/mentor/mentees/:studentId
  */
 export async function getMenteeDetail(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<MenteeData>> {
   return get<MenteeData>(`/api/mentor/mentees/${studentId}`);
 }
@@ -112,7 +119,7 @@ export async function getMenteeDetail(
  * GET /api/mentor/logbook/:studentId
  */
 export async function getStudentLogbook(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<LogbookEntry[]>> {
   return get<LogbookEntry[]>(`/api/mentor/logbook/${studentId}`);
 }
@@ -124,7 +131,7 @@ export async function getStudentLogbook(
  */
 export async function approveLogbook(
   logbookId: string,
-  notes?: string
+  notes?: string,
 ): Promise<ApiResponse<LogbookEntry>> {
   return post<LogbookEntry>(`/api/mentor/logbook/${logbookId}/approve`, {
     notes,
@@ -138,11 +145,11 @@ export async function approveLogbook(
  */
 export async function approveAllLogbooks(
   studentId: string,
-  notes?: string
+  notes?: string,
 ): Promise<ApiResponse<{ approved: number; logbooks: LogbookEntry[] }>> {
   return post<{ approved: number; logbooks: LogbookEntry[] }>(
     `/api/mentor/logbook/${studentId}/approve-all`,
-    { notes }
+    { notes },
   );
 }
 
@@ -167,7 +174,7 @@ export async function submitAssessment(data: {
  * GET /api/mentor/assessment/:studentId
  */
 export async function getStudentAssessment(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<AssessmentData>> {
   return get<AssessmentData>(`/api/mentor/assessment/${studentId}`);
 }
@@ -178,7 +185,12 @@ export async function getStudentAssessment(
  */
 export async function updateAssessment(
   assessmentId: string,
-  data: Partial<Omit<AssessmentData, "id" | "studentId" | "mentorId" | "createdAt" | "updatedAt" | "totalScore">>
+  data: Partial<
+    Omit<
+      AssessmentData,
+      "id" | "studentId" | "mentorId" | "createdAt" | "updatedAt" | "totalScore"
+    >
+  >,
 ): Promise<ApiResponse<AssessmentData>> {
   return put<AssessmentData>(`/api/mentor/assessment/${assessmentId}`, data);
 }
@@ -188,23 +200,90 @@ export async function updateAssessment(
  * PUT /api/mentor/signature
  */
 export async function saveMentorSignature(
-  signature: string
+  signature: string,
 ): Promise<ApiResponse<MentorProfile>> {
-  return put<MentorProfile>("/api/mentor/signature", { signature });
+  const response = await fetch(signature);
+  const blob = await response.blob();
+  const file = new File([blob], `signature-${Date.now()}.png`, {
+    type: blob.type || "image/png",
+  });
+
+  const upload = await uploadProfileSignature(file);
+  if (!upload.success || !upload.data) {
+    return {
+      success: false,
+      message: upload.message || "Gagal menyimpan tanda tangan.",
+      data: null,
+    };
+  }
+
+  return {
+    success: true,
+    message: upload.message,
+    data: {
+      id: "",
+      userId: "",
+      name: "",
+      email: "",
+      company: "",
+      position: "",
+      signature: upload.data.signatureImage,
+      signatureSetAt: upload.data.uploadedAt,
+      createdAt: "",
+      updatedAt: "",
+    },
+  };
 }
 
 /**
  * Get mentor signature from profile
  * GET /api/mentor/signature
  */
-export async function getMentorSignature(): Promise<ApiResponse<{ signature?: string; signatureSetAt?: string }>> {
-  return get<{ signature?: string; signatureSetAt?: string }>("/api/mentor/signature");
+export async function getMentorSignature(): Promise<
+  ApiResponse<{ signature?: string; signatureSetAt?: string }>
+> {
+  const response = await getActiveProfileSignature();
+
+  if (!response.success) {
+    return {
+      success: false,
+      message: response.message,
+      data: null,
+    };
+  }
+
+  return {
+    success: true,
+    message: response.message,
+    data: response.data
+      ? {
+          signature: response.data.signatureImage,
+          signatureSetAt: response.data.uploadedAt,
+        }
+      : {},
+  };
 }
 
 /**
  * Delete mentor signature from profile
  * DELETE /api/mentor/signature
  */
-export async function deleteMentorSignature(): Promise<ApiResponse<{ success: boolean }>> {
-  return post<{ success: boolean }>("/api/mentor/signature/delete", {});
+export async function deleteMentorSignature(): Promise<
+  ApiResponse<{ success: boolean }>
+> {
+  const response = await deleteActiveProfileSignature();
+
+  if (!response.success) {
+    return {
+      success: false,
+      message: response.message,
+      data: null,
+    };
+  }
+
+  return {
+    success: true,
+    message: response.message,
+    data: { success: true },
+  };
 }

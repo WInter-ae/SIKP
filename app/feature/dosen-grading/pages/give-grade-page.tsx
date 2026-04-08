@@ -11,6 +11,8 @@ import { GradingForm } from "../components/grading-form";
 import { RevisionReviewSection } from "../components/revision-review-section";
 import { MOCK_STUDENTS_FOR_GRADING } from "../data/mock-students";
 import type { GradingFormData } from "../types";
+import { getMyProfile } from "~/lib/services/dosen-api";
+import { getActiveProfileSignature } from "~/lib/services/signature-api";
 
 export default function GiveGradePage() {
   const { id } = useParams();
@@ -135,32 +137,22 @@ export default function GiveGradePage() {
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
     
-    // Load e-signature dari profil dosen
+    // Load e-signature dari profile-signature API
     let eSignatureUrl = "";
-    const savedSignature = localStorage.getItem("dosen-esignature");
-    if (savedSignature) {
-      try {
-        const signatureData = JSON.parse(savedSignature);
-        eSignatureUrl = signatureData.signatureImage;
-      } catch (e) {
-        console.error("Error loading signature:", e);
-      }
+    const signatureResponse = await getActiveProfileSignature();
+    if (signatureResponse.success && signatureResponse.data) {
+      eSignatureUrl = signatureResponse.data.signatureImage;
     }
-    
-    // Load dosen profile data
-    let dosenData = {
+
+    // Load dosen profile data dari endpoint profile
+    const dosenData = {
       nama: "Dr. Ahmad Santoso, M.Kom",
-      nip: "198501122010121001"
+      nip: "198501122010121001",
     };
-    const savedProfile = localStorage.getItem("dosen-profile");
-    if (savedProfile) {
-      try {
-        const profileData = JSON.parse(savedProfile);
-        dosenData.nama = profileData.nama || dosenData.nama;
-        dosenData.nip = profileData.nip || dosenData.nip;
-      } catch (e) {
-        console.error("Error loading profile:", e);
-      }
+    const profileResponse = await getMyProfile();
+    if (profileResponse.success && profileResponse.data) {
+      dosenData.nama = profileResponse.data.nama || dosenData.nama;
+      dosenData.nip = profileResponse.data.nip || dosenData.nip;
     }
     
     // Save nilai to localStorage for mahasiswa to generate form

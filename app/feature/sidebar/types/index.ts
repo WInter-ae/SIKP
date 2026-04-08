@@ -1,12 +1,11 @@
 import type { LucideIcon } from "lucide-react";
-
-export type UserRole = "mahasiswa" | "dosen" | "admin" | "mentor";
+import type { EffectiveRole } from "~/lib/sso-types";
 
 export interface User {
   name: string;
   email: string;
   avatar: string;
-  role: UserRole;
+  role: EffectiveRole;
   activeIdentityLabel?: string;
 }
 

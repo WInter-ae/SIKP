@@ -38,10 +38,14 @@ import { ESignatureDialog } from "~/feature/profil/components/esignature-dialog"
 import {
   getMyMahasiswaProfile,
   updateMyMahasiswaProfile,
-  uploadMahasiswaESignature,
-  deleteMahasiswaESignature,
-  dataUrlToFile,
 } from "~/lib/services/mahasiswa-api";
+import {
+  activateProfileSignature,
+  dataUrlToFile,
+  deleteActiveProfileSignature,
+  getActiveProfileSignature,
+  uploadProfileSignature,
+} from "~/lib/services/signature-api";
 
 interface MahasiswaProfile {
   id: string;
@@ -159,6 +163,26 @@ export function MahasiswaProfilPage() {
     variant?: "default" | "destructive";
   } | null>(null);
 
+  const syncActiveSignature = async () => {
+    const response = await getActiveProfileSignature();
+
+    if (!response.success) {
+      return;
+    }
+
+    setProfile((prev) => ({
+      ...prev,
+      esignature: response.data
+        ? {
+            url: response.data.signatureImage,
+            key: response.data.id,
+            uploadedAt: response.data.uploadedAt || new Date().toISOString(),
+          }
+        : undefined,
+    }));
+    setSignatureImageError(false);
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       setIsLoading(true);
@@ -166,7 +190,7 @@ export function MahasiswaProfilPage() {
 
       if (response.success && response.data) {
         setProfile((prev) => normalizeProfileResponse(response.data, prev));
-        setSignatureImageError(false);
+        await syncActiveSignature();
       } else {
         setNotification({
           title: "⚠️ Gagal Memuat Profil",
@@ -245,19 +269,14 @@ export function MahasiswaProfilPage() {
         `signature-${Date.now()}.png`,
       );
 
-      const response = await uploadMahasiswaESignature(signatureFile);
+      const response = await uploadProfileSignature(signatureFile);
 
       if (response.success && response.data) {
-        const uploadedData = response.data;
-        setProfile((prev) => ({
-          ...prev,
-          esignature: {
-            url: uploadedData.url,
-            key: uploadedData.key,
-            uploadedAt: uploadedData.uploadedAt,
-          },
-        }));
-        setSignatureImageError(false);
+        if (response.data.isActive === false) {
+          await activateProfileSignature(response.data.id);
+        }
+
+        await syncActiveSignature();
         setShowESignatureDialog(false);
         setNotification({
           title: "✅ E-Signature Berhasil Disimpan",
@@ -289,13 +308,10 @@ export function MahasiswaProfilPage() {
   const handleDeleteESignature = async () => {
     try {
       setIsSaving(true);
-      const response = await deleteMahasiswaESignature();
+      const response = await deleteActiveProfileSignature();
 
       if (response.success) {
-        setProfile((prev) => ({
-          ...prev,
-          esignature: undefined,
-        }));
+        await syncActiveSignature();
         setShowDeleteSignatureDialog(false);
         setNotification({
           title: "🗑️ E-Signature Berhasil Dihapus",

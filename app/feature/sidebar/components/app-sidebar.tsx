@@ -16,7 +16,7 @@ import {
   SidebarRail,
 } from "~/components/ui/sidebar";
 import { getSidebarMenuByUrl } from "../data/sidebar-data";
-import type { User, UserRole } from "../types";
+import type { User } from "../types";
 import { useUser } from "~/contexts/user-context";
 import type { EffectiveRole } from "~/lib/sso-types";
 
@@ -25,19 +25,19 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 const getDefaultUser = (pathname: string): User => {
-  let role: UserRole = "mahasiswa";
+  let role: EffectiveRole = "MAHASISWA";
   if (pathname.startsWith("/admin")) {
-    role = "admin";
+    role = "ADMIN";
   } else if (pathname.startsWith("/dosen")) {
-    role = "dosen";
+    role = "DOSEN";
   } else if (pathname.startsWith("/mentor")) {
-    role = "mentor";
+    role = "MENTOR";
   }
 
   return {
-    name: role === "dosen" ? "Dr. Ahmad Santoso, M.Kom" : "John Doe",
+    name: role === "DOSEN" ? "Dr. Ahmad Santoso, M.Kom" : "John Doe",
     email:
-      role === "dosen"
+      role === "DOSEN"
         ? "ahmad.santoso@university.ac.id"
         : "john.doe@example.com",
     avatar: "/avatars/default.jpg",
@@ -54,15 +54,15 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
     [location.pathname],
   );
 
-  const contextRole = React.useMemo<UserRole>(() => {
+  const contextRole = React.useMemo<EffectiveRole>(() => {
     const hasRole = (role: EffectiveRole) => effectiveRoles.includes(role);
 
-    if (hasRole("ADMIN")) return "admin";
-    if (hasRole("MENTOR")) return "mentor";
+    if (hasRole("ADMIN")) return "ADMIN";
+    if (hasRole("MENTOR")) return "MENTOR";
     if (hasRole("DOSEN") || hasRole("KAPRODI") || hasRole("WAKIL_DEKAN")) {
-      return "dosen";
+      return "DOSEN";
     }
-    if (hasRole("MAHASISWA")) return "mahasiswa";
+    if (hasRole("MAHASISWA")) return "MAHASISWA";
 
     return defaultUser.role;
   }, [defaultUser.role, effectiveRoles]);

@@ -93,10 +93,6 @@ export function normalizeRole(raw: unknown): EffectiveRole | null {
     return "WAKIL_DEKAN";
   }
 
-  if (normalized === "PEMBIMBING_LAPANGAN") {
-    return "MENTOR";
-  }
-
   if (
     normalized === "MAHASISWA" ||
     normalized === "ADMIN" ||
@@ -179,9 +175,6 @@ export function normalizeRoles(rawRoles: unknown[]): EffectiveRole[] {
     const normalized = normalizeRole(role);
     if (normalized) {
       unique.add(normalized);
-      if (normalized === "KAPRODI" || normalized === "WAKIL_DEKAN") {
-        unique.add("DOSEN");
-      }
     }
   }
 

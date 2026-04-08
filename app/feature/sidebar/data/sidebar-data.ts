@@ -13,7 +13,8 @@ import {
   BookMarked,
   Award,
 } from "lucide-react";
-import type { NavItem, UserRole } from "../types";
+import type { EffectiveRole } from "~/lib/sso-types";
+import type { NavItem } from "../types";
 
 // Menu untuk Mahasiswa
 const mahasiswaMenu: NavItem[] = [
@@ -295,15 +296,17 @@ const mentorMenu: NavItem[] = [
   },
 ];
 
-export function getSidebarMenuByRole(role: UserRole): NavItem[] {
+export function getSidebarMenuByRole(role: EffectiveRole): NavItem[] {
   switch (role) {
-    case "mahasiswa":
+    case "MAHASISWA":
       return mahasiswaMenu;
-    case "admin":
+    case "ADMIN":
       return adminMenu;
-    case "dosen":
+    case "DOSEN":
+    case "KAPRODI":
+    case "WAKIL_DEKAN":
       return dosenMenu;
-    case "mentor":
+    case "MENTOR":
       return mentorMenu;
     default:
       return mahasiswaMenu;

@@ -4,6 +4,11 @@
  */
 
 import { apiClient } from "~/lib/api-client";
+import {
+  dataUrlToFile as dataUrlToFileFromSignatureApi,
+  deleteActiveProfileSignature,
+  uploadProfileSignature,
+} from "~/lib/services/signature-api";
 
 // ==================== TYPES ====================
 
@@ -83,7 +88,9 @@ export async function getDosenDashboard(): Promise<
   ApiResponse<DosenDashboardData>
 > {
   try {
-    const response = await apiClient<DosenDashboardData>("/api/dosen/dashboard");
+    const response = await apiClient<DosenDashboardData>(
+      "/api/dosen/dashboard",
+    );
     return response;
   } catch (error) {
     console.error("Error fetching dosen dashboard:", error);
@@ -185,21 +192,25 @@ export async function uploadESignature(
       };
     }
 
-    // Build FormData
-    const formData = new FormData();
-    formData.append("signatureFile", signatureFile);
+    const response = await uploadProfileSignature(signatureFile);
 
-    // Upload via API
-    const response = await apiClient<ESignatureUploadResponse>(
-      "/api/dosen/me/esignature",
-      {
-        method: "PUT",
-        body: formData,
-        // Don't set Content-Type header, let browser set it with boundary for multipart
+    if (!response.success || !response.data) {
+      return {
+        success: false,
+        message: response.message || "Gagal mengunggah e-signature.",
+        data: null,
+      };
+    }
+
+    return {
+      success: true,
+      message: response.message,
+      data: {
+        url: response.data.signatureImage,
+        key: response.data.id,
+        uploadedAt: response.data.uploadedAt || new Date().toISOString(),
       },
-    );
-
-    return response;
+    };
   } catch (error) {
     console.error("Error uploading e-signature:", error);
     return {
@@ -217,11 +228,7 @@ export async function uploadESignature(
  */
 export async function deleteESignature(): Promise<ApiResponse<null>> {
   try {
-    const response = await apiClient<null>("/api/dosen/me/esignature", {
-      method: "DELETE",
-    });
-
-    return response;
+    return await deleteActiveProfileSignature();
   } catch (error) {
     console.error("Error deleting e-signature:", error);
     return {
@@ -242,8 +249,6 @@ export async function dataUrlToFile(
   dataUrl: string,
   filename?: string,
 ): Promise<File> {
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
   const finalFilename = filename || `signature-${Date.now()}.png`;
-  return new File([blob], finalFilename, { type: blob.type || "image/png" });
+  return dataUrlToFileFromSignatureApi(dataUrl, finalFilename);
 }

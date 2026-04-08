@@ -25,8 +25,7 @@ export type UserRole =
   | "DOSEN"
   | "KAPRODI"
   | "WAKIL_DEKAN"
-  | "MENTOR"
-  | "PEMBIMBING_LAPANGAN";
+  | "MENTOR";
 
 export interface LoginResponse {
   user: User;
