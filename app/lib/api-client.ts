@@ -2,7 +2,7 @@
  * API Client untuk SIKP Backend
  *
  * Gunakan modul ini untuk melakukan API calls ke backend selain authentication.
- * Authentication menggunakan better-auth yang sudah dikonfigurasi di auth-client.ts
+ * Authentication menggunakan sso yang sudah dikonfigurasi di auth-client.ts
  */
 
 import { getAuthToken as getStoredToken } from "./auth-client";
