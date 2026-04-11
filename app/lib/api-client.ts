@@ -20,13 +20,19 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-// Gunakan URL Workers sebagai default; bisa di-override via env
+const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:3000";
+const DEFAULT_PROD_API_BASE_URL =
+  "https://backend-sikp.backend-sikp.workers.dev";
+
+// Gunakan backend lokal saat development, fallback ke URL Workers saat production.
 const API_BASE_URL =
   import.meta.env.VITE_SIKP_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_APP_AUTH_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  "https://backend-sikp.backend-sikp.workers.dev";
+  (import.meta.env.DEV
+    ? DEFAULT_LOCAL_API_BASE_URL
+    : DEFAULT_PROD_API_BASE_URL);
 
 function handleUnauthorized() {
   clearAuthSession();

@@ -58,6 +58,18 @@ const ALLOWED_FILE_TYPES = [
   "text/plain", // .txt
 ];
 
+function getApiBaseUrl() {
+  return (
+    import.meta.env.VITE_SIKP_API_BASE_URL ||
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    import.meta.env.VITE_APP_AUTH_URL ||
+    (import.meta.env.DEV
+      ? "http://localhost:3000"
+      : "https://backend-sikp.backend-sikp.workers.dev")
+  );
+}
+
 // ==================== API FUNCTIONS ====================
 
 /**
@@ -194,11 +206,7 @@ export async function createTemplate(
     }
 
     const token = await getAuthToken();
-    const API_BASE_URL =
-      import.meta.env.VITE_API_URL ||
-      import.meta.env.VITE_API_BASE_URL ||
-      import.meta.env.VITE_APP_AUTH_URL ||
-      "https://backend-sikp.backend-sikp.workers.dev";
+    const API_BASE_URL = getApiBaseUrl();
 
     const response = await fetch(`${API_BASE_URL}/api/templates`, {
       method: "POST",
@@ -307,11 +315,7 @@ export async function updateTemplate(
     }
 
     const token = await getAuthToken();
-    const API_BASE_URL =
-      import.meta.env.VITE_API_URL ||
-      import.meta.env.VITE_API_BASE_URL ||
-      import.meta.env.VITE_APP_AUTH_URL ||
-      "https://backend-sikp.backend-sikp.workers.dev";
+    const API_BASE_URL = getApiBaseUrl();
 
     const response = await fetch(
       `${API_BASE_URL}/api/templates/${templateId}`,
@@ -409,11 +413,7 @@ export async function toggleTemplateActive(
  * Get template download URL
  */
 export function getTemplateDownloadUrl(templateId: string): string {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    import.meta.env.VITE_APP_AUTH_URL ||
-    "https://backend-sikp.backend-sikp.workers.dev";
+  const API_BASE_URL = getApiBaseUrl();
   return `${API_BASE_URL}/api/templates/${templateId}/download`;
 }
 
@@ -427,11 +427,7 @@ export async function downloadTemplate(
 ): Promise<void> {
   try {
     const token = await getAuthToken();
-    const API_BASE_URL =
-      import.meta.env.VITE_API_URL ||
-      import.meta.env.VITE_API_BASE_URL ||
-      import.meta.env.VITE_APP_AUTH_URL ||
-      "https://backend-sikp.backend-sikp.workers.dev";
+    const API_BASE_URL = getApiBaseUrl();
 
     const response = await fetch(
       `${API_BASE_URL}/api/templates/${templateId}/download`,

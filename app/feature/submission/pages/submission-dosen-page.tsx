@@ -121,10 +121,11 @@ function resolveAssetUrl(url?: string): string | undefined {
   if (/^https?:\/\//i.test(url)) return url;
 
   const apiBase =
+    import.meta.env.VITE_SIKP_API_BASE_URL ||
     import.meta.env.VITE_API_URL ||
     import.meta.env.VITE_APP_AUTH_URL ||
     import.meta.env.VITE_API_BASE_URL ||
-    "";
+    (import.meta.env.DEV ? "http://localhost:3000" : "");
 
   if (!apiBase) return url;
   const base = apiBase.replace(/\/+$/, "");
