@@ -74,6 +74,7 @@ export interface PengajuanSidang {
     tanggalSidang: string;
     waktuMulai: string;
     waktuSelesai: string;
+    dosenPenguji?: DosenPenguji[];
   };
   status: "submitted" | "approved" | "rejected";
   tanggalPengajuan: string;

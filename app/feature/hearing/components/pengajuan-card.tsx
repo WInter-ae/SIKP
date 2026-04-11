@@ -4,18 +4,33 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Avatar } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
-import { Check, XCircle, Clock, Calendar, MapPin, FileText, User } from "lucide-react";
-import type { PengajuanSidang } from "../types/dosen";
+import {
+  Check,
+  XCircle,
+  Clock,
+  Calendar,
+  MapPin,
+  FileText,
+  User,
+} from "lucide-react";
+import type { PengajuanSidang } from "../types";
 import { VerifikasiDialog } from "./verifikasi-dialog";
 
 interface PengajuanCardProps {
   pengajuan: PengajuanSidang;
-  onVerifikasi: (id: string, status: "approved" | "rejected", catatan: string, nilai?: number) => void;
+  onVerifikasi: (
+    id: string,
+    status: "approved" | "rejected",
+    catatan: string,
+    nilai?: number,
+  ) => void;
 }
 
 export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
   const [showDialog, setShowDialog] = useState(false);
-  const [dialogType, setDialogType] = useState<"approved" | "rejected">("approved");
+  const [dialogType, setDialogType] = useState<"approved" | "rejected">(
+    "approved",
+  );
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -93,10 +108,14 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
             <Badge variant="secondary" className="font-semibold">
               {pengajuan.status === "submitted" && "Menunggu Verifikasi"}
               {pengajuan.status === "approved" && (
-                <span className="text-green-700 dark:text-green-400">✓ Disetujui</span>
+                <span className="text-green-700 dark:text-green-400">
+                  ✓ Disetujui
+                </span>
               )}
               {pengajuan.status === "rejected" && (
-                <span className="text-red-700 dark:text-red-400">✗ Ditolak</span>
+                <span className="text-red-700 dark:text-red-400">
+                  ✗ Ditolak
+                </span>
               )}
             </Badge>
           </div>
@@ -104,49 +123,61 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
 
         <CardContent className="pt-6 space-y-4">
           {/* Tampilkan info verifikasi jika sudah disetujui/ditolak */}
-          {(pengajuan.status === "approved" || pengajuan.status === "rejected") && pengajuan.tanggalVerifikasi && (
-            <>
-              <div className={`p-4 rounded-lg border-2 ${
-                pengajuan.status === "approved" 
-                  ? "bg-green-50 border-green-200 dark:bg-green-950/20" 
-                  : "bg-red-50 border-red-200 dark:bg-red-950/20"
-              }`}>
-                <div className="flex items-start gap-3">
-                  {pengajuan.status === "approved" ? (
-                    <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
-                  )}
-                  <div className="flex-1 space-y-2">
-                    <p className={`font-semibold ${
-                      pengajuan.status === "approved" ? "text-green-900 dark:text-green-100" : "text-red-900 dark:text-red-100"
-                    }`}>
-                      {pengajuan.status === "approved" ? "Pengajuan Disetujui" : "Pengajuan Ditolak"}
-                    </p>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {formatDateTime(pengajuan.tanggalVerifikasi)}
-                      </span>
+          {(pengajuan.status === "approved" ||
+            pengajuan.status === "rejected") &&
+            pengajuan.tanggalVerifikasi && (
+              <>
+                <div
+                  className={`p-4 rounded-lg border-2 ${
+                    pengajuan.status === "approved"
+                      ? "bg-green-50 border-green-200 dark:bg-green-950/20"
+                      : "bg-red-50 border-red-200 dark:bg-red-950/20"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {pengajuan.status === "approved" ? (
+                      <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    )}
+                    <div className="flex-1 space-y-2">
+                      <p
+                        className={`font-semibold ${
+                          pengajuan.status === "approved"
+                            ? "text-green-900 dark:text-green-100"
+                            : "text-red-900 dark:text-red-100"
+                        }`}
+                      >
+                        {pengajuan.status === "approved"
+                          ? "Pengajuan Disetujui"
+                          : "Pengajuan Ditolak"}
+                      </p>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">
+                          {formatDateTime(pengajuan.tanggalVerifikasi)}
+                        </span>
+                      </div>
+                      {pengajuan.catatanDosen && (
+                        <div className="pt-2 border-t border-current opacity-30">
+                          <p className="text-sm font-medium mb-1">Catatan:</p>
+                          <p className="text-sm">{pengajuan.catatanDosen}</p>
+                        </div>
+                      )}
+                      {pengajuan.nilaiAkhir && (
+                        <div className="pt-2">
+                          <span className="text-sm font-medium">Nilai: </span>
+                          <span className="text-base font-bold">
+                            {pengajuan.nilaiAkhir}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                    {pengajuan.catatanDosen && (
-                      <div className="pt-2 border-t border-current opacity-30">
-                        <p className="text-sm font-medium mb-1">Catatan:</p>
-                        <p className="text-sm">{pengajuan.catatanDosen}</p>
-                      </div>
-                    )}
-                    {pengajuan.nilaiAkhir && (
-                      <div className="pt-2">
-                        <span className="text-sm font-medium">Nilai: </span>
-                        <span className="text-base font-bold">{pengajuan.nilaiAkhir}</span>
-                      </div>
-                    )}
                   </div>
                 </div>
-              </div>
-              <Separator />
-            </>
-          )}
+                <Separator />
+              </>
+            )}
 
           {/* Judul Laporan */}
           <div className="space-y-2">
@@ -154,7 +185,9 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
               <FileText className="h-4 w-4" />
               Judul Laporan
             </div>
-            <p className="text-base font-medium pl-6">{pengajuan.data.judulLaporan}</p>
+            <p className="text-base font-medium pl-6">
+              {pengajuan.data.judulLaporan}
+            </p>
           </div>
 
           <Separator />
@@ -169,7 +202,9 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
                 <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Tempat</p>
-                  <p className="font-medium">{pengajuan.data.tempatPelaksanaan}</p>
+                  <p className="font-medium">
+                    {pengajuan.data.tempatPelaksanaan}
+                  </p>
                 </div>
               </div>
 
@@ -177,7 +212,9 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
                 <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Tanggal</p>
-                  <p className="font-medium">{formatDate(pengajuan.data.tanggalSidang)}</p>
+                  <p className="font-medium">
+                    {formatDate(pengajuan.data.tanggalSidang)}
+                  </p>
                 </div>
               </div>
 
@@ -186,7 +223,8 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Waktu</p>
                   <p className="font-medium">
-                    {formatTime(pengajuan.data.waktuMulai)} - {formatTime(pengajuan.data.waktuSelesai)}
+                    {formatTime(pengajuan.data.waktuMulai)} -{" "}
+                    {formatTime(pengajuan.data.waktuSelesai)}
                   </p>
                 </div>
               </div>

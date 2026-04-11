@@ -13,22 +13,11 @@ import {
   Download,
   Eye,
 } from "lucide-react";
-import type { PengajuanSidang } from "../types/dosen";
+import type { PengajuanSidang } from "../types";
 import { PengajuanCard } from "../components/pengajuan-card";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "~/components/ui/dialog";
-import { ESignatureSetup } from "~/feature/esignature/components/esignature-setup";
-import type { ESignatureSetupData } from "~/feature/esignature/types/esignature";
-import {
-  activateProfileSignature,
-  dataUrlToFile,
   getActiveProfileSignature,
-  uploadProfileSignature,
+  getSignatureManageUrl,
 } from "~/lib/services/signature-api";
 
 // Mock data pengajuan dari mahasiswa
@@ -94,8 +83,7 @@ export default function VerifikasiSidangDosenPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("menunggu");
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
-  const [showESignatureDialog, setShowESignatureDialog] = useState(false);
-  const [pendingApprovalId, setPendingApprovalId] = useState<string | null>(
+  const [signatureManageUrl, setSignatureManageUrl] = useState<string | null>(
     null,
   );
   const [notification, setNotification] = useState<{
@@ -148,6 +136,11 @@ export default function VerifikasiSidangDosenPage() {
         } else {
           setSignatureImage(null);
         }
+
+        const manageUrlResponse = await getSignatureManageUrl();
+        if (manageUrlResponse.success && manageUrlResponse.data) {
+          setSignatureManageUrl(manageUrlResponse.data);
+        }
       } else {
         setPengajuanList(mockPengajuanList);
       }
@@ -173,14 +166,18 @@ export default function VerifikasiSidangDosenPage() {
     // Jika approval, cek e-signature dulu
     if (status === "approved") {
       if (!signatureImage) {
-        setPendingApprovalId(id);
-        setShowESignatureDialog(true);
         setNotification({
-          title: "⚠️ E-Signature Belum Dibuat",
-          description:
-            "Anda perlu membuat e-signature terlebih dahulu untuk menyetujui pengajuan.",
+          title: "⚠️ E-Signature Dikelola di SSO",
+          description: signatureManageUrl
+            ? `Silakan kelola e-signature di SSO terlebih dahulu: ${signatureManageUrl}`
+            : "Silakan kelola e-signature di SSO terlebih dahulu sebelum menyetujui pengajuan.",
           variant: "destructive",
         });
+
+        if (signatureManageUrl) {
+          window.open(signatureManageUrl, "_blank", "noopener,noreferrer");
+        }
+
         setTimeout(() => setNotification(null), 4000);
         return;
       }
@@ -374,60 +371,6 @@ export default function VerifikasiSidangDosenPage() {
     });
 
     setTimeout(() => setNotification(null), 4000);
-  };
-
-  // Handler untuk save e-signature
-  const handleESignatureSave = async (data: ESignatureSetupData) => {
-    console.log("✍️ DOSEN: E-Signature saved", data);
-
-    const signatureFile = await dataUrlToFile(data.signatureData);
-    const uploadResponse = await uploadProfileSignature(signatureFile);
-
-    if (!uploadResponse.success || !uploadResponse.data) {
-      setNotification({
-        title: "❌ Gagal Menyimpan E-Signature",
-        description:
-          uploadResponse.message ||
-          "Terjadi kesalahan saat menyimpan e-signature.",
-        variant: "destructive",
-      });
-      setTimeout(() => setNotification(null), 4000);
-      return;
-    }
-
-    if (!uploadResponse.data.isActive) {
-      await activateProfileSignature(uploadResponse.data.id);
-    }
-
-    const refreshedSignature = await getActiveProfileSignature();
-    if (refreshedSignature.success && refreshedSignature.data) {
-      setSignatureImage(refreshedSignature.data.signatureImage);
-    } else {
-      setSignatureImage(
-        uploadResponse.data.signatureImage || data.signatureData,
-      );
-    }
-
-    setShowESignatureDialog(false);
-
-    // Jika ada pending approval, proses sekarang
-    if (pendingApprovalId) {
-      console.log(
-        "🔄 DOSEN: Processing pending approval with new signature:",
-        pendingApprovalId,
-      );
-      processApprovalWithSignature(
-        pendingApprovalId,
-        "Jadwal sidang disetujui",
-      );
-      setPendingApprovalId(null);
-    }
-
-    setNotification({
-      title: "✅ E-Signature Berhasil Dibuat",
-      description: "Tanda tangan digital Anda telah tersimpan.",
-    });
-    setTimeout(() => setNotification(null), 3000);
   };
 
   // Filter pengajuan berdasarkan status
@@ -775,29 +718,6 @@ export default function VerifikasiSidangDosenPage() {
             )}
           </TabsContent>
         </Tabs>
-
-        {/* E-Signature Setup Dialog */}
-        <Dialog
-          open={showESignatureDialog}
-          onOpenChange={setShowESignatureDialog}
-        >
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Buat Tanda Tangan Digital</DialogTitle>
-              <DialogDescription>
-                Tanda tangan digital akan digunakan untuk menyetujui pengajuan
-                sidang mahasiswa
-              </DialogDescription>
-            </DialogHeader>
-            <ESignatureSetup
-              onSave={handleESignatureSave}
-              onCancel={() => setShowESignatureDialog(false)}
-              dosenName="Dosen Pembimbing" // TODO: Get from actual user context
-              nip="198501012010121001" // TODO: Get from actual user context
-              existingSignature={signatureImage || undefined}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
 import { useUser } from "~/contexts/user-context";
-import { type EffectiveRole } from "~/lib/sso-types";
+import { type EffectivePermission, type EffectiveRole } from "~/lib/sso-types";
 
 /**
  * Protected Route Wrapper
@@ -10,15 +10,18 @@ import { type EffectiveRole } from "~/lib/sso-types";
 export function ProtectedRoute({
   children,
   requiredRoles,
+  requiredPermissions,
 }: {
   children: React.ReactNode;
   requiredRoles?: EffectiveRole[];
+  requiredPermissions?: EffectivePermission[];
 }) {
   const navigate = useNavigate();
   const {
     isLoading,
     isAuthenticated,
     effectiveRoles,
+    effectivePermissions,
     activeIdentity,
     availableIdentities,
   } = useUser();
@@ -27,6 +30,13 @@ export function ProtectedRoute({
     !requiredRoles ||
     requiredRoles.length === 0 ||
     requiredRoles.some((role) => effectiveRoles.includes(role));
+
+  const hasPermissionAccess =
+    !requiredPermissions ||
+    requiredPermissions.length === 0 ||
+    requiredPermissions.some((permission) =>
+      effectivePermissions.includes(permission),
+    );
 
   useEffect(() => {
     if (isLoading) return;
@@ -47,9 +57,15 @@ export function ProtectedRoute({
       navigate("/unauthorized", { replace: true });
       return;
     }
+
+    if (!hasPermissionAccess) {
+      navigate("/unauthorized", { replace: true });
+      return;
+    }
   }, [
     activeIdentity,
     availableIdentities.length,
+    hasPermissionAccess,
     hasRoleAccess,
     isAuthenticated,
     isLoading,
@@ -78,6 +94,10 @@ export function ProtectedRoute({
 
   // Check role
   if (!hasRoleAccess) {
+    return null;
+  }
+
+  if (!hasPermissionAccess) {
     return null;
   }
 

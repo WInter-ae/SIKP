@@ -22,6 +22,10 @@ interface SignatureListPayload {
   items?: unknown;
 }
 
+interface SignatureManageUrlPayload {
+  manageUrl?: unknown;
+}
+
 function pickString(...values: unknown[]): string | null {
   for (const value of values) {
     if (typeof value === "string" && value.trim().length > 0) {
@@ -74,38 +78,45 @@ function normalizeSignatureList(payload: unknown): SignatureAsset[] {
     .filter((item): item is SignatureAsset => Boolean(item));
 }
 
-export async function uploadProfileSignature(
-  signatureFile: File,
-): Promise<ApiResponse<SignatureAsset>> {
-  const formData = new FormData();
-  formData.append("signatureFile", signatureFile);
-
-  const response = await apiClient<unknown>("/api/profile/signature", {
-    method: "POST",
-    body: formData,
-  });
+export async function getSignatureManageUrl(): Promise<ApiResponse<string>> {
+  const response = await apiClient<SignatureManageUrlPayload>(
+    "/api/profile/signature/manage-url",
+    {
+      method: "GET",
+    },
+  );
 
   if (!response.success || !response.data) {
     return {
       success: false,
-      message: response.message || "Gagal mengunggah signature.",
+      message: response.message || "Gagal mengambil URL kelola signature di SSO.",
       data: null,
     };
   }
 
-  const signature = normalizeSignaturePayload(response.data);
-  if (!signature) {
+  const manageUrl = pickString(response.data.manageUrl);
+  if (!manageUrl) {
     return {
       success: false,
-      message: "Payload signature tidak valid.",
+      message: "URL kelola signature SSO tidak tersedia.",
       data: null,
     };
   }
 
   return {
     success: true,
-    message: response.message || "Signature berhasil diunggah.",
-    data: signature,
+    message: response.message || "URL kelola signature berhasil diambil.",
+    data: manageUrl,
+  };
+}
+
+function writeDisabledResponse(message?: string): ApiResponse<null> {
+  return {
+    success: false,
+    message:
+      message ||
+      "Kelola signature hanya tersedia di SSO. Gunakan URL kelola signature.",
+    data: null,
   };
 }
 
@@ -144,71 +155,46 @@ export async function getActiveProfileSignature(): Promise<
   };
 }
 
-export async function activateProfileSignature(
-  signatureId: string,
+// Deprecated compatibility helpers. Keep compile compatibility for legacy callers,
+// but enforce SSO-only signature management.
+export async function uploadProfileSignature(
+  _signatureFile: File,
 ): Promise<ApiResponse<SignatureAsset>> {
-  const response = await apiClient<unknown>(
-    `/api/profile/signature/${signatureId}/activate`,
-    {
-      method: "POST",
-      body: JSON.stringify({}),
-    },
-  );
-
-  if (!response.success || !response.data) {
-    return {
-      success: false,
-      message: response.message || "Gagal mengaktifkan signature.",
-      data: null,
-    };
-  }
-
-  const signature = normalizeSignaturePayload(response.data);
-  if (!signature) {
-    return {
-      success: false,
-      message: "Payload signature aktif tidak valid.",
-      data: null,
-    };
-  }
-
+  const manage = await getSignatureManageUrl();
   return {
-    success: true,
-    message: response.message || "Signature aktif berhasil diperbarui.",
-    data: signature,
+    success: false,
+    message:
+      manage.message ||
+      "Upload signature dinonaktifkan di SIKP. Kelola signature di SSO.",
+    data: null,
+  };
+}
+
+export async function activateProfileSignature(
+  _signatureId: string,
+): Promise<ApiResponse<SignatureAsset>> {
+  const manage = await getSignatureManageUrl();
+  return {
+    success: false,
+    message:
+      manage.message ||
+      "Aktivasi signature dinonaktifkan di SIKP. Kelola signature di SSO.",
+    data: null,
   };
 }
 
 export async function deleteProfileSignatureById(
-  signatureId: string,
+  _signatureId: string,
 ): Promise<ApiResponse<null>> {
-  return apiClient<null>(`/api/profile/signature/${signatureId}`, {
-    method: "DELETE",
-  });
+  const manage = await getSignatureManageUrl();
+  return writeDisabledResponse(manage.message);
 }
 
 export async function deleteActiveProfileSignature(): Promise<
   ApiResponse<null>
 > {
-  const activeSignature = await getActiveProfileSignature();
-
-  if (!activeSignature.success) {
-    return {
-      success: false,
-      message: activeSignature.message,
-      data: null,
-    };
-  }
-
-  if (!activeSignature.data) {
-    return {
-      success: true,
-      message: "Tidak ada signature aktif untuk dihapus.",
-      data: null,
-    };
-  }
-
-  return deleteProfileSignatureById(activeSignature.data.id);
+  const manage = await getSignatureManageUrl();
+  return writeDisabledResponse(manage.message);
 }
 
 export async function dataUrlToFile(
@@ -219,3 +205,6 @@ export async function dataUrlToFile(
   const blob = await response.blob();
   return new File([blob], filename, { type: blob.type || "image/png" });
 }
+
+// Signature write operations are intentionally removed from SIKP.
+// Management must happen in SSO via getSignatureManageUrl().

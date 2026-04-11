@@ -17,6 +17,7 @@ import {
 } from "~/lib/auth-client";
 import {
   type AuthStatus,
+  type EffectivePermission,
   type EffectiveRole,
   type SSOIdentity,
   type SessionUser,
@@ -42,6 +43,7 @@ interface UserContextType {
   availableIdentities: SSOIdentity[];
   activeIdentity: SSOIdentity | null;
   effectiveRoles: EffectiveRole[];
+  effectivePermissions: EffectivePermission[];
   callbackError: string | null;
   initiateLogin: () => Promise<void>;
   handleCallback: (code: string, state: string) => Promise<CallbackResult>;
@@ -78,6 +80,9 @@ export const UserProvider = ({ children }: UserProviderProps) => {
     null,
   );
   const [effectiveRoles, setEffectiveRoles] = useState<EffectiveRole[]>([]);
+  const [effectivePermissions, setEffectivePermissions] = useState<
+    EffectivePermission[]
+  >([]);
   const [callbackError, setCallbackError] = useState<string | null>(null);
 
   const applySession = useCallback(
@@ -88,6 +93,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         setAvailableIdentities([]);
         setActiveIdentity(null);
         setEffectiveRoles([]);
+        setEffectivePermissions([]);
         setAuthStatus("unauthenticated");
         return;
       }
@@ -97,6 +103,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
       setAvailableIdentities(session.availableIdentities);
       setActiveIdentity(session.activeIdentity);
       setEffectiveRoles(session.effectiveRoles);
+      setEffectivePermissions(session.effectivePermissions);
       setAuthStatus("authenticated");
     },
     [],
@@ -211,6 +218,7 @@ export const UserProvider = ({ children }: UserProviderProps) => {
         availableIdentities,
         activeIdentity,
         effectiveRoles,
+        effectivePermissions,
         callbackError,
         initiateLogin,
         handleCallback,

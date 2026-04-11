@@ -6,6 +6,8 @@ export type EffectiveRole =
   | "WAKIL_DEKAN"
   | "MENTOR";
 
+export type EffectivePermission = string;
+
 export type AuthStatus =
   | "idle"
   | "loading"
@@ -53,6 +55,8 @@ export interface AuthSessionSnapshot {
   availableIdentities: SSOIdentity[];
   activeIdentity: SSOIdentity | null;
   effectiveRoles: EffectiveRole[];
+  effectivePermissions: EffectivePermission[];
+  authzSource: "ACCESS_TOKEN_CLAIMS" | null;
   sessionEstablished: boolean;
   requiresIdentitySelection: boolean;
 }
@@ -63,6 +67,8 @@ export interface CallbackResponseData {
   identities?: unknown[];
   activeIdentity?: unknown;
   effectiveRoles?: string[];
+  effectivePermissions?: string[];
+  authzSource?: string;
   user?: unknown;
   token?: string;
   accessToken?: string;

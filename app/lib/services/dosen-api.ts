@@ -6,8 +6,7 @@
 import { apiClient } from "~/lib/api-client";
 import {
   dataUrlToFile as dataUrlToFileFromSignatureApi,
-  deleteActiveProfileSignature,
-  uploadProfileSignature,
+  getSignatureManageUrl,
 } from "~/lib/services/signature-api";
 
 // ==================== TYPES ====================
@@ -192,24 +191,21 @@ export async function uploadESignature(
       };
     }
 
-    const response = await uploadProfileSignature(signatureFile);
-
-    if (!response.success || !response.data) {
+    const manageUrlResponse = await getSignatureManageUrl();
+    if (!manageUrlResponse.success || !manageUrlResponse.data) {
       return {
         success: false,
-        message: response.message || "Gagal mengunggah e-signature.",
+        message:
+          manageUrlResponse.message ||
+          "Kelola e-signature hanya tersedia di SSO.",
         data: null,
       };
     }
 
     return {
-      success: true,
-      message: response.message,
-      data: {
-        url: response.data.signatureImage,
-        key: response.data.id,
-        uploadedAt: response.data.uploadedAt || new Date().toISOString(),
-      },
+      success: false,
+      message: `Kelola e-signature di SSO: ${manageUrlResponse.data}`,
+      data: null,
     };
   } catch (error) {
     console.error("Error uploading e-signature:", error);
@@ -228,7 +224,22 @@ export async function uploadESignature(
  */
 export async function deleteESignature(): Promise<ApiResponse<null>> {
   try {
-    return await deleteActiveProfileSignature();
+    const manageUrlResponse = await getSignatureManageUrl();
+    if (!manageUrlResponse.success || !manageUrlResponse.data) {
+      return {
+        success: false,
+        message:
+          manageUrlResponse.message ||
+          "Kelola e-signature hanya tersedia di SSO.",
+        data: null,
+      };
+    }
+
+    return {
+      success: false,
+      message: `Kelola e-signature di SSO: ${manageUrlResponse.data}`,
+      data: null,
+    };
   } catch (error) {
     console.error("Error deleting e-signature:", error);
     return {

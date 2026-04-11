@@ -2,6 +2,7 @@ import {
   type ApiEnvelope,
   type AuthSessionSnapshot,
   type CallbackResponseData,
+  type EffectivePermission,
   type EffectiveRole,
   type SSOIdentity,
   getDashboardPath,
@@ -231,6 +232,31 @@ function normalizeEffectiveRoles(
   return activeIdentity ? normalizeRoles([activeIdentity.identityType]) : [];
 }
 
+function normalizeEffectivePermissions(
+  data: Record<string, unknown>,
+  seed: AuthSessionSnapshot | null,
+): EffectivePermission[] {
+  const rawPermissions = Array.isArray(data.effectivePermissions)
+    ? data.effectivePermissions
+    : [];
+
+  const normalized = Array.from(
+    new Set(
+      rawPermissions
+        .map((permission) =>
+          typeof permission === "string" ? permission.trim() : "",
+        )
+        .filter((permission) => permission.length > 0),
+    ),
+  );
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  return seed?.effectivePermissions || [];
+}
+
 function fallbackUserFromIdentity(
   identity: SSOIdentity | null,
   roles: EffectiveRole[],
@@ -276,6 +302,15 @@ function buildSessionFromPayload(
     activeIdentity,
     previousSession,
   );
+  const effectivePermissions = normalizeEffectivePermissions(
+    payload,
+    previousSession,
+  );
+  const authzSource =
+    typeof payload.authzSource === "string" &&
+    payload.authzSource.trim().length > 0
+      ? "ACCESS_TOKEN_CLAIMS"
+      : previousSession?.authzSource || null;
 
   const rawUser = payload.user;
   const normalizedUser =
@@ -302,6 +337,8 @@ function buildSessionFromPayload(
     availableIdentities,
     activeIdentity,
     effectiveRoles,
+    effectivePermissions,
+    authzSource,
     sessionEstablished,
     requiresIdentitySelection,
   };

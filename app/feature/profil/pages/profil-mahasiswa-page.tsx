@@ -7,20 +7,9 @@ import {
   CardDescription,
 } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Separator } from "~/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
 import {
   User,
   Mail,
@@ -29,22 +18,12 @@ import {
   Building2,
   FileSignature,
   CheckCircle2,
-  Edit,
-  Save,
-  Trash2,
+  ExternalLink,
 } from "lucide-react";
-import type { ESignatureSetupData } from "~/feature/esignature/types/esignature";
-import { ESignatureDialog } from "~/feature/profil/components/esignature-dialog";
+import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa-api";
 import {
-  getMyMahasiswaProfile,
-  updateMyMahasiswaProfile,
-} from "~/lib/services/mahasiswa-api";
-import {
-  activateProfileSignature,
-  dataUrlToFile,
-  deleteActiveProfileSignature,
   getActiveProfileSignature,
-  uploadProfileSignature,
+  getSignatureManageUrl,
 } from "~/lib/services/signature-api";
 
 interface MahasiswaProfile {
@@ -150,12 +129,12 @@ export function MahasiswaProfilPage() {
     angkatan: "",
   });
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const isSaving = false;
   const [isLoading, setIsLoading] = useState(true);
-  const [showESignatureDialog, setShowESignatureDialog] = useState(false);
-  const [showDeleteSignatureDialog, setShowDeleteSignatureDialog] =
-    useState(false);
+  const [signatureManageUrl, setSignatureManageUrl] = useState<string | null>(
+    null,
+  );
+  const profileManageUrl = import.meta.env.VITE_SSO_PROFILE_URL || null;
   const [signatureImageError, setSignatureImageError] = useState(false);
   const [notification, setNotification] = useState<{
     title: string;
@@ -183,6 +162,13 @@ export function MahasiswaProfilPage() {
     setSignatureImageError(false);
   };
 
+  const loadSignatureManageUrl = async () => {
+    const response = await getSignatureManageUrl();
+    if (response.success && response.data) {
+      setSignatureManageUrl(response.data);
+    }
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       setIsLoading(true);
@@ -191,6 +177,7 @@ export function MahasiswaProfilPage() {
       if (response.success && response.data) {
         setProfile((prev) => normalizeProfileResponse(response.data, prev));
         await syncActiveSignature();
+        await loadSignatureManageUrl();
       } else {
         setNotification({
           title: "⚠️ Gagal Memuat Profil",
@@ -204,139 +191,36 @@ export function MahasiswaProfilPage() {
       setIsLoading(false);
     };
 
-    loadProfile();
+    void loadProfile();
   }, []);
 
-  const handleSaveProfile = async () => {
-    setIsSaving(true);
-
-    try {
-      const trimmedNama = profile.nama.trim();
-      const trimmedEmail = profile.email.trim();
-      const trimmedPhone = profile.phone.trim();
-      const trimmedFakultas = profile.fakultas.trim();
-      const trimmedProdi = profile.prodi.trim();
-      const trimmedAngkatan = profile.angkatan.trim();
-
-      const semesterNumber = pickNumber(profile.semester);
-      const jumlahSksSelesaiNumber = pickNumber(profile.jumlahSksSelesai);
-
-      const response = await updateMyMahasiswaProfile({
-        nama: trimmedNama || undefined,
-        email: trimmedEmail || undefined,
-        phone: trimmedPhone || undefined,
-        fakultas: trimmedFakultas || null,
-        prodi: trimmedProdi || null,
-        semester: semesterNumber,
-        jumlahSksSelesai: jumlahSksSelesaiNumber,
-        angkatan: trimmedAngkatan || null,
-      });
-
-      if (response.success && response.data) {
-        setProfile((prev) => normalizeProfileResponse(response.data, prev));
-        setIsEditing(false);
-        setNotification({
-          title: "✅ Profil Berhasil Disimpan",
-          description: "Data profil Anda telah diperbarui.",
-        });
-        setTimeout(() => setNotification(null), 3000);
-      } else {
-        setNotification({
-          title: "❌ Gagal Menyimpan Profil",
-          description: response.message || "Terjadi kesalahan saat menyimpan",
-          variant: "destructive",
-        });
-        setTimeout(() => setNotification(null), 4000);
-      }
-    } catch (error) {
-      console.error("Error saving mahasiswa profile:", error);
+  const openManageProfile = () => {
+    if (!profileManageUrl) {
       setNotification({
-        title: "❌ Gagal Menyimpan Profil",
-        description: "Terjadi kesalahan saat menyimpan profil",
+        title: "❌ URL SSO Tidak Tersedia",
+        description: "VITE_SSO_PROFILE_URL belum dikonfigurasi.",
         variant: "destructive",
       });
       setTimeout(() => setNotification(null), 4000);
-    } finally {
-      setIsSaving(false);
+      return;
     }
+
+    window.open(profileManageUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleSaveESignature = async (data: ESignatureSetupData) => {
-    try {
-      setIsSaving(true);
-      const signatureFile = await dataUrlToFile(
-        data.signatureData,
-        `signature-${Date.now()}.png`,
-      );
-
-      const response = await uploadProfileSignature(signatureFile);
-
-      if (response.success && response.data) {
-        if (response.data.isActive === false) {
-          await activateProfileSignature(response.data.id);
-        }
-
-        await syncActiveSignature();
-        setShowESignatureDialog(false);
-        setNotification({
-          title: "✅ E-Signature Berhasil Disimpan",
-          description:
-            "Tanda tangan digital Anda telah tersimpan dan siap digunakan.",
-        });
-        setTimeout(() => setNotification(null), 3000);
-      } else {
-        setNotification({
-          title: "❌ Gagal Menyimpan E-Signature",
-          description: response.message || "Terjadi kesalahan saat menyimpan",
-          variant: "destructive",
-        });
-        setTimeout(() => setNotification(null), 4000);
-      }
-    } catch (error) {
-      console.error("Error saving mahasiswa e-signature:", error);
+  const openManageSignature = () => {
+    if (!signatureManageUrl) {
       setNotification({
-        title: "❌ Gagal Menyimpan E-Signature",
-        description: "Terjadi kesalahan saat menyimpan tanda tangan",
+        title: "❌ URL Signature SSO Tidak Tersedia",
+        description:
+          "Endpoint manage signature atau env URL signature belum siap.",
         variant: "destructive",
       });
       setTimeout(() => setNotification(null), 4000);
-    } finally {
-      setIsSaving(false);
+      return;
     }
-  };
 
-  const handleDeleteESignature = async () => {
-    try {
-      setIsSaving(true);
-      const response = await deleteActiveProfileSignature();
-
-      if (response.success) {
-        await syncActiveSignature();
-        setShowDeleteSignatureDialog(false);
-        setNotification({
-          title: "🗑️ E-Signature Berhasil Dihapus",
-          description: "Tanda tangan digital Anda telah dihapus.",
-        });
-        setTimeout(() => setNotification(null), 3000);
-      } else {
-        setNotification({
-          title: "❌ Gagal Menghapus E-Signature",
-          description: response.message || "Terjadi kesalahan saat menghapus",
-          variant: "destructive",
-        });
-        setTimeout(() => setNotification(null), 4000);
-      }
-    } catch (error) {
-      console.error("Error deleting mahasiswa e-signature:", error);
-      setNotification({
-        title: "❌ Gagal Menghapus E-Signature",
-        description: "Terjadi kesalahan saat menghapus tanda tangan",
-        variant: "destructive",
-      });
-      setTimeout(() => setNotification(null), 4000);
-    } finally {
-      setIsSaving(false);
-    }
+    window.open(signatureManageUrl, "_blank", "noopener,noreferrer");
   };
 
   if (isLoading) {
@@ -363,19 +247,18 @@ export function MahasiswaProfilPage() {
             Profil Mahasiswa
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-            Kelola data profil dan e-signature Anda
+            Profil dan e-signature bersifat read-only di SIKP
           </p>
         </div>
-        {!isEditing && (
-          <Button
-            onClick={() => setIsEditing(true)}
-            variant="outline"
-            className="gap-2 self-start"
-          >
-            <Edit className="h-4 w-4" />
-            Edit Profil
-          </Button>
-        )}
+        <Button
+          onClick={openManageProfile}
+          variant="outline"
+          className="gap-2 self-start"
+          disabled={isSaving}
+        >
+          <ExternalLink className="h-4 w-4" />
+          Kelola Profil di SSO
+        </Button>
       </div>
 
       {notification && (
@@ -394,7 +277,7 @@ export function MahasiswaProfilPage() {
       )}
 
       <Card className="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader className="">
+        <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <User className="h-6 w-6" />
             Data Profil
@@ -403,254 +286,77 @@ export function MahasiswaProfilPage() {
         <CardContent className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2 md:gap-5">
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <Label
-                htmlFor="nama"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <User className="h-4 w-4" />
                 Nama Lengkap
               </Label>
-              {isEditing ? (
-                <Input
-                  id="nama"
-                  className="h-11 bg-background/80"
-                  value={profile.nama}
-                  onChange={(e) =>
-                    setProfile({ ...profile, nama: e.target.value })
-                  }
-                  placeholder="Masukkan nama lengkap"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.nama || "-"}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.nama || "-"}</p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <Label
-                htmlFor="nim"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <IdCard className="h-4 w-4" />
                 NIM
               </Label>
-              {isEditing ? (
-                <Input
-                  id="nim"
-                  className="h-11 bg-muted/40 text-muted-foreground"
-                  value={profile.nim}
-                  disabled
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.nim}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.nim || "-"}</p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <Label
-                htmlFor="email"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Mail className="h-4 w-4" />
                 Email
               </Label>
-              {isEditing ? (
-                <Input
-                  id="email"
-                  type="email"
-                  className="h-11 bg-background/80"
-                  value={profile.email}
-                  onChange={(e) =>
-                    setProfile({ ...profile, email: e.target.value })
-                  }
-                  placeholder="Masukkan email"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.email || "-"}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.email || "-"}</p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <Label
-                htmlFor="phone"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Phone className="h-4 w-4" />
                 Telepon
               </Label>
-              {isEditing ? (
-                <Input
-                  id="phone"
-                  className="h-11 bg-background/80"
-                  value={profile.phone}
-                  onChange={(e) =>
-                    setProfile({ ...profile, phone: e.target.value })
-                  }
-                  placeholder="Masukkan nomor telepon"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.phone || "-"}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.phone || "-"}</p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <Label
-                htmlFor="fakultas"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Building2 className="h-4 w-4" />
                 Fakultas
               </Label>
-              {isEditing ? (
-                <Input
-                  id="fakultas"
-                  className="h-11 bg-background/80"
-                  value={profile.fakultas}
-                  onChange={(e) =>
-                    setProfile({ ...profile, fakultas: e.target.value })
-                  }
-                  placeholder="Masukkan fakultas"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.fakultas || "-"}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.fakultas || "-"}</p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <Label
-                htmlFor="prodi"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Building2 className="h-4 w-4" />
                 Program Studi
               </Label>
-              {isEditing ? (
-                <Input
-                  id="prodi"
-                  className="h-11 bg-background/80"
-                  value={profile.prodi}
-                  onChange={(e) =>
-                    setProfile({ ...profile, prodi: e.target.value })
-                  }
-                  placeholder="Masukkan program studi"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.prodi || "-"}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.prodi || "-"}</p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <Label
-                htmlFor="semester"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Building2 className="h-4 w-4" />
                 Semester
               </Label>
-              {isEditing ? (
-                <Input
-                  id="semester"
-                  inputMode="numeric"
-                  className="h-11 bg-background/80"
-                  value={profile.semester}
-                  onChange={(e) =>
-                    setProfile({ ...profile, semester: e.target.value })
-                  }
-                  placeholder="Masukkan semester"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.semester || "-"}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.semester || "-"}</p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-              <Label
-                htmlFor="jumlahSksSelesai"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Building2 className="h-4 w-4" />
                 Jumlah SKS Selesai
               </Label>
-              {isEditing ? (
-                <Input
-                  id="jumlahSksSelesai"
-                  inputMode="numeric"
-                  className="h-11 bg-background/80"
-                  value={profile.jumlahSksSelesai}
-                  onChange={(e) =>
-                    setProfile({
-                      ...profile,
-                      jumlahSksSelesai: e.target.value,
-                    })
-                  }
-                  placeholder="Masukkan jumlah SKS selesai"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.jumlahSksSelesai || "-"}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.jumlahSksSelesai || "-"}</p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:col-span-2">
-              <Label
-                htmlFor="angkatan"
-                className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground"
-              >
+              <Label className="mb-2 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Building2 className="h-4 w-4" />
                 Angkatan
               </Label>
-              {isEditing ? (
-                <Input
-                  id="angkatan"
-                  className="h-11 bg-background/80"
-                  value={profile.angkatan}
-                  onChange={(e) =>
-                    setProfile({ ...profile, angkatan: e.target.value })
-                  }
-                  placeholder="Masukkan angkatan"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.angkatan || "-"}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">{profile.angkatan || "-"}</p>
             </div>
           </div>
-
-          {isEditing && (
-            <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:justify-end">
-              <Button
-                onClick={handleSaveProfile}
-                disabled={isSaving}
-                className="gap-2 sm:min-w-44"
-              >
-                <Save className="h-4 w-4" />
-                {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
-              </Button>
-              <Button
-                onClick={() => setIsEditing(false)}
-                variant="outline"
-                disabled={isSaving}
-                className="sm:min-w-28"
-              >
-                Batal
-              </Button>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -663,7 +369,7 @@ export function MahasiswaProfilPage() {
             Tanda Tangan Digital (E-Signature)
           </CardTitle>
           <CardDescription>
-            Tanda tangan digital Anda untuk dokumen mahasiswa
+            Preview signature aktif. Perubahan dilakukan di SSO.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -676,8 +382,7 @@ export function MahasiswaProfilPage() {
                 <div className="flex min-h-32 items-center justify-center rounded-lg border-2 border-dashed bg-white p-4">
                   {signatureImageError ? (
                     <p className="text-xs text-red-600 break-all text-center">
-                      Preview tanda tangan gagal dimuat. URL:{" "}
-                      {profile.esignature.url}
+                      Preview tanda tangan gagal dimuat. URL: {profile.esignature.url}
                     </p>
                   ) : (
                     <img
@@ -689,31 +394,15 @@ export function MahasiswaProfilPage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Terakhir diupdate:{" "}
-                  {new Date(profile.esignature.uploadedAt).toLocaleString(
-                    "id-ID",
-                  )}
+                  Terakhir diupdate: {" "}
+                  {new Date(profile.esignature.uploadedAt).toLocaleString("id-ID")}
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button
-                  onClick={() => setShowESignatureDialog(true)}
-                  variant="outline"
-                  className="flex-1 gap-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  Ubah Tanda Tangan
-                </Button>
-                <Button
-                  onClick={() => setShowDeleteSignatureDialog(true)}
-                  variant="outline"
-                  className="gap-2 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Hapus
-                </Button>
-              </div>
+              <Button onClick={openManageSignature} variant="outline" className="w-full gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Kelola Signature di SSO
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -722,55 +411,19 @@ export function MahasiswaProfilPage() {
                 <AlertDescription>
                   <p className="font-semibold">Tanda Tangan Belum Dibuat</p>
                   <p className="text-sm mt-1">
-                    Anda perlu membuat tanda tangan digital untuk kebutuhan
-                    dokumen Anda.
+                    Anda perlu membuat tanda tangan digital untuk kebutuhan dokumen Anda.
                   </p>
                 </AlertDescription>
               </Alert>
 
-              <Button
-                onClick={() => setShowESignatureDialog(true)}
-                className="h-11 w-full gap-2"
-              >
-                <FileSignature className="h-5 w-5" />
-                Buat Tanda Tangan Digital
+              <Button onClick={openManageSignature} className="h-11 w-full gap-2">
+                <ExternalLink className="h-5 w-5" />
+                Kelola Signature di SSO
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
-
-      <ESignatureDialog
-        open={showESignatureDialog}
-        onOpenChange={setShowESignatureDialog}
-        onSave={handleSaveESignature}
-        dosenName={profile.nama}
-        nip={profile.nim}
-        existingSignature={profile.esignature?.url}
-      />
-
-      <AlertDialog
-        open={showDeleteSignatureDialog}
-        onOpenChange={setShowDeleteSignatureDialog}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Tanda Tangan Digital?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tindakan ini akan menghapus tanda tangan digital Anda.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteESignature}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Ya, Hapus
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

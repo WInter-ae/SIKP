@@ -7,20 +7,9 @@ import {
   CardDescription,
 } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Separator } from "~/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
 import {
   User,
   Mail,
@@ -29,19 +18,12 @@ import {
   Building2,
   FileSignature,
   CheckCircle2,
-  Edit,
-  Save,
-  Trash2,
+  ExternalLink,
 } from "lucide-react";
-import type { ESignatureSetupData } from "~/feature/esignature/types/esignature";
-import { ESignatureDialog } from "~/feature/profil/components/esignature-dialog";
-import { getMyProfile, updateMyProfile } from "~/lib/services/dosen-api";
+import { getMyProfile } from "~/lib/services/dosen-api";
 import {
-  activateProfileSignature,
-  dataUrlToFile,
-  deleteActiveProfileSignature,
   getActiveProfileSignature,
-  uploadProfileSignature,
+  getSignatureManageUrl,
 } from "~/lib/services/signature-api";
 
 interface DosenProfile {
@@ -133,12 +115,12 @@ export function DosenProfilPage() {
     programStudi: "",
   });
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
+  const isSaving = false;
   const [isLoading, setIsLoading] = useState(true);
-  const [showESignatureDialog, setShowESignatureDialog] = useState(false);
-  const [showDeleteSignatureDialog, setShowDeleteSignatureDialog] =
-    useState(false);
+  const [signatureManageUrl, setSignatureManageUrl] = useState<string | null>(
+    null,
+  );
+  const profileManageUrl = import.meta.env.VITE_SSO_PROFILE_URL || null;
   const [signatureImageError, setSignatureImageError] = useState(false);
   const [notification, setNotification] = useState<{
     title: string;
@@ -166,6 +148,13 @@ export function DosenProfilPage() {
     setSignatureImageError(false);
   };
 
+  const loadSignatureManageUrl = async () => {
+    const response = await getSignatureManageUrl();
+    if (response.success && response.data) {
+      setSignatureManageUrl(response.data);
+    }
+  };
+
   // Load profile dari API
   useEffect(() => {
     const loadProfile = async () => {
@@ -175,6 +164,7 @@ export function DosenProfilPage() {
       if (response.success && response.data) {
         setProfile((prev) => normalizeProfileResponse(response.data, prev));
         await syncActiveSignature();
+        await loadSignatureManageUrl();
       } else {
         setNotification({
           title: "⚠️ Gagal Memuat Profil",
@@ -192,131 +182,41 @@ export function DosenProfilPage() {
   }, []);
 
   const handleSaveProfile = async () => {
-    setIsSaving(true);
-
-    try {
-      // Update profile via API
-      const response = await updateMyProfile({
-        nama: profile.nama,
-        email: profile.email,
-        telepon: profile.telepon,
-        jabatan: profile.jabatan,
-        fakultas: profile.fakultas,
-        programStudi: profile.programStudi,
-      });
-
-      if (response.success && response.data) {
-        // Update state with normalized response (supports alias keys)
-        setProfile((prev) => normalizeProfileResponse(response.data, prev));
-
-        setIsEditing(false);
-        setNotification({
-          title: "✅ Profil Berhasil Disimpan",
-          description: "Data profil Anda telah diperbarui.",
-        });
-        setTimeout(() => setNotification(null), 3000);
-      } else {
-        setNotification({
-          title: "❌ Gagal Menyimpan Profil",
-          description: response.message || "Terjadi kesalahan saat menyimpan",
-          variant: "destructive",
-        });
-        setTimeout(() => setNotification(null), 4000);
-      }
-    } catch (error) {
-      console.error("Error saving profile:", error);
-      setNotification({
-        title: "❌ Gagal Menyimpan Profil",
-        description: "Terjadi kesalahan saat menyimpan profil",
-        variant: "destructive",
-      });
-      setTimeout(() => setNotification(null), 4000);
-    } finally {
-      setIsSaving(false);
-    }
+    setNotification({
+      title: "ℹ️ Profil Dikelola di SSO",
+      description:
+        "Perubahan profil dilakukan di SSO. Gunakan tombol Kelola Profil di SSO.",
+    });
+    setTimeout(() => setNotification(null), 3500);
   };
 
-  const handleSaveESignature = async (data: ESignatureSetupData) => {
-    try {
-      setIsSaving(true);
-
-      // Convert data URL to File
-      const signatureFile = await dataUrlToFile(
-        data.signatureData,
-        `signature-${Date.now()}.png`,
-      );
-
-      const response = await uploadProfileSignature(signatureFile);
-
-      if (response.success && response.data) {
-        if (response.data.isActive === false) {
-          await activateProfileSignature(response.data.id);
-        }
-
-        await syncActiveSignature();
-
-        setShowESignatureDialog(false);
-        setNotification({
-          title: "✅ E-Signature Berhasil Disimpan",
-          description:
-            "Tanda tangan digital Anda telah tersimpan dan siap digunakan.",
-        });
-        setTimeout(() => setNotification(null), 3000);
-      } else {
-        setNotification({
-          title: "❌ Gagal Menyimpan E-Signature",
-          description: response.message || "Terjadi kesalahan saat menyimpan",
-          variant: "destructive",
-        });
-        setTimeout(() => setNotification(null), 4000);
-      }
-    } catch (error) {
-      console.error("Error saving e-signature:", error);
+  const openManageProfile = () => {
+    if (!profileManageUrl) {
       setNotification({
-        title: "❌ Gagal Menyimpan E-Signature",
-        description: "Terjadi kesalahan saat menyimpan tanda tangan",
+        title: "❌ URL SSO Tidak Tersedia",
+        description: "VITE_SSO_PROFILE_URL belum dikonfigurasi.",
         variant: "destructive",
       });
       setTimeout(() => setNotification(null), 4000);
-    } finally {
-      setIsSaving(false);
+      return;
     }
+
+    window.open(profileManageUrl, "_blank", "noopener,noreferrer");
   };
 
-  const handleDeleteESignature = async () => {
-    try {
-      setIsSaving(true);
-
-      const response = await deleteActiveProfileSignature();
-
-      if (response.success) {
-        await syncActiveSignature();
-
-        setShowDeleteSignatureDialog(false);
-        setNotification({
-          title: "🗑️ E-Signature Berhasil Dihapus",
-          description: "Tanda tangan digital Anda telah dihapus.",
-        });
-        setTimeout(() => setNotification(null), 3000);
-      } else {
-        setNotification({
-          title: "❌ Gagal Menghapus E-Signature",
-          description: response.message || "Terjadi kesalahan saat menghapus",
-          variant: "destructive",
-        });
-        setTimeout(() => setNotification(null), 4000);
-      }
-    } catch (error) {
-      console.error("Error deleting e-signature:", error);
+  const openManageSignature = () => {
+    if (!signatureManageUrl) {
       setNotification({
-        title: "❌ Gagal Menghapus E-Signature",
-        description: "Terjadi kesalahan saat menghapus tanda tangan",
+        title: "❌ URL Signature SSO Tidak Tersedia",
+        description:
+          "Endpoint manage signature atau env URL signature belum siap.",
         variant: "destructive",
       });
       setTimeout(() => setNotification(null), 4000);
-    } finally {
-      setIsSaving(false);
+      return;
     }
+
+    window.open(signatureManageUrl, "_blank", "noopener,noreferrer");
   };
 
   // Show loading state
@@ -345,19 +245,13 @@ export function DosenProfilPage() {
             Profil Dosen
           </h1>
           <p className="max-w-2xl text-sm text-muted-foreground md:text-base">
-            Kelola data profil dan e-signature Anda
+            Profil dan e-signature bersifat read-only di SIKP
           </p>
         </div>
-        {!isEditing && (
-          <Button
-            onClick={() => setIsEditing(true)}
-            variant="outline"
-            className="gap-2 self-start"
-          >
-            <Edit className="h-4 w-4" />
-            Edit Profil
-          </Button>
-        )}
+        <Button onClick={openManageProfile} variant="outline" className="gap-2 self-start">
+          <ExternalLink className="h-4 w-4" />
+          Kelola Profil di SSO
+        </Button>
       </div>
 
       {/* Notification */}
@@ -395,21 +289,9 @@ export function DosenProfilPage() {
                 <User className="h-4 w-4" />
                 Nama Lengkap
               </Label>
-              {isEditing ? (
-                <Input
-                  id="nama"
-                  className="h-11 bg-background/80"
-                  value={profile.nama}
-                  onChange={(e) =>
-                    setProfile({ ...profile, nama: e.target.value })
-                  }
-                  placeholder="Masukkan nama lengkap"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.nama}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">
+                {profile.nama || "-"}
+              </p>
             </div>
 
             {/* NIP */}
@@ -421,21 +303,9 @@ export function DosenProfilPage() {
                 <IdCard className="h-4 w-4" />
                 NIP
               </Label>
-              {isEditing ? (
-                <Input
-                  id="nip"
-                  className="h-11 bg-background/80"
-                  value={profile.nip}
-                  onChange={(e) =>
-                    setProfile({ ...profile, nip: e.target.value })
-                  }
-                  placeholder="Masukkan NIP"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.nip}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">
+                {profile.nip || "-"}
+              </p>
             </div>
 
             {/* Email */}
@@ -447,22 +317,9 @@ export function DosenProfilPage() {
                 <Mail className="h-4 w-4" />
                 Email
               </Label>
-              {isEditing ? (
-                <Input
-                  id="email"
-                  type="email"
-                  className="h-11 bg-background/80"
-                  value={profile.email}
-                  onChange={(e) =>
-                    setProfile({ ...profile, email: e.target.value })
-                  }
-                  placeholder="Masukkan email"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.email}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">
+                {profile.email || "-"}
+              </p>
             </div>
 
             {/* Telepon */}
@@ -474,21 +331,9 @@ export function DosenProfilPage() {
                 <Phone className="h-4 w-4" />
                 Telepon
               </Label>
-              {isEditing ? (
-                <Input
-                  id="telepon"
-                  className="h-11 bg-background/80"
-                  value={profile.telepon}
-                  onChange={(e) =>
-                    setProfile({ ...profile, telepon: e.target.value })
-                  }
-                  placeholder="Masukkan nomor telepon"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.telepon}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">
+                {profile.telepon || "-"}
+              </p>
             </div>
 
             {/* Fakultas */}
@@ -500,21 +345,9 @@ export function DosenProfilPage() {
                 <Building2 className="h-4 w-4" />
                 Fakultas
               </Label>
-              {isEditing ? (
-                <Input
-                  id="fakultas"
-                  className="h-11 bg-background/80"
-                  value={profile.fakultas}
-                  onChange={(e) =>
-                    setProfile({ ...profile, fakultas: e.target.value })
-                  }
-                  placeholder="Masukkan fakultas"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.fakultas}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">
+                {profile.fakultas || "-"}
+              </p>
             </div>
 
             {/* Program Studi */}
@@ -526,21 +359,9 @@ export function DosenProfilPage() {
                 <Building2 className="h-4 w-4" />
                 Program Studi
               </Label>
-              {isEditing ? (
-                <Input
-                  id="programStudi"
-                  className="h-11 bg-background/80"
-                  value={profile.programStudi}
-                  onChange={(e) =>
-                    setProfile({ ...profile, programStudi: e.target.value })
-                  }
-                  placeholder="Masukkan program studi"
-                />
-              ) : (
-                <p className="text-base font-semibold tracking-tight">
-                  {profile.programStudi}
-                </p>
-              )}
+              <p className="text-base font-semibold tracking-tight">
+                {profile.programStudi || "-"}
+              </p>
             </div>
           </div>
 
@@ -553,43 +374,16 @@ export function DosenProfilPage() {
               <Building2 className="h-4 w-4" />
               Jabatan
             </Label>
-            {isEditing ? (
-              <Input
-                id="jabatan"
-                className="h-11 bg-background/80"
-                value={profile.jabatan}
-                onChange={(e) =>
-                  setProfile({ ...profile, jabatan: e.target.value })
-                }
-                placeholder="Masukkan jabatan"
-              />
-            ) : (
-              <p className="text-base font-semibold tracking-tight">
-                {profile.jabatan}
-              </p>
-            )}
+            <p className="text-base font-semibold tracking-tight">
+              {profile.jabatan || "-"}
+            </p>
           </div>
-          {/* Action Buttons saat Edit */}
-          {isEditing && (
-            <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:justify-end">
-              <Button
-                onClick={handleSaveProfile}
-                disabled={isSaving}
-                className="gap-2 sm:min-w-44"
-              >
-                <Save className="h-4 w-4" />
-                {isSaving ? "Menyimpan..." : "Simpan Perubahan"}
-              </Button>
-              <Button
-                onClick={() => setIsEditing(false)}
-                variant="outline"
-                disabled={isSaving}
-                className="sm:min-w-28"
-              >
-                Batal
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:justify-end">
+            <Button onClick={handleSaveProfile} disabled={isSaving} className="gap-2 sm:min-w-44">
+              <ExternalLink className="h-4 w-4" />
+              Kelola Profil di SSO
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -603,7 +397,7 @@ export function DosenProfilPage() {
             Tanda Tangan Digital (E-Signature)
           </CardTitle>
           <CardDescription>
-            Tanda tangan digital digunakan untuk menyetujui dokumen mahasiswa
+            Preview signature aktif. Perubahan dilakukan di SSO.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -638,24 +432,10 @@ export function DosenProfilPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button
-                  onClick={() => setShowESignatureDialog(true)}
-                  variant="outline"
-                  className="flex-1 gap-2"
-                >
-                  <Edit className="h-4 w-4" />
-                  Ubah Tanda Tangan
-                </Button>
-                <Button
-                  onClick={() => setShowDeleteSignatureDialog(true)}
-                  variant="outline"
-                  className="gap-2 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Hapus
-                </Button>
-              </div>
+              <Button onClick={openManageSignature} variant="outline" className="w-full gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Kelola Signature di SSO
+              </Button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -671,52 +451,16 @@ export function DosenProfilPage() {
               </Alert>
 
               <Button
-                onClick={() => setShowESignatureDialog(true)}
+                onClick={openManageSignature}
                 className="w-full gap-2 h-11"
               >
-                <FileSignature className="h-5 w-5" />
-                Buat Tanda Tangan Digital
+                <ExternalLink className="h-5 w-5" />
+                Kelola Signature di SSO
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* E-Signature Dialog */}
-      <ESignatureDialog
-        open={showESignatureDialog}
-        onOpenChange={setShowESignatureDialog}
-        onSave={handleSaveESignature}
-        dosenName={profile.nama}
-        nip={profile.nip}
-        existingSignature={profile.esignature?.url}
-      />
-
-      {/* Delete E-Signature Confirmation Dialog */}
-      <AlertDialog
-        open={showDeleteSignatureDialog}
-        onOpenChange={setShowDeleteSignatureDialog}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Tanda Tangan Digital?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tindakan ini akan menghapus tanda tangan digital Anda. Anda tidak
-              akan bisa menyetujui dokumen mahasiswa sampai membuat tanda tangan
-              baru.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteESignature}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Ya, Hapus
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

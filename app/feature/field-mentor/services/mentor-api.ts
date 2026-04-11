@@ -6,9 +6,8 @@
 import { post, get, put } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 import {
-  deleteActiveProfileSignature,
   getActiveProfileSignature,
-  uploadProfileSignature,
+  getSignatureManageUrl,
 } from "~/lib/services/signature-api";
 
 // ==================== TYPES ====================
@@ -202,36 +201,21 @@ export async function updateAssessment(
 export async function saveMentorSignature(
   signature: string,
 ): Promise<ApiResponse<MentorProfile>> {
-  const response = await fetch(signature);
-  const blob = await response.blob();
-  const file = new File([blob], `signature-${Date.now()}.png`, {
-    type: blob.type || "image/png",
-  });
-
-  const upload = await uploadProfileSignature(file);
-  if (!upload.success || !upload.data) {
+  const manageUrlResponse = await getSignatureManageUrl();
+  if (!manageUrlResponse.success || !manageUrlResponse.data) {
     return {
       success: false,
-      message: upload.message || "Gagal menyimpan tanda tangan.",
+      message:
+        manageUrlResponse.message ||
+        "Kelola tanda tangan hanya tersedia di SSO.",
       data: null,
     };
   }
 
   return {
-    success: true,
-    message: upload.message,
-    data: {
-      id: "",
-      userId: "",
-      name: "",
-      email: "",
-      company: "",
-      position: "",
-      signature: upload.data.signatureImage,
-      signatureSetAt: upload.data.uploadedAt,
-      createdAt: "",
-      updatedAt: "",
-    },
+    success: false,
+    message: `Kelola tanda tangan di SSO: ${manageUrlResponse.data}`,
+    data: null,
   };
 }
 
@@ -271,19 +255,20 @@ export async function getMentorSignature(): Promise<
 export async function deleteMentorSignature(): Promise<
   ApiResponse<{ success: boolean }>
 > {
-  const response = await deleteActiveProfileSignature();
-
-  if (!response.success) {
+  const manageUrlResponse = await getSignatureManageUrl();
+  if (!manageUrlResponse.success || !manageUrlResponse.data) {
     return {
       success: false,
-      message: response.message,
+      message:
+        manageUrlResponse.message ||
+        "Kelola tanda tangan hanya tersedia di SSO.",
       data: null,
     };
   }
 
   return {
-    success: true,
-    message: response.message,
-    data: { success: true },
+    success: false,
+    message: `Kelola tanda tangan di SSO: ${manageUrlResponse.data}`,
+    data: null,
   };
 }
