@@ -9,6 +9,7 @@ import { getDashboardPath } from "~/lib/sso-types";
 export default function IdentityChooserPage() {
   const navigate = useNavigate();
   const {
+    user,
     isAuthenticated,
     isLoading,
     availableIdentities,
@@ -32,6 +33,15 @@ export default function IdentityChooserPage() {
     () => availableIdentities.length > 1 && !activeIdentity,
     [availableIdentities, activeIdentity],
   );
+
+  const accountInfo = useMemo(() => {
+    const fallbackProfile = availableIdentities[0]?.profile;
+
+    return {
+      nama: user?.nama || fallbackProfile?.nama || "Akun SSO",
+      email: user?.email || fallbackProfile?.email || null,
+    };
+  }, [availableIdentities, user]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -108,6 +118,12 @@ export default function IdentityChooserPage() {
             Anda memiliki lebih dari satu identity. Pilih identity aktif untuk
             masuk ke dashboard.
           </p>
+          <div className="bg-muted/40 mt-4 rounded-lg border border-border/60 px-4 py-3 text-left">
+            <p className="text-sm font-semibold">{accountInfo.nama}</p>
+            <p className="text-muted-foreground text-xs">
+              {accountInfo.email || "Email tidak tersedia"}
+            </p>
+          </div>
         </div>
 
         {availableIdentities.length === 0 ? (
@@ -122,7 +138,7 @@ export default function IdentityChooserPage() {
 
               return (
                 <button
-                  key={`${identity.identityType}-${identity.profile.email || identity.profile.id || "identity"}`}
+                  key={identity.identityType}
                   type="button"
                   onClick={() => setSelectedIdentityType(identity.identityType)}
                   className={`w-full rounded-lg border p-4 text-left transition ${
@@ -132,11 +148,10 @@ export default function IdentityChooserPage() {
                   }`}
                 >
                   <p className="text-sm font-semibold">{identity.label}</p>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {identity.profile.nama || "Tanpa Nama"}
-                  </p>
                   <p className="text-muted-foreground text-xs">
-                    {identity.profile.email || "Email tidak tersedia"}
+                    {identity.profile.nim ||
+                      identity.profile.nip ||
+                      "Pilih identity ini untuk melanjutkan"}
                   </p>
                 </button>
               );

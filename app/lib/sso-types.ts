@@ -119,6 +119,33 @@ function pickString(value: unknown): string | undefined {
   return trimmed ? trimmed : undefined;
 }
 
+function pickFirstString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    const parsed = pickString(value);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object") return null;
+  return value as Record<string, unknown>;
+}
+
+function pickEmail(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    const parsed = pickString(value);
+    if (parsed && parsed.includes("@")) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+}
+
 function pickNumber(value: unknown): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   return undefined;
@@ -127,18 +154,44 @@ function pickNumber(value: unknown): number | undefined {
 function parseIdentityProfile(
   raw: Record<string, unknown>,
 ): SSOIdentityProfile {
+  const metadata = asRecord(raw.metadata) || {};
+  const metadataProfile = asRecord(metadata.profile) || {};
+
   return {
-    id: pickString(raw.id),
-    nama: pickString(raw.nama),
-    email: pickString(raw.email),
-    nim: pickString(raw.nim),
-    nip: pickString(raw.nip),
-    fakultas: pickString(raw.fakultas),
-    prodi: pickString(raw.prodi),
-    semester: pickNumber(raw.semester),
-    angkatan: pickString(raw.angkatan),
-    phone: pickString(raw.phone),
-    jabatan: pickString(raw.jabatan),
+    id: pickFirstString(
+      raw.id,
+      raw.identityId,
+      raw.profileId,
+      metadataProfile.id,
+    ),
+    nama: pickFirstString(
+      raw.nama,
+      raw.fullName,
+      raw.displayName,
+      metadataProfile.nama,
+      metadataProfile.fullName,
+      metadata.fullName,
+    ),
+    email:
+      pickEmail(raw.email, metadataProfile.email, metadata.email) ||
+      pickEmail(raw.identifier),
+    nim: pickFirstString(raw.nim, metadataProfile.nim),
+    nip: pickFirstString(
+      raw.nip,
+      raw.nidn,
+      metadataProfile.nip,
+      metadataProfile.nidn,
+    ),
+    fakultas: pickFirstString(raw.fakultas, metadataProfile.fakultas),
+    prodi: pickFirstString(raw.prodi, metadataProfile.prodi),
+    semester: pickNumber(raw.semester) ?? pickNumber(metadataProfile.semester),
+    angkatan: pickFirstString(raw.angkatan, metadataProfile.angkatan),
+    phone: pickFirstString(raw.phone, raw.noTelepon, metadataProfile.phone),
+    jabatan: pickFirstString(
+      raw.jabatan,
+      raw.jabatanFungsional,
+      metadataProfile.jabatan,
+    ),
   };
 }
 
