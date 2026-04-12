@@ -196,7 +196,9 @@ export default function MentorLogbookPage() {
     const total = studentEntries.length;
     const approved = studentEntries.filter((e) => e.mentorSignature?.status === "approved").length;
     const pending = studentEntries.filter((e) => !e.mentorSignature).length;
-    const revision = studentEntries.filter((e) => e.mentorSignature?.status === "revision").length;
+    const revision = studentEntries.filter(
+      (e) => e.mentorSignature?.status === "revision" || e.mentorSignature?.status === "rejected"
+    ).length;
 
     return { total, approved, pending, revision };
   };
@@ -324,7 +326,7 @@ export default function MentorLogbookPage() {
                       <TableHead className="text-center">Total Logbook</TableHead>
                       <TableHead className="text-center">Disetujui</TableHead>
                       <TableHead className="text-center">Menunggu</TableHead>
-                      <TableHead className="text-center">Revisi</TableHead>
+                      <TableHead className="text-center">Revisi / Ditolak</TableHead>
                       <TableHead className="text-center">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -399,7 +401,7 @@ export default function MentorLogbookPage() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-center">
-                              <Badge className="bg-yellow-500">
+                              <Badge variant="destructive">
                                 <AlertCircle className="w-3 h-3 mr-1" />
                                 {stats.revision}
                               </Badge>

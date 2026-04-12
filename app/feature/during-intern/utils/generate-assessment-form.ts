@@ -23,24 +23,13 @@ export interface AssessmentFormData {
 export async function normalizeSignatureForDocument(
   signatureDataUrl?: string | null
 ): Promise<string | undefined> {
-  if (!signatureDataUrl) {
-    console.debug("[normalizeSignature] No signature provided");
-    return undefined;
-  }
+  if (!signatureDataUrl) return undefined;
 
   try {
-    console.debug("[normalizeSignature] Processing signature, length:", signatureDataUrl.length);
-    
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
-      img.onload = () => {
-        console.debug("[normalizeSignature] Image loaded successfully");
-        resolve(img);
-      };
-      img.onerror = () => {
-        console.error("[normalizeSignature] Failed to load image");
-        reject(new Error("Gagal memuat gambar tanda tangan."));
-      };
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Gagal memuat gambar tanda tangan."));
       img.src = signatureDataUrl;
     });
 
@@ -81,7 +70,6 @@ export async function normalizeSignatureForDocument(
 
     // If no stroke detected, keep original image.
     if (maxX < minX || maxY < minY) {
-      console.debug("[normalizeSignature] No visible strokes detected, returning original");
       return signatureDataUrl;
     }
 
@@ -98,11 +86,8 @@ export async function normalizeSignatureForDocument(
     if (!cropCtx) return signatureDataUrl;
 
     cropCtx.drawImage(srcCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-    const result = cropCanvas.toDataURL("image/png");
-    console.debug("[normalizeSignature] Signature cropped and normalized, new length:", result.length);
-    return result;
-  } catch (error) {
-    console.error("[normalizeSignature] Error during normalization:", error);
+    return cropCanvas.toDataURL("image/png");
+  } catch {
     return signatureDataUrl;
   }
 }

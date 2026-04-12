@@ -1,22 +1,17 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Badge } from "~/components/ui/badge";
-import { CheckCircle2, XCircle, Clock, AlertCircle, FileText, Plus, X } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, AlertCircle, FileText } from "lucide-react";
 
 interface TitleSubmissionFormProps {
   currentTitle?: string;
   titleStatus?: "draft" | "diajukan" | "disetujui" | "ditolak" | "revisi";
   onSubmit: (data: {
     judulLaporan: string;
-    judulInggris: string;
     deskripsi: string;
-    metodologi: string;
-    teknologi: string[];
   }) => void;
   disabled?: boolean;
   catatanDosen?: string;
@@ -30,34 +25,20 @@ function TitleSubmissionForm({
   catatanDosen,
 }: TitleSubmissionFormProps) {
   const [judulLaporan, setJudulLaporan] = useState(currentTitle);
-  const [judulInggris, setJudulInggris] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
-  const [metodologi, setMetodologi] = useState("");
-  const [teknologi, setTeknologi] = useState<string[]>([]);
-  const [newTech, setNewTech] = useState("");
+
+  useEffect(() => {
+    setJudulLaporan(currentTitle);
+  }, [currentTitle]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (judulLaporan.trim() && deskripsi.trim()) {
       onSubmit({
         judulLaporan,
-        judulInggris,
         deskripsi,
-        metodologi,
-        teknologi,
       });
     }
-  };
-
-  const addTechnology = () => {
-    if (newTech.trim() && !teknologi.includes(newTech.trim())) {
-      setTeknologi([...teknologi, newTech.trim()]);
-      setNewTech("");
-    }
-  };
-
-  const removeTechnology = (tech: string) => {
-    setTeknologi(teknologi.filter((t) => t !== tech));
   };
 
   const getStatusBadge = () => {
@@ -139,7 +120,8 @@ function TitleSubmissionForm({
   };
 
   const isFormDisabled = disabled || titleStatus === "disetujui";
-  const canSubmit = titleStatus === "draft" || titleStatus === "ditolak" || titleStatus === "revisi";
+  const canSubmit =
+    titleStatus === "draft" || titleStatus === "ditolak" || titleStatus === "revisi";
 
   return (
     <Card>
@@ -155,7 +137,6 @@ function TitleSubmissionForm({
       <CardContent>
         {getStatusBadge()}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Judul Bahasa Indonesia */}
           <div className="space-y-2">
             <Label htmlFor="judulLaporan" className="text-base font-semibold">
               Judul Laporan (Bahasa Indonesia) <span className="text-red-500">*</span>
@@ -174,25 +155,6 @@ function TitleSubmissionForm({
             </p>
           </div>
 
-          {/* Judul Bahasa Inggris */}
-          <div className="space-y-2">
-            <Label htmlFor="judulInggris" className="text-base font-semibold">
-              Judul Laporan (Bahasa Inggris)
-            </Label>
-            <Textarea
-              id="judulInggris"
-              value={judulInggris}
-              onChange={(e) => setJudulInggris(e.target.value)}
-              placeholder="Example: Web-Based Library Management Information System Using React and Node.js Technology"
-              className="min-h-[100px]"
-              disabled={isFormDisabled}
-            />
-            <p className="text-sm text-muted-foreground">
-              Opsional, tetapi direkomendasikan untuk laporan yang baik
-            </p>
-          </div>
-
-          {/* Deskripsi */}
           <div className="space-y-2">
             <Label htmlFor="deskripsi" className="text-base font-semibold">
               Deskripsi Laporan <span className="text-red-500">*</span>
@@ -211,88 +173,10 @@ function TitleSubmissionForm({
             </p>
           </div>
 
-          {/* Metodologi */}
-          <div className="space-y-2">
-            <Label htmlFor="metodologi" className="text-base font-semibold">
-              Metodologi Pengembangan
-            </Label>
-            <Textarea
-              id="metodologi"
-              value={metodologi}
-              onChange={(e) => setMetodologi(e.target.value)}
-              placeholder="Contoh: Pengembangan menggunakan metode Agile dengan sprint 2 minggu, meliputi tahap analisis, desain, implementasi, dan testing..."
-              className="min-h-[100px]"
-              disabled={isFormDisabled}
-            />
-            <p className="text-sm text-muted-foreground">
-              Jelaskan metode atau pendekatan yang digunakan dalam pengerjaan proyek
-            </p>
-          </div>
-
-          {/* Teknologi */}
-          <div className="space-y-2">
-            <Label className="text-base font-semibold">
-              Teknologi yang Digunakan
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                value={newTech}
-                onChange={(e) => setNewTech(e.target.value)}
-                placeholder="Contoh: React, Node.js, PostgreSQL"
-                disabled={isFormDisabled}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTechnology();
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={addTechnology}
-                disabled={isFormDisabled || !newTech.trim()}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            {teknologi.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {teknologi.map((tech, idx) => (
-                  <Badge key={idx} variant="secondary" className="text-sm">
-                    {tech}
-                    {!isFormDisabled && (
-                      <button
-                        type="button"
-                        onClick={() => removeTechnology(tech)}
-                        className="ml-2 hover:text-red-600"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </Badge>
-                ))}
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground">
-              Tekan Enter atau klik tombol + untuk menambahkan teknologi
-            </p>
-          </div>
-
-          {/* Submit Button */}
           {canSubmit && (
-            <div className="pt-4">
-              <Button
-                type="submit"
-                disabled={isFormDisabled || !judulLaporan.trim() || !deskripsi.trim()}
-                className="w-full"
-                size="lg"
-              >
-                {titleStatus === "revisi" 
-                  ? "Ajukan Revisi Judul"
-                  : titleStatus === "ditolak"
-                  ? "Ajukan Judul Baru"
-                  : "Ajukan Judul Laporan"}
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isFormDisabled || !judulLaporan.trim() || !deskripsi.trim()}>
+                Ajukan Judul
               </Button>
             </div>
           )}

@@ -58,7 +58,7 @@ export interface LogbookEntry {
   description: string;
   mentorSignature?: string;
   mentorSignedAt?: string;
-  status: "PENDING" | "APPROVED" | "REJECTED";
+  status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
   rejectionNote?: string;
   createdAt: string;
   updatedAt: string;
@@ -298,10 +298,44 @@ export async function getMenteeDetail(
 export async function getStudentLogbook(
   studentIdOrInternshipId: string
 ): Promise<ApiResponse<{ internshipId: string; entries: LogbookEntry[] }>> {
-  const normalizeStatus = (value: unknown): LogbookEntry["status"] => {
+  const hasSubmittedMarkers = (row: Record<string, unknown>): boolean => {
+    const submittedAt =
+      row.submittedAt ||
+      row.submitted_at ||
+      row.sentAt ||
+      row.sent_at ||
+      row.diajukanAt ||
+      row.diajukan_at;
+    const submittedFlag =
+      row.isSubmitted ??
+      row.submitted ??
+      row.is_submitted ??
+      row.hasBeenSubmitted ??
+      row.has_been_submitted;
+
+    const createdRaw = String(row.createdAt || row.created_at || "");
+    const updatedRaw = String(row.updatedAt || row.updated_at || "");
+    const createdMs = Date.parse(createdRaw);
+    const updatedMs = Date.parse(updatedRaw);
+    const updatedAfterCreate =
+      Number.isFinite(createdMs) && Number.isFinite(updatedMs) && updatedMs > createdMs;
+
+    return Boolean(submittedAt) || submittedFlag === true || updatedAfterCreate;
+  };
+
+  const normalizeStatus = (value: unknown, row: Record<string, unknown>): LogbookEntry["status"] => {
     const normalized = String(value || "").toUpperCase();
-    if (normalized === "APPROVED" || normalized === "REJECTED") return normalized;
-    return "PENDING";
+    if (normalized === "APPROVED" || normalized === "REJECTED") {
+      return normalized;
+    }
+    if (normalized === "PENDING") {
+      return hasSubmittedMarkers(row) ? "PENDING" : "DRAFT";
+    }
+    if (normalized === "DRAFT" || normalized === "UNSUBMITTED" || normalized === "BELUM_DIAJUKAN") {
+      return "DRAFT";
+    }
+
+    return hasSubmittedMarkers(row) ? "PENDING" : "DRAFT";
   };
 
   const normalizeEntry = (value: unknown): LogbookEntry | null => {
@@ -325,7 +359,7 @@ export async function getStudentLogbook(
       description: description || activity || "-",
       mentorSignature: typeof row.mentorSignature === "string" ? row.mentorSignature : undefined,
       mentorSignedAt: typeof row.mentorSignedAt === "string" ? row.mentorSignedAt : undefined,
-      status: normalizeStatus(row.status),
+      status: normalizeStatus(row.status, row),
       rejectionNote: typeof row.rejectionNote === "string" ? row.rejectionNote : undefined,
       createdAt: String(row.createdAt || row.created_at || date || ""),
       updatedAt: String(row.updatedAt || row.updated_at || row.createdAt || row.created_at || date || ""),

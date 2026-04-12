@@ -167,8 +167,10 @@ interface BackendInternshipResponse {
     id: number;
     teamId: number;
     teamName: string;
-    companyName: string; // ← Backend uses "companyName" not "company"
-    companyAddress: string; // ← Backend uses "companyAddress" not "address"
+    companyName?: string;
+    company?: string;
+    companyAddress?: string;
+    address?: string;
     division?: string;
     startDate: string;
     endDate: string;
@@ -207,6 +209,19 @@ interface BackendInternshipResponse {
  */
 function mapBackendToFrontend(backendData: BackendInternshipResponse): CompleteInternshipData {
   const { student, submission, internship, mentor, lecturer } = backendData;
+
+  // Handle backend variants: companyName/company and companyAddress/address
+  const submissionAny = submission as Record<string, unknown>;
+  const company =
+    (typeof submission.companyName === "string" && submission.companyName) ||
+    (typeof submission.company === "string" && submission.company) ||
+    (typeof submissionAny.namaPerusahaan === "string" ? (submissionAny.namaPerusahaan as string) : "") ||
+    "";
+  const address =
+    (typeof submission.companyAddress === "string" && submission.companyAddress) ||
+    (typeof submission.address === "string" && submission.address) ||
+    (typeof submissionAny.alamatPerusahaan === "string" ? (submissionAny.alamatPerusahaan as string) : "") ||
+    "";
   
   return {
     student: {
@@ -224,15 +239,15 @@ function mapBackendToFrontend(backendData: BackendInternshipResponse): CompleteI
     submission: {
       id: submission.id.toString(),
       teamId: submission.teamId?.toString(),
-      company: submission.companyName, // ← Map companyName to company
+      company,
       division: submission.division || '',
-      address: submission.companyAddress || '', // ← Map companyAddress to address
+      address,
       startDate: submission.startDate,
       endDate: submission.endDate,
       status: submission.status,
     },
     internship: internship
-      ? {
+          ? {
           id: internship.id.toString(),
           studentId: student.id.toString(),
           submissionId: submission.id.toString(),

@@ -270,19 +270,9 @@ function AssessmentPage() {
 
     setIsGeneratingPdf(true);
     try {
-      const rawSignature = internshipContext.mentor?.signature;
-      console.debug("[Assessment] Raw mentor signature:", {
-        exists: !!rawSignature,
-        type: typeof rawSignature,
-        length: rawSignature?.length || 0,
-      });
-
-      const normalizedSignature = await normalizeSignatureForDocument(rawSignature);
-      console.debug("[Assessment] Normalized signature:", {
-        exists: !!normalizedSignature,
-        type: typeof normalizedSignature,
-        length: normalizedSignature?.length || 0,
-      });
+      const normalizedSignature = await normalizeSignatureForDocument(
+        internshipContext.mentor?.signature
+      );
 
       const formData = {
         studentName: internshipContext.student?.name || "-",
@@ -299,16 +289,9 @@ function AssessmentPage() {
         totalWeightedScore,
       };
 
-      console.debug("[Assessment] Form data mentorSignature:", {
-        exists: !!formData.mentorSignature,
-        type: typeof formData.mentorSignature,
-        length: formData.mentorSignature?.length || 0,
-      });
-
       try {
         printAssessmentForm(formData);
-      } catch (printError) {
-        console.debug("[Assessment] Print failed, trying PDF generation:", printError);
+      } catch {
         await generateAssessmentForm(formData);
       }
 

@@ -1,5 +1,5 @@
 // 1. External dependencies
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import {
   CheckCircle,
@@ -31,6 +31,7 @@ import {
   TableRow,
 } from "~/components/ui/table"
 import { Badge } from "~/components/ui/badge"
+import { Textarea } from "~/components/ui/textarea"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,81 +50,24 @@ import {
   SelectValue,
 } from "~/components/ui/select"
 import { Input } from "~/components/ui/input"
+import {
+  approveMentorEmailChangeRequest,
+  approveMentorRegistrationRequest,
+  getMentorEmailChangeRequests,
+  getMentorRegistrationRequests,
+  rejectMentorEmailChangeRequest,
+  rejectMentorRegistrationRequest,
+} from "../services/register-approval-api"
 
 // Tipe data untuk pendaftaran dosen
-interface PendingRegistration {
-  id: string
-  name: string
-  email: string
-  nip?: string
-  company: string
-  position: string
-  phone: string
-  registeredAt: string
-  status: "pending" | "approved" | "rejected"
-  // Data mahasiswa yang request
-  studentName: string
-  studentNim: string
-  studentEmail: string
-}
-
-interface PendingEmailChangeRequest {
-  id: string
-  mentorName: string
-  currentEmail: string
-  requestedEmail: string
-  reason: string
-  requestedAt: string
-  studentName: string
-  status: "pending" | "approved" | "rejected"
-}
+import type {
+  PendingEmailChangeRequest,
+  PendingRegistration,
+} from "../services/register-approval-api"
 
 export default function RegisterApprovalPage() {
-  // Data dummy - nanti akan diganti dengan API call
-  const [registrations, setRegistrations] = useState<PendingRegistration[]>([
-    {
-      id: "1",
-      name: "Ahmad Fauzi",
-      email: "ahmad.fauzi@company.com",
-      nip: "198501012010011001",
-      company: "PT. Teknologi Nusantara",
-      position: "Senior Software Engineer",
-      phone: "081234567890",
-      registeredAt: "2025-01-15T10:30:00",
-      status: "pending",
-      studentName: "Budi Santoso",
-      studentNim: "2021110001",
-      studentEmail: "budi.santoso@student.ac.id",
-    },
-    {
-      id: "2",
-      name: "Siti Nurhaliza",
-      email: "siti.nurhaliza@enterprise.co.id",
-      nip: "198703202011012002",
-      company: "CV. Digital Kreatif",
-      position: "Project Manager",
-      phone: "082345678901",
-      registeredAt: "2025-01-16T14:20:00",
-      status: "pending",
-      studentName: "Dewi Lestari",
-      studentNim: "2021110002",
-      studentEmail: "dewi.lestari@student.ac.id",
-    },
-    {
-      id: "3",
-      name: "Budi Hartono",
-      email: "budi.hartono@startup.id",
-      nip: "197912152008011003",
-      company: "Startup Indonesia Tech",
-      position: "Lead Developer",
-      phone: "083456789012",
-      registeredAt: "2025-01-18T09:15:00",
-      status: "pending",
-      studentName: "Andi Wijaya",
-      studentNim: "2021110003",
-      studentEmail: "andi.wijaya@student.ac.id",
-    },
-  ])
+  const [registrations, setRegistrations] = useState<PendingRegistration[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const [selectedRegistration, setSelectedRegistration] =
     useState<PendingRegistration | null>(null)
@@ -131,32 +75,41 @@ export default function RegisterApprovalPage() {
   const [dialogAction, setDialogAction] = useState<"approve" | "reject">(
     "approve"
   )
+  const [rejectReason, setRejectReason] = useState<string>("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [searchQuery, setSearchQuery] = useState<string>("")
-  const [emailChangeRequests, setEmailChangeRequests] = useState<
-    PendingEmailChangeRequest[]
-  >([
-    {
-      id: "ec-1",
-      mentorName: "Ahmad Fauzi",
-      currentEmail: "ahmad.fauzi@company.com",
-      requestedEmail: "a.fauzi@company.com",
-      reason: "Menggunakan email kerja resmi yang aktif",
-      requestedAt: "2026-03-28T09:30:00",
-      studentName: "Budi Santoso",
-      status: "pending",
-    },
-    {
-      id: "ec-2",
-      mentorName: "Siti Nurhaliza",
-      currentEmail: "siti.nurhaliza@enterprise.co.id",
-      requestedEmail: "s.nurhaliza@enterprise.co.id",
-      reason: "Perubahan domain email divisi",
-      requestedAt: "2026-03-29T13:10:00",
-      studentName: "Dewi Lestari",
-      status: "pending",
-    },
-  ])
+  const [emailChangeRequests, setEmailChangeRequests] = useState<PendingEmailChangeRequest[]>([])
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setIsLoading(true)
+
+      const [registrationResponse, emailChangeResponse] = await Promise.all([
+        getMentorRegistrationRequests(),
+        getMentorEmailChangeRequests(),
+      ])
+
+      if (registrationResponse.success && registrationResponse.data) {
+        setRegistrations(registrationResponse.data)
+      } else {
+        setRegistrations([])
+        toast.info(
+          registrationResponse.message ||
+            "Endpoint pengajuan pembimbing belum tersedia."
+        )
+      }
+
+      if (emailChangeResponse.success && emailChangeResponse.data) {
+        setEmailChangeRequests(emailChangeResponse.data)
+      } else {
+        setEmailChangeRequests([])
+      }
+
+      setIsLoading(false)
+    }
+
+    loadInitialData()
+  }, [])
 
   // Handler untuk membuka dialog konfirmasi
   const handleOpenDialog = (
@@ -165,6 +118,7 @@ export default function RegisterApprovalPage() {
   ) => {
     setSelectedRegistration(registration)
     setDialogAction(action)
+    setRejectReason("")
     setDialogOpen(true)
   }
 
@@ -173,10 +127,11 @@ export default function RegisterApprovalPage() {
     if (!selectedRegistration) return
 
     try {
-      // TODO: Implement API call untuk approve
-      // const response = await fetch(`/api/admin/approve-registration/${selectedRegistration.id}`, {
-      //   method: 'POST',
-      // })
+      const response = await approveMentorRegistrationRequest(selectedRegistration.id)
+      if (!response.success) {
+        toast.error(response.message || "Gagal menyetujui pendaftaran")
+        return
+      }
 
       // Update state
       setRegistrations(
@@ -189,8 +144,10 @@ export default function RegisterApprovalPage() {
 
       setDialogOpen(false)
       setSelectedRegistration(null)
+      toast.success("Pendaftaran pembimbing disetujui")
     } catch (error) {
       console.error("Error approving registration:", error)
+      toast.error("Terjadi kesalahan saat menyetujui pendaftaran")
     }
   }
 
@@ -198,11 +155,18 @@ export default function RegisterApprovalPage() {
   const handleReject = async () => {
     if (!selectedRegistration) return
 
+    const reason = rejectReason.trim()
+    if (!reason) {
+      toast.error("Alasan penolakan harus diisi")
+      return
+    }
+
     try {
-      // TODO: Implement API call untuk reject
-      // const response = await fetch(`/api/admin/reject-registration/${selectedRegistration.id}`, {
-      //   method: 'POST',
-      // })
+      const response = await rejectMentorRegistrationRequest(selectedRegistration.id, reason)
+      if (!response.success) {
+        toast.error(response.message || "Gagal menolak pendaftaran")
+        return
+      }
 
       // Update state
       setRegistrations(
@@ -215,8 +179,11 @@ export default function RegisterApprovalPage() {
 
       setDialogOpen(false)
       setSelectedRegistration(null)
+      setRejectReason("")
+      toast.success("Pendaftaran pembimbing ditolak")
     } catch (error) {
       console.error("Error rejecting registration:", error)
+      toast.error("Terjadi kesalahan saat menolak pendaftaran")
     }
   }
 
@@ -266,21 +233,73 @@ export default function RegisterApprovalPage() {
     requestId: string,
     action: "approve" | "reject"
   ) => {
-    setEmailChangeRequests((prev) =>
-      prev.map((item) =>
-        item.id === requestId
-          ? {
-              ...item,
-              status: action === "approve" ? "approved" : "rejected",
-            }
-          : item
-      )
-    )
+    const run = async () => {
+      if (action === "reject") {
+        const reason = window.prompt("Masukkan alasan penolakan perubahan email")
+        if (!reason || !reason.trim()) {
+          toast.error("Alasan penolakan harus diisi")
+          return
+        }
 
-    toast.success(
-      action === "approve"
-        ? "Pengajuan perubahan email disetujui."
-        : "Pengajuan perubahan email ditolak."
+        const response = await rejectMentorEmailChangeRequest(requestId, reason.trim())
+
+        if (!response.success) {
+          toast.error(response.message || "Gagal memproses pengajuan perubahan email")
+          return
+        }
+
+        setEmailChangeRequests((prev) =>
+          prev.map((item) =>
+            item.id === requestId
+              ? {
+                  ...item,
+                  status: "rejected",
+                }
+              : item
+          )
+        )
+
+        toast.success("Pengajuan perubahan email ditolak.")
+        return
+      }
+
+      const response = await approveMentorEmailChangeRequest(requestId)
+
+      if (!response.success) {
+        toast.error(response.message || "Gagal memproses pengajuan perubahan email")
+        return
+      }
+
+      setEmailChangeRequests((prev) =>
+        prev.map((item) =>
+          item.id === requestId
+            ? {
+                ...item,
+                status: action === "approve" ? "approved" : "rejected",
+              }
+            : item
+        )
+      )
+
+      toast.success(
+        action === "approve"
+          ? "Pengajuan perubahan email disetujui."
+          : "Pengajuan perubahan email ditolak."
+      )
+    }
+
+    run()
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-6 p-6">
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            Memuat data persetujuan pembimbing...
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
@@ -520,7 +539,6 @@ export default function RegisterApprovalPage() {
           <CardTitle>Pengajuan Perubahan Email Mentor</CardTitle>
           <CardDescription>
             Setujui atau tolak pengajuan perubahan email dari pembimbing lapangan.
-            Endpoint backend masih disiapkan, saat ini menggunakan simulasi data.
           </CardDescription>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-1">
             <span>Total: {emailRequestStats.total}</span>
@@ -641,6 +659,19 @@ export default function RegisterApprovalPage() {
                 </>
               )}
             </AlertDialogDescription>
+            {dialogAction === "reject" && (
+              <div className="space-y-2 pt-4">
+                <Textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Masukkan alasan penolakan"
+                  rows={4}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Alasan penolakan akan dikirim ke backend.
+                </p>
+              </div>
+            )}
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>

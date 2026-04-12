@@ -9,6 +9,7 @@ import {
 } from "~/components/ui/dialog";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
+import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import {
@@ -25,7 +26,8 @@ interface TitleVerificationDialogProps {
   pengajuan: PengajuanJudul;
   onSubmit: (
     status: "disetujui" | "ditolak" | "revisi",
-    catatan: string
+    catatan: string,
+    revisedTitle?: string
   ) => void;
 }
 
@@ -39,6 +41,7 @@ function TitleVerificationDialog({
     "disetujui" | "ditolak" | "revisi" | null
   >(null);
   const [catatan, setCatatan] = useState("");
+  const [revisedTitle, setRevisedTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -59,17 +62,23 @@ function TitleVerificationDialog({
       return;
     }
 
+    if (selectedStatus === "revisi" && !revisedTitle.trim()) {
+      setError("Judul revisi harus diisi untuk status revisi");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
 
     try {
       // Simulasi API call
       await new Promise((resolve) => setTimeout(resolve, 500));
-      onSubmit(selectedStatus, catatan);
+      onSubmit(selectedStatus, catatan, revisedTitle.trim() || undefined);
 
       // Reset form
       setSelectedStatus(null);
       setCatatan("");
+      setRevisedTitle("");
     } catch (err) {
       setError("Terjadi kesalahan saat menyimpan verifikasi");
     } finally {
@@ -80,6 +89,7 @@ function TitleVerificationDialog({
   const handleCancel = () => {
     setSelectedStatus(null);
     setCatatan("");
+    setRevisedTitle("");
     setError("");
     onOpenChange(false);
   };
@@ -263,6 +273,23 @@ function TitleVerificationDialog({
               Minimal 10 karakter. Catatan ini akan dilihat oleh mahasiswa.
             </p>
           </div>
+
+          {selectedStatus === "revisi" && (
+            <div className="space-y-2">
+              <Label htmlFor="revisedTitle" className="text-base font-semibold">
+                Judul Revisi <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="revisedTitle"
+                value={revisedTitle}
+                onChange={(e) => setRevisedTitle(e.target.value)}
+                placeholder="Masukkan judul yang disarankan"
+              />
+              <p className="text-xs text-muted-foreground">
+                Isi jika dosen meminta revisi judul.
+              </p>
+            </div>
+          )}
 
           {/* Error Alert */}
           {error && (

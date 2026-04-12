@@ -37,6 +37,7 @@ import {
   type LogbookEntry,
   type MenteeData,
 } from "../services";
+import { RejectLogbookButton } from "../components/reject-logbook-button";
 
 type ViewLogbookEntry = {
   id: string;
@@ -132,7 +133,12 @@ function StudentLogbookDetailPage() {
             ? logbookRes.data.entries
             : [];
 
-        const mapped = backendEntries
+        const mentorVisibleEntries = backendEntries.filter(
+          (entry): entry is LogbookEntry & { status: "PENDING" | "APPROVED" | "REJECTED" } =>
+            entry.status !== "DRAFT"
+        );
+
+        const mapped = mentorVisibleEntries
           .map((entry) => ({
             id: coerceText(entry.id, `${entry.date || "logbook"}-${entry.activity || entry.description || "entry"}`),
             date: coerceText(entry.date, ""),
@@ -190,6 +196,14 @@ function StudentLogbookDetailPage() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal menyetujui logbook.");
     }
+  }
+
+  function handleRejectLogbook(logbookId: string) {
+    setEntries((prev) =>
+      prev.map((entry) =>
+        entry.id === logbookId ? { ...entry, status: "REJECTED" } : entry
+      )
+    );
   }
 
   async function handleSignAllLogbooks() {
@@ -381,40 +395,62 @@ function StudentLogbookDetailPage() {
           <CardDescription>Semua entri logbook mahasiswa dari endpoint backend</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-x-auto">
-            <Table>
+          <div className="border rounded-lg">
+            <Table className="table-fixed w-full">
+              <colgroup>
+                <col className="w-28" />
+                <col />
+                <col className="w-36" />
+                <col className="w-40" />
+              </colgroup>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[160px]">Tanggal</TableHead>
-                  <TableHead>Deskripsi Kegiatan</TableHead>
-                  <TableHead className="w-[160px]">Status Paraf</TableHead>
-                  <TableHead className="w-[120px]">Aksi</TableHead>
+                  <TableHead className="w-28 text-left align-middle text-sm font-semibold">Tanggal</TableHead>
+                  <TableHead className="text-left align-middle text-sm font-semibold">Deskripsi Kegiatan</TableHead>
+                  <TableHead className="w-36 text-sm font-semibold">Status Paraf</TableHead>
+                  <TableHead className="w-40 text-sm font-semibold">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {entries.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                      Belum ada logbook pada mahasiswa ini.
+                      Belum ada logbook yang diajukan mahasiswa ini.
                     </TableCell>
                   </TableRow>
                 ) : (
                   entries.map((entry) => (
-                    <TableRow key={entry.id}>
-                      <TableCell>{formatDate(entry.date)}</TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <p className="font-medium text-sm">{entry.description}</p>
-                          <p className="text-sm text-muted-foreground whitespace-pre-line">{entry.activity}</p>
+                    <TableRow key={entry.id} className="align-top">
+                      <TableCell className="align-middle text-left text-xs sm:text-sm border-r py-4 pr-3 whitespace-nowrap">{formatDate(entry.date)}</TableCell>
+                      <TableCell className="align-middle text-left py-4 min-w-0">
+                        <div className="min-h-16 min-w-0 break-words flex flex-col justify-center gap-2">
+                          <p className="font-medium text-sm leading-5 whitespace-normal break-words min-w-0">
+                            {entry.description}
+                          </p>
+                          {entry.activity && entry.activity.trim() !== entry.description.trim() && (
+                            <p className="text-sm leading-5 text-muted-foreground whitespace-pre-line break-words min-w-0">
+                              {entry.activity}
+                            </p>
+                          )}
                         </div>
                       </TableCell>
-                      <TableCell>{getStatusBadge(entry.status)}</TableCell>
-                      <TableCell>
+                      <TableCell className="align-middle py-4">{getStatusBadge(entry.status)}</TableCell>
+                      <TableCell className="align-middle py-4">
                         {entry.status === "PENDING" ? (
-                          <Button size="sm" onClick={() => handleSignLogbook(entry.id)} className="w-full">
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Paraf
-                          </Button>
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <Button size="sm" onClick={() => handleSignLogbook(entry.id)}>
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Paraf
+                            </Button>
+                            <RejectLogbookButton
+                              logbookId={entry.id}
+                              studentName={student.nama || student.name || "-"}
+                              date={entry.date}
+                              activity={entry.activity}
+                              onSuccess={() => handleRejectLogbook(entry.id)}
+                              size="sm"
+                            />
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">Selesai</span>
                         )}
