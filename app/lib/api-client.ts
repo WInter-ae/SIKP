@@ -50,14 +50,9 @@ function handleUnauthorized() {
 }
 
 function handleLegacyAuthCutover() {
-  clearAuthSession();
-
-  if (typeof window !== "undefined") {
-    const currentPath = window.location.pathname;
-    if (currentPath !== "/login" && currentPath !== "/callback") {
-      window.location.assign("/login?reason=auth_legacy_cutover");
-    }
-  }
+  // Do not force logout on 410 legacy endpoints.
+  // Many feature modules are still migrating route prefixes, and redirecting to
+  // login here creates auth loops even when session is valid.
 }
 
 /**

@@ -87,7 +87,14 @@ export const UserProvider = ({ children }: UserProviderProps) => {
 
   const applySession = useCallback(
     (session: ReturnType<typeof getAuthSession>) => {
-      if (!session || !session.sessionEstablished) {
+      const hasPendingIdentitySelection =
+        Boolean(session?.requiresIdentitySelection) &&
+        (session?.availableIdentities?.length || 0) > 0;
+
+      if (
+        !session ||
+        (!session.sessionEstablished && !hasPendingIdentitySelection)
+      ) {
         setUser(null);
         setToken(null);
         setAvailableIdentities([]);

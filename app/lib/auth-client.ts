@@ -51,7 +51,8 @@ interface IdentitySelectionPayload {
 }
 
 const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:3000";
-const DEFAULT_PROD_API_BASE_URL = "https://backend-sikp.backend-sikp.workers.dev";
+const DEFAULT_PROD_API_BASE_URL =
+  "https://backend-sikp.backend-sikp.workers.dev";
 const DEFAULT_API_BASE_URL = import.meta.env.DEV
   ? DEFAULT_LOCAL_API_BASE_URL
   : DEFAULT_PROD_API_BASE_URL;
@@ -324,7 +325,7 @@ function buildSessionFromPayload(
 
   const token = extractToken(payload, previousSession);
 
-  const sessionEstablished =
+  const sessionEstablishedRaw =
     typeof payload.sessionEstablished === "boolean"
       ? payload.sessionEstablished
       : previousSession?.sessionEstablished || Boolean(normalizedUser || token);
@@ -333,7 +334,12 @@ function buildSessionFromPayload(
     (typeof payload.requiresIdentitySelection === "boolean"
       ? payload.requiresIdentitySelection
       : false) ||
-    (sessionEstablished && availableIdentities.length > 1 && !activeIdentity);
+    ((sessionEstablishedRaw || Boolean(normalizedUser)) &&
+      availableIdentities.length > 1 &&
+      !activeIdentity);
+
+  // Multi-identity login is already authenticated, but needs identity choice first.
+  const sessionEstablished = sessionEstablishedRaw || requiresIdentitySelection;
 
   return {
     user: normalizedUser,
