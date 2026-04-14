@@ -59,13 +59,21 @@ export async function registerMahasiswa(data: {
   nama: string;
   email: string;
   password: string;
-  phone: string;
-  fakultas: string;
+  phone?: string;
+  fakultas?: string;
   prodi: string;
-  semester: number;
-  angkatan: string;
+  semester?: number;
+  angkatan?: string;
 }) {
   try {
+    const payload = {
+      ...data,
+      phone: data.phone || "",
+      fakultas: data.fakultas || "",
+      semester: data.semester ?? 0,
+      angkatan: data.angkatan || "",
+    };
+
     const response = await fetch(
       `${API_BASE_URL}/api/auth/register/mahasiswa`,
       {
@@ -73,7 +81,7 @@ export async function registerMahasiswa(data: {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       }
     );
 

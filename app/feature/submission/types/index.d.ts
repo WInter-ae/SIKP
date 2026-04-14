@@ -23,6 +23,11 @@ export interface Document {
   type?: string;
 }
 
+export interface FileUploadProps {
+  label: string;
+  onFileChange?: (file: File) => void;
+}
+
 export interface DocumentFile {
   id: string;
   title: string;

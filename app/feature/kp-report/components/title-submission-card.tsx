@@ -27,7 +27,8 @@ interface TitleSubmissionCardProps {
   onVerifikasi?: (
     id: string,
     status: "disetujui" | "ditolak" | "revisi",
-    catatan: string
+    catatan: string,
+    revisedTitle?: string
   ) => void;
 }
 
@@ -40,9 +41,10 @@ function TitleSubmissionCard({
 
   const handleVerifikasi = (
     status: "disetujui" | "ditolak" | "revisi",
-    catatan: string
+    catatan: string,
+    revisedTitle?: string
   ) => {
-    onVerifikasi?.(pengajuan.id, status, catatan);
+    onVerifikasi?.(pengajuan.id, status, catatan, revisedTitle);
     setIsDialogOpen(false);
   };
 

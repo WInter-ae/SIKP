@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ArrowLeft, Calendar, Building2, User, Award } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -6,13 +7,71 @@ import { Badge } from "~/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
 import { GradeSection } from "../components/grade-section";
-import { MOCK_EVALUATIONS } from "../data/mock-evaluations";
+import { getAssessmentCriteria } from "~/lib/assessment-criteria-api";
+import { getAdminEvaluationByStudentId } from "../services/evaluation-api";
+import type { StudentEvaluation } from "../types";
+import { toast } from "sonner";
 
 export default function StudentEvaluationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [evaluation, setEvaluation] = useState<StudentEvaluation | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const evaluation = MOCK_EVALUATIONS.find((e) => e.student.id === id);
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDetail() {
+      if (!id) {
+        if (isMounted) {
+          setEvaluation(null);
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const criteria = await getAssessmentCriteria();
+        const response = await getAdminEvaluationByStudentId(id, criteria);
+
+        if (!isMounted) return;
+
+        if (!response.success) {
+          setEvaluation(null);
+          toast.error(response.message || "Gagal memuat detail penilaian.");
+          return;
+        }
+
+        setEvaluation(response.data || null);
+      } catch (error) {
+        if (!isMounted) return;
+        setEvaluation(null);
+        toast.error(error instanceof Error ? error.message : "Gagal memuat detail penilaian.");
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    void loadDetail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Card className="max-w-md w-full dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="p-6 text-center">
+            <p className="text-gray-600 dark:text-gray-300">Memuat detail penilaian mahasiswa...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!evaluation) {
     return (

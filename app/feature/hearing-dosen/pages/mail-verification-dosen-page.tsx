@@ -151,17 +151,7 @@ function normalizeTeamMembers(
         role: normalizeMemberRole(member.role),
       };
     })
-    .filter(
-      (
-        item,
-      ): item is {
-        id: string;
-        name: string;
-        nim?: string;
-        prodi?: string;
-        role: string;
-      } => Boolean(item),
-    )
+    .filter((item): item is Exclude<typeof item, null> => item !== null)
     .sort((a, b) => {
       if (a.role === "Ketua") return -1;
       if (b.role === "Ketua") return 1;

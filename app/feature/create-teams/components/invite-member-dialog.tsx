@@ -85,7 +85,7 @@ export function InviteMemberDialog({
         setSearchResults(filteredResults);
         setShowResults(true);
       } else {
-        setSearchError(result.error || "Gagal mencari mahasiswa");
+        setSearchError(result.message || "Gagal mencari mahasiswa");
         setSearchResults([]);
         setShowResults(true);
       }

@@ -37,6 +37,12 @@ const statusConfig = {
     color: "bg-red-500",
     badgeVariant: "destructive" as const,
   },
+  jadwal_approved: {
+    label: "Jadwal Disetujui",
+    icon: CheckCircle,
+    color: "bg-green-500",
+    badgeVariant: "default" as const,
+  },
 };
 
 export function BeritaAcaraStatus({

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -26,125 +27,170 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-import type { Mentee } from "../types";
+import {
+  getMenteeDetail,
+  getMentees,
+  getStudentAssessment,
+  getStudentLogbook,
+  type AssessmentData,
+  type LogbookEntry,
+  type MenteeData,
+} from "~/feature/field-mentor/services";
 
-// Mock data - should be fetched from API
-const MOCK_MENTEE_DATA: Record<string, Mentee & {
-  address: string;
-  startDate: string;
-  endDate: string;
-  supervisor: string;
-  university: string;
-  major: string;
-  semester: string;
-  ipk: string;
-}> = {
-  "1": {
-    id: "1",
-    name: "Ahmad Fauzi",
-    nim: "12250111001",
-    email: "ahmad.fauzi@student.unri.ac.id",
-    phone: "081234567890",
-    company: "PT. Teknologi Indonesia",
-    progress: 75,
-    status: "Aktif",
-    address: "Jl. Raya No. 123, Pekanbaru",
-    startDate: "2024-01-01",
-    endDate: "2024-03-31",
-    supervisor: "Budi Santoso",
-    university: "Universitas Riau",
-    major: "Teknik Informatika",
-    semester: "6",
-    ipk: "3.75",
-  },
-  "2": {
-    id: "2",
-    name: "Siti Aminah",
-    nim: "12250111002",
-    email: "siti.aminah@student.unri.ac.id",
-    phone: "081234567891",
-    company: "PT. Digital Solutions",
-    progress: 60,
-    status: "Aktif",
-    address: "Jl. Sudirman No. 456, Pekanbaru",
-    startDate: "2024-01-01",
-    endDate: "2024-03-31",
-    supervisor: "Citra Dewi",
-    university: "Universitas Riau",
-    major: "Sistem Informasi",
-    semester: "6",
-    ipk: "3.60",
-  },
-  "3": {
-    id: "3",
-    name: "Budi Santoso",
-    nim: "12250111003",
-    email: "budi.santoso@student.unri.ac.id",
-    phone: "081234567892",
-    company: "CV. Mitra Sejahtera",
-    progress: 85,
-    status: "Aktif",
-    address: "Jl. Ahmad Yani No. 789, Pekanbaru",
-    startDate: "2024-01-01",
-    endDate: "2024-03-31",
-    supervisor: "Ahmad Hidayat",
-    university: "Universitas Riau",
-    major: "Teknik Informatika",
-    semester: "6",
-    ipk: "3.85",
-  },
+type ActivityItem = {
+  id: string;
+  type: "logbook";
+  title: string;
+  date: string;
+  status: "approved" | "pending";
 };
 
-const MOCK_ACTIVITIES = [
-  {
-    id: "1",
-    type: "logbook",
-    title: "Logbook Minggu ke-8",
-    date: "2024-01-20",
-    status: "approved",
-  },
-  {
-    id: "2",
-    type: "report",
-    title: "Laporan Tengah KP",
-    date: "2024-01-18",
-    status: "pending",
-  },
-  {
-    id: "3",
-    type: "logbook",
-    title: "Logbook Minggu ke-7",
-    date: "2024-01-13",
-    status: "approved",
-  },
-];
+function formatDate(dateValue?: string) {
+  if (!dateValue) return "-";
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleDateString("id-ID");
+}
 
-const MOCK_ASSESSMENTS = [
-  {
-    id: "1",
-    title: "Penilaian Kedisiplinan",
-    score: 85,
-    date: "2024-01-15",
-  },
-  {
-    id: "2",
-    title: "Penilaian Keterampilan Teknis",
-    score: 90,
-    date: "2024-01-10",
-  },
-  {
-    id: "3",
-    title: "Penilaian Kerjasama Tim",
-    score: 88,
-    date: "2024-01-05",
-  },
-];
+function normalizeStatus(status?: string) {
+  const normalized = (status || "").toUpperCase();
+  if (normalized === "AKTIF") return "Aktif";
+  if (normalized === "SELESAI") return "Selesai";
+  if (normalized === "PENDING") return "Menunggu";
+  return status || "-";
+}
+
+async function resolveStudentUserId(studentAlias: string): Promise<string> {
+  const menteesRes = await getMentees();
+
+  if (!menteesRes.success || !menteesRes.data) {
+    return studentAlias;
+  }
+
+  const exactUser = menteesRes.data.find((mentee) => mentee.userId === studentAlias);
+  if (exactUser?.userId) return exactUser.userId;
+
+  const byInternshipId = menteesRes.data.find((mentee) => mentee.internshipId === studentAlias);
+  if (byInternshipId?.userId) return byInternshipId.userId;
+
+  const byLegacyId = menteesRes.data.find((mentee) => mentee.id === studentAlias);
+  if (byLegacyId?.userId) return byLegacyId.userId;
+
+  const byNim = menteesRes.data.find((mentee) => mentee.nim === studentAlias);
+  if (byNim?.userId) return byNim.userId;
+
+  return studentAlias;
+}
 
 function MenteeDetailPage() {
   const { menteeId } = useParams();
   const [activeTab, setActiveTab] = useState("info");
+  const [mentee, setMentee] = useState<MenteeData | null>(null);
+  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
+  const [assessment, setAssessment] = useState<AssessmentData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const mentee = menteeId ? MOCK_MENTEE_DATA[menteeId] : null;
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDetail() {
+      if (!menteeId) {
+        setErrorMessage("Parameter mahasiswa tidak valid.");
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setErrorMessage(null);
+
+      try {
+        const resolvedStudentId = await resolveStudentUserId(menteeId);
+
+        const menteeRes = await getMenteeDetail(resolvedStudentId);
+
+        if (!isMounted) return;
+
+        if (!menteeRes.success || !menteeRes.data) {
+          setErrorMessage(menteeRes.message || "Data mahasiswa tidak ditemukan.");
+          setMentee(null);
+          setLogbookEntries([]);
+          setAssessment(null);
+          return;
+        }
+
+        const studentUserId = menteeRes.data.userId || resolvedStudentId;
+        let logbookRes = await getStudentLogbook(studentUserId);
+        const assessmentRes = await getStudentAssessment(studentUserId);
+
+        setMentee(menteeRes.data);
+
+        let logbookEntries = logbookRes.success && logbookRes.data?.entries ? logbookRes.data.entries : [];
+        
+        if (!logbookEntries || logbookEntries.length === 0) {
+          console.log(`⚠️ No logbook for userId ${studentUserId}`);
+        }
+
+        setLogbookEntries(logbookEntries);
+        setAssessment(assessmentRes.success && assessmentRes.data ? assessmentRes.data : null);
+      } catch (error) {
+        if (!isMounted) return;
+        const message = error instanceof Error ? error.message : "Gagal memuat detail mahasiswa.";
+        setErrorMessage(message);
+        setMentee(null);
+        setLogbookEntries([]);
+        setAssessment(null);
+        toast.error(message);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadDetail();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [menteeId]);
+
+  const activities = useMemo<ActivityItem[]>(() => {
+    return logbookEntries
+      .slice()
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 10)
+      .map((entry) => ({
+        id: entry.id,
+        type: "logbook",
+        title: entry.description || entry.activity || "Logbook",
+        date: entry.date,
+        status: entry.status === "APPROVED" ? "approved" : "pending",
+      }));
+  }, [logbookEntries]);
+
+  const averageScore = useMemo(() => {
+    if (!assessment) return 0;
+    return assessment.totalScore || 0;
+  }, [assessment]);
+
+  const progressValue = useMemo(() => {
+    if (!logbookEntries.length) return 0;
+    const approved = logbookEntries.filter((entry) => entry.status === "APPROVED").length;
+    return Math.round((approved / logbookEntries.length) * 100);
+  }, [logbookEntries]);
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <Card>
+          <CardContent className="pt-6 text-muted-foreground">
+            Memuat detail mahasiswa dari backend...
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!mentee) {
     return (
@@ -152,7 +198,7 @@ function MenteeDetailPage() {
         <Card>
           <CardContent className="pt-6">
             <p className="text-center text-muted-foreground">
-              Data mahasiswa tidak ditemukan
+              {errorMessage || "Data mahasiswa tidak ditemukan"}
             </p>
           </CardContent>
         </Card>
@@ -165,10 +211,6 @@ function MenteeDetailPage() {
       </div>
     );
   }
-
-  const averageScore =
-    MOCK_ASSESSMENTS.reduce((sum, a) => sum + a.score, 0) /
-    MOCK_ASSESSMENTS.length;
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
@@ -183,14 +225,14 @@ function MenteeDetailPage() {
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{mentee.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">{mentee.nama || mentee.name || "-"}</h1>
             <p className="text-muted-foreground mt-1">Mahasiswa Magang - NIM: {mentee.nim}</p>
           </div>
           <Badge
-            variant={mentee.status === "Aktif" ? "default" : "secondary"}
+            variant={normalizeStatus(mentee.internshipStatus) === "Aktif" ? "default" : "secondary"}
             className="text-sm"
           >
-            {mentee.status}
+            {normalizeStatus(mentee.internshipStatus)}
           </Badge>
         </div>
       </div>
@@ -200,7 +242,7 @@ function MenteeDetailPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Progress Magang</CardDescription>
-            <CardTitle className="text-3xl">{mentee.progress}%</CardTitle>
+            <CardTitle className="text-3xl">{progressValue}%</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -212,7 +254,7 @@ function MenteeDetailPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Total Aktivitas</CardDescription>
-            <CardTitle className="text-3xl">{MOCK_ACTIVITIES.length}</CardTitle>
+            <CardTitle className="text-3xl">{activities.length}</CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -238,7 +280,7 @@ function MenteeDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Nama Lengkap</p>
-                  <p className="font-medium">{mentee.name}</p>
+                  <p className="font-medium">{mentee.nama || mentee.name || "-"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">NIM</p>
@@ -255,14 +297,14 @@ function MenteeDetailPage() {
                   <p className="text-sm text-muted-foreground">Telepon</p>
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{mentee.phone}</p>
+                    <p className="font-medium">{mentee.phone || "-"}</p>
                   </div>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Alamat</p>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <p className="font-medium">{mentee.address}</p>
+                    <p className="font-medium">-</p>
                   </div>
                 </div>
               </div>
@@ -280,19 +322,19 @@ function MenteeDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Universitas</p>
-                  <p className="font-medium">{mentee.university}</p>
+                  <p className="font-medium">-</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Program Studi</p>
-                  <p className="font-medium">{mentee.major}</p>
+                  <p className="font-medium">{mentee.prodi || "-"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Semester</p>
-                  <p className="font-medium">{mentee.semester}</p>
+                  <p className="font-medium">{mentee.semester ?? "-"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">IPK</p>
-                  <p className="font-medium">{mentee.ipk}</p>
+                  <p className="font-medium">-</p>
                 </div>
               </div>
             </CardContent>
@@ -309,27 +351,23 @@ function MenteeDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Perusahaan</p>
-                  <p className="font-medium">{mentee.company}</p>
+                  <p className="font-medium">{mentee.companyName || mentee.company || "-"}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">
                     Pembimbing Lapangan
                   </p>
-                  <p className="font-medium">{mentee.supervisor}</p>
+                  <p className="font-medium">-</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Tanggal Mulai</p>
-                  <p className="font-medium">
-                    {new Date(mentee.startDate).toLocaleDateString("id-ID")}
-                  </p>
+                  <p className="font-medium">{formatDate(mentee.internshipStartDate)}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">
                     Tanggal Selesai
                   </p>
-                  <p className="font-medium">
-                    {new Date(mentee.endDate).toLocaleDateString("id-ID")}
-                  </p>
+                  <p className="font-medium">{formatDate(mentee.internshipEndDate)}</p>
                 </div>
               </div>
 
@@ -338,12 +376,12 @@ function MenteeDetailPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Progress Magang</span>
-                  <span className="font-medium">{mentee.progress}%</span>
+                  <span className="font-medium">{progressValue}%</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
                   <div
                     className="bg-primary h-2 rounded-full transition-all"
-                    style={{ width: `${mentee.progress}%` }}
+                    style={{ width: `${progressValue}%` }}
                   />
                 </div>
               </div>
@@ -353,13 +391,13 @@ function MenteeDetailPage() {
           {/* Action Buttons */}
           <div className="flex gap-2 flex-wrap">
             <Button asChild>
-              <Link to={`/mentor/logbook-detail/${mentee.id}`}>
+              <Link to={`/mentor/logbook-detail/${menteeId}`}>
                 <BookOpen className="mr-2 h-4 w-4" />
                 Lihat Logbook
               </Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link to={`/mentor/penilaian?mentee=${mentee.id}`}>
+              <Link to={`/mentor/penilaian?mentee=${menteeId}`}>
                 <Award className="mr-2 h-4 w-4" />
                 Beri Penilaian
               </Link>
@@ -373,12 +411,14 @@ function MenteeDetailPage() {
             <CardHeader>
               <CardTitle>Riwayat Aktivitas</CardTitle>
               <CardDescription>
-                Aktivitas terbaru dari {mentee.name}
+                Aktivitas terbaru dari {mentee.nama || mentee.name || "-"}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {MOCK_ACTIVITIES.map((activity) => (
+                {activities.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Belum ada aktivitas logbook.</p>
+                ) : activities.map((activity) => (
                   <div
                     key={activity.id}
                     className="flex items-start gap-4 p-4 border rounded-lg"
@@ -426,31 +466,30 @@ function MenteeDetailPage() {
             <CardHeader>
               <CardTitle>Riwayat Penilaian</CardTitle>
               <CardDescription>
-                Penilaian yang telah diberikan kepada {mentee.name}
+                Penilaian yang telah diberikan kepada {mentee.nama || mentee.name || "-"}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {MOCK_ASSESSMENTS.map((assessment) => (
-                  <div
-                    key={assessment.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
+              {assessment ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
-                      <p className="font-medium">{assessment.title}</p>
+                      <p className="font-medium">Penilaian Mentor</p>
                       <p className="text-sm text-muted-foreground">
-                        {new Date(assessment.date).toLocaleDateString("id-ID")}
+                        {formatDate(assessment.updatedAt || assessment.createdAt)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-2xl font-bold text-primary">
-                        {assessment.score}
+                        {assessment.totalScore.toFixed(1)}
                       </p>
                       <p className="text-xs text-muted-foreground">dari 100</p>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Belum ada penilaian tersimpan.</p>
+              )}
 
               <Separator className="my-6" />
 
@@ -462,7 +501,7 @@ function MenteeDetailPage() {
           </Card>
 
           <Button asChild className="w-full">
-            <Link to={`/mentor/penilaian?mentee=${mentee.id}`}>
+            <Link to={`/mentor/penilaian?mentee=${menteeId}`}>
               <Award className="mr-2 h-4 w-4" />
               Tambah Penilaian Baru
             </Link>

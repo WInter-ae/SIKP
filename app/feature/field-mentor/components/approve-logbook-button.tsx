@@ -47,7 +47,7 @@ export function ApproveLogbookButton({
   const handleApprove = async () => {
     setIsSubmitting(true);
     try {
-      const response = await approveLogbook(logbookId, notes || undefined);
+      const response = await approveLogbook(logbookId);
       
       if (response.success) {
         toast.success("Logbook berhasil disetujui dengan paraf Anda!");
@@ -239,10 +239,10 @@ export function BulkApproveButton({
     try {
       // Import approveAllLogbooks when needed
       const { approveAllLogbooks } = await import("../services/mentor-api");
-      const response = await approveAllLogbooks(studentId, notes || undefined);
+      const response = await approveAllLogbooks(studentId);
       
       if (response.success) {
-        toast.success(`${response.data?.approved || pendingCount} logbook berhasil disetujui!`);
+        toast.success(`${pendingCount} logbook berhasil disetujui!`);
         setIsOpen(false);
         setNotes("");
         onSuccess?.();
