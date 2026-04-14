@@ -492,27 +492,14 @@ function AdminResponseLetterPage() {
                         </div>
                       </TableCell>
                       <TableCell className="pr-6">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="link"
-                            className="p-0 h-auto text-primary hover:text-primary/80"
-                            onClick={() => handleViewDetail(student)}
-                          >
-                            Lihat
-                          </Button>
-                          {!student.adminApproved && (
-                            <>
-                              <span className="text-muted-foreground">|</span>
-                              <Button
-                                variant="link"
-                                className="p-0 h-auto text-primary hover:text-primary/80"
-                                onClick={() => handleApprove(student)}
-                              >
-                                Verifikasi
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-primary border-primary/50 hover:bg-primary/5"
+                          onClick={() => handleViewDetail(student)}
+                        >
+                          Lihat
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}

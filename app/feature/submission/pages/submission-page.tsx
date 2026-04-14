@@ -381,7 +381,7 @@ function SubmissionPage() {
           return [...filtered, docToAdd];
         });
         setProposalFile(file);
-        toast.success("Proposal berhasil diupload dengan status PENDING");
+        toast.success("Proposal berhasil diupload");
       } else {
         toast.error(response.message || "Gagal mengupload proposal");
       }

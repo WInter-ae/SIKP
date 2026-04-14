@@ -11,6 +11,7 @@ function MemberList({
   members,
   showActions = false,
   showCancel = false,
+  showRole = true,
   isLeader = false,
   currentUserId,
   onAccept,
@@ -30,6 +31,10 @@ function MemberList({
     if (b.isLeader) return 1;
     return 0;
   });
+
+  const getStatusLabel = (status?: string) => {
+    if (status === "PENDING") return status || "";
+  };
 
   const isDaftarAnggotaCard = title === "Daftar Anggota";
 
@@ -74,18 +79,18 @@ function MemberList({
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <div className="font-medium text-foreground">
-                        {member.name} ({member.isLeader ? "Ketua" : "Anggota"})
+                        {member.name}
+                        {showRole && (
+                          <span>{` (${member.isLeader ? "Ketua" : "Anggota"})`}</span>
+                        )}
                       </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                      {<span>NIM {member.nim}</span>}
                       {member.status &&
                         (!isLeader || member.status !== "PENDING") && (
                           <Badge
-                            variant="outline"
+                            variant="secondary"
                             className={
                               member.status === "PENDING"
-                                ? "border-amber-200 text-amber-700 bg-amber-50"
+                                ? "bg-yellow-100 text-yellow-800"
                                 : member.status === "REJECTED" ||
                                     member.status === "DITOLAK"
                                   ? "border-red-200 text-red-700 bg-red-50"
@@ -95,9 +100,12 @@ function MemberList({
                                     : ""
                             }
                           >
-                            {member.status}
+                            {getStatusLabel(member.status)}
                           </Badge>
                         )}
+                    </div>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      {<span>NIM {member.nim}</span>}
                     </div>
                   </div>
                 </div>

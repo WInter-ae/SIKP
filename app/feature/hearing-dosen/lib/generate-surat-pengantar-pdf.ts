@@ -102,8 +102,8 @@ function formatDateLong(dateStr?: string): string {
 }
 
 function formatRangeDate(startDate?: string, endDate?: string): string {
-  const start = formatDateLong(startDate).replace(/\s+/g, ' ').trim();
-  const end = formatDateLong(endDate).replace(/\s+/g, ' ').trim();
+  const start = formatDateLong(startDate).replace(/\s+/g, " ").trim();
+  const end = formatDateLong(endDate).replace(/\s+/g, " ").trim();
   if (start === end) return start;
   return `${start} - ${end}`;
 }
@@ -171,27 +171,28 @@ function drawLogoFallback(
   pdf.text("UNSRI", centerX, centerY + 1.8, { align: "center" });
 }
 
-function drawStampPlaceholder(
-  pdf: jsPDF,
-  x: number,
-  y: number,
-  size: number,
-): void {
-  const centerX = x + size / 2;
-  const centerY = y + size / 2;
+// STEMPEL PLACEHOLDER (NONAKTIF)
+// function drawStampPlaceholder(
+//   pdf: jsPDF,
+//   x: number,
+//   y: number,
+//   size: number,
+// ): void {
+//   const centerX = x + size / 2;
+//   const centerY = y + size / 2;
 
-  pdf.setDrawColor(25, 64, 175);
-  pdf.setLineWidth(0.6);
-  pdf.circle(centerX, centerY, size / 2, "S");
-  pdf.circle(centerX, centerY, size / 2 - 3, "S");
+//   pdf.setDrawColor(25, 64, 175);
+//   pdf.setLineWidth(0.6);
+//   pdf.circle(centerX, centerY, size / 2, "S");
+//   pdf.circle(centerX, centerY, size / 2 - 3, "S");
 
-  pdf.setFont("times", "bold");
-  pdf.setTextColor(25, 64, 175);
-  pdf.setFontSize(8);
-  pdf.text("STEMPEL", centerX, centerY - 1, { align: "center" });
-  pdf.text("PLACEHOLDER", centerX, centerY + 4, { align: "center" });
-  pdf.setTextColor(0, 0, 0);
-}
+//   pdf.setFont("times", "bold");
+//   pdf.setTextColor(25, 64, 175);
+//   pdf.setFontSize(8);
+//   pdf.text("STEMPEL", centerX, centerY - 1, { align: "center" });
+//   pdf.text("PLACEHOLDER", centerX, centerY + 4, { align: "center" });
+//   pdf.setTextColor(0, 0, 0);
+// }
 
 export async function generateSuratPengantarPdf(
   entry: MailEntry,
@@ -243,91 +244,6 @@ export async function generateSuratPengantarPdf(
 
       state.y += lineHeight;
     });
-  };
-
-  const writeParagraphWithBoldToken = (
-    fullText: string,
-    boldToken: string,
-    x: number,
-    width: number,
-    lineHeight = lineHeight115,
-  ) => {
-    const marker = "__BOLD_TOKEN__";
-    // Gunakan regex agar semua variasi spasi tergantikan
-    const escaped = boldToken.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
-    const regex = new RegExp(escaped.replace(/\s+/g, '\\s+'), 'g');
-    const normalizedText = fullText.replace(regex, marker);
-
-    const segments = normalizedText
-      .split(marker)
-      .flatMap((part, index, arr) => {
-        const result: Array<{ text: string; bold: boolean }> = [];
-        if (part.trim().length > 0) result.push({ text: part, bold: false });
-        if (index < arr.length - 1 && boldToken.trim().length > 0) {
-          result.push({ text: boldToken, bold: true });
-        }
-        return result;
-      });
-
-    const chunks: Array<{ text: string; bold: boolean }> = [];
-    segments.forEach((segment) => {
-      if (segment.bold) {
-        if (segment.text.length > 0) {
-          chunks.push({ text: segment.text, bold: true });
-        }
-      }
-
-      segment.text
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .forEach((word) => chunks.push({ text: word, bold: false }));
-    });
-
-    const lines: Array<Array<{ text: string; bold: boolean }>> = [];
-    let currentLine: Array<{ text: string; bold: boolean }> = [];
-    let currentWidth = 0;
-
-    chunks.forEach((item) => {
-      pdf.setFont("times", item.bold ? "bold" : "normal");
-      const textWidth = pdf.getTextWidth(item.text);
-      pdf.setFont("times", "normal");
-      const spaceWidth = pdf.getTextWidth(" ");
-
-      const candidateWidth =
-        currentLine.length === 0
-          ? textWidth
-          : currentWidth + spaceWidth + textWidth;
-
-      if (candidateWidth > width && currentLine.length > 0) {
-        lines.push(currentLine);
-        currentLine = [item];
-        currentWidth = textWidth;
-      } else {
-        currentLine.push(item);
-        currentWidth = candidateWidth;
-      }
-    });
-
-    if (currentLine.length > 0) {
-      lines.push(currentLine);
-    }
-
-    lines.forEach((line) => {
-      let cursorX = x;
-      line.forEach((item, index) => {
-        pdf.setFont("times", item.bold ? "bold" : "normal");
-        pdf.text(item.text, cursorX, state.y);
-        const textWidth = pdf.getTextWidth(item.text);
-        if (index < line.length - 1) {
-          pdf.setFont("times", "normal");
-          cursorX += textWidth + pdf.getTextWidth(" ");
-        }
-      });
-      state.y += lineHeight;
-    });
-
-    pdf.setFont("times", "normal");
   };
 
   const teamMembers =
@@ -489,18 +405,23 @@ export async function generateSuratPengantarPdf(
 
   ensureSpace(65);
 
-  const periodText = formatRangeDate(entry.tanggalMulai, entry.tanggalSelesai).replace(/\s+/g, ' ').trim();
-  const penutupText = `Merencanakan Kerja Praktik (KP) di unit/bagian/subbagian ${entry.divisi || "-"} yang Bapak/Ibu pimpin pada tanggal ${periodText} dengan proposal KP terlampir. Mohon kiranya Bapak/Ibu dapat memperkenankan/memfasilitasi mahasiswa tersebut.`.replace(/\s+/g, ' ');
+  const periodText = formatRangeDate(entry.tanggalMulai, entry.tanggalSelesai)
+    .replace(/\s+/g, " ")
+    .trim();
+  const penutupText =
+    `Merencanakan Kerja Praktik (KP) di unit/bagian/subbagian ${entry.divisi || "-"} yang Bapak/Ibu pimpin pada tanggal ${periodText} dengan proposal KP terlampir. Mohon kiranya Bapak/Ibu dapat memperkenankan/memfasilitasi mahasiswa tersebut.`.replace(
+      /\s+/g,
+      " ",
+    );
 
   // Word wrap manual dengan highlight bold pada periodText
-  const words = penutupText.split(' ');
-  let line = '';
+  const words = penutupText.split(" ");
+  let line = "";
   let y = state.y;
-  const spaceWidth = pdf.getTextWidth(' ');
   pdf.setFontSize(12);
   for (let i = 0; i < words.length; i++) {
-    let testLine = line.length > 0 ? line + ' ' + words[i] : words[i];
-    let testWidth = pdf.getTextWidth(testLine);
+    const testLine = line.length > 0 ? line + " " + words[i] : words[i];
+    const testWidth = pdf.getTextWidth(testLine);
     if (testWidth > contentWidth && line.length > 0) {
       // Render line
       let x = contentLeft;
@@ -594,7 +515,7 @@ export async function generateSuratPengantarPdf(
     pdf.text("[Tanda Tangan Digital]", signX, signatureTopY + 13);
   }
 
-  drawStampPlaceholder(pdf, 84, signatureTopY + -25, 56);
+  // drawStampPlaceholder(pdf, 84, signatureTopY + -25, 56);
 
   pdf.setFontSize(12);
   pdf.setFont("times", "normal");
