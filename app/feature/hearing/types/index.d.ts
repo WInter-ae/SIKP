@@ -88,3 +88,13 @@ export interface VerifikasiFormData {
   catatanDosen: string;
   nilaiAkhir?: number;
 }
+
+export interface ProcessStepProps {
+  title: string;
+  description: string;
+  status: "submitted" | "rejected" | "resubmitted" | "approved";
+  comment?: string;
+  onAction?: () => void;
+  actionText?: string;
+  showDocumentPreview?: boolean;
+}

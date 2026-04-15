@@ -203,17 +203,12 @@ export function SentInvitations({
             </div>
           ) : (
             <div className="space-y-3">
-              {members.map((invitation, index) => (
+              {members.map((invitation) => (
                 <div
                   key={invitation.id}
                   className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-3 flex-1">
-                    {/* Member Number Badge */}
-                    <div className="flex items-center justify-center h-10 w-10 rounded-full bg-muted font-semibold text-sm">
-                      {index + 1}
-                    </div>
-
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-primary text-primary-foreground font-bold">
                         {invitation.name.charAt(0).toUpperCase()}
@@ -233,8 +228,7 @@ export function SentInvitations({
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        <span>{invitation.nim}</span>
-                        {invitation.email && <span> • {invitation.email}</span>}
+                        <span>NIM {invitation.nim}</span>
                       </div>
                     </div>
                   </div>

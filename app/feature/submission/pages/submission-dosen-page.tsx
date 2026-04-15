@@ -830,8 +830,9 @@ function SubmissionDosenPage() {
                       <TableCell>{getStatusBadge(entry.status)}</TableCell>
                       <TableCell className="pr-6">
                         <Button
-                          variant="link"
-                          className="p-0 h-auto text-primary hover:text-primary/80"
+                          variant="outline"
+                          size="sm"
+                          className="text-primary border-primary/50 hover:bg-primary/5"
                           onClick={() => handleReview(entry)}
                         >
                           {entry.status === "menunggu" ? "Review" : "Lihat"}

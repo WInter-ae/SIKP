@@ -55,6 +55,11 @@ function handleLegacyAuthCutover() {
   // login here creates auth loops even when session is valid.
 }
 
+// URL untuk pelaksanaan magang: logbook, mentor, internship, penilaian (URL baru)
+export const INTERNSHIP_API_BASE_URL =
+  import.meta.env.VITE_API_INTERNSHIP_URL ||
+  "https://backend-sikp.mukarrobinujiantik.workers.dev";
+
 /**
  * Standard API Response format
  */
@@ -160,10 +165,13 @@ function buildHeaders(
  */
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: RequestInit & { _baseUrl?: string } = {},
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
-  const isFormData = options.body instanceof FormData;
+  const { _baseUrl, ...fetchOptions } = options as RequestInit & {
+    _baseUrl?: string;
+  };
+  const isFormData = fetchOptions.body instanceof FormData;
 
   try {
     const headers = buildHeaders(
@@ -262,7 +270,7 @@ export async function uploadFile<T>(
 }
 
 /**
- * GET request helper
+ * GET request helper (pengajuan/submission URL)
  */
 export function get<T>(endpoint: string, params?: Record<string, string>) {
   const url = params
@@ -272,7 +280,7 @@ export function get<T>(endpoint: string, params?: Record<string, string>) {
 }
 
 /**
- * POST request helper
+ * POST request helper (pengajuan/submission URL)
  */
 export function post<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -282,7 +290,7 @@ export function post<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * PUT request helper
+ * PUT request helper (pengajuan/submission URL)
  */
 export function put<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -292,7 +300,7 @@ export function put<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * PATCH request helper
+ * PATCH request helper (pengajuan/submission URL)
  */
 export function patch<T>(endpoint: string, body?: unknown) {
   return apiClient<T>(endpoint, {
@@ -302,11 +310,48 @@ export function patch<T>(endpoint: string, body?: unknown) {
 }
 
 /**
- * DELETE request helper
+ * DELETE request helper (pengajuan/submission URL)
  */
 export function del<T>(endpoint: string) {
   return apiClient<T>(endpoint, { method: "DELETE" });
 }
 
-// Export base URL for reference
+// ==================== INTERNSHIP CLIENT HELPERS ====================
+// Digunakan untuk: logbook, mentor, internship data, penilaian
+// URL: VITE_API_INTERNSHIP_URL (https://backend-sikp.mukarrobinujiantik.workers.dev)
+
+export function iget<T>(endpoint: string, params?: Record<string, string>) {
+  const url = params
+    ? `${endpoint}?${new URLSearchParams(params).toString()}`
+    : endpoint;
+  return apiClient<T>(url, {
+    method: "GET",
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+export function ipost<T>(endpoint: string, body?: unknown) {
+  return apiClient<T>(endpoint, {
+    method: "POST",
+    body: body ? JSON.stringify(body) : undefined,
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+export function iput<T>(endpoint: string, body?: unknown) {
+  return apiClient<T>(endpoint, {
+    method: "PUT",
+    body: body ? JSON.stringify(body) : undefined,
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+export function idel<T>(endpoint: string) {
+  return apiClient<T>(endpoint, {
+    method: "DELETE",
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
+}
+
+// Export base URLs for reference
 export { API_BASE_URL };

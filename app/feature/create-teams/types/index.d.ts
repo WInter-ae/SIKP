@@ -17,6 +17,7 @@ export interface MemberListProps {
   members: Member[];
   showActions?: boolean;
   showCancel?: boolean;
+  showRole?: boolean;
   isLeader?: boolean;
   currentUserId?: string;
   onAccept?: (memberId: string) => void;

@@ -123,10 +123,6 @@ const adminMenu: NavItem[] = [
         title: "Surat Balasan",
         url: "/admin/surat-balasan",
       },
-      {
-        title: "Persetujuan Pembimbing",
-        url: "/admin/persetujuan-pembimbing",
-      },
     ],
   },
   {
@@ -157,8 +153,14 @@ const adminMenu: NavItem[] = [
   },
   {
     title: "Penilaian",
-    url: "/admin/penilaian",
+    url: "#",
     icon: Award,
+    items: [
+      {
+        title: "Kriteria & Bobot",
+        url: "/admin/penilaian-kriteria",
+      },
+    ],
   },
   {
     title: "Profil",
@@ -169,6 +171,12 @@ const adminMenu: NavItem[] = [
     title: "Pengaturan",
     url: "#",
     icon: Settings,
+    items: [
+      {
+        title: "Reset Logbook Global",
+        url: "/admin/logbook-reset",
+      },
+    ],
   },
 ];
 
@@ -202,6 +210,14 @@ const dosenMenu: NavItem[] = [
       {
         title: "Surat Ajuan Mahasiswa",
         url: "/dosen/kp/verifikasi-surat",
+      },
+      {
+        title: "Persetujuan Pembimbing",
+        url: "/dosen/kp/persetujuan-pembimbing",
+      },
+      {
+        title: "Monitoring Logbook",
+        url: "/dosen/kp/logbook-monitor",
       },
     ],
   },

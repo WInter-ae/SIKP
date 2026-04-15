@@ -14,7 +14,10 @@ import {
 } from "lucide-react";
 import type { PengajuanJudul } from "../types/title";
 import TitleSubmissionCard from "../components/title-submission-card";
-import { mockPengajuanList } from "../data/mock-submissions";
+import {
+  getTitleSubmissionsForLecturer,
+  verifyTitleSubmission,
+} from "../services/title-verification-api";
 
 function LecturerTitleVerificationPage() {
   const [pengajuanList, setPengajuanList] = useState<PengajuanJudul[]>([]);
@@ -31,8 +34,20 @@ function LecturerTitleVerificationPage() {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      setPengajuanList(mockPengajuanList);
+
+      const response = await getTitleSubmissionsForLecturer();
+      if (response.success && response.data) {
+        setPengajuanList(response.data);
+      } else {
+        setPengajuanList([]);
+        setNotification({
+          title: "Informasi",
+          description:
+            response.message ||
+            "Endpoint verifikasi judul belum tersedia di backend.",
+        });
+      }
+
       setIsLoading(false);
     };
 
@@ -42,58 +57,87 @@ function LecturerTitleVerificationPage() {
   const handleVerifikasi = (
     id: string,
     status: "disetujui" | "ditolak" | "revisi",
-    catatan: string
+    catatan: string,
+    revisedTitle?: string
   ) => {
-    setPengajuanList((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          const newRevisi =
-            status === "revisi"
-              ? {
-                  count: (p.revisi?.count || 0) + 1,
-                  history: [
-                    ...(p.revisi?.history || []),
-                    {
-                      tanggal: new Date().toISOString(),
-                      catatan,
-                    },
-                  ],
-                }
-              : p.revisi;
+    const action =
+      status === "disetujui"
+        ? "APPROVE"
+        : status === "ditolak"
+        ? "REJECT"
+        : "REVISE";
 
-          return {
-            ...p,
-            status,
-            tanggalVerifikasi: new Date().toISOString(),
-            catatanDosen: catatan,
-            revisi: newRevisi,
-          };
-        }
-        return p;
-      })
-    );
+    verifyTitleSubmission(id, {
+      action,
+      notes: catatan,
+      revisedTitle,
+    }).then((response) => {
+      if (!response.success) {
+        setNotification({
+          title: "Gagal Verifikasi",
+          description:
+            response.message ||
+            "Gagal mengirim verifikasi judul ke backend.",
+          variant: "destructive",
+        });
+        setTimeout(() => setNotification(null), 4000);
+        return;
+      }
 
-    // Show notification
-    const notificationMap = {
-      disetujui: {
-        title: "✅ Judul Disetujui",
-        description:
-          "Judul laporan telah disetujui. Mahasiswa akan menerima notifikasi.",
-      },
-      ditolak: {
-        title: "❌ Judul Ditolak",
-        description:
-          "Judul laporan ditolak. Mahasiswa diminta untuk mengajukan judul baru.",
-      },
-      revisi: {
-        title: "📝 Revisi Diperlukan",
-        description:
-          "Mahasiswa diminta untuk merevisi judul sesuai catatan yang diberikan.",
-      },
-    };
+      setPengajuanList((prev) =>
+        prev.map((p) => {
+          if (p.id === id) {
+            const newRevisi =
+              status === "revisi"
+                ? {
+                    count: (p.revisi?.count || 0) + 1,
+                    history: [
+                      ...(p.revisi?.history || []),
+                      {
+                        tanggal: new Date().toISOString(),
+                        catatan,
+                      },
+                    ],
+                  }
+                : p.revisi;
 
-    setNotification(notificationMap[status]);
-    setTimeout(() => setNotification(null), 4000);
+            return {
+              ...p,
+              status,
+              tanggalVerifikasi: new Date().toISOString(),
+              catatanDosen: catatan,
+              data:
+                status === "revisi" && revisedTitle
+                  ? { ...p.data, judulLaporan: revisedTitle }
+                  : p.data,
+              revisi: newRevisi,
+            };
+          }
+          return p;
+        })
+      );
+
+      const notificationMap = {
+        disetujui: {
+          title: "✅ Judul Disetujui",
+          description:
+            "Judul laporan telah disetujui. Mahasiswa akan menerima notifikasi.",
+        },
+        ditolak: {
+          title: "❌ Judul Ditolak",
+          description:
+            "Judul laporan ditolak. Mahasiswa diminta untuk mengajukan judul baru.",
+        },
+        revisi: {
+          title: "📝 Revisi Diperlukan",
+          description:
+            "Mahasiswa diminta untuk merevisi judul sesuai catatan yang diberikan.",
+        },
+      };
+
+      setNotification(notificationMap[status]);
+      setTimeout(() => setNotification(null), 4000);
+    });
   };
 
   // Filter pengajuan berdasarkan status

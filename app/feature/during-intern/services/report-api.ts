@@ -3,7 +3,7 @@
  * Handles internship report upload and management
  */
 
-import { post, get, put, API_BASE_URL } from "~/lib/api-client";
+import { post, get, put } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 // ==================== TYPES ====================
@@ -52,6 +52,13 @@ export async function uploadKPReport(
   if (metadata?.notes) {
     formData.append("notes", metadata.notes);
   }
+
+  // Use fetch directly for file upload with FormData
+  const API_BASE_URL =
+    import.meta.env.VITE_API_INTERNSHIP_URL ||
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://backend-sikp.mukarrobinujiantik.workers.dev";
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/report/upload`, {
@@ -142,5 +149,10 @@ export async function deleteReport(
  * GET /api/report/:reportId/download
  */
 export function getReportDownloadUrl(reportId: string): string {
+  const API_BASE_URL =
+    import.meta.env.VITE_API_INTERNSHIP_URL ||
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://backend-sikp.mukarrobinujiantik.workers.dev";
   return `${API_BASE_URL}/api/report/${reportId}/download`;
 }

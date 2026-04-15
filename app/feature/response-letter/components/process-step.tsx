@@ -2,7 +2,7 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Card, CardContent } from "~/components/ui/card";
 import { cn } from "~/lib/utils";
 
-import type { ProcessStepsProps } from "../types";
+import type { ProcessStepsProps } from "../types/index";
 import { Send, XCircle, CheckCircle, Info } from "lucide-react";
 
 function ProcessSteps({ steps }: ProcessStepsProps) {

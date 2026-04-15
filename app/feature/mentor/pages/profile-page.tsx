@@ -28,30 +28,64 @@ import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import PageHeader from "../components/page-header";
 import BackButton from "../components/back-button";
+import { SignatureDialog, SignatureCanvas } from "~/feature/field-mentor";
+
+// API services
+import {
+  deleteMentorSignature,
+  getMentorProfile,
+  saveMentorSignature,
+  updateMentorProfile,
+  type MentorProfile,
+} from "~/feature/field-mentor/services";
 
 // Types
 import type { ProfileData } from "../types";
 
 const DEFAULT_PROFILE: ProfileData = {
-  name: "Budi Santoso, S.T., M.T.",
-  nip: "198501152010121001",
-  email: "budi.santoso@company.com",
-  phone: "081234567890",
-  company: "PT. Teknologi Indonesia",
-  position: "Software Engineer Lead",
-  address: "Jl. Raya Teknologi No. 123, Jakarta Selatan",
-  bio: "Berpengalaman 10+ tahun di bidang software engineering dan pembimbingan mahasiswa magang.",
+  name: "-",
+  nip: "-",
+  email: "-",
+  phone: "-",
+  company: "-",
+  position: "-",
+  address: "-",
+  bio: "-",
   photo: "",
   signature: "",
 };
 
+function mapMentorProfileToFormData(data: MentorProfile): ProfileData {
+  return {
+    name: data.name || "-",
+    nip: data.userId || "-",
+    email: data.email || "-",
+    phone: data.phone || "-",
+    company: data.company || "-",
+    position: data.position || "-",
+    address: data.address || "-",
+    bio: "-",
+    photo: "",
+    signature: data.signature || "",
+  };
+}
+
 function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData>(DEFAULT_PROFILE);
-  const [editData, setEditData] = useState<ProfileData>(profileData);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [editData, setEditData] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [emailChangeRequest, setEmailChangeRequest] = useState({
+    newEmail: "",
+    reason: "",
+  });
+  const [isSubmittingEmailRequest, setIsSubmittingEmailRequest] = useState(false);
+  const sigCanvasRef = useRef<SignatureCanvas>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [signaturePreview, setSignaturePreview] = useState<string | null>(null);
+  const [isUpdatingSignature, setIsUpdatingSignature] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Handle ESC key to close modal
@@ -97,6 +131,40 @@ function ProfilePage() {
     }
   }, [showSignatureModal]);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProfile() {
+      setIsLoadingProfile(true);
+      try {
+        const response = await getMentorProfile();
+        if (!isMounted) return;
+
+        if (!response.success || !response.data) {
+          toast.error(response.message || "Gagal memuat profil mentor.");
+          return;
+        }
+
+        const mapped = mapMentorProfileToFormData(response.data);
+        setProfileData(mapped);
+        setEditData(mapped);
+      } catch (error) {
+        if (!isMounted) return;
+        toast.error(error instanceof Error ? error.message : "Gagal memuat profil mentor.");
+      } finally {
+        if (isMounted) {
+          setIsLoadingProfile(false);
+        }
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   function handleInputChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
@@ -129,10 +197,35 @@ function ProfilePage() {
     }
   }
 
-  function handleSave() {
-    setProfileData(editData);
-    setIsEditing(false);
-    toast.success("Profil berhasil diperbarui!");
+  async function handleSave() {
+    setIsSavingProfile(true);
+
+    try {
+      const response = await updateMentorProfile({
+        name: editData.name,
+        phone: editData.phone === "-" ? "" : editData.phone,
+        position: editData.position,
+        address: editData.address === "-" ? "" : editData.address,
+      });
+
+      if (!response.success || !response.data) {
+        toast.error(response.message || "Gagal memperbarui profil mentor.");
+        return;
+      }
+
+      const mapped = mapMentorProfileToFormData(response.data);
+      mapped.bio = editData.bio;
+      mapped.photo = editData.photo;
+
+      setProfileData(mapped);
+      setEditData(mapped);
+      setIsEditing(false);
+      toast.success("Profil berhasil diperbarui!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal memperbarui profil mentor.");
+    } finally {
+      setIsSavingProfile(false);
+    }
   }
 
   function handleCancel() {
@@ -140,90 +233,138 @@ function ProfilePage() {
     setIsEditing(false);
   }
 
-  // E-Signature functions
-  function getCoordinates(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
+  function handleSubmitEmailChangeRequest() {
+    const newEmail = emailChangeRequest.newEmail.trim().toLowerCase();
+    const reason = emailChangeRequest.reason.trim();
+    const emailPattern = /^\S+@\S+\.\S+$/;
 
-    const rect = canvas.getBoundingClientRect();
-    
-    if ('touches' in e) {
-      // Touch event
-      const touch = e.touches[0] || e.changedTouches[0];
-      return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top,
-      };
-    } else {
-      // Mouse event
-      return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      };
+    if (!newEmail) {
+      toast.error("Email baru wajib diisi.");
+      return;
+    }
+
+    if (!emailPattern.test(newEmail)) {
+      toast.error("Format email baru tidak valid.");
+      return;
+    }
+
+    if (newEmail === profileData.email.toLowerCase()) {
+      toast.error("Email baru tidak boleh sama dengan email saat ini.");
+      return;
+    }
+
+    if (!reason) {
+      toast.error("Alasan perubahan email wajib diisi.");
+      return;
+    }
+
+    // TODO: Ganti dengan API request ke endpoint pengajuan perubahan email mentor.
+    setIsSubmittingEmailRequest(true);
+    setTimeout(() => {
+      setIsSubmittingEmailRequest(false);
+      setEmailChangeRequest({ newEmail: "", reason: "" });
+      toast.success("Pengajuan perubahan email dikirim ke Dosen PA/Admin.");
+    }, 300);
+  }
+
+  // E-Signature functions
+  const handleClearSignature = () => {
+    sigCanvasRef.current?.clear();
+    setSignaturePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleChooseFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleUploadSignature = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("File harus berupa gambar (PNG/JPG/WebP).");
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("Ukuran file maksimal 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === "string") {
+        sigCanvasRef.current?.clear();
+        setSignaturePreview(result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  async function saveSignature() {
+    // Auto-generate preview from canvas if empty but canvas has content
+    let finalPreview = signaturePreview;
+    if (!finalPreview && sigCanvasRef.current && sigCanvasRef.current.isEmpty && !sigCanvasRef.current.isEmpty()) {
+      finalPreview = sigCanvasRef.current.toDataURL("image/png");
+      setSignaturePreview(finalPreview);
+    }
+
+    if (!finalPreview) {
+      toast.error("Silakan buat tanda tangan terlebih dahulu.");
+      return;
+    }
+
+    setIsUpdatingSignature(true);
+    try {
+      const response = await saveMentorSignature(finalPreview);
+      if (!response.success || !response.data) {
+        toast.error(response.message || "Gagal menyimpan tanda tangan.");
+        return;
+      }
+
+      setEditData((prev) => ({ ...prev, signature: finalPreview }));
+      setProfileData((prev) => ({ ...prev, signature: finalPreview }));
+      setShowSignatureModal(false);
+      handleClearSignature();
+      toast.success("Tanda tangan berhasil disimpan!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal menyimpan tanda tangan.");
+    } finally {
+      setIsUpdatingSignature(false);
     }
   }
 
-  function startDrawing(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
-    e.preventDefault();
-    setIsDrawing(true);
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  async function deleteSignature() {
+    try {
+      const response = await deleteMentorSignature();
+      if (!response.success) {
+        toast.error(response.message || "Gagal menghapus tanda tangan.");
+        return;
+      }
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const coords = getCoordinates(e);
-    ctx.beginPath();
-    ctx.moveTo(coords.x, coords.y);
+      setEditData((prev) => ({ ...prev, signature: "" }));
+      setProfileData((prev) => ({ ...prev, signature: "" }));
+      handleClearSignature();
+      toast.success("Tanda tangan berhasil dihapus!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal menghapus tanda tangan.");
+    }
   }
 
-  function draw(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
-    e.preventDefault();
-    if (!isDrawing) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const coords = getCoordinates(e);
-    ctx.lineTo(coords.x, coords.y);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.stroke();
-  }
-
-  function stopDrawing(e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) {
-    e.preventDefault();
-    setIsDrawing(false);
-  }
-
-  function clearSignature() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-
-  function saveSignature() {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const signatureData = canvas.toDataURL();
-    setEditData((prev) => ({ ...prev, signature: signatureData }));
-    setShowSignatureModal(false);
-    toast.success("Tanda tangan berhasil disimpan!");
-  }
-
-  function deleteSignature() {
-    setEditData((prev) => ({ ...prev, signature: "" }));
-    clearSignature();
-    toast.success("Tanda tangan berhasil dihapus!");
+  if (isLoadingProfile) {
+    return (
+      <div className="p-6">
+        <PageHeader title="Profil" description="Kelola informasi profil Anda" />
+        <Card>
+          <CardContent className="pt-6 text-muted-foreground">Memuat profil mentor...</CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -317,10 +458,16 @@ function ProfilePage() {
                   name="nip"
                   value={editData.nip}
                   onChange={handleInputChange}
-                  className="mt-1"
+                  className="mt-1 bg-muted"
+                  readOnly
                 />
               ) : (
                 <p className="mt-1 font-medium">{profileData.nip}</p>
+              )}
+              {isEditing && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  NIP/NIK dikunci untuk menjaga konsistensi data verifikasi.
+                </p>
               )}
             </div>
 
@@ -337,11 +484,61 @@ function ProfilePage() {
                   type="email"
                   value={editData.email}
                   onChange={handleInputChange}
-                  className="mt-1"
+                  className="mt-1 bg-muted"
+                  readOnly
                 />
               ) : (
                 <p className="mt-1 font-medium">{profileData.email}</p>
               )}
+              {isEditing && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Email tidak dapat diubah di sini. Ajukan perubahan melalui Dosen PA/Admin.
+                </p>
+              )}
+
+              <div className="mt-3 rounded-md border border-dashed p-3">
+                <p className="text-sm font-medium">Butuh ganti email?</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Kirim pengajuan ke Dosen PA/Admin. Email akun akan diperbarui setelah disetujui.
+                </p>
+
+                <div className="grid gap-3 mt-3">
+                  <Input
+                    type="email"
+                    placeholder="Email baru (contoh: nama@perusahaan.com)"
+                    value={emailChangeRequest.newEmail}
+                    onChange={(e) =>
+                      setEmailChangeRequest((prev) => ({
+                        ...prev,
+                        newEmail: e.target.value,
+                      }))
+                    }
+                  />
+                  <Textarea
+                    rows={3}
+                    placeholder="Alasan perubahan email"
+                    value={emailChangeRequest.reason}
+                    onChange={(e) =>
+                      setEmailChangeRequest((prev) => ({
+                        ...prev,
+                        reason: e.target.value,
+                      }))
+                    }
+                  />
+                  <div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleSubmitEmailChangeRequest}
+                      disabled={isSubmittingEmailRequest}
+                    >
+                      {isSubmittingEmailRequest
+                        ? "Mengirim Pengajuan..."
+                        : "Ajukan Perubahan Email"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Phone */}
@@ -376,10 +573,16 @@ function ProfilePage() {
                   name="company"
                   value={editData.company}
                   onChange={handleInputChange}
-                  className="mt-1"
+                  className="mt-1 bg-muted"
+                  readOnly
                 />
               ) : (
                 <p className="mt-1 font-medium">{profileData.company}</p>
+              )}
+              {isEditing && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Perusahaan dikunci sesuai data persetujuan pembimbing lapangan.
+                </p>
               )}
             </div>
 
@@ -507,9 +710,9 @@ function ProfilePage() {
               <Button variant="outline" onClick={handleCancel}>
                 Batal
               </Button>
-              <Button onClick={handleSave}>
+              <Button onClick={handleSave} disabled={isSavingProfile}>
                 <Save className="mr-2 h-4 w-4" />
-                Simpan Perubahan
+                {isSavingProfile ? "Menyimpan..." : "Simpan Perubahan"}
               </Button>
             </div>
           )}
@@ -528,53 +731,28 @@ function ProfilePage() {
             <CardHeader>
               <CardTitle id="signature-modal-title">Buat Tanda Tangan Digital</CardTitle>
               <CardDescription>
-                Gambar tanda tangan Anda pada area di bawah ini
+                Gambar atau upload tanda tangan Anda pada area di bawah ini
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg bg-white">
-                  <canvas
-                    ref={canvasRef}
-                    width={600}
-                    height={200}
-                    className="w-full cursor-crosshair"
-                    aria-label="Area untuk menggambar tanda tangan digital"
-                    onMouseDown={startDrawing}
-                    onMouseMove={draw}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    onTouchStart={startDrawing}
-                    onTouchMove={draw}
-                    onTouchEnd={stopDrawing}
-                    onTouchCancel={stopDrawing}
-                  />
-                </div>
-                <div className="flex justify-between">
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={clearSignature}
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Hapus
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowSignatureModal(false)}
-                    >
-                      Batal
-                    </Button>
-                    <Button type="button" onClick={saveSignature}>
-                      <Save className="h-4 w-4 mr-2" />
-                      Simpan Tanda Tangan
-                    </Button>
-                  </div>
-                </div>
+              <SignatureDialog
+                sigCanvas={sigCanvasRef}
+                fileInputRef={fileInputRef}
+                preview={signaturePreview}
+                onClear={handleClearSignature}
+                onChooseFile={handleChooseFile}
+                onUploadSignature={handleUploadSignature}
+                onSave={saveSignature}
+                isSaving={isUpdatingSignature}
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowSignatureModal(false)}
+                >
+                  Batal
+                </Button>
               </div>
             </CardContent>
           </Card>

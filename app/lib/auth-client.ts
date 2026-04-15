@@ -873,11 +873,11 @@ export async function registerMahasiswa(_data: {
   nama: string;
   email: string;
   password: string;
-  phone: string;
-  fakultas: string;
+  phone?: string;
+  fakultas?: string;
   prodi: string;
-  semester: number;
-  angkatan: string;
+  semester?: number;
+  angkatan?: string;
 }) {
   void _data;
 

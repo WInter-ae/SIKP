@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Label } from "~/components/ui/label";
 import { cn } from "~/lib/utils";
 
-import type { FileUploadProps } from "../types";
+import type { FileUploadProps } from "../types/index";
 import { Upload } from "lucide-react";
 
 function FileUpload({ label, onFileChange }: FileUploadProps) {

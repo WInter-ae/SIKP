@@ -65,6 +65,22 @@ const TeamCreationPage = () => {
   const navigate = useNavigate();
   const { user, isLoading: isUserLoading, isAuthenticated } = useUser();
 
+  const extractTeamCodeFromDisplayName = (name: string): string => {
+    const match = name.match(/\((TEAM-[^)]+)\)/);
+    return match ? match[1] : "";
+  };
+
+  const dedupeByKey = <T,>(items: T[], keyFn: (item: T) => string): T[] => {
+    const map = new Map<string, T>();
+    for (const item of items) {
+      const key = keyFn(item);
+      if (!map.has(key)) {
+        map.set(key, item);
+      }
+    }
+    return Array.from(map.values());
+  };
+
   // Redirect ke login jika tidak terautentikasi
   useEffect(() => {
     if (!isUserLoading && !isAuthenticated) {
@@ -154,6 +170,14 @@ const TeamCreationPage = () => {
   const [showConfirmRejectInviteDialog, setShowConfirmRejectInviteDialog] =
     useState(false);
   const [pendingRejectInviteData, setPendingRejectInviteData] = useState<{
+    memberId: string;
+    invitationName: string;
+  } | null>(null);
+
+  // State untuk confirm accept invite dialog
+  const [showConfirmAcceptInviteDialog, setShowConfirmAcceptInviteDialog] =
+    useState(false);
+  const [pendingAcceptInviteData, setPendingAcceptInviteData] = useState<{
     memberId: string;
     invitationName: string;
   } | null>(null);
@@ -405,7 +429,7 @@ const TeamCreationPage = () => {
           (m: TeamMember) => m.status === "PENDING",
         );
 
-        const pendingInvitesList = pendingMembers
+        const pendingInvitesListRaw = pendingMembers
           .filter((m: TeamMember) => m.invitedBy === teamData.leaderId)
           .map((m: TeamMember) => ({
             id: m.id, // ✅ memberId
@@ -416,8 +440,12 @@ const TeamCreationPage = () => {
             email: m.user.email,
             status: m.status,
           }));
+        const pendingInvitesList = dedupeByKey(
+          pendingInvitesListRaw,
+          (m) => `${m.userId || ""}-${m.nim || ""}-${m.status || ""}`,
+        );
 
-        const incomingJoinRequests = pendingMembers
+        const incomingJoinRequestsRaw = pendingMembers
           .filter((m: TeamMember) => m.invitedBy !== teamData.leaderId)
           .map((m: TeamMember) => ({
             id: m.id,
@@ -428,6 +456,10 @@ const TeamCreationPage = () => {
             email: m.user.email,
             status: m.status,
           }));
+        const incomingJoinRequests = dedupeByKey(
+          incomingJoinRequestsRaw,
+          (m) => `${m.userId || ""}-${m.nim || ""}-${m.status || ""}`,
+        );
 
         console.log("📤 Pending Invites (Sent):", {
           total: members.length,
@@ -787,6 +819,22 @@ const TeamCreationPage = () => {
       return;
     }
 
+    // Blokir request gabung duplikat hanya untuk team yang sama
+    const hasPendingForSameTeam = joinRequests.some((req) => {
+      const reqCode = extractTeamCodeFromDisplayName(req.name || "");
+      return req.status === "PENDING" && reqCode === code;
+    });
+    if (!team && hasPendingForSameTeam) {
+      setNotificationData({
+        type: "warning",
+        title: "Permintaan Masih Diproses",
+        message:
+          "Anda sudah memiliki permintaan gabung PENDING ke tim yang sama. Tunggu sampai ketua tim menerima/menolak sebelum mengajukan lagi.",
+      });
+      setShowNotificationDialog(true);
+      return;
+    }
+
     // Jika user sudah memiliki tim, hapus tim lama terlebih dahulu sebelum join
     if (team && team.id) {
       if (team.status === "FIXED" && !canDeleteFixedTeam) {
@@ -879,6 +927,18 @@ const TeamCreationPage = () => {
     });
   };
 
+  // Fungsi batalkan permintaan gabung tim
+  const handleCancelJoinRequest = (memberId: string) => {
+    const member = joinRequests.find((m: Member) => m.id === memberId);
+    if (!member) return;
+
+    setConfirmAction({
+      type: "cancel-join",
+      memberId,
+      memberName: member.name,
+    });
+  };
+
   // Fungsi untuk load invitations yang diterima
   const loadMyInvitations = async () => {
     try {
@@ -917,7 +977,7 @@ const TeamCreationPage = () => {
         );
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const invitations = invitationsReceivedRaw.map((inv: any) => {
+        const invitationsRaw = invitationsReceivedRaw.map((inv: any) => {
           // Debug logging
           console.log("🔍 Invitation data:", {
             id: inv.id,
@@ -933,7 +993,6 @@ const TeamCreationPage = () => {
           // Get inviter info (person who invited us)
           const inviterName = inv.inviter?.name;
           const inviterNim = inv.inviter?.nim;
-          const teamCode = inv.team?.code;
 
           // Fallback untuk debug
           if (!inviterName) {
@@ -946,12 +1005,7 @@ const TeamCreationPage = () => {
           return {
             id: inv.id, // member ID untuk respond (string utuh)
             memberId: inv.id, // Simpan member ID asli (string utuh)
-            name:
-              inviterName && teamCode
-                ? `${inviterName} (${teamCode})`
-                : teamCode
-                  ? `Unknown (${teamCode})`
-                  : "Unknown (Team)",
+            name: inviterName || "Unknown",
             role: "Undangan dari Tim",
             nim: inviterNim || "",
             email: inv.inviter?.email || inv.user?.email || "",
@@ -962,7 +1016,7 @@ const TeamCreationPage = () => {
 
         // Map join requests sent by current user to display under 'Daftar Permintaan Gabung Tim'
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const myJoinRequests = joinRequestsSentRaw.map((inv: any) => {
+        const myJoinRequestsRaw = joinRequestsSentRaw.map((inv: any) => {
           console.log("🔍 Join request sent by me - raw data:", {
             id: inv.id,
             teamId: inv.teamId,
@@ -990,7 +1044,7 @@ const TeamCreationPage = () => {
           return {
             id: inv.id,
             memberId: inv.id,
-            name: teamCode ? `${leaderName} (${teamCode})` : leaderName,
+            name: leaderName,
             role: "Permintaan Gabung",
             nim: leaderNim,
             email: "", // Leader email not needed for display
@@ -999,6 +1053,16 @@ const TeamCreationPage = () => {
             invitedAt: inv.invitedAt,
           } as Member;
         });
+
+        const invitations = dedupeByKey(
+          invitationsRaw,
+          (inv) => `${inv.teamId || ""}-${inv.nim || ""}`,
+        );
+        const myJoinRequests = dedupeByKey(
+          myJoinRequestsRaw,
+          (req) =>
+            `${req.teamId || ""}-${req.nim || ""}-${req.status || "PENDING"}`,
+        );
 
         console.log(`✅ Found ${invitations.length} pending invitations:`, {
           count: invitations.length,
@@ -1070,6 +1134,36 @@ const TeamCreationPage = () => {
       name: invitation.name,
       teamId: invitation.teamId,
     });
+
+    setPendingAcceptInviteData({
+      memberId,
+      invitationName: invitation.name || "Tim",
+    });
+    setShowConfirmAcceptInviteDialog(true);
+  };
+
+  // Fungsi untuk submit confirm accept invite
+  const handleConfirmAcceptInvite = async () => {
+    if (!pendingAcceptInviteData) {
+      setShowConfirmAcceptInviteDialog(false);
+      return;
+    }
+
+    const { memberId } = pendingAcceptInviteData;
+    const invitation = inviteRequests.find((m) => m.id === memberId);
+
+    if (!invitation) {
+      console.error("❌ Invitation not found in state:", memberId);
+      setNotificationData({
+        type: "error",
+        title: "Data Tidak Ditemukan",
+        message: "Data undangan tidak ditemukan. Silakan refresh halaman.",
+      });
+      setShowNotificationDialog(true);
+      setShowConfirmAcceptInviteDialog(false);
+      setPendingAcceptInviteData(null);
+      return;
+    }
 
     // Jika user sudah memiliki tim
     if (team && team.id) {
@@ -1265,6 +1359,9 @@ const TeamCreationPage = () => {
         setShowNotificationDialog(true);
       }
     }
+
+    setShowConfirmAcceptInviteDialog(false);
+    setPendingAcceptInviteData(null);
   };
 
   // Fungsi tolak ajakan tim
@@ -1556,6 +1653,23 @@ const TeamCreationPage = () => {
 
     const member = pendingInviteMember;
 
+    // Guard tambahan agar tidak kirim undangan duplikat jika ada race-click
+    const alreadyPendingInvite = pendingInvites.some(
+      (m) => m.userId === member.id && m.status === "PENDING",
+    );
+    if (alreadyPendingInvite) {
+      setInviteMessageData({
+        type: "warning",
+        title: "Undangan Masih Pending",
+        message: `${member.name} sudah memiliki undangan pending. Tunggu sampai direspons terlebih dahulu.`,
+        memberName: member.name,
+      });
+      setShowInviteMessageDialog(true);
+      setShowConfirmInviteDialog(false);
+      setPendingInviteMember(null);
+      return;
+    }
+
     try {
       const response = await inviteTeamMember(team.id, member.nim);
 
@@ -1752,6 +1866,64 @@ const TeamCreationPage = () => {
           }
         } catch (error) {
           console.error("Error rejecting join request:", error);
+          setNotificationData({
+            type: "error",
+            title: "Terjadi Kesalahan",
+            message: error instanceof Error ? error.message : "Unknown error",
+          });
+          setShowNotificationDialog(true);
+        } finally {
+          setIsLoading(false);
+        }
+        break;
+      }
+      case "cancel-join": {
+        if (!confirmAction.memberId) break;
+        setIsLoading(true);
+        try {
+          const joinReq = joinRequests.find(
+            (m) => m.id === confirmAction.memberId,
+          );
+          console.log("🚫 Canceling join request - DEBUG:", {
+            confirmMemberId: confirmAction.memberId,
+            foundInList: !!joinReq,
+            joinReqData: joinReq,
+            allJoinRequests: joinRequests.map((j) => ({
+              id: j.id,
+              name: j.name,
+              status: j.status,
+            })),
+          });
+
+          const response = await respondToInvitation(
+            confirmAction.memberId,
+            false,
+          );
+
+          console.log("📨 Backend response:", response);
+
+          if (response.success) {
+            setJoinRequests(
+              joinRequests.filter((m) => m.id !== confirmAction.memberId),
+            );
+            setNotificationData({
+              type: "success",
+              title: "Permintaan Dibatalkan",
+              message: `Permintaan bergabung ke ${confirmAction.memberName} berhasil dibatalkan.`,
+            });
+            setShowNotificationDialog(true);
+            await loadMyTeams();
+            await loadMyInvitations();
+          } else {
+            setNotificationData({
+              type: "error",
+              title: "Gagal Membatalkan Permintaan",
+              message: response.message || "Unknown error",
+            });
+            setShowNotificationDialog(true);
+          }
+        } catch (error) {
+          console.error("Error canceling join request:", error);
           setNotificationData({
             type: "error",
             title: "Terjadi Kesalahan",
@@ -2285,6 +2457,11 @@ const TeamCreationPage = () => {
           title: "Tolak Permintaan",
           description: `Apakah Anda yakin ingin menolak permintaan dari ${confirmAction.memberName}?`,
         };
+      case "cancel-join":
+        return {
+          title: "Batalkan Permintaan",
+          description: `Apakah Anda yakin ingin membatalkan permintaan bergabung ke ${confirmAction.memberName}?`,
+        };
       case "accept-invite":
         return {
           title: "Terima Ajakan",
@@ -2525,6 +2702,45 @@ const TeamCreationPage = () => {
               className="bg-red-600 hover:bg-red-700"
             >
               Ya, Tolak Undangan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirm Accept Invite Dialog */}
+      <Dialog
+        open={showConfirmAcceptInviteDialog}
+        onOpenChange={setShowConfirmAcceptInviteDialog}
+      >
+        <DialogContent className="sm:max-w-[450px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-green-600">❓</span> Terima Undangan
+            </DialogTitle>
+            <DialogDescription>
+              {pendingAcceptInviteData && (
+                <span>
+                  Yakin ingin menerima undangan dari{" "}
+                  <strong>{pendingAcceptInviteData.invitationName}</strong>?
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2">
+            <Button
+              onClick={() => {
+                setShowConfirmAcceptInviteDialog(false);
+                setPendingAcceptInviteData(null);
+              }}
+              variant="outline"
+            >
+              Batalkan
+            </Button>
+            <Button
+              onClick={handleConfirmAcceptInvite}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Ya, Terima Undangan
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -2824,29 +3040,27 @@ const TeamCreationPage = () => {
             )}
 
             {/* Join Requests */}
-            {team?.status !== "FIXED" &&
-              (team?.isLeader ||
-                (!team?.isLeader && joinRequests.length > 0)) && (
-                <MemberList
-                  title="Daftar Permintaan Gabung Tim"
-                  members={joinRequests}
-                  showActions={!!team?.isLeader}
-                  isLeader={!!team?.isLeader}
-                  currentUserId={user?.id}
-                  onAccept={
-                    team?.isLeader ? handleAcceptJoinRequest : undefined
-                  }
-                  onReject={
-                    team?.isLeader ? handleRejectJoinRequest : undefined
-                  }
-                />
-              )}
+            {team?.status !== "FIXED" && joinRequests.length > 0 && (
+              <MemberList
+                title="Daftar Permintaan Gabung Tim"
+                members={joinRequests}
+                showActions={!!team?.isLeader}
+                showRole={false}
+                isLeader={!!team?.isLeader}
+                currentUserId={user?.id}
+                onAccept={team?.isLeader ? handleAcceptJoinRequest : undefined}
+                onReject={team?.isLeader ? handleRejectJoinRequest : undefined}
+                showCancel={!team?.isLeader}
+                onCancel={!team?.isLeader ? handleCancelJoinRequest : undefined}
+              />
+            )}
 
             {team?.status !== "FIXED" && (
               <MemberList
                 title="Daftar Permintaan Ajakan Tim"
                 members={inviteRequests}
                 showActions={true}
+                showRole={false}
                 onAccept={handleAcceptInvite}
                 onReject={handleRejectInvite}
               />

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
+import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
 import {
   Card,
@@ -26,372 +27,257 @@ import {
   Calendar,
   Download,
 } from "lucide-react";
-import { toast } from "sonner";
 
-import type { LogbookEntry, Student } from "../types/logbook";
+import {
+  approveAllLogbooks,
+  approveLogbook,
+  getMenteeDetail,
+  getMentees,
+  getStudentLogbook,
+  type LogbookEntry,
+  type MenteeData,
+} from "../services";
+import { RejectLogbookButton } from "../components/reject-logbook-button";
 
-// Mock data - in real app, this would come from API based on studentId
-const mockStudents: Student[] = [
-  {
-    id: "1",
-    name: "Adam Ramadhan",
-    nim: "1234567890",
-    email: "adam@student.ac.id",
-    university: "Universitas Indonesia",
-    major: "Teknik Informatika",
-    fakultas: "Fakultas Sains dan Teknologi",
-    company: "PT. Tech Innovate Indonesia",
-    position: "Frontend Developer",
-    startDate: "2024-01-01",
-    endDate: "2024-03-31",
-  },
-  {
-    id: "2",
-    name: "Robin Setiawan",
-    nim: "1234567891",
-    email: "robin@student.ac.id",
-    university: "Universitas Indonesia",
-    major: "Teknik Informatika",
-    fakultas: "Fakultas Sains dan Teknologi",
-    company: "PT. Tech Innovate Indonesia",
-    position: "Backend Developer",
-    startDate: "2024-01-01",
-    endDate: "2024-03-31",
-  },
-];
-
-const mockLogbookEntries: LogbookEntry[] = [
-  {
-    id: "1",
-    studentId: "1",
-    studentName: "Adam Ramadhan",
-    date: "2024-01-02",
-    description: "Hari Pertama - Orientasi",
-    activities:
-      "Orientasi kantor dan pengenalan tim\nSetup workstation dan akun email\nMempelajari struktur organisasi perusahaan",
-    createdAt: "2024-01-02T10:00:00",
-    mentorSignature: {
-      signedAt: "2024-01-03T14:30:00",
-      signedBy: "mentor1",
-      mentorName: "Budi Santoso",
-      mentorPosition: "Senior Developer",
-      status: "approved",
-      notes: "Orientasi berjalan baik",
-    },
-  },
-  {
-    id: "2",
-    studentId: "1",
-    studentName: "Adam Ramadhan",
-    date: "2024-01-03",
-    description: "Setup Development Environment",
-    activities:
-      "Install tools development (VS Code, Git, Node.js)\nSetup database lokal\nClone repository project",
-    createdAt: "2024-01-03T10:00:00",
-    mentorSignature: {
-      signedAt: "2024-01-04T09:00:00",
-      signedBy: "mentor1",
-      mentorName: "Budi Santoso",
-      mentorPosition: "Senior Developer",
-      status: "approved",
-      notes: "Setup berhasil dilakukan",
-    },
-  },
-  {
-    id: "3",
-    studentId: "1",
-    studentName: "Adam Ramadhan",
-    date: "2024-01-04",
-    description: "Mempelajari Codebase",
-    activities:
-      "Membaca dokumentasi project\nMempelajari struktur folder dan arsitektur\nMemahami flow aplikasi",
-    createdAt: "2024-01-04T10:00:00",
-  },
-  {
-    id: "4",
-    studentId: "1",
-    studentName: "Adam Ramadhan",
-    date: "2024-01-08",
-    description: "Implementasi Fitur Login",
-    activities:
-      "Membuat form login UI\nImplementasi validasi form\nIntegrasi dengan API backend",
-    createdAt: "2024-01-08T10:00:00",
-    mentorSignature: {
-      signedAt: "2024-01-09T11:00:00",
-      signedBy: "mentor1",
-      mentorName: "Budi Santoso",
-      mentorPosition: "Senior Developer",
-      status: "revision",
-      notes: "Perlu perbaikan pada error handling",
-    },
-  },
-  {
-    id: "5",
-    studentId: "1",
-    studentName: "Adam Ramadhan",
-    date: "2024-01-09",
-    description: "Revisi Fitur Login",
-    activities:
-      "Memperbaiki error handling sesuai feedback\nMenambahkan loading state\nTesting berbagai skenario error",
-    createdAt: "2024-01-09T10:00:00",
-    mentorSignature: {
-      signedAt: "2024-01-10T14:00:00",
-      signedBy: "mentor1",
-      mentorName: "Budi Santoso",
-      mentorPosition: "Senior Developer",
-      status: "approved",
-      notes: "Sudah bagus, approved!",
-    },
-  },
-  {
-    id: "6",
-    studentId: "2",
-    studentName: "Robin Setiawan",
-    date: "2024-01-02",
-    description: "Orientasi Perusahaan",
-    activities:
-      "Tour kantor\nPengenalan dengan tim\nPenjelasan budaya kerja perusahaan",
-    createdAt: "2024-01-02T09:00:00",
-    mentorSignature: {
-      signedAt: "2024-01-03T10:00:00",
-      signedBy: "mentor1",
-      mentorName: "Budi Santoso",
-      mentorPosition: "Senior Developer",
-      status: "approved",
-    },
-  },
-  {
-    id: "7",
-    studentId: "2",
-    studentName: "Robin Setiawan",
-    date: "2024-01-03",
-    description: "Setup & Training",
-    activities:
-      "Setup development tools\nTraining penggunaan version control\nMempelajari workflow tim",
-    createdAt: "2024-01-03T09:00:00",
-  },
-  {
-    id: "8",
-    studentId: "1",
-    studentName: "Adam Ramadhan",
-    date: "2024-01-15",
-    description: "Dashboard UI Development",
-    activities:
-      "Membuat layout dashboard\nImplementasi navigation sidebar\nMenambahkan chart components",
-    createdAt: "2024-01-15T10:00:00",
-  },
-];
-
-const mockWorkPeriod = {
-  startDate: "2024-01-01",
-  endDate: "2024-03-31",
-  startDay: "senin",
-  endDay: "jumat",
+type ViewLogbookEntry = {
+  id: string;
+  date: string;
+  description: string;
+  activity: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
 };
+
+function coerceText(value: unknown, fallback = "-") {
+  if (typeof value === "string" && value.trim()) return value;
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return fallback;
+}
+
+function formatDate(dateString?: string) {
+  if (!dateString) return "-";
+  const parsed = new Date(dateString);
+  if (Number.isNaN(parsed.getTime())) return "-";
+  return parsed.toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+async function resolveStudentUserId(studentAlias: string): Promise<string> {
+  const menteesRes = await getMentees();
+
+  if (!menteesRes.success || !menteesRes.data) {
+    return studentAlias;
+  }
+
+  const exactUser = menteesRes.data.find((mentee) => mentee.userId === studentAlias);
+  if (exactUser?.userId) return exactUser.userId;
+
+  const byInternshipId = menteesRes.data.find((mentee) => mentee.internshipId === studentAlias);
+  if (byInternshipId?.userId) return byInternshipId.userId;
+
+  const byLegacyId = menteesRes.data.find((mentee) => mentee.id === studentAlias);
+  if (byLegacyId?.userId) return byLegacyId.userId;
+
+  const byNim = menteesRes.data.find((mentee) => mentee.nim === studentAlias);
+  if (byNim?.userId) return byNim.userId;
+
+  return studentAlias;
+}
 
 function StudentLogbookDetailPage() {
   const { studentId } = useParams();
-  const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>(mockLogbookEntries);
 
-  // Get student data
-  const student = mockStudents.find((s) => s.id === studentId);
+  const [student, setStudent] = useState<MenteeData | null>(null);
+  const [entries, setEntries] = useState<ViewLogbookEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isApprovingAll, setIsApprovingAll] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Generate all dates for the period
-  const generateAllDates = (): string[] => {
-    const dates: string[] = [];
-    const start = new Date(mockWorkPeriod.startDate);
-    const end = new Date(mockWorkPeriod.endDate);
+  useEffect(() => {
+    let isMounted = true;
 
-    const dayMap: { [key: string]: number } = {
-      minggu: 0,
-      senin: 1,
-      selasa: 2,
-      rabu: 3,
-      kamis: 4,
-      jumat: 5,
-      sabtu: 6,
-    };
-
-    const startDayNum = dayMap[mockWorkPeriod.startDay?.toLowerCase()] || 1;
-    const endDayNum = dayMap[mockWorkPeriod.endDay?.toLowerCase()] || 5;
-
-    const MS_PER_DAY = 24 * 60 * 60 * 1000;
-
-    for (let d = new Date(start); d <= end; d = new Date(d.getTime() + MS_PER_DAY)) {
-      const currentDay = d.getDay();
-
-      if (startDayNum <= endDayNum) {
-        if (currentDay >= startDayNum && currentDay <= endDayNum) {
-          dates.push(d.toISOString().split("T")[0]);
-        }
-      } else {
-        if (currentDay >= startDayNum || currentDay <= endDayNum) {
-          dates.push(d.toISOString().split("T")[0]);
-        }
+    async function loadData() {
+      if (!studentId) {
+        setErrorMessage("Parameter mahasiswa tidak valid.");
+        setIsLoading(false);
+        return;
       }
-    }
 
-    return dates;
-  };
+      setIsLoading(true);
+      setErrorMessage(null);
 
-  const allDates = generateAllDates();
+      try {
+        const resolvedStudentId = await resolveStudentUserId(studentId);
+        
+        let studentRes = await getMenteeDetail(resolvedStudentId);
 
-  const getLogbookForDate = (date: string): LogbookEntry | undefined => {
-    return logbookEntries.find(
-      (entry) => entry.studentId === studentId && entry.date === date
-    );
-  };
+        if (!isMounted) return;
 
-  const getDayName = (dateString: string) => {
-    const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    return days[new Date(dateString).getDay()];
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  const getWeekNumber = (dateString: string) => {
-    const dateIndex = allDates.indexOf(dateString);
-    if (dateIndex === -1) return 0;
-
-    let weekNumber = 1;
-
-    for (let i = 0; i < dateIndex; i++) {
-      const currentDate = new Date(allDates[i]);
-      const currentDay = currentDate.getDay();
-      const nextDate = i < allDates.length - 1 ? new Date(allDates[i + 1]) : null;
-
-      if (nextDate) {
-        const nextDay = nextDate.getDay();
-        if (currentDay === 5 || currentDay === 6 || currentDay === 0 || nextDay === 1) {
-          weekNumber++;
+        if (!studentRes.success || !studentRes.data) {
+          setStudent(null);
+          setEntries([]);
+          setErrorMessage(studentRes.message || "Mahasiswa tidak ditemukan.");
+          return;
         }
-      }
-    }
 
-    return weekNumber;
-  };
+        setStudent(studentRes.data);
+        
+        // Backend expects userId for GET /api/mentor/logbook/:studentId
+        const studentUserId = studentRes.data?.userId || resolvedStudentId;
+        let logbookRes = await getStudentLogbook(studentUserId);
+        
+        let backendEntries: LogbookEntry[] =
+          logbookRes.success && logbookRes.data?.entries
+            ? logbookRes.data.entries
+            : [];
 
-  const getWeekRowSpan = (currentIndex: number) => {
-    const currentWeek = getWeekNumber(allDates[currentIndex]);
-    let count = 1;
-
-    for (let i = currentIndex + 1; i < allDates.length; i++) {
-      if (getWeekNumber(allDates[i]) === currentWeek) {
-        count++;
-      } else {
-        break;
-      }
-    }
-
-    return count;
-  };
-
-  const getMentorSignatureBadge = (entry: LogbookEntry | undefined) => {
-    if (!entry) {
-      return (
-        <Badge variant="outline" className="bg-gray-50">
-          <span className="text-muted-foreground">Belum diisi</span>
-        </Badge>
-      );
-    }
-
-    if (!entry.mentorSignature) {
-      return (
-        <Badge variant="outline" className="bg-yellow-50">
-          <Clock className="w-3 h-3 mr-1" />
-          Menunggu Paraf
-        </Badge>
-      );
-    }
-
-    switch (entry.mentorSignature.status) {
-      case "approved":
-        return (
-          <Badge className="bg-green-500">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Disetujui
-          </Badge>
+        const mentorVisibleEntries = backendEntries.filter(
+          (entry): entry is LogbookEntry & { status: "PENDING" | "APPROVED" | "REJECTED" } =>
+            entry.status !== "DRAFT"
         );
-      default:
-        return (
-          <Badge variant="outline" className="bg-gray-50">
-            <span className="text-muted-foreground">Belum diisi</span>
-          </Badge>
-        );
+
+        const mapped = mentorVisibleEntries
+          .map((entry) => ({
+            id: coerceText(entry.id, `${entry.date || "logbook"}-${entry.activity || entry.description || "entry"}`),
+            date: coerceText(entry.date, ""),
+            description: coerceText(entry.description || entry.activity, "-"),
+            activity: coerceText(entry.activity || entry.description, "-"),
+            status: entry.status,
+          }))
+          .sort((a, b) =>
+            new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+
+        setEntries(mapped);
+      } catch (error) {
+        if (!isMounted) return;
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat logbook mahasiswa.";
+        setStudent(null);
+        setEntries([]);
+        setErrorMessage(message);
+        toast.error(message);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
     }
-  };
 
-  const handleSignLogbook = (logbookId: string) => {
-    const signature = {
-      signedAt: new Date().toISOString(),
-      signedBy: "mentor1",
-      mentorName: "Budi Santoso",
-      mentorPosition: "Senior Developer",
-      status: "approved" as const,
+    loadData();
+
+    return () => {
+      isMounted = false;
     };
+  }, [studentId]);
 
-    setLogbookEntries((prev) =>
+  const totalEntries = entries.length;
+  const approvedEntries = entries.filter((entry) => entry.status === "APPROVED").length;
+  const pendingEntries = entries.filter((entry) => entry.status === "PENDING").length;
+
+  async function handleSignLogbook(logbookId: string) {
+    try {
+      const response = await approveLogbook(logbookId);
+      if (!response.success) {
+        toast.error(response.message || "Gagal menyetujui logbook.");
+        return;
+      }
+
+      setEntries((prev) =>
+        prev.map((entry) =>
+          entry.id === logbookId ? { ...entry, status: "APPROVED" } : entry
+        )
+      );
+      toast.success("Logbook berhasil disetujui.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal menyetujui logbook.");
+    }
+  }
+
+  function handleRejectLogbook(logbookId: string) {
+    setEntries((prev) =>
       prev.map((entry) =>
-        entry.id === logbookId ? { ...entry, mentorSignature: signature } : entry
+        entry.id === logbookId ? { ...entry, status: "REJECTED" } : entry
       )
     );
+  }
 
-    toast.success("Logbook berhasil disetujui!");
-  };
-
-  const handleSignAllLogbooks = () => {
-    const signature = {
-      signedAt: new Date().toISOString(),
-      signedBy: "mentor1",
-      mentorName: "Budi Santoso",
-      mentorPosition: "Senior Developer",
-      status: "approved" as const,
-    };
-
-    const pendingLogbooks = logbookEntries.filter(
-      (e) => e.studentId === studentId && !e.mentorSignature
-    );
-
-    if (pendingLogbooks.length === 0) {
-      toast.info("Tidak ada logbook yang perlu diparaf");
+  async function handleSignAllLogbooks() {
+    const effectiveStudentId = student?.userId || studentId;
+    if (!effectiveStudentId) return;
+    if (pendingEntries === 0) {
+      toast.info("Tidak ada logbook yang perlu diparaf.");
       return;
     }
 
-    setLogbookEntries((prev) =>
-      prev.map((entry) =>
-        entry.studentId === studentId && !entry.mentorSignature
-          ? { ...entry, mentorSignature: signature }
-          : entry
-      )
+    setIsApprovingAll(true);
+    try {
+      const response = await approveAllLogbooks(effectiveStudentId);
+      if (!response.success) {
+        toast.error(response.message || "Gagal paraf semua logbook.");
+        return;
+      }
+
+      setEntries((prev) =>
+        prev.map((entry) =>
+          entry.status === "PENDING" ? { ...entry, status: "APPROVED" } : entry
+        )
+      );
+      toast.success("Semua logbook pending berhasil disetujui.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Gagal paraf semua logbook.");
+    } finally {
+      setIsApprovingAll(false);
+    }
+  }
+
+  function handleExportLogbook() {
+    toast.info("Fitur export logbook akan diaktifkan setelah endpoint tersedia.");
+  }
+
+  function getStatusBadge(status: ViewLogbookEntry["status"]) {
+    if (status === "APPROVED") {
+      return (
+        <Badge className="bg-green-500">
+          <CheckCircle className="w-3 h-3 mr-1" />
+          Disetujui
+        </Badge>
+      );
+    }
+
+    if (status === "REJECTED") {
+      return <Badge variant="destructive">Ditolak</Badge>;
+    }
+
+    return (
+      <Badge variant="outline" className="bg-yellow-50">
+        <Clock className="w-3 h-3 mr-1" />
+        Menunggu Paraf
+      </Badge>
     );
+  }
 
-    toast.success(`${pendingLogbooks.length} logbook berhasil diparaf!`);
-  };
-
-  const handleExportLogbook = () => {
-    toast.info("Fitur export logbook sedang dalam pengembangan");
-  };
-
-  // Calculate statistics
-  const totalEntries = logbookEntries.filter((e) => e.studentId === studentId).length;
-  const approvedEntries = logbookEntries.filter(
-    (e) => e.studentId === studentId && e.mentorSignature?.status === "approved"
-  ).length;
-  const pendingEntries = logbookEntries.filter(
-    (e) => e.studentId === studentId && !e.mentorSignature
-  ).length;
+  if (isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto p-6">
+        <Card>
+          <CardContent className="pt-6 text-muted-foreground">
+            Memuat detail logbook mahasiswa...
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!student) {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <Alert variant="destructive">
-          <AlertDescription>Mahasiswa tidak ditemukan</AlertDescription>
+          <AlertDescription>{errorMessage || "Mahasiswa tidak ditemukan"}</AlertDescription>
         </Alert>
         <Button asChild className="mt-4">
           <Link to="/mentor/logbook">
@@ -405,7 +291,6 @@ function StudentLogbookDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-      {/* Header */}
       <div className="space-y-4">
         <Button variant="ghost" asChild>
           <Link to="/mentor/logbook">
@@ -418,15 +303,13 @@ function StudentLogbookDetailPage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Detail Logbook Mahasiswa</h1>
             <p className="text-muted-foreground mt-1">
-              Periode magang dari{" "}
-              {new Date(mockWorkPeriod.startDate).toLocaleDateString("id-ID")} hingga{" "}
-              {new Date(mockWorkPeriod.endDate).toLocaleDateString("id-ID")}
+              Menampilkan aktivitas logbook mahasiswa secara real-time dari backend
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleSignAllLogbooks} disabled={pendingEntries === 0}>
+            <Button onClick={handleSignAllLogbooks} disabled={pendingEntries === 0 || isApprovingAll}>
               <CheckCircle className="mr-2 h-4 w-4" />
-              Paraf Semua
+              {isApprovingAll ? "Memproses..." : "Paraf Semua"}
             </Button>
             <Button onClick={handleExportLogbook} variant="outline">
               <Download className="mr-2 h-4 w-4" />
@@ -436,7 +319,6 @@ function StudentLogbookDetailPage() {
         </div>
       </div>
 
-      {/* Student Info Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -448,7 +330,7 @@ function StudentLogbookDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
-              <p className="font-medium">{student.name}</p>
+              <p className="font-medium">{student.nama || student.name || "-"}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">NIM</p>
@@ -456,29 +338,28 @@ function StudentLogbookDetailPage() {
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Program Studi</p>
-              <p className="font-medium">{student.major}</p>
+              <p className="font-medium">{student.prodi || "-"}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Tempat KP</p>
-              <p className="font-medium">{student.company || "-"}</p>
+              <p className="text-sm text-muted-foreground">Perusahaan</p>
+              <p className="font-medium">{student.companyName || student.company || "-"}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Bagian/Bidang</p>
-              <p className="font-medium">{student.position || "-"}</p>
+              <p className="text-sm text-muted-foreground">Bidang</p>
+              <p className="font-medium">{student.division || "-"}</p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Email</p>
-              <p className="font-medium">{student.email}</p>
+              <p className="font-medium">{student.email || "-"}</p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Statistics */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>Total Logbook Diisi</CardDescription>
+            <CardDescription>Total Logbook</CardDescription>
             <CardTitle className="text-3xl">{totalEntries}</CardTitle>
           </CardHeader>
         </Card>
@@ -496,90 +377,87 @@ function StudentLogbookDetailPage() {
         </Card>
       </div>
 
-      {/* Alert */}
       {pendingEntries > 0 && (
         <Alert className="border-l-4 border-yellow-500 bg-yellow-50">
           <Clock className="h-4 w-4 text-yellow-600" />
           <AlertDescription className="text-yellow-800">
-            Ada {pendingEntries} logbook yang menunggu paraf Anda
+            Ada {pendingEntries} logbook yang menunggu paraf Anda.
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Logbook Table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Tabel Logbook Periode Lengkap
+            Daftar Logbook
           </CardTitle>
-          <CardDescription>
-            Semua tanggal kerja dalam periode magang (termasuk yang belum diisi)
-          </CardDescription>
+          <CardDescription>Semua entri logbook mahasiswa dari endpoint backend</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg overflow-x-auto">
-            <Table>
+          <div className="border rounded-lg">
+            <Table className="table-fixed w-full">
+              <colgroup>
+                <col className="w-28" />
+                <col />
+                <col className="w-36" />
+                <col className="w-40" />
+              </colgroup>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px]">Minggu</TableHead>
-                  <TableHead className="w-[100px]">Hari</TableHead>
-                  <TableHead className="w-[150px]">Tanggal</TableHead>
-                  <TableHead>Deskripsi Kegiatan</TableHead>
-                  <TableHead className="w-[150px]">Status Paraf</TableHead>
-                  <TableHead className="w-[120px]">Aksi</TableHead>
+                  <TableHead className="w-28 text-left align-middle text-sm font-semibold">Tanggal</TableHead>
+                  <TableHead className="text-left align-middle text-sm font-semibold">Deskripsi Kegiatan</TableHead>
+                  <TableHead className="w-36 text-sm font-semibold">Status Paraf</TableHead>
+                  <TableHead className="w-40 text-sm font-semibold">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {allDates.map((date, index) => {
-                  const entry = getLogbookForDate(date);
-                  const weekNumber = getWeekNumber(date);
-                  const showWeekCell =
-                    index === 0 || getWeekNumber(allDates[index - 1]) !== weekNumber;
-                  const rowSpan = showWeekCell ? getWeekRowSpan(index) : 0;
-
-                  return (
-                    <TableRow key={date}>
-                      {showWeekCell && (
-                        <TableCell
-                          rowSpan={rowSpan}
-                          className="font-medium text-center bg-muted/50"
-                        >
-                          {weekNumber}
-                        </TableCell>
-                      )}
-                      <TableCell className="font-medium">{getDayName(date)}</TableCell>
-                      <TableCell className="text-sm">{formatDate(date)}</TableCell>
-                      <TableCell>
-                        {entry ? (
-                          <div className="space-y-1">
-                            <p className="font-medium text-sm">{entry.description}</p>
-                            <p className="text-sm text-muted-foreground whitespace-pre-line line-clamp-3">
-                              {entry.activities}
+                {entries.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                      Belum ada logbook yang diajukan mahasiswa ini.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  entries.map((entry) => (
+                    <TableRow key={entry.id} className="align-top">
+                      <TableCell className="align-middle text-left text-xs sm:text-sm border-r py-4 pr-3 whitespace-nowrap">{formatDate(entry.date)}</TableCell>
+                      <TableCell className="align-middle text-left py-4 min-w-0">
+                        <div className="min-h-16 min-w-0 break-words flex flex-col justify-center gap-2">
+                          <p className="font-medium text-sm leading-5 whitespace-normal break-words min-w-0">
+                            {entry.description}
+                          </p>
+                          {entry.activity && entry.activity.trim() !== entry.description.trim() && (
+                            <p className="text-sm leading-5 text-muted-foreground whitespace-pre-line break-words min-w-0">
+                              {entry.activity}
                             </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-middle py-4">{getStatusBadge(entry.status)}</TableCell>
+                      <TableCell className="align-middle py-4">
+                        {entry.status === "PENDING" ? (
+                          <div className="flex flex-wrap items-center gap-2 min-w-0">
+                            <Button size="sm" onClick={() => handleSignLogbook(entry.id)}>
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Paraf
+                            </Button>
+                            <RejectLogbookButton
+                              logbookId={entry.id}
+                              studentName={student.nama || student.name || "-"}
+                              date={entry.date}
+                              activity={entry.activity}
+                              onSuccess={() => handleRejectLogbook(entry.id)}
+                              size="sm"
+                            />
                           </div>
                         ) : (
-                          <span className="text-muted-foreground text-sm italic">
-                            Belum mengisi logbook
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{getMentorSignatureBadge(entry)}</TableCell>
-                      <TableCell>
-                        {entry && !entry.mentorSignature && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleSignLogbook(entry.id)}
-                            className="w-full"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Paraf
-                          </Button>
+                          <span className="text-xs text-muted-foreground">Selesai</span>
                         )}
                       </TableCell>
                     </TableRow>
-                  );
-                })}
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

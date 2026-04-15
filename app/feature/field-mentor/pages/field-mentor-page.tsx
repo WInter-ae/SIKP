@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import {
   UserPlus,
@@ -32,15 +32,13 @@ import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 
+import { getCompleteInternshipData } from "~/feature/during-intern/services/student-api";
 import type { FieldMentor, MentorRequest } from "../types";
-
-const MENTOR_CODE_TIMESTAMP_LENGTH = 6;
-const MENTOR_CODE_RANDOM_LENGTH = 4;
-const MENTOR_CODE_RANDOM_MAX = 10000;
 
 function FieldMentorPage() {
   const navigate = useNavigate();
   const [showRequestForm, setShowRequestForm] = useState(false);
+  const [isLoadingMentor, setIsLoadingMentor] = useState(true);
   const [mentorRequest, setMentorRequest] = useState<MentorRequest>({
     mentorName: "",
     mentorEmail: "",
@@ -50,7 +48,53 @@ function FieldMentorPage() {
     address: "",
   });
   const [currentMentor, setCurrentMentor] = useState<FieldMentor | null>(null);
-  const [showMentorCode, setShowMentorCode] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadMentorData() {
+      setIsLoadingMentor(true);
+
+      try {
+        const response = await getCompleteInternshipData();
+
+        if (!isMounted || !response.success || !response.data?.mentor) {
+          return;
+        }
+
+        const mentor = response.data.mentor;
+        const internshipStatus = response.data.internship.status;
+
+        setCurrentMentor({
+          id: mentor.id,
+          code: `AUTO-${mentor.id}`,
+          name: mentor.name,
+          email: mentor.email,
+          company: mentor.company,
+          position: mentor.position,
+          phone: mentor.phone || "-",
+          status: internshipStatus === "AKTIF" ? "approved" : "registered",
+          createdAt: response.data.internship.createdAt,
+          registeredAt: response.data.internship.updatedAt,
+          approvedAt: internshipStatus === "AKTIF" ? response.data.internship.updatedAt : undefined,
+          photo: undefined,
+          nip: "",
+        });
+      } catch {
+        // Keep empty state when backend data is unavailable or user is not authenticated.
+      } finally {
+        if (isMounted) {
+          setIsLoadingMentor(false);
+        }
+      }
+    }
+
+    loadMentorData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -62,13 +106,9 @@ function FieldMentorPage() {
   const handleSubmitRequest = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const timestamp = Date.now();
-    const random = Math.floor(Math.random() * MENTOR_CODE_RANDOM_MAX);
-    const generatedCode = `MNT-${timestamp.toString().slice(-MENTOR_CODE_TIMESTAMP_LENGTH)}-${random.toString().padStart(MENTOR_CODE_RANDOM_LENGTH, "0")}`;
-
     const newMentor: FieldMentor = {
       id: Date.now().toString(),
-      code: generatedCode,
+      code: `AUTO-${Date.now()}`,
       name: mentorRequest.mentorName,
       email: mentorRequest.mentorEmail,
       company: mentorRequest.company,
@@ -80,7 +120,6 @@ function FieldMentorPage() {
     };
 
     setCurrentMentor(newMentor);
-    setShowMentorCode(true);
     setShowRequestForm(false);
 
     setMentorRequest({
@@ -92,28 +131,23 @@ function FieldMentorPage() {
       address: "",
     });
 
-    toast.success("Request mentor berhasil! Kode mentor telah digenerate.");
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("Kode berhasil disalin!");
+    toast.success("Pengajuan mentor berhasil dikirim! Menunggu persetujuan dari Dosen PA.");
   };
 
   const getStatusBadge = (status: FieldMentor["status"]) => {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+          <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
             <Clock className="mr-1 h-3 w-3" />
-            Menunggu Mentor Registrasi
+            Menunggu Persetujuan Dosen PA
           </Badge>
         );
       case "registered":
         return (
           <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
             <Info className="mr-1 h-3 w-3" />
-            Menunggu Persetujuan Admin
+            Email Aktivasi Terkirim
           </Badge>
         );
       case "approved":
@@ -166,14 +200,13 @@ function FieldMentorPage() {
         <AlertTitle>Informasi Mentor Lapangan</AlertTitle>
         <AlertDescription className="mt-2">
           <p className="mb-2">
-            Halaman ini digunakan untuk mendaftarkan mentor lapangan Anda di
-            tempat Kerja Praktik.
+            Halaman ini digunakan untuk mengajukan mentor lapangan Anda kepada Dosen PA.
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
-            <li>Isi data mentor lapangan dengan lengkap</li>
-            <li>Setelah submit, sistem akan generate kode unik untuk mentor</li>
-            <li>Berikan kode tersebut kepada mentor untuk registrasi dan login</li>
-            <li>Mentor dapat menggunakan kode untuk mengakses sistem</li>
+            <li>Isi data mentor lapangan dengan lengkap dan akurat</li>
+            <li>Setelah submit, pengajuan akan dikirim ke Dosen PA untuk persetujuan</li>
+            <li>Mentor akan menerima email aktivasi dari sistem saat pengajuan disetujui</li>
+            <li>Mentor dapat langsung login dan mulai bekerja tanpa perlu kode registrasi</li>
           </ul>
         </AlertDescription>
       </Alert>
@@ -265,27 +298,20 @@ function FieldMentorPage() {
               </div>
             </div>
 
-            {/* Mentor Code Section */}
-            {showMentorCode && (
-              <Card className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
+            {/* Approval Waiting Section */}
+            {currentMentor.status === "pending" && (
+              <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
                 <CardContent className="pt-6">
-                  <Label className="text-muted-foreground text-sm">Kode Mentor</Label>
-                  <div className="flex items-center gap-2 mt-2">
-                    <code className="flex-1 text-2xl font-bold text-green-700 dark:text-green-400 bg-background p-3 rounded-md border">
-                      {currentMentor.code}
-                    </code>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => copyToClipboard(currentMentor.code)}
-                      className="h-12 w-12"
-                    >
-                      <Copy className="h-5 w-5" />
-                    </Button>
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-900 dark:text-amber-200">Menunggu Persetujuan Dosen PA</p>
+                      <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
+                        Pengajuan sedang ditinjau oleh Dosen PA. Anda akan menerima notifikasi setelah ada keputusan. 
+                        Mentor akan mendapat email aktivasi jika pengajuan disetujui.
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-3">
-                    ⚠️ Berikan kode ini kepada mentor untuk registrasi dan login ke sistem
-                  </p>
                 </CardContent>
               </Card>
             )}
@@ -294,7 +320,7 @@ function FieldMentorPage() {
       )}
 
       {/* Empty State / Request Button */}
-      {!currentMentor && !showRequestForm && (
+      {!currentMentor && !showRequestForm && !isLoadingMentor && (
         <Card className="text-center py-12">
           <CardContent className="space-y-6">
             <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
@@ -310,6 +336,22 @@ function FieldMentorPage() {
               <UserPlus className="mr-2 h-5 w-5" />
               Request Mentor Lapangan
             </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!currentMentor && !showRequestForm && isLoadingMentor && (
+        <Card className="text-center py-12">
+          <CardContent className="space-y-4">
+            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto animate-pulse">
+              <UserPlus className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">Memuat Data Mentor</h3>
+              <p className="text-muted-foreground">
+                Kami sedang mengambil data mentor yang sudah terkait dengan internship Anda.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -358,7 +400,7 @@ function FieldMentorPage() {
                       type="email"
                       required
                       className="pl-10"
-                      placeholder="email@example.com"
+                      placeholder="email@perusahaan.com"
                       value={mentorRequest.mentorEmail}
                       onChange={handleInputChange}
                     />
@@ -455,7 +497,7 @@ function FieldMentorPage() {
       )}
 
       {/* Process Flow Info Section */}
-      <Card className="border-l-4 border-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/20">
+      <Card className="border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             📌 Alur Proses Mentor Lapangan
@@ -468,9 +510,9 @@ function FieldMentorPage() {
                 1
               </span>
               <div>
-                <p className="font-medium">Mahasiswa Request Mentor</p>
+                <p className="font-medium">Anda Mengajukan Mentor</p>
                 <p className="text-sm text-muted-foreground">
-                  Isi form dan submit, sistem akan generate kode unik
+                  Lengkapi form dengan data mentor dari perusahaan tempat magang
                 </p>
               </div>
             </li>
@@ -479,9 +521,9 @@ function FieldMentorPage() {
                 2
               </span>
               <div>
-                <p className="font-medium">Status: Menunggu Mentor Registrasi</p>
+                <p className="font-medium">Pengajuan Dikirim ke Dosen PA</p>
                 <p className="text-sm text-muted-foreground">
-                  Berikan kode kepada mentor untuk registrasi
+                  Data mentor Anda dikirimkan untuk ditinjau oleh Dosen Pembimbing Akademik
                 </p>
               </div>
             </li>
@@ -490,9 +532,9 @@ function FieldMentorPage() {
                 3
               </span>
               <div>
-                <p className="font-medium">Mentor Registrasi</p>
+                <p className="font-medium">Dosen PA Melakukan Review</p>
                 <p className="text-sm text-muted-foreground">
-                  Mentor menggunakan kode untuk membuat akun dan melengkapi data profil
+                  Dosen PA memeriksa kelengkapan dan keabsahan data mentor yang diajukan
                 </p>
               </div>
             </li>
@@ -501,9 +543,9 @@ function FieldMentorPage() {
                 4
               </span>
               <div>
-                <p className="font-medium">Status: Menunggu Persetujuan Admin</p>
+                <p className="font-medium">Keputusan Persetujuan</p>
                 <p className="text-sm text-muted-foreground">
-                  Setelah mentor registrasi, data lengkap akan muncul dan menunggu admin approve
+                  Dosen PA menyetujui atau menolak pengajuan mentor Anda
                 </p>
               </div>
             </li>
@@ -512,9 +554,9 @@ function FieldMentorPage() {
                 5
               </span>
               <div>
-                <p className="font-medium">Admin Approve</p>
+                <p className="font-medium">Mentor Menerima Email Aktivasi</p>
                 <p className="text-sm text-muted-foreground">
-                  Admin memeriksa dan menyetujui/menolak mentor
+                  Jika disetujui, mentor akan menerima email undangan dan dapat mulai login
                 </p>
               </div>
             </li>
@@ -523,17 +565,17 @@ function FieldMentorPage() {
                 6
               </span>
               <div>
-                <p className="font-medium">Status: Disetujui</p>
+                <p className="font-medium">Mentor Sudah Aktif</p>
                 <p className="text-sm text-muted-foreground">
-                  Mentor dapat login dan mulai membimbing
+                  Mentor dapat login ke sistem dan mulai membimbing Anda di perusahaan
                 </p>
               </div>
             </li>
           </ol>
-          <Alert variant="destructive" className="mt-6">
-            <XCircle className="h-4 w-4" />
+          <Alert className="mt-6 border-blue-200 bg-blue-50 dark:bg-blue-950">
+            <CheckCircle className="h-4 w-4" />
             <AlertDescription>
-              Mentor tidak dapat login sebelum mendapat persetujuan dari admin
+              Mentor tidak perlu kode registrasi. Sistem otomatis mengirim email aktivasi saat persetujuan Dosen PA selesai.
             </AlertDescription>
           </Alert>
         </CardContent>

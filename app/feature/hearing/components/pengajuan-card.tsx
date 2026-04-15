@@ -85,7 +85,7 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
   return (
     <>
       <Card className="shadow-md hover:shadow-lg transition-shadow border-2">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950">
+        <CardHeader className="bg-linear-to-r from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-3 flex-1">
               <Avatar className="h-12 w-12 bg-primary text-primary-foreground flex items-center justify-center font-semibold">
@@ -136,9 +136,9 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
                 >
                   <div className="flex items-start gap-3">
                     {pengajuan.status === "approved" ? (
-                      <Check className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      <Check className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
                     ) : (
-                      <XCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      <XCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
                     )}
                     <div className="flex-1 space-y-2">
                       <p
@@ -199,7 +199,7 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
             </h4>
             <div className="grid gap-3 bg-muted p-4 rounded-lg">
               <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <MapPin className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Tempat</p>
                   <p className="font-medium">
@@ -209,7 +209,7 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
               </div>
 
               <div className="flex items-start gap-3">
-                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <Calendar className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Tanggal</p>
                   <p className="font-medium">
@@ -219,7 +219,7 @@ export function PengajuanCard({ pengajuan, onVerifikasi }: PengajuanCardProps) {
               </div>
 
               <div className="flex items-start gap-3">
-                <Clock className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                <Clock className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="text-sm text-muted-foreground">Waktu</p>
                   <p className="font-medium">

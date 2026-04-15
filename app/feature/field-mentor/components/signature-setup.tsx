@@ -19,6 +19,7 @@ interface SignatureSetupProps {
 
 export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: SignatureSetupProps) {
   const sigCanvas = useRef<SignatureCanvas>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -27,24 +28,57 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
   const handleClear = () => {
     sigCanvas.current?.clear();
     setPreview(null);
-  };
-
-  const handlePreview = () => {
-    if (sigCanvas.current) {
-      const base64 = sigCanvas.current.toDataURL("image/png");
-      setPreview(base64);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
+  const handleChooseFile = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleUploadSignature = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("File harus berupa gambar (PNG/JPG/WebP).");
+      return;
+    }
+
+    const maxSize = 2 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error("Ukuran file maksimal 2MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result === "string") {
+        sigCanvas.current?.clear();
+        setPreview(result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
-    if (!preview) {
+    // Auto-generate preview from canvas if empty but canvas has content
+    let finalPreview = preview;
+    if (!finalPreview && sigCanvas.current && !sigCanvas.current.isEmpty()) {
+      finalPreview = sigCanvas.current.toDataURL("image/png");
+      setPreview(finalPreview);
+    }
+
+    if (!finalPreview) {
       toast.error("Silakan buat tanda tangan terlebih dahulu");
       return;
     }
 
     setIsSaving(true);
     try {
-      const response = await saveMentorSignature(preview);
+      const response = await saveMentorSignature(finalPreview);
       if (response.success) {
         toast.success("Tanda tangan berhasil disimpan!");
         setIsOpen(false);
@@ -121,9 +155,11 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
                   </DialogHeader>
                   <SignatureDialog
                     sigCanvas={sigCanvas}
+                    fileInputRef={fileInputRef}
                     preview={preview}
                     onClear={handleClear}
-                    onPreview={handlePreview}
+                    onChooseFile={handleChooseFile}
+                    onUploadSignature={handleUploadSignature}
                     onSave={handleSave}
                     isSaving={isSaving}
                   />
@@ -158,9 +194,11 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
                 </DialogHeader>
                 <SignatureDialog
                   sigCanvas={sigCanvas}
+                  fileInputRef={fileInputRef}
                   preview={preview}
                   onClear={handleClear}
-                  onPreview={handlePreview}
+                  onChooseFile={handleChooseFile}
+                  onUploadSignature={handleUploadSignature}
                   onSave={handleSave}
                   isSaving={isSaving}
                 />
@@ -173,20 +211,24 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
   );
 }
 
-interface SignatureDialogProps {
+export interface SignatureDialogProps {
   sigCanvas: React.RefObject<SignatureCanvas | null>;
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
   preview: string | null;
   onClear: () => void;
-  onPreview: () => void;
-  onSave: () => void;
+  onChooseFile: () => void;
+  onUploadSignature: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onSave: () => Promise<void> | void;
   isSaving: boolean;
 }
 
-function SignatureDialog({
+export function SignatureDialog({
   sigCanvas,
+  fileInputRef,
   preview,
   onClear,
-  onPreview,
+  onChooseFile,
+  onUploadSignature,
   onSave,
   isSaving,
 }: SignatureDialogProps) {
@@ -203,15 +245,23 @@ function SignatureDialog({
         />
       </div>
 
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={onUploadSignature}
+      />
+
       <div className="flex gap-2 justify-between">
         <Button type="button" variant="outline" onClick={onClear}>
           Hapus
         </Button>
         <div className="flex gap-2">
-          <Button type="button" variant="secondary" onClick={onPreview}>
-            Preview
+          <Button type="button" variant="outline" onClick={onChooseFile}>
+            Upload TTD
           </Button>
-          <Button type="button" onClick={onSave} disabled={!preview || isSaving}>
+          <Button type="button" onClick={onSave} disabled={isSaving}>
             {isSaving ? "Menyimpan..." : "Simpan Tanda Tangan"}
           </Button>
         </div>
@@ -226,3 +276,5 @@ function SignatureDialog({
     </div>
   );
 }
+
+export { SignatureCanvas };
