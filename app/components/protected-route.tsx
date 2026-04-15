@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
 import { useUser } from "~/contexts/user-context";
+import { type EffectivePermission, type EffectiveRole } from "~/lib/sso-types";
 
 /**
  * Protected Route Wrapper
@@ -9,12 +10,33 @@ import { useUser } from "~/contexts/user-context";
 export function ProtectedRoute({
   children,
   requiredRoles,
+  requiredPermissions,
 }: {
   children: React.ReactNode;
-  requiredRoles?: string[];
+  requiredRoles?: EffectiveRole[];
+  requiredPermissions?: EffectivePermission[];
 }) {
   const navigate = useNavigate();
-  const { user, isLoading, isAuthenticated } = useUser();
+  const {
+    isLoading,
+    isAuthenticated,
+    effectiveRoles,
+    effectivePermissions,
+    activeIdentity,
+    availableIdentities,
+  } = useUser();
+
+  const hasRoleAccess =
+    !requiredRoles ||
+    requiredRoles.length === 0 ||
+    requiredRoles.some((role) => effectiveRoles.includes(role));
+
+  const hasPermissionAccess =
+    !requiredPermissions ||
+    requiredPermissions.length === 0 ||
+    requiredPermissions.some((permission) =>
+      effectivePermissions.includes(permission),
+    );
 
   useEffect(() => {
     if (isLoading) return;
@@ -25,12 +47,30 @@ export function ProtectedRoute({
       return;
     }
 
+    if (availableIdentities.length > 1 && !activeIdentity) {
+      navigate("/identity-chooser", { replace: true });
+      return;
+    }
+
     // Check role-based access
-    if (requiredRoles && user && !requiredRoles.includes(user.role)) {
+    if (!hasRoleAccess) {
       navigate("/unauthorized", { replace: true });
       return;
     }
-  }, [isLoading, isAuthenticated, user, requiredRoles, navigate]);
+
+    if (!hasPermissionAccess) {
+      navigate("/unauthorized", { replace: true });
+      return;
+    }
+  }, [
+    activeIdentity,
+    availableIdentities.length,
+    hasPermissionAccess,
+    hasRoleAccess,
+    isAuthenticated,
+    isLoading,
+    navigate,
+  ]);
 
   // Show loading state
   if (isLoading) {
@@ -48,8 +88,16 @@ export function ProtectedRoute({
     return null;
   }
 
+  if (availableIdentities.length > 1 && !activeIdentity) {
+    return null;
+  }
+
   // Check role
-  if (requiredRoles && user && !requiredRoles.includes(user.role)) {
+  if (!hasRoleAccess) {
+    return null;
+  }
+
+  if (!hasPermissionAccess) {
     return null;
   }
 

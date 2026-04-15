@@ -3,8 +3,12 @@
  * Handles all mentor (pembimbing lapangan) related API calls
  */
 
-import { ipost, iget, iput } from "~/lib/api-client";
+import { ipost, iget, iput, get } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
+import {
+  getActiveProfileSignature,
+  getSignatureManageUrl,
+} from "~/lib/services/signature-api";
 
 // ==================== TYPES ====================
 
@@ -100,8 +104,13 @@ function normalizeCategoryKey(value: string): string {
 }
 
 function scoreFromComponents(
-  components: Array<{ categoryId?: string; categoryKey?: string; label?: string; score?: number }> | null,
-  aliases: string[]
+  components: Array<{
+    categoryId?: string;
+    categoryKey?: string;
+    label?: string;
+    score?: number;
+  }> | null,
+  aliases: string[],
 ): number | null {
   if (!components || components.length === 0) return null;
 
@@ -138,38 +147,60 @@ function normalizeAssessmentPayload(payload: unknown): AssessmentData | null {
 
   const rawComponents = Array.isArray(row.components)
     ? (row.components as Record<string, unknown>[])
-    : Array.isArray((row.data as Record<string, unknown> | undefined)?.components)
-      ? ((row.data as Record<string, unknown>).components as Record<string, unknown>[])
+    : Array.isArray(
+          (row.data as Record<string, unknown> | undefined)?.components,
+        )
+      ? ((row.data as Record<string, unknown>).components as Record<
+          string,
+          unknown
+        >[])
       : null;
 
   const parsedComponents = rawComponents
     ? rawComponents.map((component) => ({
         id: typeof component.id === "string" ? component.id : undefined,
-        categoryId: String(component.categoryId || component.category_id || component.categoryKey || ""),
-        categoryKey: typeof component.categoryKey === "string" ? component.categoryKey : undefined,
-        label: typeof component.label === "string" ? component.label : undefined,
+        categoryId: String(
+          component.categoryId ||
+            component.category_id ||
+            component.categoryKey ||
+            "",
+        ),
+        categoryKey:
+          typeof component.categoryKey === "string"
+            ? component.categoryKey
+            : undefined,
+        label:
+          typeof component.label === "string" ? component.label : undefined,
         weight: Number(component.weight ?? 0),
         maxScore: Number(component.maxScore ?? component.max_score ?? 100),
         score: Number(component.score ?? 0),
-        weightedScore: Number(component.weightedScore ?? component.weighted_score ?? 0),
+        weightedScore: Number(
+          component.weightedScore ?? component.weighted_score ?? 0,
+        ),
         sortOrder: Number(component.sortOrder ?? component.sort_order ?? 0),
       }))
-      : null;
+    : null;
 
-  const directId = String(row.id || row.assessmentId || row.assessment_id || "").trim();
+  const directId = String(
+    row.id || row.assessmentId || row.assessment_id || "",
+  ).trim();
   const kehadiran = Number(
     row.kehadiran ??
       row.attendance ??
       row.nilaiKehadiran ??
       scoreFromComponents(parsedComponents, ["kehadiran", "attendance"]) ??
-      0
+      0,
   );
   const kerjasama = Number(
     row.kerjasama ??
       row.cooperation ??
       row.nilaiKerjasama ??
-      scoreFromComponents(parsedComponents, ["kerjasama", "cooperation", "teamwork"]) ??
-      0
+      scoreFromComponents(parsedComponents, [
+        "kerjasama",
+        "cooperation",
+        "teamwork",
+      ]) ??
+      0,
   );
   const sikapEtika = Number(
     row.sikapEtika ??
@@ -184,47 +215,77 @@ function normalizeAssessmentPayload(payload: unknown): AssessmentData | null {
       row.ethics ??
       row.nilaiSikapEtika ??
       row.nilai_sikap_etika ??
-        scoreFromComponents(parsedComponents, ["sikap", "etika", "attitude", "ethics"]) ??
-      0
+      scoreFromComponents(parsedComponents, [
+        "sikap",
+        "etika",
+        "attitude",
+        "ethics",
+      ]) ??
+      0,
   );
   const prestasiKerja = Number(
     row.prestasiKerja ??
       row.prestasi_kerja ??
       row.workAchievement ??
       row.nilaiPrestasiKerja ??
-      scoreFromComponents(parsedComponents, ["prestasi", "workachievement", "kinerja"]) ??
-      0
+      scoreFromComponents(parsedComponents, [
+        "prestasi",
+        "workachievement",
+        "kinerja",
+      ]) ??
+      0,
   );
   const kreatifitas = Number(
     row.kreatifitas ??
       row.kreativitas ??
       row.creativity ??
       row.nilaiKreatifitas ??
-      scoreFromComponents(parsedComponents, ["kreatif", "kreativ", "creativ", "inovasi"]) ??
-      0
+      scoreFromComponents(parsedComponents, [
+        "kreatif",
+        "kreativ",
+        "creativ",
+        "inovasi",
+      ]) ??
+      0,
   );
 
-  const hasScores = Boolean(kehadiran || kerjasama || sikapEtika || prestasiKerja || kreatifitas);
+  const hasScores = Boolean(
+    kehadiran || kerjasama || sikapEtika || prestasiKerja || kreatifitas,
+  );
 
   if (directId || hasScores) {
     return {
       id: directId || "assessment",
-      studentId: String(row.studentId || row.studentUserId || row.student_id || row.userId || ""),
+      studentId: String(
+        row.studentId ||
+          row.studentUserId ||
+          row.student_id ||
+          row.userId ||
+          "",
+      ),
       mentorId: String(row.mentorId || row.mentor_id || row.mentorUserId || ""),
       kehadiran,
       kerjasama,
       sikapEtika,
       prestasiKerja,
       kreatifitas,
-      totalScore: Number(row.totalScore ?? row.finalScore ?? row.nilaiAkhir ?? 0),
+      totalScore: Number(
+        row.totalScore ?? row.finalScore ?? row.nilaiAkhir ?? 0,
+      ),
       feedback:
         typeof row.feedback === "string"
           ? row.feedback
           : typeof row.catatan === "string"
             ? row.catatan
             : undefined,
-      createdAt: typeof row.createdAt === "string" ? row.createdAt : new Date().toISOString(),
-      updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : new Date().toISOString(),
+      createdAt:
+        typeof row.createdAt === "string"
+          ? row.createdAt
+          : new Date().toISOString(),
+      updatedAt:
+        typeof row.updatedAt === "string"
+          ? row.updatedAt
+          : new Date().toISOString(),
       components: parsedComponents || undefined,
     };
   }
@@ -268,7 +329,9 @@ export async function getMentorProfile(): Promise<ApiResponse<MentorProfile>> {
  * PUT /api/mentor/profile
  */
 export async function updateMentorProfile(
-  data: Partial<Omit<MentorProfile, "id" | "userId" | "createdAt" | "updatedAt">>
+  data: Partial<
+    Omit<MentorProfile, "id" | "userId" | "createdAt" | "updatedAt">
+  >,
 ): Promise<ApiResponse<MentorProfile>> {
   return iput<MentorProfile>("/api/mentor/profile", data);
 }
@@ -286,7 +349,7 @@ export async function getMentees(): Promise<ApiResponse<MenteeData[]>> {
  * GET /api/mentor/mentees/:studentId
  */
 export async function getMenteeDetail(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<MenteeData>> {
   return iget<MenteeData>(`/api/mentor/mentees/${studentId}`);
 }
@@ -296,183 +359,10 @@ export async function getMenteeDetail(
  * GET /api/mentor/logbook/:studentId
  */
 export async function getStudentLogbook(
-  studentIdOrInternshipId: string
-): Promise<ApiResponse<{ internshipId: string; entries: LogbookEntry[] }>> {
-  const hasSubmittedMarkers = (row: Record<string, unknown>): boolean => {
-    const submittedAt =
-      row.submittedAt ||
-      row.submitted_at ||
-      row.sentAt ||
-      row.sent_at ||
-      row.diajukanAt ||
-      row.diajukan_at;
-    const submittedFlag =
-      row.isSubmitted ??
-      row.submitted ??
-      row.is_submitted ??
-      row.hasBeenSubmitted ??
-      row.has_been_submitted;
-
-    const createdRaw = String(row.createdAt || row.created_at || "");
-    const updatedRaw = String(row.updatedAt || row.updated_at || "");
-    const createdMs = Date.parse(createdRaw);
-    const updatedMs = Date.parse(updatedRaw);
-    const updatedAfterCreate =
-      Number.isFinite(createdMs) && Number.isFinite(updatedMs) && updatedMs > createdMs;
-
-    return Boolean(submittedAt) || submittedFlag === true || updatedAfterCreate;
-  };
-
-  const normalizeStatus = (value: unknown, row: Record<string, unknown>): LogbookEntry["status"] => {
-    const normalized = String(value || "").toUpperCase();
-    if (normalized === "APPROVED" || normalized === "REJECTED") {
-      return normalized;
-    }
-    if (normalized === "PENDING") {
-      return hasSubmittedMarkers(row) ? "PENDING" : "DRAFT";
-    }
-    if (normalized === "DRAFT" || normalized === "UNSUBMITTED" || normalized === "BELUM_DIAJUKAN") {
-      return "DRAFT";
-    }
-
-    return hasSubmittedMarkers(row) ? "PENDING" : "DRAFT";
-  };
-
-  const normalizeEntry = (value: unknown): LogbookEntry | null => {
-    if (!value || typeof value !== "object") return null;
-
-    const row = value as Record<string, unknown>;
-    const id = String(row.id || row.logbookId || row.logbook_id || row._id || "").trim();
-    const date = String(row.date || row.tanggal || row.createdAt || row.created_at || "").trim();
-    const activity = String(row.activity || row.kegiatan || row.title || row.namaKegiatan || "").trim();
-    const description = String(
-      row.description || row.deskripsi || row.descriptionText || row.keterangan || activity || ""
-    ).trim();
-
-    if (!id && !date && !activity && !description) return null;
-
-    return {
-      id: id || `${date || "logbook"}-${activity || description || "entry"}`,
-      studentId: String(row.studentId || row.userId || row.internshipId || ""),
-      date,
-      activity: activity || description || "-",
-      description: description || activity || "-",
-      mentorSignature: typeof row.mentorSignature === "string" ? row.mentorSignature : undefined,
-      mentorSignedAt: typeof row.mentorSignedAt === "string" ? row.mentorSignedAt : undefined,
-      status: normalizeStatus(row.status, row),
-      rejectionNote: typeof row.rejectionNote === "string" ? row.rejectionNote : undefined,
-      createdAt: String(row.createdAt || row.created_at || date || ""),
-      updatedAt: String(row.updatedAt || row.updated_at || row.createdAt || row.created_at || date || ""),
-    };
-  };
-
-  const extractEntries = (payload: unknown): LogbookEntry[] => {
-    if (Array.isArray(payload)) {
-      return payload.map(normalizeEntry).filter((entry): entry is LogbookEntry => Boolean(entry));
-    }
-
-    if (!payload || typeof payload !== "object") {
-      return [];
-    }
-
-    const obj = payload as Record<string, unknown>;
-
-    const commonCandidates = [
-      obj.entries,
-      obj.logbooks,
-      obj.items,
-      obj.results,
-      obj.rows,
-      obj.data,
-    ];
-
-    for (const candidate of commonCandidates) {
-      const parsed = extractEntries(candidate);
-      if (parsed.length > 0) return parsed;
-    }
-
-    for (const value of Object.values(obj)) {
-      const parsed = extractEntries(value);
-      if (parsed.length > 0) return parsed;
-    }
-
-    return [];
-  };
-
-  const extractInternshipId = (payload: unknown, fallbackRawId: string): string => {
-    if (payload && typeof payload === "object") {
-      const obj = payload as Record<string, unknown>;
-      const direct = obj.internshipId;
-      if (typeof direct === "string" && direct.trim()) return direct;
-
-      const nested = obj.data;
-      if (nested && typeof nested === "object") {
-        const nestedId = (nested as Record<string, unknown>).internshipId;
-        if (typeof nestedId === "string" && nestedId.trim()) return nestedId;
-      }
-    }
-
-    return fallbackRawId.startsWith("int_") ? fallbackRawId : "";
-  };
-
-  const rawId = (studentIdOrInternshipId || "").trim();
-  const fromInternshipId = rawId.startsWith("int_") ? rawId.replace(/^int_/, "") : "";
-  const fromLegacyComposite = rawId.includes("-") ? rawId.split("-")[0] : "";
-
-  const candidateIds = Array.from(
-    new Set([rawId, fromInternshipId, fromLegacyComposite].filter(Boolean))
-  );
-
-  if (candidateIds.length === 0) {
-    return {
-      success: false,
-      message: "studentId tidak valid.",
-      data: null,
-    };
-  }
-
-  let lastError: ApiResponse<{ internshipId: string; entries: LogbookEntry[] }> | null = null;
-
-  for (const candidateId of candidateIds) {
-    const endpoint = `/api/mentor/logbook/${candidateId}`;
-
-    const response = await iget<
-      LogbookEntry[] |
-      { internshipId?: string; entries?: LogbookEntry[]; logbooks?: LogbookEntry[]; items?: LogbookEntry[] }
-    >(endpoint);
-
-    if (!response.success) {
-      lastError = {
-        success: false,
-        message: response.message,
-        data: null,
-      };
-      continue;
-    }
-
-    const payload = response.data;
-    const entries = extractEntries(payload);
-    const internshipId = extractInternshipId(payload, rawId);
-
-    return {
-      success: true,
-      message: response.message,
-      data: {
-        internshipId,
-        entries,
-      },
-    };
-  }
-
-  return (
-    lastError || {
-      success: false,
-      message: "Gagal mengambil logbook mahasiswa.",
-      data: null,
-    }
-  );
+  studentId: string,
+): Promise<ApiResponse<LogbookEntry[]>> {
+  return get<LogbookEntry[]>(`/api/mentor/logbook/${studentId}`);
 }
-
 
 /**
  * Approve (paraf) logbook entry
@@ -480,7 +370,7 @@ export async function getStudentLogbook(
  * POST /api/mentor/logbook/:logbookId/approve
  */
 export async function approveLogbook(
-  logbookId: string
+  logbookId: string,
 ): Promise<ApiResponse<LogbookEntry>> {
   return ipost<LogbookEntry>(`/api/mentor/logbook/${logbookId}/approve`, {});
 }
@@ -491,7 +381,7 @@ export async function approveLogbook(
  */
 export async function rejectLogbook(
   logbookId: string,
-  rejectionReason: string
+  rejectionReason: string,
 ): Promise<ApiResponse<LogbookEntry>> {
   return ipost<LogbookEntry>(`/api/mentor/logbook/${logbookId}/reject`, {
     rejectionReason,
@@ -504,11 +394,11 @@ export async function rejectLogbook(
  * POST /api/mentor/logbook/:studentId/approve-all
  */
 export async function approveAllLogbooks(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<{ message: string; internshipId: string }>> {
   return ipost<{ message: string; internshipId: string }>(
     `/api/mentor/logbook/${studentId}/approve-all`,
-    {}
+    {},
   );
 }
 
@@ -568,7 +458,7 @@ export async function submitAssessment(data: {
  * GET /api/mentor/assessment/:studentId
  */
 export async function getStudentAssessment(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<AssessmentData>> {
   const endpoints = [
     `/api/mentor/assessment/${studentId}`,
@@ -615,9 +505,20 @@ export async function getStudentAssessment(
  */
 export async function updateAssessment(
   assessmentId: string,
-  data: Partial<Omit<AssessmentData, "id" | "studentId" | "mentorId" | "createdAt" | "updatedAt" | "totalScore" | "components">> & {
+  data: Partial<
+    Omit<
+      AssessmentData,
+      | "id"
+      | "studentId"
+      | "mentorId"
+      | "createdAt"
+      | "updatedAt"
+      | "totalScore"
+      | "components"
+    >
+  > & {
     components?: AssessmentComponentPayload[];
-  }
+  },
 ): Promise<ApiResponse<AssessmentData>> {
   const componentPayload =
     data.components && data.components.length > 0
@@ -640,7 +541,10 @@ export async function updateAssessment(
       : {}),
   };
 
-  const response = await iput<unknown>(`/api/mentor/assessment/${assessmentId}`, payload);
+  const response = await iput<unknown>(
+    `/api/mentor/assessment/${assessmentId}`,
+    payload,
+  );
 
   if (!response.success) {
     return response as ApiResponse<AssessmentData>;
@@ -658,24 +562,77 @@ export async function updateAssessment(
  * Save/Update mentor signature in profile (setup once)
  * PUT /api/mentor/signature
  */
-export async function saveMentorSignature(
-  signature: string
-): Promise<ApiResponse<MentorProfile>> {
-  return iput<MentorProfile>("/api/mentor/signature", { signature });
+export async function saveMentorSignature(): Promise<
+  ApiResponse<MentorProfile>
+> {
+  const manageUrlResponse = await getSignatureManageUrl();
+  if (!manageUrlResponse.success || !manageUrlResponse.data) {
+    return {
+      success: false,
+      message:
+        manageUrlResponse.message ||
+        "Kelola tanda tangan hanya tersedia di SSO.",
+      data: null,
+    };
+  }
+
+  return {
+    success: false,
+    message: `Kelola tanda tangan di SSO: ${manageUrlResponse.data}`,
+    data: null,
+  };
 }
 
 /**
  * Get mentor signature from profile
  * GET /api/mentor/signature
  */
-export async function getMentorSignature(): Promise<ApiResponse<{ signature?: string; signatureSetAt?: string }>> {
-  return iget<{ signature?: string; signatureSetAt?: string }>("/api/mentor/signature");
+export async function getMentorSignature(): Promise<
+  ApiResponse<{ signature?: string; signatureSetAt?: string }>
+> {
+  const response = await getActiveProfileSignature();
+
+  if (!response.success) {
+    return {
+      success: false,
+      message: response.message,
+      data: null,
+    };
+  }
+
+  return {
+    success: true,
+    message: response.message,
+    data: response.data
+      ? {
+          signature: response.data.signatureImage,
+          signatureSetAt: response.data.uploadedAt,
+        }
+      : {},
+  };
 }
 
 /**
  * Delete mentor signature from profile
  * DELETE /api/mentor/signature
  */
-export async function deleteMentorSignature(): Promise<ApiResponse<{ success: boolean }>> {
-  return ipost<{ success: boolean }>("/api/mentor/signature/delete", {});
+export async function deleteMentorSignature(): Promise<
+  ApiResponse<{ success: boolean }>
+> {
+  const manageUrlResponse = await getSignatureManageUrl();
+  if (!manageUrlResponse.success || !manageUrlResponse.data) {
+    return {
+      success: false,
+      message:
+        manageUrlResponse.message ||
+        "Kelola tanda tangan hanya tersedia di SSO.",
+      data: null,
+    };
+  }
+
+  return {
+    success: false,
+    message: `Kelola tanda tangan di SSO: ${manageUrlResponse.data}`,
+    data: null,
+  };
 }

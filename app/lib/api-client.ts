@@ -2,10 +2,11 @@
  * API Client untuk SIKP Backend
  *
  * Gunakan modul ini untuk melakukan API calls ke backend selain authentication.
- * Authentication menggunakan better-auth yang sudah dikonfigurasi di auth-client.ts
+ * Authentication menggunakan sso yang sudah dikonfigurasi di auth-client.ts
  */
 
 import { getAuthToken as getStoredToken } from "./auth-client";
+import { clearAuthSession } from "./auth-client";
 import {
   parseJsonResponse,
   getErrorMessage,
@@ -15,12 +16,44 @@ import {
   API_ERROR_MESSAGES,
 } from "./api-error";
 
-// URL untuk pengajuan, teams, templates (URL lama — tetap)
+function isBrowser() {
+  return typeof window !== "undefined";
+}
+
+const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:3000";
+const DEFAULT_PROD_API_BASE_URL =
+  "https://backend-sikp.backend-sikp.workers.dev";
+
+// Gunakan backend lokal saat development, fallback ke URL Workers saat production.
 const API_BASE_URL =
+  import.meta.env.VITE_SIKP_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_APP_AUTH_URL ||
   import.meta.env.VITE_API_BASE_URL ||
-  "https://backend-sikp.backend-sikp.workers.dev";
+  (import.meta.env.DEV
+    ? DEFAULT_LOCAL_API_BASE_URL
+    : DEFAULT_PROD_API_BASE_URL);
+
+function handleUnauthorized() {
+  clearAuthSession();
+
+  if (typeof window !== "undefined") {
+    const currentPath = window.location.pathname;
+    if (
+      currentPath !== "/login" &&
+      currentPath !== "/callback" &&
+      currentPath !== "/identity-chooser"
+    ) {
+      window.location.assign("/login?reason=session_expired");
+    }
+  }
+}
+
+function handleLegacyAuthCutover() {
+  // Do not force logout on 410 legacy endpoints.
+  // Many feature modules are still migrating route prefixes, and redirecting to
+  // login here creates auth loops even when session is valid.
+}
 
 // URL untuk pelaksanaan magang: logbook, mentor, internship, penilaian (URL baru)
 export const INTERNSHIP_API_BASE_URL =
@@ -82,7 +115,7 @@ function getAuthToken(): string | null {
 function buildHeaders(
   token: string | null,
   isFormData: boolean,
-  customHeaders?: Record<string, string>
+  customHeaders?: Record<string, string>,
 ): Record<string, string> {
   const headers: Record<string, string> = {};
 
@@ -91,7 +124,8 @@ function buildHeaders(
     headers["Content-Type"] = "application/json";
   }
 
-  if (token) {
+  // Browser app authenticates via httpOnly cookie session.
+  if (token && !isBrowser()) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -137,19 +171,18 @@ export async function apiClient<T>(
   const { _baseUrl, ...fetchOptions } = options as RequestInit & {
     _baseUrl?: string;
   };
-  const effectiveBaseUrl = _baseUrl || API_BASE_URL;
   const isFormData = fetchOptions.body instanceof FormData;
 
   try {
     const headers = buildHeaders(
       token,
       isFormData,
-      fetchOptions.headers as Record<string, string>,
+      options.headers as Record<string, string>,
     );
 
-    const response = await fetch(`${effectiveBaseUrl}${endpoint}`, {
-      ...fetchOptions,
-      credentials: "omit",
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      credentials: "include",
       headers,
     });
 
@@ -171,22 +204,12 @@ export async function apiClient<T>(
 
     // Handle non-OK responses
     if (!response.ok) {
-      // Handle 401 Unauthorized - token invalid/expired.
       if (response.status === 401) {
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user_data");
+        handleUnauthorized();
+      }
 
-        if (typeof window !== "undefined") {
-          window.location.href = "/login?reason=unauthorized";
-        }
-
-        return {
-          success: false,
-          message:
-            (data as ApiResponse<T>).message ||
-            "Session expired. Silakan login kembali.",
-          data: null,
-        };
+      if (response.status === 410) {
+        handleLegacyAuthCutover();
       }
 
       const errorMessage =
@@ -211,9 +234,10 @@ export async function apiClient<T>(
     }
 
     // Handle other errors
-    const errorMessage = error instanceof Error ? error.message : API_ERROR_MESSAGES.UNKNOWN_ERROR;
+    const errorMessage =
+      error instanceof Error ? error.message : API_ERROR_MESSAGES.UNKNOWN_ERROR;
     console.error("❌ API Client Error:", error);
-    
+
     return {
       success: false,
       message: errorMessage,
@@ -300,7 +324,10 @@ export function iget<T>(endpoint: string, params?: Record<string, string>) {
   const url = params
     ? `${endpoint}?${new URLSearchParams(params).toString()}`
     : endpoint;
-  return apiClient<T>(url, { method: "GET", _baseUrl: INTERNSHIP_API_BASE_URL } as RequestInit & { _baseUrl: string });
+  return apiClient<T>(url, {
+    method: "GET",
+    _baseUrl: INTERNSHIP_API_BASE_URL,
+  } as RequestInit & { _baseUrl: string });
 }
 
 export function ipost<T>(endpoint: string, body?: unknown) {

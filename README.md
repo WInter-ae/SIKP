@@ -65,8 +65,11 @@ pnpm run typecheck  # Generate route types + cek TypeScript
 
 ## Konfigurasi Environment | Environment Variables
 Beberapa environment variable yang digunakan frontend:
+- VITE_SIKP_API_BASE_URL
 - VITE_API_URL
 - VITE_APP_AUTH_URL
+- VITE_API_BASE_URL
+- VITE_SSO_REDIRECT_URI
 
 Jika tidak diisi, frontend menggunakan default endpoint backend yang sudah didefinisikan di kode.
 If not provided, the frontend falls back to the default backend endpoint defined in code.

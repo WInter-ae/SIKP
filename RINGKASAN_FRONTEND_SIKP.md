@@ -1,536 +1,305 @@
-# RINGKASAN FRONTEND SIKP
+# RINGKASAN FRONTEND SIKP (KONDISI AKTUAL)
 
-## 1. Tujuan Dokumen
-Dokumen ini adalah ringkasan teknis lengkap frontend SIKP (Sistem Informasi Kerja Praktik) Manajemen Informatika UNSRI berdasarkan kode yang ada di repository frontend saat ini.
+Dokumen ini merangkum implementasi frontend saat ini berdasarkan kode di folder `app`, dengan fokus pada alur SSO yang sudah aktif, kontrak session auth terbaru, serta gap endpoint domain yang masih tersisa pasca cutover.
 
-Fokus dokumen:
-- Menjelaskan arsitektur frontend dan pola implementasi utama.
-- Menyajikan daftar fitur lengkap berdasarkan modul di app/feature.
-- Menjelaskan alur proses bisnis KP dari sisi aplikasi frontend.
-- Memberi status implementasi per fitur (Implemented, Partial, Mock/TODO).
+## 1. Stack dan Fondasi
 
-Batasan:
-- Ringkasan ini membahas frontend codebase.
-- Detail backend hanya disebut jika berpengaruh langsung pada perilaku frontend.
+- React Router v7 (file-based routing).
+- React 19 + TypeScript.
+- Vite.
+- Tailwind CSS + komponen UI berbasis shadcn/Radix.
+- Context global utama:
+  - `UserProvider` untuk auth/session/identity,
+  - `ThemeProvider` untuk tema.
 
----
+## 2. Status Umum Frontend
 
-## 2. Ringkasan Eksekutif
-Frontend SIKP dibangun dengan React Router v7 (file based routing), React 19, TypeScript, Tailwind CSS v4, dan komponen UI berbasis Radix/shadcn.
+Frontend sudah berada pada mode **SSO-first** untuk login dan session browser:
 
-Aplikasi memakai pola modular feature-first di folder app/feature, dengan route berbasis role:
-- Mahasiswa
-- Admin
-- Dosen
-- Pembimbing Lapangan (Mentor)
+- login/register lokal tidak lagi menjadi jalur auth utama,
+- alur auth aktif memakai SSO UNSRI,
+- session browser memakai kombinasi:
+  - cookie httpOnly dari backend,
+  - cache session di `sessionStorage`,
+- flow multi-identity sudah aktif dan tervalidasi,
+- akun dengan role SSO yang hanya `user` atau `superadmin` ditolak mengakses SIKP.
 
-Alur utama mahasiswa mengikuti timeline KP 6 tahap:
-1. Pembuatan Tim
-2. Pengajuan
-3. Surat Pengantar
-4. Surat Balasan
-5. Saat Magang
-6. Pasca Magang
+Checklist validasi auth inti dan identity chooser sudah dinyatakan lolos pada dokumen checklist SSO.
 
-Fitur besar sudah tersedia di sisi frontend, tetapi beberapa area masih membutuhkan penguatan integrasi production backend (terutama template management, e-signature end-to-end, dan beberapa workflow yang masih mock/dev oriented).
+## 3. Arsitektur Auth Frontend (SSO-First)
 
----
+Frontend memakai flow SSO penuh:
 
-## 3. Teknologi dan Fondasi Teknis
+1. Halaman login memanggil `initiateSsoLogin()`.
+2. Frontend generate PKCE (`code_verifier`, `code_challenge`).
+3. Frontend memanggil `POST /api/auth/prepare`.
+4. Browser diarahkan ke SSO authorize URL.
+5. Callback ditangani di route `/callback`.
+6. Frontend mengirim `code + state + codeVerifier` ke `POST /api/auth/callback`.
+7. Session di-hydrate melalui `GET /api/auth/me`.
+8. Jika akun punya lebih dari satu identity, user diarahkan ke `/identity-chooser`.
+9. Setelah identity dipilih, frontend memanggil `POST /api/auth/select-identity` lalu refresh context lewat `GET /api/auth/me`.
 
-### 3.1 Stack Utama
-- Framework routing: React Router v7 (flat routes dari file system).
-- UI runtime: React 19.
-- Bahasa: TypeScript.
-- Styling: Tailwind CSS v4.
-- Form dan validasi: React Hook Form + Zod.
-- UI kit: Radix UI + komponen reusable di app/components/ui.
-- Build tool: Vite.
-- Notification: Sonner.
+## 3.1 Penyimpanan Session
 
-### 3.2 Script Project
-Script utama:
-- dev: react-router dev
-- build: react-router build
-- start: react-router-serve ./build/server/index.js
-- typecheck: react-router typegen && tsc
+- Session utama disimpan di `sessionStorage` dengan key `sikp_auth_session`.
+- Cookie httpOnly dari backend tetap menjadi sumber autentikasi utama untuk browser request.
+- Key kompatibilitas lama:
+  - `auth_token`
+  - `user_data`
+  masih dikelola untuk kompatibilitas transisi, tetapi bukan sumber auth utama.
 
-### 3.3 Konfigurasi Runtime Frontend
-- Dev proxy API: /api diarahkan ke http://127.0.0.1:8787.
-- Base URL API fallback mengarah ke backend workers bila env tidak diisi.
-- Aplikasi menggunakan shell global di root.tsx dengan provider tema dan provider user.
+## 3.2 User Context dan Session Snapshot
 
----
+`UserProvider` memelihara state auth berikut:
 
-## 4. Arsitektur Aplikasi
+- `user`
+- `token`
+- `authStatus`
+- `isLoading`
+- `availableIdentities`
+- `activeIdentity`
+- `effectiveRoles`
+- `effectivePermissions`
+- `callbackError`
 
-### 4.1 Struktur Direktori Inti
-- app/routes: route files berdasarkan konvensi React Router v7.
-- app/feature: modul fitur domain.
-- app/components: komponen global/reusable.
-- app/contexts: state global (tema, user/auth).
-- app/lib: utilitas, auth client, API client, service layer, dan types.
+Session snapshot frontend sekarang sudah mampu membawa data user/identity yang lebih kaya hasil normalisasi dari backend SSO, termasuk field seperti:
 
-### 4.2 App Shell dan Provider
-Aplikasi dibungkus provider global:
-- ThemeProvider
-- UserProvider
+- `nim`
+- `nip`
+- `nidn`
+- `prodi`
+- `fakultas`
+- `semester`
+- `semesterAktif`
+- `angkatan`
+- `jumlahSksLulus`
+- `phone`
+- `jabatan`
+- `jabatanFungsional`
+- `jabatanStruktural`
 
-Layout route terproteksi menggunakan _sidebar.tsx:
-- SidebarProvider
-- AppSidebar
-- SidebarInset
-- Outlet
+Untuk identity profile, frontend juga sudah menormalisasi detail nested tambahan seperti:
 
-Artinya mayoritas halaman internal mengikuti shell sidebar yang sama, dengan konten halaman berubah sesuai route.
+- `prodiDetail`
+- `fakultasDetail`
+- `dosenPA`
+- `instansi`
+- `status`
+- `bidang`
+- `bidangKeahlian`
 
-### 4.3 Pola Routing
-Routing memakai flatRoutes dengan naming convention file:
-- Prefix _ untuk layout/group segment.
-- Dot (.) untuk nested segment.
-- $ untuk dynamic parameter.
+Dengan ini, komponen yang bergantung pada metadata identity tidak lagi hanya menerima nama/email minimum.
 
-Contoh pola:
-- _sidebar.mahasiswa.kp._timeline.pengajuan.tsx
-- _sidebar.dosen.penilaian.beri-nilai.$id.tsx
-- _sidebar.mentor.logbook-detail.$studentId.tsx
+## 3.3 Guard Akses
 
----
+Akses route dijaga oleh `ProtectedRoute` dan layout `_sidebar` dengan pemeriksaan:
 
-## 5. Auth, Otorisasi, dan Akses Role
-
-### 5.1 Autentikasi Frontend
-Frontend saat ini memakai penyimpanan token berbasis localStorage:
-- auth_token
-- user_data
-
-Auth client menyediakan fungsi login/register/logout/get token/get current user.
-
-### 5.2 User Context
-UserProvider menyimpan:
-- user
-- token
-- isLoading
-- isAuthenticated
-- logout
-
-Saat mount, context mengambil user dan token dari localStorage.
-
-### 5.3 Protected Route
-ProtectedRoute mengecek:
-- apakah user sudah autentikasi
-- apakah role termasuk requiredRoles (jika diberikan)
+- status authenticated,
+- ada/tidaknya identity aktif untuk akun multi-identity,
+- role efektif,
+- permission efektif jika diperlukan.
 
 Perilaku redirect:
-- belum login -> /login
-- role tidak sesuai -> /unauthorized
+
+- belum login -> `/login`
+- akun multi-identity tanpa identity aktif -> `/identity-chooser`
+- role tidak sesuai -> `/unauthorized`
+
+## 4. Aturan Role dan Identity di Frontend
+
+Frontend mengikuti kontrak role efektif dari backend:
+
+- `MAHASISWA`
+- `ADMIN`
+- `DOSEN`
+- `KAPRODI`
+- `WAKIL_DEKAN`
+- `MENTOR`
+
+Aturan penting yang sudah diterapkan:
+
+- bucket identity internal tetap konsisten ke `MAHASISWA`, `ADMIN`, `DOSEN`, `MENTOR`,
+- role dosen turunan seperti `KAPRODI` dan `WAKIL_DEKAN` tetap masuk shell dosen,
+- akun dengan role SSO yang hanya `USER` atau hanya `SUPERADMIN` tidak boleh masuk SIKP,
+- jika user punya role valid lain selain `USER`/`SUPERADMIN`, login tetap diperbolehkan.
+
+## 5. Kontrak API Frontend
+
+## 5.1 Resolusi API Base URL
+
+Prioritas konfigurasi base URL di client:
+
+1. `VITE_SIKP_API_BASE_URL`
+2. `VITE_API_URL`
+3. `VITE_APP_AUTH_URL`
+4. `VITE_API_BASE_URL`
+5. fallback code:
+   - dev: `http://localhost:3000`
+   - prod: `https://backend-sikp.backend-sikp.workers.dev`
+
+## 5.2 Perilaku API Client
+
+- Semua request browser dikirim dengan `credentials: include`.
+- Header `Authorization` hanya disisipkan untuk konteks non-browser (SSR/utility) saat token tersedia.
+- Handling status:
+  - `401`: session dibersihkan lalu diarahkan ke login.
+  - `410`: diperlakukan sebagai sinyal legacy cutover, **tanpa forced logout**, untuk menghindari loop login/logout saat modul lama masih memanggil endpoint lama.
+
+Catatan penting:
+- perilaku `410` ini sengaja dibuat lebih lunak dibanding `401`,
+- tujuannya agar session SSO yang valid tidak ikut dianggap rusak hanya karena ada modul frontend yang belum selesai migrasi endpoint.
+
+## 5.3 Kontrak Response Auth yang Dipakai Frontend
+
+Frontend mengonsumsi flow auth berikut:
+
+- `POST /api/auth/prepare`
+- `POST /api/auth/callback`
+- `GET /api/auth/me`
+- `GET /api/auth/identities`
+- `POST /api/auth/select-identity`
+- `POST /api/auth/logout`
+
+Response auth yang dipakai frontend berfokus pada data berikut:
+
+- `sessionEstablished`
+- `requiresIdentitySelection`
+- `activeIdentity`
+- `availableIdentities` / `identities`
+- `effectiveRoles`
+- `effectivePermissions`
+- `user`
+- `authzSource`
+
+Khusus `GET /api/auth/me`, frontend sekarang mengharapkan user/identity payload yang lebih kaya, sehingga data identity detail bisa dipakai ulang di banyak fitur.
+
+## 6. Peta Route UI
+
+## 6.1 Public
+
+- `/`
+- `/login`
+- `/callback`
+- `/identity-chooser`
+- `/unauthorized`
+- `/register`
+- `/pembimbing-lapangan`
+- `/tentang`
+- `/kontak`
+- `/referensi`
+- `/detail-referensi/:id`
 
 Catatan:
-- role di model user meliputi MAHASISWA, ADMIN, DOSEN, KAPRODI, WAKIL_DEKAN, PEMBIMBING_LAPANGAN.
-- sidebar juga punya diferensiasi jalur dosen vs wakil dekan berdasarkan field jabatan.
+- `/register` dan `/pembimbing-lapangan` kini lebih berperan sebagai halaman informasi/compatibility, bukan jalur registrasi lokal aktif.
 
----
+## 6.2 Protected Shell
 
-## 6. Pola API Frontend dan Service Layer
+Semua route internal memakai layout `_sidebar`.
 
-### 6.1 API Client
-Ada wrapper api client terpusat dengan fitur:
-- Generic typed response.
-- Inject Authorization Bearer token otomatis.
-- Dukungan JSON dan FormData upload.
-- Helper method: get, post, put, patch, del, uploadFile.
+Kelompok route utama:
 
-### 6.2 Format Response
-Pola respons standar frontend:
-- success
-- message
-- data
+- Mahasiswa: `/mahasiswa/*`
+- Admin: `/admin/*`
+- Dosen/Kaprodi/Wakil Dekan: `/dosen/*`
+- Mentor: `/mentor/*`
 
-Juga ada struktur paginated response dan error response terdefinisi di types.
+Redirect `/dashboard` ditentukan berdasarkan role efektif dan/atau identity aktif.
 
-### 6.3 Service Layer Domain
-Service dipisah per domain, contoh:
-- submission.service.ts
-- team.service.ts
-- mahasiswa-api.ts
-- dosen-api.ts
-- response-letter-api.ts
-- template-api.ts
-- surat-kesediaan-api.ts
-- surat-permohonan-api.ts
-- letter-request-status-api.ts
+## 7. Fitur yang Sudah Selaras dengan SSO
 
-Pola ini memudahkan komponen halaman tetap fokus pada UI/UX, sedangkan detail request ada di service.
+Bagian frontend yang sudah selaras dengan fondasi SSO terbaru:
 
----
+- halaman login,
+- callback SSO,
+- identity chooser,
+- user context berbasis session SSO,
+- guard route berbasis `effectiveRoles` dan `effectivePermissions`,
+- profile/signature management yang diarahkan ke SSO,
+- penolakan akun blocked-only role (`USER` / `SUPERADMIN`),
+- pemuatan metadata identity yang lebih kaya dari response backend terbaru.
 
-## 7. Peta Route Berdasarkan Role
+Identity chooser juga sudah sesuai ekspektasi validasi:
 
-### 7.1 Public Route
-- /
-- /login
-- /register
-- /pembimbing-lapangan
-- /tentang
-- /kontak
-- /referensi
-- /detail-referensi/:id
+- akun ditampilkan sekali pada header chooser,
+- identity card fokus pada jenis identity,
+- metadata seperti NIM/NIP dapat ditampilkan bila tersedia,
+- submit identity mengarahkan ke dashboard yang benar.
 
-### 7.2 Mahasiswa
-Route utama:
-- /mahasiswa
-- /mahasiswa/kp/buat-tim
-- /mahasiswa/kp/pengajuan
-- /mahasiswa/kp/surat-pengantar
-- /mahasiswa/kp/surat-balasan
-- /mahasiswa/kp/saat-magang
-- /mahasiswa/kp/pengujian-sidang
-- /mahasiswa/kp/pasca-magang
-- /mahasiswa/kp/penilaian
-- /mahasiswa/kp/laporan
-- /mahasiswa/kp/template
-- /mahasiswa/repositori
-- /mahasiswa/repositori/:id
-- /mahasiswa/mentor-lapangan
-- /mahasiswa/profil
+## 8. Integrasi Profil dan Signature
 
-### 7.3 Admin
-Route utama:
-- /admin
-- /admin/pengajuan-surat-pengantar
-- /admin/surat-balasan
-- /admin/persetujuan-pembimbing
-- /admin/template
-- /admin/penilaian
-- /admin/penilaian/:id
+Frontend memperlakukan profil dan tanda tangan sebagai domain yang dikelola oleh SSO:
 
-### 7.4 Dosen
-Route utama:
-- /dosen
-- /dosen/kp/surat-pengantar
-- /dosen/kp/verifikasi-judul
-- /dosen/kp/verifikasi-sidang
-- /dosen/kp/verifikasi-surat
-- /dosen/penilaian
-- /dosen/penilaian/detail/:id
-- /dosen/penilaian/beri-nilai/:id
-- /dosen/profil
+- profil akun dibaca dari session/me dan sumber SSO,
+- pengelolaan profil diarahkan ke URL SSO,
+- pengelolaan signature diarahkan ke URL SSO,
+- operasi write signature di sisi SIKP tidak lagi menjadi jalur utama.
 
-### 7.5 Mentor
-Route utama:
-- /mentor
-- /mentor/mentee
-- /mentor/mentee/:menteeId
-- /mentor/logbook
-- /mentor/logbook-detail/:studentId
-- /mentor/penilaian
-- /mentor/notifikasi
-- /mentor/arsip
-- /mentor/profil
-- /mentor/pengaturan
+## 9. Gap Integrasi yang Masih Ada
 
----
+Walaupun alur auth SSO inti sudah selesai, masih ada gap pada beberapa modul domain lama.
 
-## 8. Inventaris Fitur Lengkap (Berdasarkan app/feature)
+Masih ditemukan service/frontend module yang memanggil prefix legacy backend seperti:
 
-Legenda status:
-- Implemented: UI/flow frontend sudah tersedia dan dipakai route aktif.
-- Partial: fitur ada, tetapi ada bagian penting yang masih terbatas atau belum production-ready penuh.
-- Mock/TODO: dominan berbasis mock/local state/dev control atau integrasi backend belum final.
+- `/api/mahasiswa/*`
+- `/api/dosen/*`
+- `/api/admin/*`
+- `/api/mentor/*`
 
-### 8.1 Surat Pengantar (cover-letter)
-- Fungsi: Menampilkan status dan proses surat pengantar dalam alur KP mahasiswa.
-- Aktor: Mahasiswa.
-- Route terkait: tahap timeline surat pengantar mahasiswa.
-- Alur ringkas: lihat status proses surat pengantar -> lanjut ke tahap berikut.
-- Status: Implemented.
+Dampak aktualnya:
 
-### 8.2 Pembuatan Tim (create-teams)
-- Fungsi: Pembuatan tim KP, join tim, dan pengelolaan anggota.
-- Aktor: Mahasiswa.
-- Route terkait: /mahasiswa/kp/buat-tim.
-- Alur ringkas: buat/bergabung tim -> validasi status tim -> lanjut pengajuan.
-- Status: Implemented.
+- `/api/mahasiswa/*`, `/api/dosen/*`, `/api/admin/*` akan terkena `410` dari backend,
+- `/api/mentor/*` masih berpotensi `404` karena belum menjadi mount aktif pada entrypoint backend,
+- sebagian fitur domain lama dapat gagal walaupun user sudah login dan session SSO valid.
 
-### 8.3 Dasbor (dashboard)
-- Fungsi: Dashboard ringkasan per role.
-- Aktor: Mahasiswa, Admin, Dosen, Mentor.
-- Route terkait: /mahasiswa, /admin, /dosen, /mentor, dan route dashboard role redirect.
-- Alur ringkas: login -> masuk dashboard sesuai role.
-- Status: Implemented.
+Artinya:
+- **fondasi auth sudah selesai dan stabil**,
+- tetapi **harmonisasi endpoint domain belum sepenuhnya selesai**.
 
-### 8.4 Penilaian Dosen (dosen-grading)
-- Fungsi: Penilaian mahasiswa oleh dosen, termasuk workflow revisi dokumen.
-- Aktor: Dosen.
-- Route terkait: /dosen/penilaian, detail, beri-nilai.
-- Alur ringkas: review revisi -> approve/reject revisi -> isi penilaian komponen -> simpan nilai.
-- Status: Partial.
-- Catatan status: dokumen modul menyebut masih ada keterbatasan seperti mock data dan beberapa enhancement lanjutan.
+## 10. Modul Besar di Frontend
 
-### 8.5 Saat Magang (during-intern)
-- Fungsi: Aktivitas saat magang (logbook, assessment, monitoring tahap berjalan).
-- Aktor: Mahasiswa (utama), juga menjadi data input bagi pihak penilai.
-- Route terkait: /mahasiswa/kp/saat-magang, /mahasiswa/kp/logbook, /mahasiswa/kp/penilaian (timeline context).
-- Alur ringkas: isi aktivitas/logbook -> submit data kegiatan -> dipakai untuk evaluasi/penilaian lanjutan.
-- Status: Implemented.
+Modul besar yang masih ada di struktur `app/feature` antara lain:
 
-### 8.6 Tanda Tangan Elektronik (esignature)
-- Fungsi: Setup dan penggunaan tanda tangan elektronik pada alur dokumen sidang.
-- Aktor: Dosen (utama), Mahasiswa (menerima hasil dokumen signed).
-- Route terkait: terintegrasi pada verifikasi sidang dosen dan tampilan download mahasiswa.
-- Alur ringkas: dosen setup signature -> approve dokumen sidang -> mahasiswa unduh dokumen signed.
-- Status: Partial.
-- Catatan status: flow frontend tersedia, tetapi integrasi production backend dan template dokumen final masih perlu penyempurnaan.
-
-### 8.7 Evaluasi (evaluation)
-- Fungsi: Evaluasi pasca magang dan ringkasan penilaian.
-- Aktor: Admin dan Mahasiswa (pasca magang).
-- Route terkait: /admin/penilaian, /admin/penilaian/:id, /mahasiswa/kp/pasca-magang.
-- Alur ringkas: akumulasi hasil penilaian -> tampilkan detail evaluasi -> pemantauan hasil akhir.
-- Status: Implemented.
-
-### 8.8 Pembimbing Lapangan (field-mentor)
-- Fungsi: Halaman mentor lapangan untuk monitoring logbook dan detail mahasiswa.
-- Aktor: Pembimbing Lapangan dan Mahasiswa (akses halaman mentor lapangan mahasiswa).
-- Route terkait: /mentor/logbook, /mentor/logbook-detail/:studentId, /mahasiswa/mentor-lapangan.
-- Alur ringkas: mentor melihat logbook mahasiswa -> cek detail aktivitas -> masukan untuk penilaian.
-- Status: Implemented.
-
-### 8.9 Pengujian Sidang (hearing)
-- Fungsi: Pengajuan dan status berita acara sidang mahasiswa.
-- Aktor: Mahasiswa (pengajuan), Dosen (verifikasi melalui halaman terkait), Mahasiswa (download hasil).
-- Route terkait: /mahasiswa/kp/pengujian-sidang.
-- Alur ringkas: isi berita acara -> submit -> tunggu approve/reject -> jika approved dapat unduh dokumen.
-- Status: Partial.
-- Catatan status: dokumen fitur menyebut kebutuhan integrasi backend lanjutan dan generation dokumen production-ready.
-
-### 8.10 Verifikasi Dosen (hearing-dosen)
-- Fungsi: Verifikasi surat/ajuan oleh dosen pada jalur khusus verifikasi.
-- Aktor: Dosen.
-- Route terkait: /dosen/kp/verifikasi-surat.
-- Alur ringkas: dosen review surat ajuan mahasiswa -> verifikasi status.
-- Status: Implemented.
-
-### 8.11 Laporan KP (kp-report)
-- Fungsi: Pengelolaan laporan KP mahasiswa dan verifikasi judul oleh dosen.
-- Aktor: Mahasiswa, Dosen.
-- Route terkait: /mahasiswa/kp/laporan, /dosen/kp/verifikasi-judul.
-- Alur ringkas: mahasiswa kelola laporan/judul -> dosen verifikasi judul -> lanjut tahap sidang/penilaian.
-- Status: Implemented.
-
-### 8.12 Masuk (login)
-- Fungsi: Form login pengguna.
-- Aktor: Semua role.
-- Route terkait: /login.
-- Alur ringkas: input kredensial -> simpan token/user -> masuk dashboard berdasarkan role.
-- Status: Implemented.
-
-### 8.13 Portal Mentor (mentor)
-- Fungsi: Portal mentor untuk mentee, notifikasi, penilaian, arsip, profil, pengaturan.
-- Aktor: Pembimbing Lapangan.
-- Route terkait: seluruh route prefiks /mentor.
-- Alur ringkas: mentor buka daftar mentee/logbook -> lakukan review/penilaian -> kelola profil dan pengaturan.
-- Status: Implemented.
-
-### 8.14 Profil Pengguna (profil)
-- Fungsi: Halaman profil per role (minimal mahasiswa dan dosen).
-- Aktor: Mahasiswa, Dosen.
-- Route terkait: /mahasiswa/profil, /dosen/profil.
-- Alur ringkas: lihat dan ubah data profil pengguna.
-- Status: Implemented.
-
-### 8.15 Registrasi (register)
-- Fungsi: Registrasi akun baru, termasuk alur persetujuan pembimbing lapangan.
-- Aktor: Mahasiswa (register), Admin (approval), calon pembimbing lapangan.
-- Route terkait: /register, /pembimbing-lapangan, /admin/persetujuan-pembimbing.
-- Alur ringkas: user daftar -> data dikirim ke backend/approval -> status registrasi diproses.
-- Status: Partial.
-- Catatan status: endpoint registrasi pembimbing lapangan di auth client ditandai belum tersedia pada backend sehingga ada keterbatasan flow end-to-end.
-
-### 8.16 Repositori (repository)
-- Fungsi: Repositori/arsip laporan dan detail dokumen.
-- Aktor: Mahasiswa.
-- Route terkait: /mahasiswa/repositori, /mahasiswa/repositori/:id.
-- Alur ringkas: telusuri arsip laporan -> buka detail laporan.
-- Status: Implemented.
-
-### 8.17 Surat Balasan (response-letter)
-- Fungsi: Pengelolaan surat balasan (mahasiswa dan admin).
-- Aktor: Mahasiswa, Admin.
-- Route terkait: /mahasiswa/kp/surat-balasan, /admin/surat-balasan.
-- Alur ringkas: mahasiswa memantau/unggah status surat balasan -> admin memproses dan memvalidasi.
-- Status: Implemented.
-
-### 8.18 Navigasi Samping (sidebar)
-- Fungsi: Navigasi aplikasi berbasis role + konteks URL.
-- Aktor: Semua role internal.
-- Route terkait: shell _sidebar dan seluruh route terproteksi.
-- Alur ringkas: deteksi role/pathname -> bangun menu -> render menu sesuai hak akses.
-- Status: Implemented.
-
-### 8.19 Pengajuan (submission)
-- Fungsi: Pengajuan utama KP termasuk unggah dokumen dan approval flow.
-- Aktor: Mahasiswa, Admin, Dosen.
-- Route terkait:
-  - Mahasiswa: /mahasiswa/kp/pengajuan
-  - Admin: /admin/pengajuan-surat-pengantar
-  - Dosen: /dosen/kp/surat-pengantar
-- Alur ringkas: mahasiswa isi data perusahaan + unggah dokumen -> submit -> admin/dosen review -> approve/reject -> update status.
-- Status: Implemented.
-
-### 8.20 Template Dokumen (template)
-- Fungsi: Manajemen template dokumen (CRUD + editor + kategori template).
-- Aktor: Admin (utama), mahasiswa pada penggunaan template tertentu.
-- Route terkait: /admin/template, /mahasiswa/kp/template.
-- Alur ringkas: admin buat/edit template -> simpan template -> dipakai pada alur dokumen lain.
-- Status: Partial.
-- Catatan status: dokumentasi fitur menyebut penyimpanan masih lokal/state dan integrasi backend penuh menjadi pekerjaan lanjutan.
-
-### 8.21 Linimasa KP (timeline)
-- Fungsi: Pengatur dan visualisasi langkah proses KP mahasiswa.
-- Aktor: Mahasiswa.
-- Route terkait: seluruh jalur /mahasiswa/kp/* berbasis _timeline.
-- Alur ringkas: aktifkan step sesuai halaman -> tampilkan progres -> arahkan ke tahap berikut.
-- Status: Implemented.
-
----
-
-## 9. Alur Proses Utama KP (End-to-End)
-
-### 9.1 Alur Mahasiswa
-1. Login ke sistem.
-2. Membuat tim atau bergabung tim KP.
-3. Mengisi pengajuan KP dan mengunggah dokumen persyaratan.
-4. Menunggu review admin/dosen untuk surat pengantar.
-5. Memproses surat balasan dari instansi/perusahaan.
-6. Menjalankan fase saat magang (aktivitas/logbook).
-7. Mengikuti proses pengujian sidang (berita acara).
-8. Masuk fase pasca magang dan melihat evaluasi/penilaian akhir.
-9. Menyimpan/akses arsip di repositori.
-
-### 9.2 Alur Admin
-1. Memantau dashboard admin.
-2. Mereview pengajuan surat pengantar mahasiswa.
-3. Mengelola surat balasan.
-4. Menangani persetujuan pembimbing (register approval).
-5. Mengelola template dokumen.
-6. Melihat hasil evaluasi/penilaian mahasiswa.
-
-### 9.3 Alur Dosen
-1. Memantau dashboard dosen.
-2. Verifikasi judul laporan KP mahasiswa.
-3. Verifikasi sidang dan dokumen terkait.
-4. Menjalankan workflow penilaian mahasiswa.
-5. Mengisi/menyimpan hasil grading.
-
-### 9.4 Alur Mentor Lapangan
-1. Login ke portal mentor.
-2. Melihat daftar mentee.
-3. Review logbook dan detail aktivitas mahasiswa.
-4. Memberi penilaian/assessment.
-5. Kelola profil, notifikasi, arsip, dan pengaturan.
-
----
-
-## 10. Entitas Data dan Status Domain Penting
-
-### 10.1 Role User
-Role utama yang dipakai frontend:
-- MAHASISWA
-- ADMIN
-- DOSEN
-- KAPRODI
-- WAKIL_DEKAN
-- PEMBIMBING_LAPANGAN
-
-### 10.2 Tim KP
-- Team status: PENDING, FIXED.
-- Invitation status: PENDING, ACCEPTED, REJECTED.
-
-### 10.3 Pengajuan
-Status submission:
-- DRAFT
-- MENUNGGU
-- DITOLAK
-- DITERIMA
-
-Jenis dokumen pengajuan (termasuk auto generated):
-- PROPOSAL_KETUA
-- SURAT_KESEDIAAN
-- FORM_PERMOHONAN
-- KRS_SEMESTER_4
-- DAFTAR_KUMPULAN_NILAI
-- BUKTI_PEMBAYARAN_UKT
-- SURAT_PENGANTAR (auto generated saat approval tertentu)
-
----
-
-## 11. Integrasi Antar Fitur (Cross-Feature Dependencies)
-
-### 11.1 Timeline sebagai tulang punggung alur mahasiswa
-Fitur berikut saling terkait melalui alur timeline:
-- create-teams
+- dashboard per role
+- create teams
 - submission
-- cover-letter
-- response-letter
-- during-intern
-- hearing
-- evaluation (pasca magang)
+- surat pengantar / response letter
+- hearing / verifikasi dosen
+- during intern / logbook
+- evaluation / penilaian
+- template
+- profil
+- mentor portal
+- repository
 
-### 11.2 Sidebar dan akses role
-Sidebar menentukan pengalaman navigasi per role dan memisahkan area mahasiswa/admin/dosen/mentor.
+Catatan penting:
+- keberadaan modul UI tidak otomatis berarti seluruh service API-nya sudah sepenuhnya selaras dengan backend pasca cutover,
+- sebagian modul sudah berjalan baik di jalur SSO baru,
+- sebagian lain masih butuh migrasi endpoint domain.
 
-### 11.3 Service layer bersama
-Modul halaman memanggil service domain untuk API sehingga pola request/response konsisten.
+## 11. Konfigurasi Environment Frontend
 
-### 11.4 Dokumen dan e-signature
-Fitur hearing, template, dan esignature saling terkait dalam jalur pembuatan dokumen sidang dan approval digital.
+Variabel penting untuk mode SSO dan integrasi backend:
 
----
+- `VITE_SIKP_API_BASE_URL`
+- `VITE_SSO_REDIRECT_URI`
+- `VITE_SSO_PROFILE_URL`
+- `VITE_SSO_PROFILE_SIGNATURE_URL`
 
-## 12. Matriks Status Implementasi
+Kompatibilitas lama yang masih didukung:
 
-| Fitur | Status | Catatan Singkat |
-|---|---|---|
-| Surat Pengantar (cover-letter) | Implemented | Monitoring status surat pengantar pada timeline mahasiswa. |
-| Pembuatan Tim (create-teams) | Implemented | Pembentukan dan manajemen tim KP tersedia di frontend. |
-| Dasbor (dashboard) | Implemented | Dashboard terpisah per role. |
-| Penilaian Dosen (dosen-grading) | Partial | Workflow kuat, namun masih ada bagian mock dan enhancement lanjutan. |
-| Saat Magang (during-intern) | Implemented | Halaman logbook/aktivitas/assessment tersedia. |
-| Tanda Tangan Elektronik (esignature) | Partial | Frontend setup tersedia, integrasi production penuh masih bertahap. |
-| Evaluasi (evaluation) | Implemented | Evaluasi admin dan pasca magang mahasiswa tersedia. |
-| Pembimbing Lapangan (field-mentor) | Implemented | Monitoring logbook mahasiswa oleh mentor lapangan. |
-| Pengujian Sidang (hearing) | Partial | Alur pengajuan ada, beberapa bagian backend/doc generation masih perlu finalisasi. |
-| Verifikasi Dosen (hearing-dosen) | Implemented | Verifikasi surat oleh dosen pada halaman khusus tersedia. |
-| Laporan KP (kp-report) | Implemented | Laporan KP mahasiswa dan verifikasi judul dosen tersedia. |
-| Masuk (login) | Implemented | Form login dan penyimpanan token berjalan. |
-| Portal Mentor (mentor) | Implemented | Portal mentor lengkap (mentee, logbook, penilaian, dll). |
-| Profil Pengguna (profil) | Implemented | Profil mahasiswa dan dosen tersedia. |
-| Registrasi (register) | Partial | Alur registrasi ada, endpoint pembimbing lapangan belum siap penuh. |
-| Repositori (repository) | Implemented | Halaman repositori dan detail laporan tersedia. |
-| Surat Balasan (response-letter) | Implemented | Mahasiswa/admin bisa menangani surat balasan. |
-| Navigasi Samping (sidebar) | Implemented | Navigasi role-based aktif. |
-| Pengajuan (submission) | Implemented | Pengajuan dokumen dan jalur review utama tersedia. |
-| Template Dokumen (template) | Partial | CRUD template ada, persist/integrasi backend penuh masih penguatan. |
-| Linimasa KP (timeline) | Implemented | Konteks dan visual tahap KP sudah terpakai lintas route. |
+- `VITE_API_URL`
+- `VITE_APP_AUTH_URL`
+- `VITE_API_BASE_URL`
 
----
+## 12. Ringkasan Singkat
 
-## 13. Keterbatasan dan Risiko Saat Ini
-1. Ada ketergantungan localStorage untuk beberapa alur auth/state dan development flow dokumen.
-2. Sebagian alur dokumen (template/e-signature/hearing) masih membutuhkan hardening integrasi backend production.
-3. Beberapa modul menyebut penggunaan mock data atau dev controls sehingga perlu validasi saat go-live.
-4. Konsistensi kontrol akses antara role formal dan jabatan (contoh wakil dekan) perlu dijaga agar tidak terjadi gap otorisasi.
+Frontend SIKP saat ini sudah berhasil menyelesaikan fondasi auth SSO:
 
----
+- login/callback/PKCE aktif,
+- session cookie + hydration berjalan,
+- multi-identity chooser berjalan,
+- blocked-only role (`USER` / `SUPERADMIN`) ditolak,
+- payload user/identity sudah lebih kaya dan siap dipakai fitur.
 
-## 14. Prioritas Teknis yang Disarankan
-1. Finalisasi integrasi backend untuk area Partial (template, hearing, esignature, register pembimbing lapangan).
-2. Kurangi ketergantungan localStorage untuk data sensitif dan migrasi ke pola yang lebih aman bila diperlukan.
-3. Konsolidasikan status source of truth per fitur agar tidak tercampur antara mock state dan API state.
-4. Tambahkan pengujian end-to-end untuk alur KP lintas role agar regresi bisnis flow cepat terdeteksi.
-
----
-
-## 15. Kesimpulan
-Frontend SIKP sudah memiliki fondasi arsitektur yang rapi dan modular, dengan cakupan fitur KP yang luas dan route tersegmentasi jelas per role. Untuk mencapai tingkat production maturity yang lebih tinggi, fokus utama ada pada finalisasi integrasi backend pada modul yang masih Partial, serta penguatan konsistensi state dan kontrol akses lintas alur.
+Pekerjaan yang masih tersisa terutama berada pada sisi **migrasi service domain** yang masih memanggil endpoint legacy backend, bukan lagi pada fondasi auth SSO inti.

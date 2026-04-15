@@ -4,6 +4,10 @@
  */
 
 import { apiClient } from "~/lib/api-client";
+import {
+  dataUrlToFile as dataUrlToFileFromSignatureApi,
+  getSignatureManageUrl,
+} from "~/lib/services/signature-api";
 
 // ==================== TYPES ====================
 
@@ -83,7 +87,9 @@ export async function getDosenDashboard(): Promise<
   ApiResponse<DosenDashboardData>
 > {
   try {
-    const response = await apiClient<DosenDashboardData>("/api/dosen/dashboard");
+    const response = await apiClient<DosenDashboardData>(
+      "/api/dosen/dashboard",
+    );
     return response;
   } catch (error) {
     console.error("Error fetching dosen dashboard:", error);
@@ -185,21 +191,22 @@ export async function uploadESignature(
       };
     }
 
-    // Build FormData
-    const formData = new FormData();
-    formData.append("signatureFile", signatureFile);
+    const manageUrlResponse = await getSignatureManageUrl();
+    if (!manageUrlResponse.success || !manageUrlResponse.data) {
+      return {
+        success: false,
+        message:
+          manageUrlResponse.message ||
+          "Kelola e-signature hanya tersedia di SSO.",
+        data: null,
+      };
+    }
 
-    // Upload via API
-    const response = await apiClient<ESignatureUploadResponse>(
-      "/api/dosen/me/esignature",
-      {
-        method: "PUT",
-        body: formData,
-        // Don't set Content-Type header, let browser set it with boundary for multipart
-      },
-    );
-
-    return response;
+    return {
+      success: false,
+      message: `Kelola e-signature di SSO: ${manageUrlResponse.data}`,
+      data: null,
+    };
   } catch (error) {
     console.error("Error uploading e-signature:", error);
     return {
@@ -217,11 +224,22 @@ export async function uploadESignature(
  */
 export async function deleteESignature(): Promise<ApiResponse<null>> {
   try {
-    const response = await apiClient<null>("/api/dosen/me/esignature", {
-      method: "DELETE",
-    });
+    const manageUrlResponse = await getSignatureManageUrl();
+    if (!manageUrlResponse.success || !manageUrlResponse.data) {
+      return {
+        success: false,
+        message:
+          manageUrlResponse.message ||
+          "Kelola e-signature hanya tersedia di SSO.",
+        data: null,
+      };
+    }
 
-    return response;
+    return {
+      success: false,
+      message: `Kelola e-signature di SSO: ${manageUrlResponse.data}`,
+      data: null,
+    };
   } catch (error) {
     console.error("Error deleting e-signature:", error);
     return {
@@ -242,8 +260,6 @@ export async function dataUrlToFile(
   dataUrl: string,
   filename?: string,
 ): Promise<File> {
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
   const finalFilename = filename || `signature-${Date.now()}.png`;
-  return new File([blob], finalFilename, { type: blob.type || "image/png" });
+  return dataUrlToFileFromSignatureApi(dataUrl, finalFilename);
 }

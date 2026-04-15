@@ -4,6 +4,10 @@
  */
 
 import { apiClient } from "~/lib/api-client";
+import {
+  dataUrlToFile as dataUrlToFileFromSignatureApi,
+  getSignatureManageUrl,
+} from "~/lib/services/signature-api";
 
 export interface MahasiswaProfile {
   id: string;
@@ -114,16 +118,22 @@ export async function uploadMahasiswaESignature(
       };
     }
 
-    const formData = new FormData();
-    formData.append("signatureFile", signatureFile);
+    const manageUrlResponse = await getSignatureManageUrl();
+    if (!manageUrlResponse.success || !manageUrlResponse.data) {
+      return {
+        success: false,
+        message:
+          manageUrlResponse.message ||
+          "Kelola e-signature hanya tersedia di SSO.",
+        data: null,
+      };
+    }
 
-    return await apiClient<ESignatureUploadResponse>(
-      "/api/mahasiswa/me/esignature",
-      {
-        method: "PUT",
-        body: formData,
-      },
-    );
+    return {
+      success: false,
+      message: `Kelola e-signature di SSO: ${manageUrlResponse.data}`,
+      data: null,
+    };
   } catch (error) {
     console.error("Error uploading mahasiswa e-signature:", error);
     return {
@@ -141,9 +151,22 @@ export async function uploadMahasiswaESignature(
  */
 export async function deleteMahasiswaESignature(): Promise<ApiResponse<null>> {
   try {
-    return await apiClient<null>("/api/mahasiswa/me/esignature", {
-      method: "DELETE",
-    });
+    const manageUrlResponse = await getSignatureManageUrl();
+    if (!manageUrlResponse.success || !manageUrlResponse.data) {
+      return {
+        success: false,
+        message:
+          manageUrlResponse.message ||
+          "Kelola e-signature hanya tersedia di SSO.",
+        data: null,
+      };
+    }
+
+    return {
+      success: false,
+      message: `Kelola e-signature di SSO: ${manageUrlResponse.data}`,
+      data: null,
+    };
   } catch (error) {
     console.error("Error deleting mahasiswa e-signature:", error);
     return {
@@ -162,8 +185,6 @@ export async function dataUrlToFile(
   dataUrl: string,
   filename?: string,
 ): Promise<File> {
-  const response = await fetch(dataUrl);
-  const blob = await response.blob();
   const finalFilename = filename || `signature-${Date.now()}.png`;
-  return new File([blob], finalFilename, { type: blob.type || "image/png" });
+  return dataUrlToFileFromSignatureApi(dataUrl, finalFilename);
 }

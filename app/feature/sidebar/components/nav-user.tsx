@@ -36,6 +36,7 @@ export function NavUser({ user }: { user: User }) {
   const { logout } = useUser();
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const userInitials = user.name
     .split(" ")
     .filter(Boolean)
@@ -43,9 +44,11 @@ export function NavUser({ user }: { user: User }) {
     .map((word) => word[0]?.toUpperCase() ?? "")
     .join("");
 
-  const handleLogout = () => {
-    logout();
-    navigate("/");
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await logout();
+    setIsLoggingOut(false);
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -69,7 +72,9 @@ export function NavUser({ user }: { user: User }) {
                     {user.name}
                   </span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {user.email}
+                    {user.activeIdentityLabel
+                      ? `${user.activeIdentityLabel} • ${user.email}`
+                      : user.email}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
@@ -91,7 +96,11 @@ export function NavUser({ user }: { user: User }) {
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-medium">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
+                    <span className="truncate text-xs">
+                      {user.activeIdentityLabel
+                        ? `${user.activeIdentityLabel} • ${user.email}`
+                        : user.email}
+                    </span>
                   </div>
                 </div>
               </DropdownMenuLabel>
@@ -127,8 +136,8 @@ export function NavUser({ user }: { user: User }) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLogout}>
-              Ya, Logout
+            <AlertDialogAction onClick={() => void handleLogout()}>
+              {isLoggingOut ? "Memproses..." : "Ya, Logout"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
