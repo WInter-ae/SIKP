@@ -1,45 +1,132 @@
 # RINGKASAN FRONTEND SIKP (KONDISI AKTUAL)
 
-Dokumen ini merangkum implementasi frontend saat ini berdasarkan kode di folder `app`, dengan fokus pada mode SSO cutover dan integrasi ke backend KP terbaru.
+Dokumen ini merangkum implementasi frontend saat ini berdasarkan kode di folder `app`, dengan fokus pada alur SSO yang sudah aktif, kontrak session auth terbaru, serta gap endpoint domain yang masih tersisa pasca cutover.
 
 ## 1. Stack dan Fondasi
 
-- React Router v7 (file-based routing melalui `flatRoutes`).
+- React Router v7 (file-based routing).
 - React 19 + TypeScript.
 - Vite.
 - Tailwind CSS + komponen UI berbasis shadcn/Radix.
-- Context global utama: `UserProvider` (auth/session) dan `ThemeProvider`.
+- Context global utama:
+  - `UserProvider` untuk auth/session/identity,
+  - `ThemeProvider` untuk tema.
 
-## 2. Arsitektur Auth Frontend (SSO-First)
+## 2. Status Umum Frontend
 
-Frontend sudah berpindah ke flow SSO penuh:
+Frontend sudah berada pada mode **SSO-first** untuk login dan session browser:
+
+- login/register lokal tidak lagi menjadi jalur auth utama,
+- alur auth aktif memakai SSO UNSRI,
+- session browser memakai kombinasi:
+  - cookie httpOnly dari backend,
+  - cache session di `sessionStorage`,
+- flow multi-identity sudah aktif dan tervalidasi,
+- akun dengan role SSO yang hanya `user` atau `superadmin` ditolak mengakses SIKP.
+
+Checklist validasi auth inti dan identity chooser sudah dinyatakan lolos pada dokumen checklist SSO.
+
+## 3. Arsitektur Auth Frontend (SSO-First)
+
+Frontend memakai flow SSO penuh:
 
 1. Halaman login memanggil `initiateSsoLogin()`.
-2. Frontend generate PKCE (`code_verifier`, `code_challenge`) lalu `POST /api/auth/prepare`.
-3. Browser diarahkan ke SSO authorize URL.
-4. Callback ditangani di route `/callback`.
-5. Frontend kirim `code + state + codeVerifier` ke `POST /api/auth/callback`.
-6. Session di-hydrate melalui `GET /api/auth/me`.
-7. Jika multi identity, user diarahkan ke `/identity-chooser` lalu pilih identity aktif.
+2. Frontend generate PKCE (`code_verifier`, `code_challenge`).
+3. Frontend memanggil `POST /api/auth/prepare`.
+4. Browser diarahkan ke SSO authorize URL.
+5. Callback ditangani di route `/callback`.
+6. Frontend mengirim `code + state + codeVerifier` ke `POST /api/auth/callback`.
+7. Session di-hydrate melalui `GET /api/auth/me`.
+8. Jika akun punya lebih dari satu identity, user diarahkan ke `/identity-chooser`.
+9. Setelah identity dipilih, frontend memanggil `POST /api/auth/select-identity` lalu refresh context lewat `GET /api/auth/me`.
 
-## 2.1 Penyimpanan Session
+## 3.1 Penyimpanan Session
 
-- Session utama disimpan di `sessionStorage` (`sikp_auth_session`).
-- Cookie httpOnly dari backend tetap dipakai sebagai sumber autentikasi browser.
-- Key legacy (`auth_token`, `user_data`) masih dipertahankan untuk kompatibilitas compile/migrasi, tetapi dibersihkan dari `localStorage`.
+- Session utama disimpan di `sessionStorage` dengan key `sikp_auth_session`.
+- Cookie httpOnly dari backend tetap menjadi sumber autentikasi utama untuk browser request.
+- Key kompatibilitas lama:
+  - `auth_token`
+  - `user_data`
+  masih dikelola untuk kompatibilitas transisi, tetapi bukan sumber auth utama.
 
-## 2.2 Guard Akses
+## 3.2 User Context dan Session Snapshot
 
-- `ProtectedRoute` dan layout `_sidebar` mengecek:
-  - status authenticated,
-  - identity aktif (jika akun multi identity),
-  - role/permission sesuai halaman.
-- Jika gagal:
-  - redirect ke `/login`, `/identity-chooser`, atau `/unauthorized`.
+`UserProvider` memelihara state auth berikut:
 
-## 3. Kontrak API Frontend
+- `user`
+- `token`
+- `authStatus`
+- `isLoading`
+- `availableIdentities`
+- `activeIdentity`
+- `effectiveRoles`
+- `effectivePermissions`
+- `callbackError`
 
-## 3.1 Resolusi API Base URL
+Session snapshot frontend sekarang sudah mampu membawa data user/identity yang lebih kaya hasil normalisasi dari backend SSO, termasuk field seperti:
+
+- `nim`
+- `nip`
+- `nidn`
+- `prodi`
+- `fakultas`
+- `semester`
+- `semesterAktif`
+- `angkatan`
+- `jumlahSksLulus`
+- `phone`
+- `jabatan`
+- `jabatanFungsional`
+- `jabatanStruktural`
+
+Untuk identity profile, frontend juga sudah menormalisasi detail nested tambahan seperti:
+
+- `prodiDetail`
+- `fakultasDetail`
+- `dosenPA`
+- `instansi`
+- `status`
+- `bidang`
+- `bidangKeahlian`
+
+Dengan ini, komponen yang bergantung pada metadata identity tidak lagi hanya menerima nama/email minimum.
+
+## 3.3 Guard Akses
+
+Akses route dijaga oleh `ProtectedRoute` dan layout `_sidebar` dengan pemeriksaan:
+
+- status authenticated,
+- ada/tidaknya identity aktif untuk akun multi-identity,
+- role efektif,
+- permission efektif jika diperlukan.
+
+Perilaku redirect:
+
+- belum login -> `/login`
+- akun multi-identity tanpa identity aktif -> `/identity-chooser`
+- role tidak sesuai -> `/unauthorized`
+
+## 4. Aturan Role dan Identity di Frontend
+
+Frontend mengikuti kontrak role efektif dari backend:
+
+- `MAHASISWA`
+- `ADMIN`
+- `DOSEN`
+- `KAPRODI`
+- `WAKIL_DEKAN`
+- `MENTOR`
+
+Aturan penting yang sudah diterapkan:
+
+- bucket identity internal tetap konsisten ke `MAHASISWA`, `ADMIN`, `DOSEN`, `MENTOR`,
+- role dosen turunan seperti `KAPRODI` dan `WAKIL_DEKAN` tetap masuk shell dosen,
+- akun dengan role SSO yang hanya `USER` atau hanya `SUPERADMIN` tidak boleh masuk SIKP,
+- jika user punya role valid lain selain `USER`/`SUPERADMIN`, login tetap diperbolehkan.
+
+## 5. Kontrak API Frontend
+
+## 5.1 Resolusi API Base URL
 
 Prioritas konfigurasi base URL di client:
 
@@ -51,71 +138,127 @@ Prioritas konfigurasi base URL di client:
    - dev: `http://localhost:3000`
    - prod: `https://backend-sikp.backend-sikp.workers.dev`
 
-## 3.2 Perilaku API Client
+## 5.2 Perilaku API Client
 
 - Semua request browser dikirim dengan `credentials: include`.
 - Header `Authorization` hanya disisipkan untuk konteks non-browser (SSR/utility) saat token tersedia.
 - Handling status:
-  - `401`: clear session + redirect login.
-  - `410`: treat sebagai cutover legacy route, clear session + redirect login.
+  - `401`: session dibersihkan lalu diarahkan ke login.
+  - `410`: diperlakukan sebagai sinyal legacy cutover, **tanpa forced logout**, untuk menghindari loop login/logout saat modul lama masih memanggil endpoint lama.
 
-## 3.3 Kontrak Response
+Catatan penting:
+- perilaku `410` ini sengaja dibuat lebih lunak dibanding `401`,
+- tujuannya agar session SSO yang valid tidak ikut dianggap rusak hanya karena ada modul frontend yang belum selesai migrasi endpoint.
 
-Mayoritas service mengasumsikan envelope:
-- `success: boolean`
-- `message: string`
-- `data: T | null`
+## 5.3 Kontrak Response Auth yang Dipakai Frontend
 
-## 4. Peta Route UI
+Frontend mengonsumsi flow auth berikut:
 
-## 4.1 Public
+- `POST /api/auth/prepare`
+- `POST /api/auth/callback`
+- `GET /api/auth/me`
+- `GET /api/auth/identities`
+- `POST /api/auth/select-identity`
+- `POST /api/auth/logout`
+
+Response auth yang dipakai frontend berfokus pada data berikut:
+
+- `sessionEstablished`
+- `requiresIdentitySelection`
+- `activeIdentity`
+- `availableIdentities` / `identities`
+- `effectiveRoles`
+- `effectivePermissions`
+- `user`
+- `authzSource`
+
+Khusus `GET /api/auth/me`, frontend sekarang mengharapkan user/identity payload yang lebih kaya, sehingga data identity detail bisa dipakai ulang di banyak fitur.
+
+## 6. Peta Route UI
+
+## 6.1 Public
 
 - `/`
 - `/login`
 - `/callback`
 - `/identity-chooser`
 - `/unauthorized`
-- `/register` (informasi bahwa registrasi lokal dinonaktifkan)
-- `/pembimbing-lapangan` (informasi bahwa registrasi lokal dinonaktifkan)
-- `/tentang`, `/kontak`, `/referensi`, `/detail-referensi/:id`
+- `/register`
+- `/pembimbing-lapangan`
+- `/tentang`
+- `/kontak`
+- `/referensi`
+- `/detail-referensi/:id`
 
-## 4.2 Protected Shell
+Catatan:
+- `/register` dan `/pembimbing-lapangan` kini lebih berperan sebagai halaman informasi/compatibility, bukan jalur registrasi lokal aktif.
 
-Semua route internal memakai layout `_sidebar` dan redirect `/dashboard` ke dashboard role efektif:
+## 6.2 Protected Shell
 
-- Mahasiswa: prefix `/mahasiswa/*`
-- Admin: prefix `/admin/*`
-- Dosen/Kaprodi/Wakil Dekan: prefix `/dosen/*`
-- Mentor: prefix `/mentor/*`
+Semua route internal memakai layout `_sidebar`.
 
-## 5. Integrasi Fitur yang Sudah Selaras SSO
+Kelompok route utama:
 
-- Halaman login, callback, dan identity chooser.
-- User context berbasis session SSO (`effectiveRoles`, `effectivePermissions`, `activeIdentity`).
-- Signature management diarahkan ke SSO:
-  - ambil URL kelola signature via `GET /api/profile/signature/manage-url`.
-  - operasi write signature di SIKP dinonaktifkan, UI diarahkan ke SSO.
-- Profil mahasiswa/dosen ditampilkan sebagai read-only dari perspektif SIKP dengan CTA ke URL profil SSO.
+- Mahasiswa: `/mahasiswa/*`
+- Admin: `/admin/*`
+- Dosen/Kaprodi/Wakil Dekan: `/dosen/*`
+- Mentor: `/mentor/*`
 
-## 6. Gap Integrasi yang Masih Ada
+Redirect `/dashboard` ditentukan berdasarkan role efektif dan/atau identity aktif.
 
-Masih ada service/frontend module yang memanggil prefix legacy backend:
+## 7. Fitur yang Sudah Selaras dengan SSO
+
+Bagian frontend yang sudah selaras dengan fondasi SSO terbaru:
+
+- halaman login,
+- callback SSO,
+- identity chooser,
+- user context berbasis session SSO,
+- guard route berbasis `effectiveRoles` dan `effectivePermissions`,
+- profile/signature management yang diarahkan ke SSO,
+- penolakan akun blocked-only role (`USER` / `SUPERADMIN`),
+- pemuatan metadata identity yang lebih kaya dari response backend terbaru.
+
+Identity chooser juga sudah sesuai ekspektasi validasi:
+
+- akun ditampilkan sekali pada header chooser,
+- identity card fokus pada jenis identity,
+- metadata seperti NIM/NIP dapat ditampilkan bila tersedia,
+- submit identity mengarahkan ke dashboard yang benar.
+
+## 8. Integrasi Profil dan Signature
+
+Frontend memperlakukan profil dan tanda tangan sebagai domain yang dikelola oleh SSO:
+
+- profil akun dibaca dari session/me dan sumber SSO,
+- pengelolaan profil diarahkan ke URL SSO,
+- pengelolaan signature diarahkan ke URL SSO,
+- operasi write signature di sisi SIKP tidak lagi menjadi jalur utama.
+
+## 9. Gap Integrasi yang Masih Ada
+
+Walaupun alur auth SSO inti sudah selesai, masih ada gap pada beberapa modul domain lama.
+
+Masih ditemukan service/frontend module yang memanggil prefix legacy backend seperti:
 
 - `/api/mahasiswa/*`
 - `/api/dosen/*`
 - `/api/admin/*`
 - `/api/mentor/*`
 
-Di backend mode cutover, prefix `/api/mahasiswa/*`, `/api/dosen/*`, `/api/admin/*` sekarang hard-fail `410`.
-Untuk `/api/mentor/*`, route tersebut saat ini belum di-mount pada entrypoint backend utama sehingga berpotensi `404`.
+Dampak aktualnya:
 
-Dampaknya:
-- sebagian fitur lama yang belum dipindah endpoint bisa gagal saat runtime,
-- beberapa service sudah punya fallback endpoint baru (contoh surat kesediaan/permohonan), tetapi belum merata di seluruh modul.
+- `/api/mahasiswa/*`, `/api/dosen/*`, `/api/admin/*` akan terkena `410` dari backend,
+- `/api/mentor/*` masih berpotensi `404` karena belum menjadi mount aktif pada entrypoint backend,
+- sebagian fitur domain lama dapat gagal walaupun user sudah login dan session SSO valid.
 
-## 7. Modul Besar di Frontend
+Artinya:
+- **fondasi auth sudah selesai dan stabil**,
+- tetapi **harmonisasi endpoint domain belum sepenuhnya selesai**.
 
-Modul utama yang tetap ada di struktur `app/feature`:
+## 10. Modul Besar di Frontend
+
+Modul besar yang masih ada di struktur `app/feature` antara lain:
 
 - dashboard per role
 - create teams
@@ -129,18 +272,34 @@ Modul utama yang tetap ada di struktur `app/feature`:
 - mentor portal
 - repository
 
-Catatan penting: keberadaan modul UI tidak selalu berarti endpoint backend finalnya sudah 100 persen selaras pasca-cutover.
+Catatan penting:
+- keberadaan modul UI tidak otomatis berarti seluruh service API-nya sudah sepenuhnya selaras dengan backend pasca cutover,
+- sebagian modul sudah berjalan baik di jalur SSO baru,
+- sebagian lain masih butuh migrasi endpoint domain.
 
-## 8. Konfigurasi Environment Frontend
+## 11. Konfigurasi Environment Frontend
 
-Variabel yang penting untuk mode SSO dan integrasi backend:
+Variabel penting untuk mode SSO dan integrasi backend:
 
 - `VITE_SIKP_API_BASE_URL`
 - `VITE_SSO_REDIRECT_URI`
 - `VITE_SSO_PROFILE_URL`
 - `VITE_SSO_PROFILE_SIGNATURE_URL`
-- kompatibilitas lama: `VITE_API_URL`, `VITE_APP_AUTH_URL`, `VITE_API_BASE_URL`
 
-## 9. Ringkasan Singkat
+Kompatibilitas lama yang masih didukung:
 
-Frontend sudah mengadopsi alur SSO modern (prepare/callback/identity selection) dan guard berbasis role efektif, tetapi migrasi endpoint domain lama ke route backend pasca-cutover masih berjalan. Fokus berikutnya adalah merapikan semua service yang masih mengarah ke prefix legacy agar alur end-to-end seluruh modul konsisten.
+- `VITE_API_URL`
+- `VITE_APP_AUTH_URL`
+- `VITE_API_BASE_URL`
+
+## 12. Ringkasan Singkat
+
+Frontend SIKP saat ini sudah berhasil menyelesaikan fondasi auth SSO:
+
+- login/callback/PKCE aktif,
+- session cookie + hydration berjalan,
+- multi-identity chooser berjalan,
+- blocked-only role (`USER` / `SUPERADMIN`) ditolak,
+- payload user/identity sudah lebih kaya dan siap dipakai fitur.
+
+Pekerjaan yang masih tersisa terutama berada pada sisi **migrasi service domain** yang masih memanggil endpoint legacy backend, bukan lagi pada fondasi auth SSO inti.
