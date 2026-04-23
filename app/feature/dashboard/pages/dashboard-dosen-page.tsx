@@ -38,15 +38,15 @@ export default function DashboardDosenPage({ data }: DashboardDosenPageProps) {
   const activities = data?.activities ?? [];
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard Dosen</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard Dosen</h1>
+        <p className="text-muted-foreground text-sm sm:text-base">
           Ringkasan bimbingan KP dan verifikasi surat mahasiswa
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">

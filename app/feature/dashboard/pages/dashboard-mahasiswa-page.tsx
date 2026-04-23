@@ -93,17 +93,17 @@ export default function DashboardMahasiswaPage({
   const hasPengajuan = Boolean(statusPengajuan?.submitted);
 
   return (
-    <div className="flex flex-col gap-6 p-6">
+    <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
           Dashboard Mahasiswa
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-sm sm:text-base">
           Selamat datang di Sistem Informasi Kerja Praktik
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 md:auto-rows-min">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:auto-rows-min">
         <Card className="md:col-start-1 md:row-start-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">

@@ -224,7 +224,7 @@ function Referensi() {
 
       <section
         className={cn(
-          "py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
+          "py-14 sm:py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
           isDarkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-white to-gray-50"
         )}
       >
@@ -272,7 +272,7 @@ function Referensi() {
             
             <h1
               className={cn(
-                "text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight",
+                "text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 tracking-tight",
                 isDarkMode ? "text-white" : "text-gray-900"
               )}
             >
@@ -327,7 +327,7 @@ function Referensi() {
           </div>
 
           {/* Stats */}
-          <div className="flex flex-wrap justify-center gap-6 mb-16">
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6 mb-10 sm:mb-16">
             <StatCard
               icon={<Building2 className="h-6 w-6 text-white" />}
               value={REFERENSI_DATA.length}
@@ -353,7 +353,7 @@ function Referensi() {
 
           {/* Referensi Grid */}
           {filteredData.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredData.map((item, index) => (
                 <ReferensiCard 
                   key={item.id} 

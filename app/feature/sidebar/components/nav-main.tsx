@@ -16,6 +16,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "~/components/ui/sidebar";
 
 export function NavMain({
@@ -24,6 +25,13 @@ export function NavMain({
   items: NavItem[];
 }) {
   const { pathname } = useLocation();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   const isUrlActive = (url: string) => {
     if (!url || url === "#") {
@@ -52,7 +60,7 @@ export function NavMain({
               isActive={subItemActive}
               className="h-8 rounded-lg text-[13px] font-medium transition-all duration-200"
             >
-              <Link to={subItem.url}>
+              <Link to={subItem.url} onClick={handleLinkClick}>
                 <span>{subItem.title}</span>
               </Link>
             </SidebarMenuSubButton>
@@ -104,7 +112,7 @@ export function NavMain({
                   isActive={itemActive}
                   className="h-10 rounded-xl px-3 text-[15px] font-medium transition-all duration-200"
                 >
-                  <Link to={item.url}>
+                  <Link to={item.url} onClick={handleLinkClick}>
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>
                   </Link>

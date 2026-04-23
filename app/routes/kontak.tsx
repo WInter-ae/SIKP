@@ -140,7 +140,7 @@ function Kontak() {
 
       <section
         className={cn(
-          "py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
+          "py-14 sm:py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
           isDarkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-white to-gray-50"
         )}
       >
@@ -174,7 +174,7 @@ function Kontak() {
             
             <h1
               className={cn(
-                "text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight",
+                "text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 tracking-tight",
                 isDarkMode ? "text-white" : "text-gray-900"
               )}
             >
@@ -190,7 +190,7 @@ function Kontak() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 max-w-6xl mx-auto">
             {/* Left Column */}
             <div className="space-y-8">
               {/* Map Card */}

@@ -10,13 +10,10 @@ import type { ApiResponse } from "~/lib/api-client";
 
 export interface Team {
   id: string;
-  name: string;
   code: string;
-  dosen_kp_id?: string;
-  dosen_kp_name?: string;
   leaderId: string;
-  createdAt: string;
-  updatedAt: string;
+  dosenKpId: string | null;
+  status: "PENDING" | "FIXED";
 }
 
 export interface TeamMember {
@@ -91,7 +88,7 @@ export interface JoinTeamResponseData {
  * Database auto-generates: id, code, leader_id (from JWT), status (PENDING)
  */
 export async function createTeam(): Promise<ApiResponse<Team>> {
-  return post<Team>("/api/teams", { name: "Tim Kerja Praktik" });
+  return post<Team>("/api/teams", { namaTeam: "Tim Kerja Praktik" });
 }
 
 /**

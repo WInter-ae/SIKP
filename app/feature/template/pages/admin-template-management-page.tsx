@@ -263,12 +263,12 @@ export default function TemplateManagementPage() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 sm:p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">
           Template Management
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Kelola template dokumen untuk berbagai keperluan mahasiswa
         </p>
       </div>
@@ -304,14 +304,14 @@ export default function TemplateManagementPage() {
       {/* Main Content */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
               <CardTitle>Daftar Template</CardTitle>
               <CardDescription>
                 Kelola semua template dokumen di sini
               </CardDescription>
             </div>
-            <Button onClick={() => setCreateDialogOpen(true)}>
+            <Button onClick={() => setCreateDialogOpen(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Tambah Template
             </Button>
@@ -319,7 +319,7 @@ export default function TemplateManagementPage() {
         </CardHeader>
         <CardContent>
           {/* Search and Filter */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -330,14 +330,14 @@ export default function TemplateManagementPage() {
               />
             </div>
             <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <Select
                 value={filterType}
                 onValueChange={(value) =>
                   setFilterType(value as TemplateType | "all")
                 }
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue placeholder="Filter by type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -353,15 +353,15 @@ export default function TemplateManagementPage() {
           </div>
 
           {/* Table */}
-          <div className="border rounded-lg">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nama Template</TableHead>
-                  <TableHead>Tipe</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Terakhir Diupdate</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  <TableHead className="whitespace-nowrap">Nama Template</TableHead>
+                  <TableHead className="whitespace-nowrap">Tipe</TableHead>
+                  <TableHead className="whitespace-nowrap">Status</TableHead>
+                  <TableHead className="whitespace-nowrap">Terakhir Diupdate</TableHead>
+                  <TableHead className="text-right whitespace-nowrap">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

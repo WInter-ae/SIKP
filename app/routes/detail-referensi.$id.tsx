@@ -182,7 +182,7 @@ function DetailReferensi() {
 
       <section
         className={cn(
-          "py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
+          "py-14 sm:py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
           isDarkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-white to-gray-50"
         )}
       >
@@ -256,7 +256,7 @@ function DetailReferensi() {
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
             {/* Left Side - Image Gallery */}
             <div className="group relative">
               <div className={cn(
@@ -360,7 +360,7 @@ function DetailReferensi() {
                         </Badge>
                         <CardTitle
                           className={cn(
-                            "text-3xl md:text-4xl font-black",
+                            "text-2xl sm:text-3xl md:text-4xl font-black",
                             isDarkMode ? "text-white" : ""
                           )}
                         >

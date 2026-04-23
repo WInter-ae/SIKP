@@ -124,7 +124,7 @@ function Beranda() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[calc(100vh-64px)] flex items-center justify-center overflow-hidden">
         {/* Background Images with transition */}
         {BACKGROUND_IMAGES.map((image, index) => (
           <div
@@ -170,58 +170,58 @@ function Beranda() {
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-6 top-1/2 -translate-y-1/2 z-20 h-14 w-14 rounded-full bg-white/5 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 transition-all duration-300 hover:scale-110"
+          className="absolute left-3 md:left-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 md:h-14 md:w-14 rounded-full bg-white/5 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 transition-all duration-300 hover:scale-110"
           onClick={handlePrevSlide}
           aria-label="Previous slide"
         >
-          <ChevronLeft className="h-7 w-7" />
+          <ChevronLeft className="h-5 w-5 md:h-7 md:w-7" />
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-6 top-1/2 -translate-y-1/2 z-20 h-14 w-14 rounded-full bg-white/5 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 transition-all duration-300 hover:scale-110"
+          className="absolute right-3 md:right-6 top-1/2 -translate-y-1/2 z-20 h-10 w-10 md:h-14 md:w-14 rounded-full bg-white/5 hover:bg-white/20 text-white backdrop-blur-md border border-white/10 transition-all duration-300 hover:scale-110"
           onClick={handleNextSlide}
           aria-label="Next slide"
         >
-          <ChevronRight className="h-7 w-7" />
+          <ChevronRight className="h-5 w-5 md:h-7 md:w-7" />
         </Button>
 
         {/* Content */}
-        <div className="relative z-20 text-center text-white px-6 py-8 max-w-5xl">
+        <div className="relative z-20 text-center text-white px-4 sm:px-6 py-8 max-w-5xl w-full">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md rounded-full mb-10 border border-white/20 animate-fade-in">
-            <Sparkles className="h-5 w-5 text-yellow-300 animate-pulse" />
-            <span className="text-lg font-semibold tracking-widest bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+          <div className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-white/10 backdrop-blur-md rounded-full mb-6 sm:mb-10 border border-white/20 animate-fade-in">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300 animate-pulse" />
+            <span className="text-sm sm:text-lg font-semibold tracking-widest bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
               SIKP
             </span>
-            <Sparkles className="h-5 w-5 text-yellow-300 animate-pulse" />
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-300 animate-pulse" />
           </div>
           
           {/* Main heading */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black mb-8 leading-tight tracking-tight">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-5 sm:mb-8 leading-tight tracking-tight">
             <span className="block text-white/90 drop-shadow-2xl">
               Selamat Datang di
             </span>
-            <span className="block mt-2 bg-gradient-to-r from-blue-200 via-white to-blue-200 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
+            <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-blue-200 via-white to-blue-200 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto]">
               Sistem Informasi
             </span>
-            <span className="block mt-2 bg-gradient-to-r from-yellow-200 via-orange-200 to-yellow-200 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto] delay-500">
+            <span className="block mt-1 sm:mt-2 bg-gradient-to-r from-yellow-200 via-orange-200 to-yellow-200 bg-clip-text text-transparent animate-gradient bg-[length:200%_auto] delay-500">
               Kerja Praktik
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl mb-12 leading-relaxed text-white/80 max-w-3xl mx-auto font-light">
+          <p className="text-base sm:text-xl md:text-2xl mb-8 sm:mb-12 leading-relaxed text-white/80 max-w-3xl mx-auto font-light">
             Portal Kerja Praktik Program Studi Manajemen Informatika yang dirancang
             untuk mempermudah mahasiswa dalam mencari, mendaftar, dan
             melaksanakan program kerja praktik.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center w-full max-w-md sm:max-w-none mx-auto">
             <Button 
               size="lg" 
-              className="group relative bg-white text-primary hover:bg-white font-bold px-10 py-7 text-lg rounded-full shadow-2xl shadow-white/25 hover:shadow-white/40 transition-all duration-300 hover:scale-105"
+              className="group relative bg-white text-primary hover:bg-white font-bold w-full sm:w-auto px-6 sm:px-10 py-5 sm:py-7 text-base sm:text-lg rounded-full shadow-2xl shadow-white/25 hover:shadow-white/40 transition-all duration-300 hover:scale-105"
             >
               <span className="relative z-10 flex items-center gap-2">
                 Mulai Sekarang
@@ -232,23 +232,23 @@ function Beranda() {
             <Button 
               size="lg" 
               variant="outline"
-              className="bg-white/5 backdrop-blur-md border-2 border-white/30 text-white hover:bg-white/10 font-semibold px-10 py-7 text-lg rounded-full transition-all duration-300 hover:scale-105 hover:border-white/50"
+              className="bg-white/5 backdrop-blur-md border-2 border-white/30 text-white hover:bg-white/10 font-semibold w-full sm:w-auto px-6 sm:px-10 py-5 sm:py-7 text-base sm:text-lg rounded-full transition-all duration-300 hover:scale-105 hover:border-white/50"
             >
               Pelajari Lebih Lanjut
             </Button>
           </div>
 
           {/* Slide Indicators */}
-          <div className="flex gap-3 justify-center mt-16">
+          <div className="flex gap-2 sm:gap-3 justify-center mt-8 sm:mt-16">
             {BACKGROUND_IMAGES.map((_, index) => (
               <button
                 key={`indicator-${index}`}
                 onClick={() => handleSlideSelect(index)}
                 className={cn(
-                  "h-3 rounded-full transition-all duration-500 backdrop-blur-sm",
+                  "h-2.5 sm:h-3 rounded-full transition-all duration-500 backdrop-blur-sm",
                   index === currentImageIndex
-                    ? "bg-white w-12 shadow-lg shadow-white/50"
-                    : "bg-white/30 hover:bg-white/50 w-3"
+                    ? "bg-white w-8 sm:w-12 shadow-lg shadow-white/50"
+                    : "bg-white/30 hover:bg-white/50 w-2.5 sm:w-3"
                 )}
                 aria-label={`Go to slide ${index + 1}`}
               />
@@ -267,7 +267,7 @@ function Beranda() {
       {/* Requirements Section */}
       <section
         className={cn(
-          "py-24 transition-colors duration-300 relative overflow-hidden",
+          "py-14 sm:py-24 transition-colors duration-300 relative overflow-hidden",
           isDarkMode ? "bg-gray-900" : "bg-gradient-to-b from-white to-gray-50"
         )}
       >
@@ -283,15 +283,15 @@ function Beranda() {
           )} />
         </div>
         
-        <FloatingDecoration className="top-20 left-20" />
-        <FloatingDecoration className="top-40 right-32" />
-        <FloatingDecoration className="bottom-20 left-1/3" />
+        <FloatingDecoration className="top-20 left-20 hidden sm:block" />
+        <FloatingDecoration className="top-40 right-32 hidden sm:block" />
+        <FloatingDecoration className="bottom-20 left-1/3 hidden sm:block" />
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             {/* Section badge */}
             <div className={cn(
-              "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6",
+              "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 sm:mb-6",
               isDarkMode ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary"
             )}>
               <Star className="h-4 w-4" />
@@ -300,7 +300,7 @@ function Beranda() {
             
             <h2
               className={cn(
-                "text-4xl md:text-5xl font-black mb-6 tracking-tight",
+                "text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 tracking-tight",
                 isDarkMode ? "text-white" : "text-gray-900"
               )}
             >
@@ -308,7 +308,7 @@ function Beranda() {
             </h2>
             <p
               className={cn(
-                "text-xl max-w-2xl mx-auto leading-relaxed",
+                "text-base sm:text-xl max-w-2xl mx-auto leading-relaxed",
                 isDarkMode ? "text-gray-400" : "text-gray-600"
               )}
             >
@@ -316,7 +316,7 @@ function Beranda() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-8 max-w-5xl mx-auto">
             <RequirementCard
               icon={<GraduationCap className="h-10 w-10" />}
               title="Semester"
@@ -342,7 +342,7 @@ function Beranda() {
       {/* Workflow Section */}
       <section
         className={cn(
-          "py-24 transition-colors duration-300 relative overflow-hidden",
+          "py-14 sm:py-24 transition-colors duration-300 relative overflow-hidden",
           isDarkMode ? "bg-gray-800" : "bg-gray-50"
         )}
       >
@@ -355,9 +355,9 @@ function Beranda() {
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="text-center mb-16">
+          <div className="text-center mb-10 sm:mb-16">
             <div className={cn(
-              "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6",
+              "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 sm:mb-6",
               isDarkMode ? "bg-secondary/20 text-secondary" : "bg-secondary/10 text-secondary"
             )}>
               <Sparkles className="h-4 w-4" />
@@ -366,7 +366,7 @@ function Beranda() {
             
             <h2
               className={cn(
-                "text-4xl md:text-5xl font-black mb-6 tracking-tight",
+                "text-3xl sm:text-4xl md:text-5xl font-black mb-4 sm:mb-6 tracking-tight",
                 isDarkMode ? "text-white" : "text-gray-900"
               )}
             >
@@ -374,7 +374,7 @@ function Beranda() {
             </h2>
             <p
               className={cn(
-                "text-xl max-w-2xl mx-auto leading-relaxed",
+                "text-base sm:text-xl max-w-2xl mx-auto leading-relaxed",
                 isDarkMode ? "text-gray-400" : "text-gray-600"
               )}
             >

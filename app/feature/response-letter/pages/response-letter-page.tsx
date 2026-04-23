@@ -310,11 +310,11 @@ function ResponseLetterPage() {
   return (
     <>
       {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Surat Balasan
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Upload surat balasan dan pantau status persetujuan kerja praktik
         </p>
       </div>
@@ -531,7 +531,7 @@ function ResponseLetterPage() {
 
       {/* Navigation Buttons */}
       {hasTeam && canManageResponseLetter && (
-        <div className="flex justify-between mt-8">
+        <div className="flex justify-between items-center gap-2 mt-6">
           <Button variant="secondary" asChild className="px-6 py-3 font-medium">
             <Link to="/mahasiswa/kp/surat-pengantar">
               <ArrowLeft className="mr-2 h-4 w-4" />

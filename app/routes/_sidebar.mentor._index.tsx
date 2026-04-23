@@ -259,7 +259,7 @@ export default function MentorDashboard() {
         setAverageScore(
           scoreList.length > 0
             ? scoreList.reduce((sum, score) => sum + score, 0) /
-                scoreList.length
+            scoreList.length
             : 0,
         );
       } catch (error) {

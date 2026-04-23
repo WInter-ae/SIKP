@@ -837,11 +837,11 @@ function SubmissionPage() {
   return (
     <>
       {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Pengajuan Syarat Kerja Praktik
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
           Praktik
         </p>
@@ -1079,7 +1079,7 @@ function SubmissionPage() {
                 setIsConfirmDialogOpen(true);
               }}
               size="lg"
-              className="px-8 py-3 font-medium text-lg"
+              className="w-full sm:w-auto px-10 py-3 font-medium text-lg"
               disabled={!isCurrentUserLeader || isSubmissionSubmitted}
             >
               {isPendingReviewStage || isRejectedBeforeReapply
@@ -1093,7 +1093,7 @@ function SubmissionPage() {
       </Card>
 
       {/* Navigation Buttons - Always show */}
-      <div className="flex justify-between mt-8">
+      <div className="flex justify-between items-center gap-2 mt-6">
         <Button variant="secondary" asChild className="px-6 py-3 font-medium">
           <Link to="/mahasiswa/kp/buat-tim">
             <ArrowLeft className="mr-2 h-4 w-4" />

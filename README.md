@@ -53,7 +53,7 @@ pnpm run dev
 ```
 
 Default local URL:
-- http://localhost:5173
+- http://localhost:5174
 
 ## Script Penting | Useful Scripts
 ```bash

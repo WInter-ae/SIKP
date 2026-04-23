@@ -72,7 +72,7 @@ interface TechCardProps {
 function TechCard({ tech, isDarkMode, index }: TechCardProps) {
   return (
     <div 
-      className="flex flex-col items-center gap-4 group"
+      className="flex flex-col items-center gap-3 sm:gap-4 group"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Glow effect */}
@@ -83,7 +83,7 @@ function TechCard({ tech, isDarkMode, index }: TechCardProps) {
         )} />
         <div
           className={cn(
-            "relative w-28 h-28 rounded-3xl flex items-center justify-center text-5xl transition-all duration-500",
+            "relative w-20 h-20 sm:w-28 sm:h-28 rounded-3xl flex items-center justify-center text-4xl sm:text-5xl transition-all duration-500",
             "group-hover:scale-110 group-hover:-rotate-6",
             `bg-gradient-to-br ${tech.color}`,
             "shadow-lg group-hover:shadow-2xl"
@@ -215,7 +215,7 @@ function Tentang() {
 
       <section
         className={cn(
-          "py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
+          "py-14 sm:py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
           isDarkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-white to-gray-50"
         )}
       >
@@ -268,8 +268,8 @@ function Tentang() {
                     : "bg-white/80 backdrop-blur-xl shadow-2xl"
                 )}
               >
-                <CardContent className="p-10 md:p-16">
-                  <div className="flex flex-col lg:flex-row items-center gap-10">
+                <CardContent className="p-6 sm:p-10 md:p-16">
+                  <div className="flex flex-col lg:flex-row items-center gap-6 sm:gap-10">
                     {/* Icon with animation */}
                     <div className="relative flex-shrink-0">
                       <div className="absolute inset-0 animate-pulse">
@@ -292,7 +292,7 @@ function Tentang() {
                       
                       <h1
                         className={cn(
-                          "text-4xl md:text-5xl lg:text-6xl font-black mb-6 tracking-tight",
+                          "text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 tracking-tight",
                           isDarkMode ? "text-white" : "text-gray-900"
                         )}
                       >
@@ -318,7 +318,7 @@ function Tentang() {
           </div>
 
           {/* Stats Section */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-24">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 max-w-4xl mx-auto mb-14 sm:mb-24">
             {STATS.map((stat, index) => (
               <div 
                 key={index}
@@ -359,10 +359,10 @@ function Tentang() {
           </div>
 
           {/* Technology Section */}
-          <div className="mb-24">
-            <div className="text-center mb-16">
+          <div className="mb-14 sm:mb-24">
+            <div className="text-center mb-10 sm:mb-16">
               <div className={cn(
-                "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6",
+                "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 sm:mb-6",
                 isDarkMode ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary"
               )}>
                 <Code2 className="h-4 w-4" />
@@ -370,7 +370,7 @@ function Tentang() {
               </div>
               <h2
                 className={cn(
-                  "text-3xl md:text-4xl lg:text-5xl font-black mb-6 tracking-tight",
+                  "text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-4 sm:mb-6 tracking-tight",
                   isDarkMode ? "text-white" : "text-gray-900"
                 )}
               >
@@ -378,7 +378,7 @@ function Tentang() {
               </h2>
               <p
                 className={cn(
-                  "text-xl max-w-2xl mx-auto",
+                  "text-base sm:text-xl max-w-2xl mx-auto",
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 )}
               >
@@ -389,12 +389,12 @@ function Tentang() {
             <div className="relative max-w-5xl mx-auto">
               {/* Glassmorphism container */}
               <div className={cn(
-                "relative rounded-3xl p-10",
+                "relative rounded-3xl p-5 sm:p-10",
                 isDarkMode 
                   ? "bg-gray-800/50 backdrop-blur-xl" 
                   : "bg-white/50 backdrop-blur-xl shadow-xl"
               )}>
-                <div className="flex flex-wrap items-center justify-center gap-10 md:gap-16">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center justify-center gap-6 sm:gap-10 md:gap-16">
                   {TECHNOLOGIES.map((tech, index) => (
                     <TechCard 
                       key={tech.id} 
@@ -410,9 +410,9 @@ function Tentang() {
 
           {/* Team Section */}
           <div>
-            <div className="text-center mb-16">
+            <div className="text-center mb-10 sm:mb-16">
               <div className={cn(
-                "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6",
+                "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 sm:mb-6",
                 isDarkMode ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary"
               )}>
                 <Users className="h-4 w-4" />
@@ -420,7 +420,7 @@ function Tentang() {
               </div>
               <h2
                 className={cn(
-                  "text-3xl md:text-4xl lg:text-5xl font-black mb-6 tracking-tight",
+                  "text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-4 sm:mb-6 tracking-tight",
                   isDarkMode ? "text-white" : "text-gray-900"
                 )}
               >
@@ -428,7 +428,7 @@ function Tentang() {
               </h2>
               <p
                 className={cn(
-                  "text-xl max-w-2xl mx-auto",
+                  "text-base sm:text-xl max-w-2xl mx-auto",
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 )}
               >

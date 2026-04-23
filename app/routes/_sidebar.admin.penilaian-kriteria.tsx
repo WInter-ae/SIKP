@@ -308,11 +308,9 @@ export default function PenilaianKriteriaPage() {
               </div>
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    isValid && "bg-green-500"
-                  } ${!isValid && totalWeight > 100 && "bg-red-500"} ${
-                    !isValid && totalWeight < 100 && "bg-amber-500"
-                  }`}
+                  className={`h-full rounded-full transition-all duration-300 ${isValid && "bg-green-500"
+                    } ${!isValid && totalWeight > 100 && "bg-red-500"} ${!isValid && totalWeight < 100 && "bg-amber-500"
+                    }`}
                   style={{ width: `${Math.min(totalWeight, 100)}%` }}
                 />
               </div>

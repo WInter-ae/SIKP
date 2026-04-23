@@ -385,15 +385,15 @@ function SubmissionAdminPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 bg-background min-h-screen">
+    <div className="p-4 sm:p-6 md:p-8 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Page Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-xl sm:text-3xl font-bold text-foreground">
               Penerimaan Pengajuan Surat Pengantar
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Kelola dan review pengajuan surat pengantar dari mahasiswa
             </p>
           </div>
@@ -414,7 +414,7 @@ function SubmissionAdminPage() {
 
         {/* Filter and Search */}
         <Card>
-          <CardContent className="p-4 flex flex-wrap gap-4 items-center">
+          <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
             <div className="flex-1 min-w-[250px] relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -450,7 +450,7 @@ function SubmissionAdminPage() {
               Daftar Pengajuan Surat Pengantar
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">
@@ -469,11 +469,11 @@ function SubmissionAdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="pl-6">Tanggal</TableHead>
-                    <TableHead>Nama Mahasiswa</TableHead>
-                    <TableHead>Perusahaan</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="pr-6">Aksi</TableHead>
+                    <TableHead className="pl-6 whitespace-nowrap">Tanggal</TableHead>
+                    <TableHead className="whitespace-nowrap">Nama Mahasiswa</TableHead>
+                    <TableHead className="whitespace-nowrap">Perusahaan</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="pr-6 whitespace-nowrap">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

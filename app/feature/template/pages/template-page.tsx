@@ -108,17 +108,17 @@ export default function TemplatePage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-4 sm:p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">
           Template Surat Kerja Praktik
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Unduh atau generate template surat yang diperlukan untuk kerja praktik
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {templates.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

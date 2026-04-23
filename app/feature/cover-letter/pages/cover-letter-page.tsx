@@ -87,11 +87,11 @@ function CoverLetterPage() {
   return (
     <>
       {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Status Pengajuan Surat Pengantar
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Monitor status pengajuan surat pengantar kerja praktik Anda
         </p>
       </div>
@@ -135,7 +135,7 @@ function CoverLetterPage() {
 
       {/* Navigation Buttons - Only show if there's a submission */}
       {submission && !isLoading && !isDraftSubmission && (
-        <div className="flex justify-between mt-8">
+        <div className="flex justify-between items-center gap-2 mt-6">
           <Button
             variant="secondary"
             onClick={() => navigate("/mahasiswa/kp/pengajuan")}

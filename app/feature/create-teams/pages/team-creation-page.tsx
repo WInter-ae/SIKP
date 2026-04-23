@@ -2862,11 +2862,11 @@ const TeamCreationPage = () => {
         </DialogContent>
       </Dialog>
       {/* Header Section */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+      <div className="mb-6">
+        <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Pembuatan Tim
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           Buat tim Anda untuk melaksanakan Kerja Praktik
         </p>
       </div>
@@ -2933,7 +2933,7 @@ const TeamCreationPage = () => {
         <>
           {/* Team Actions Row */}
           {team && (
-            <div className="flex items-center justify-between gap-3 mb-8">
+            <div className="flex justify-between items-center gap-3 mb-8">
               <Button
                 type="button"
                 variant="outline"
@@ -3074,7 +3074,7 @@ const TeamCreationPage = () => {
         <Button
           onClick={handleNext}
           size="lg"
-          className="px-6 py-3 font-medium text-lg"
+          className="w-full sm:w-auto px-8 py-3 font-medium text-lg"
           disabled={
             isLoading || !team || (team.status !== "FIXED" && !team.isLeader)
           }
