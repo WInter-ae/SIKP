@@ -20,11 +20,11 @@ import {
   CheckCircle2,
   ExternalLink,
 } from "lucide-react";
-import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa-api";
+import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa.service";
 import {
   getActiveProfileSignature,
   getSignatureManageUrl,
-} from "~/lib/services/signature-api";
+} from "~/lib/services/signature.service";
 
 interface MahasiswaProfile {
   id: string;
@@ -180,7 +180,7 @@ export function MahasiswaProfilPage() {
         await loadSignatureManageUrl();
       } else {
         setNotification({
-          title: "⚠️ Gagal Memuat Profil",
+          title: "âš ï¸ Gagal Memuat Profil",
           description:
             response.message || "Terjadi kesalahan saat memuat profil",
           variant: "destructive",
@@ -197,7 +197,7 @@ export function MahasiswaProfilPage() {
   const openManageProfile = () => {
     if (!profileManageUrl) {
       setNotification({
-        title: "❌ URL SSO Tidak Tersedia",
+        title: "âŒ URL SSO Tidak Tersedia",
         description: "VITE_SSO_PROFILE_URL belum dikonfigurasi.",
         variant: "destructive",
       });
@@ -211,7 +211,7 @@ export function MahasiswaProfilPage() {
   const openManageSignature = () => {
     if (!signatureManageUrl) {
       setNotification({
-        title: "❌ URL Signature SSO Tidak Tersedia",
+        title: "âŒ URL Signature SSO Tidak Tersedia",
         description:
           "Endpoint manage signature atau env URL signature belum siap.",
         variant: "destructive",

@@ -26,7 +26,7 @@ import DetailDialog from "../components/detail-dialog";
 import {
   getAllResponseLettersForAdmin,
   verifyResponseLetter,
-} from "~/lib/services/response-letter-api";
+} from "~/lib/services/response-letter.service";
 
 import type { Student } from "../types";
 
@@ -151,13 +151,13 @@ function AdminResponseLetterPage() {
     const loadResponseLetters = async () => {
       try {
         setIsLoading(true);
-        console.log("🔄 Fetching response letters for admin...");
+        console.log("ðŸ”„ Fetching response letters for admin...");
 
         const response = await getAllResponseLettersForAdmin();
 
         if (response.success && response.data && response.data.length > 0) {
           console.log(
-            "✅ Loaded response letters from backend:",
+            "âœ… Loaded response letters from backend:",
             response.data,
           );
           setStudents(
@@ -171,18 +171,18 @@ function AdminResponseLetterPage() {
           response.success &&
           (!response.data || response.data.length === 0)
         ) {
-          console.log("ℹ️ No response letters found");
+          console.log("â„¹ï¸ No response letters found");
           setStudents([]);
         } else {
           console.error(
-            "❌ Failed to load response letters:",
+            "âŒ Failed to load response letters:",
             response.message,
           );
           toast.error(response.message || "Gagal memuat daftar surat balasan");
           setStudents([]);
         }
       } catch (error) {
-        console.error("❌ Error loading response letters:", error);
+        console.error("âŒ Error loading response letters:", error);
         toast.error("Terjadi kesalahan saat memuat surat balasan");
         setStudents([]);
       } finally {

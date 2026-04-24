@@ -70,11 +70,11 @@ import {
   toggleTemplateActive,
   downloadTemplate,
   type TemplateResponse,
-} from "~/lib/services/template-api";
+} from "~/lib/services/template.service";
 
 export default function TemplateManagementPage() {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user } = useUser();;
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<TemplateType | "all">("all");

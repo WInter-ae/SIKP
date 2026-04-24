@@ -1,9 +1,11 @@
+import { useIdentity } from "~/contexts/identity-context";
+import { useAuth } from "~/contexts/auth-context";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Link, useNavigate } from "react-router";
 import { Loader2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useUser } from "~/contexts/user-context";
+
 import { getDashboardPath } from "~/lib/sso-types";
 
 export function LoginForm({
@@ -11,15 +13,8 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"form">) {
   const navigate = useNavigate();
-  const {
-    initiateLogin,
-    isLoading,
-    isAuthenticated,
-    effectiveRoles,
-    activeIdentity,
-    callbackError,
-    setCallbackError,
-  } = useUser();
+  const { initiateLogin, isLoading, isAuthenticated, callbackError, setCallbackError } = useAuth();
+  const { effectiveRoles, activeIdentity } = useIdentity();;
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

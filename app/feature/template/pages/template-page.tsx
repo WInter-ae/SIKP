@@ -19,11 +19,11 @@ import {
   getActiveTemplates,
   downloadTemplate,
   type TemplateResponse,
-} from "~/lib/services/template-api";
+} from "~/lib/services/template.service";
 
 export default function TemplatePage() {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { user } = useUser();;
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [selectedTemplate, setSelectedTemplate] =
     useState<TemplateResponse | null>(null);

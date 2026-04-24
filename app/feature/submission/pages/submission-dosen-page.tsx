@@ -39,8 +39,8 @@ import {
   type SubmissionDetailForVerifier,
   getDosenSuratPengantarRequests,
   rejectDosenSuratPengantarRequest,
-} from "~/lib/services/surat-pengantar-dosen-api";
-import { getMyProfile } from "~/lib/services/dosen-api";
+} from "~/lib/services/surat-pengantar-dosen.service";
+import { getMyProfile } from "~/lib/services/dosen.service";
 
 type AdminGateCandidate = {
   isAdminApproved?: unknown;
@@ -425,7 +425,7 @@ function SubmissionDosenPage() {
       ]);
 
       if (!response.success) {
-        console.warn("⚠️ Gagal memuat surat pengantar:", response.message);
+        console.warn("âš ï¸ Gagal memuat surat pengantar:", response.message);
         toast.error("Gagal memuat data verifikasi surat.");
         setEntries([]);
         return;
@@ -543,7 +543,7 @@ function SubmissionDosenPage() {
 
       setEntries(suratPengantarEntries);
     } catch (error) {
-      console.error("❌ Error loading surat verification data:", error);
+      console.error("âŒ Error loading surat verification data:", error);
       toast.error("Terjadi kesalahan saat memuat data verifikasi surat.");
     } finally {
       setIsLoading(false);

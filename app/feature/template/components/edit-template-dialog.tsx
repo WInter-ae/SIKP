@@ -29,7 +29,7 @@ import type {
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
 import { autoGenerateFields } from "../services/template.service";
-import { updateTemplate, type TemplateResponse } from "~/lib/services/template-api";
+import { updateTemplate, type TemplateResponse } from "~/lib/services/template.service";
 
 interface EditTemplateDialogProps {
   template: TemplateResponse | null;

@@ -1,8 +1,16 @@
 /**
  * API Client untuk SIKP Backend
  *
- * Gunakan modul ini untuk melakukan API calls ke backend selain authentication.
- * Authentication menggunakan sso yang sudah dikonfigurasi di auth-client.ts
+ * Gunakan modul ini untuk melakukan API calls ke backend.
+ * Authentication menggunakan SSO yang sudah dikonfigurasi di auth-client.ts
+ *
+ * @example Penggunaan standar (pengajuan KP):
+ *   import { sikpClient } from "~/lib/api-client";
+ *   const { data } = await sikpClient.get<Team[]>("/api/teams/my-teams");
+ *
+ * @example Untuk layanan internship (logbook, mentor, penilaian):
+ *   import { internshipClient } from "~/lib/api-client";
+ *   const { data } = await internshipClient.get<Logbook[]>("/api/logbook");
  */
 
 import { getAuthToken as getStoredToken } from "./auth-client";
@@ -15,6 +23,9 @@ import {
   ApiError,
   API_ERROR_MESSAGES,
 } from "./api-error";
+import { z } from "zod";
+
+// ==================== ENVIRONMENT & CONFIG ====================
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -24,8 +35,8 @@ const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:3000";
 const DEFAULT_PROD_API_BASE_URL =
   "https://backend-sikp.backend-sikp.workers.dev";
 
-// Gunakan backend lokal saat development, fallback ke URL Workers saat production.
-const API_BASE_URL =
+/** Base URL untuk layanan pengajuan KP (submission, team, dll.) */
+export const API_BASE_URL =
   import.meta.env.VITE_SIKP_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_APP_AUTH_URL ||
@@ -34,31 +45,12 @@ const API_BASE_URL =
     ? DEFAULT_LOCAL_API_BASE_URL
     : DEFAULT_PROD_API_BASE_URL);
 
-function handleUnauthorized() {
-  clearAuthSession();
-
-  if (typeof window !== "undefined") {
-    const currentPath = window.location.pathname;
-    if (
-      currentPath !== "/login" &&
-      currentPath !== "/callback" &&
-      currentPath !== "/identity-chooser"
-    ) {
-      window.location.assign("/login?reason=session_expired");
-    }
-  }
-}
-
-function handleLegacyAuthCutover() {
-  // Do not force logout on 410 legacy endpoints.
-  // Many feature modules are still migrating route prefixes, and redirecting to
-  // login here creates auth loops even when session is valid.
-}
-
-// URL untuk pelaksanaan magang: logbook, mentor, internship, penilaian (URL baru)
+/** Base URL untuk layanan pelaksanaan magang (logbook, mentor, penilaian) */
 export const INTERNSHIP_API_BASE_URL =
   import.meta.env.VITE_API_INTERNSHIP_URL ||
   "https://backend-sikp.mukarrobinujiantik.workers.dev";
+
+// ==================== TYPES ====================
 
 /**
  * Standard API Response format
@@ -101,17 +93,29 @@ export interface PaginatedResponse<T> {
   pagination: PaginationMeta;
 }
 
-/**
- * Get auth token from storage
- * Mengambil token JWT yang disimpan saat login
- */
+// ==================== AUTH HELPERS ====================
+
 function getAuthToken(): string | null {
   return getStoredToken();
 }
 
-/**
- * Build request headers
- */
+function handleUnauthorized() {
+  clearAuthSession();
+
+  if (typeof window !== "undefined") {
+    const currentPath = window.location.pathname;
+    if (
+      currentPath !== "/login" &&
+      currentPath !== "/callback" &&
+      currentPath !== "/identity-chooser"
+    ) {
+      window.location.assign("/login?reason=session_expired");
+    }
+  }
+}
+
+// ==================== REQUEST BUILDER ====================
+
 function buildHeaders(
   token: string | null,
   isFormData: boolean,
@@ -119,12 +123,13 @@ function buildHeaders(
 ): Record<string, string> {
   const headers: Record<string, string> = {};
 
-  // Don't force Content-Type for FormData
+  // Don't force Content-Type for FormData (browser sets it with boundary)
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
 
   // Browser app authenticates via httpOnly cookie session.
+  // Only attach Bearer token in non-browser (SSR/server) contexts.
   if (token && !isBrowser()) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -136,42 +141,26 @@ function buildHeaders(
   return headers;
 }
 
+// ==================== CORE API CLIENT ====================
+
 /**
- * Main API client function
+ * Low-level API client — dipakai oleh factory `createApiClient`.
+ * Penanganan error (network, HTTP non-2xx, JSON parse) dilakukan secara
+ * terpusat di sini sehingga setiap service tidak perlu try/catch sendiri.
  *
- * @param endpoint - API endpoint (e.g., '/api/teams')
- * @param options - Fetch options
- * @returns Promise with typed response
- *
- * @example
- * // GET request
- * const { data } = await apiClient<Team[]>('/api/teams/my-teams');
- *
- * @example
- * // POST request with JSON
- * const { data } = await apiClient<Team>('/api/teams', {
- *   method: 'POST',
- *   body: JSON.stringify({ name: 'Tim KP ABC' }),
- * });
- *
- * @example
- * // POST request with FormData
- * const formData = new FormData();
- * formData.append('file', file);
- * const { data } = await apiClient<Document>('/api/submissions/123/documents', {
- *   method: 'POST',
- *   body: formData,
- * });
+ * @param baseUrl  - Base URL untuk request (misal: API_BASE_URL atau INTERNSHIP_API_BASE_URL)
+ * @param endpoint - Path endpoint (misal: '/api/teams/my-teams')
+ * @param options  - Fetch options standar
+ * @param schema   - (Opsional) Zod schema untuk validasi response data saat runtime
  */
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit & { _baseUrl?: string } = {},
+  options: RequestInit = {},
+  baseUrl: string = API_BASE_URL,
+  schema?: z.ZodType<T>,
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
-  const { _baseUrl, ...fetchOptions } = options as RequestInit & {
-    _baseUrl?: string;
-  };
-  const isFormData = fetchOptions.body instanceof FormData;
+  const isFormData = options.body instanceof FormData;
 
   try {
     const headers = buildHeaders(
@@ -180,7 +169,7 @@ export async function apiClient<T>(
       options.headers as Record<string, string>,
     );
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const response = await fetch(`${baseUrl}${endpoint}`, {
       ...options,
       credentials: "include",
       headers,
@@ -202,14 +191,28 @@ export async function apiClient<T>(
       throw parseError;
     }
 
+    // Runtime type validation via Zod (if schema is provided and request succeeded)
+    if (response.ok && schema && data && "data" in (data as Record<string, unknown>)) {
+      const payloadData = (data as ApiResponse<T>).data;
+      if (payloadData !== null && payloadData !== undefined) {
+        const validation = schema.safeParse(payloadData);
+        if (!validation.success) {
+          console.error("❌ Zod Validation Error:", validation.error);
+          return {
+            success: false,
+            message: "Format data dari server tidak sesuai tipe yang diharapkan (Runtime Validation Failed)",
+            data: null,
+          };
+        }
+        // Force the validated data back into the payload
+        (data as ApiResponse<T>).data = validation.data;
+      }
+    }
+
     // Handle non-OK responses
     if (!response.ok) {
       if (response.status === 401) {
         handleUnauthorized();
-      }
-
-      if (response.status === 410) {
-        handleLegacyAuthCutover();
       }
 
       const errorMessage =
@@ -223,7 +226,6 @@ export async function apiClient<T>(
 
     return data as ApiResponse<T>;
   } catch (error) {
-    // Handle network errors
     if (isNetworkError(error)) {
       console.error("❌ Network Error:", error);
       return {
@@ -233,7 +235,6 @@ export async function apiClient<T>(
       };
     }
 
-    // Handle other errors
     const errorMessage =
       error instanceof Error ? error.message : API_ERROR_MESSAGES.UNKNOWN_ERROR;
     console.error("❌ API Client Error:", error);
@@ -246,112 +247,155 @@ export async function apiClient<T>(
   }
 }
 
+// ==================== CLIENT FACTORY ====================
+
 /**
- * Upload file to API
- *
- * @param endpoint - API endpoint for file upload
- * @param formData - FormData containing file and other fields
- * @returns Promise with typed response
+ * Buat instance API client dengan base URL tertentu.
+ * Setiap method sudah membawa base URL-nya sendiri.
  *
  * @example
- * const formData = new FormData();
- * formData.append('file', file);
- * formData.append('documentType', 'KTP');
- * const { data } = await uploadFile('/api/submissions/xyz/documents', formData);
+ *   const client = createApiClient("https://my-api.workers.dev");
+ *   const { data } = await client.get<Team[]>("/api/teams");
  */
-export async function uploadFile<T>(
-  endpoint: string,
-  formData: FormData,
-): Promise<ApiResponse<T>> {
-  return apiClient<T>(endpoint, {
-    method: "POST",
-    body: formData,
-  });
+export function createApiClient(baseUrl: string) {
+  return {
+    /**
+     * GET request
+     * @param endpoint - path endpoint
+     * @param params   - optional query string params
+     * @param schema   - opsional Zod schema validasi response
+     */
+    get<T>(endpoint: string, params?: Record<string, string>, schema?: z.ZodType<T>) {
+      const url = params
+        ? `${endpoint}?${new URLSearchParams(params).toString()}`
+        : endpoint;
+      return apiClient<T>(url, { method: "GET" }, baseUrl, schema);
+    },
+
+    /**
+     * POST request
+     * @param endpoint - path endpoint
+     * @param body     - request body (akan di-JSON.stringify)
+     * @param schema   - opsional Zod schema validasi response
+     */
+    post<T>(endpoint: string, body?: unknown, schema?: z.ZodType<T>) {
+      return apiClient<T>(
+        endpoint,
+        {
+          method: "POST",
+          body: body !== undefined ? JSON.stringify(body) : undefined,
+        },
+        baseUrl,
+        schema
+      );
+    },
+
+    /**
+     * PUT request
+     */
+    put<T>(endpoint: string, body?: unknown, schema?: z.ZodType<T>) {
+      return apiClient<T>(
+        endpoint,
+        {
+          method: "PUT",
+          body: body !== undefined ? JSON.stringify(body) : undefined,
+        },
+        baseUrl,
+        schema
+      );
+    },
+
+    /**
+     * PATCH request
+     */
+    patch<T>(endpoint: string, body?: unknown, schema?: z.ZodType<T>) {
+      return apiClient<T>(
+        endpoint,
+        {
+          method: "PATCH",
+          body: body !== undefined ? JSON.stringify(body) : undefined,
+        },
+        baseUrl,
+        schema
+      );
+    },
+
+    /**
+     * DELETE request
+     */
+    del<T>(endpoint: string, schema?: z.ZodType<T>) {
+      return apiClient<T>(endpoint, { method: "DELETE" }, baseUrl, schema);
+    },
+
+    /**
+     * Upload file (multipart/form-data) via POST
+     * @param endpoint - path endpoint
+     * @param formData - FormData berisi file dan field tambahan
+     * @param schema   - opsional Zod schema validasi response
+     */
+    upload<T>(endpoint: string, formData: FormData, schema?: z.ZodType<T>) {
+      return apiClient<T>(
+        endpoint,
+        { method: "POST", body: formData },
+        baseUrl,
+        schema
+      );
+    },
+
+    /**
+     * Custom fetch — untuk kasus yang membutuhkan opsi RequestInit penuh
+     */
+    request<T>(endpoint: string, options: RequestInit = {}, schema?: z.ZodType<T>) {
+      return apiClient<T>(endpoint, options, baseUrl, schema);
+    },
+  };
 }
 
+// ==================== CLIENT INSTANCES ====================
+
 /**
- * GET request helper (pengajuan/submission URL)
+ * Client untuk layanan pengajuan KP (submission, team, surat, dll.)
+ * Menggunakan API_BASE_URL
  */
+export const sikpClient = createApiClient(API_BASE_URL);
+
+/**
+ * Client untuk layanan pelaksanaan magang (logbook, mentor, penilaian)
+ * Menggunakan INTERNSHIP_API_BASE_URL
+ */
+export const internshipClient = createApiClient(INTERNSHIP_API_BASE_URL);
+
+// ==================== LEGACY COMPAT EXPORTS ====================
+// Fungsi-fungsi di bawah dipertahankan sementara untuk backward compatibility
+// dengan file-file service lama yang belum dimigrasi.
+// Akan dihapus setelah semua service dimigrasi ke sikpClient.*
+
+/** @deprecated Gunakan sikpClient.get() */
 export function get<T>(endpoint: string, params?: Record<string, string>) {
-  const url = params
-    ? `${endpoint}?${new URLSearchParams(params).toString()}`
-    : endpoint;
-  return apiClient<T>(url, { method: "GET" });
+  return sikpClient.get<T>(endpoint, params);
 }
 
-/**
- * POST request helper (pengajuan/submission URL)
- */
+/** @deprecated Gunakan sikpClient.post() */
 export function post<T>(endpoint: string, body?: unknown) {
-  return apiClient<T>(endpoint, {
-    method: "POST",
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  return sikpClient.post<T>(endpoint, body);
 }
 
-/**
- * PUT request helper (pengajuan/submission URL)
- */
+/** @deprecated Gunakan sikpClient.put() */
 export function put<T>(endpoint: string, body?: unknown) {
-  return apiClient<T>(endpoint, {
-    method: "PUT",
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  return sikpClient.put<T>(endpoint, body);
 }
 
-/**
- * PATCH request helper (pengajuan/submission URL)
- */
+/** @deprecated Gunakan sikpClient.patch() */
 export function patch<T>(endpoint: string, body?: unknown) {
-  return apiClient<T>(endpoint, {
-    method: "PATCH",
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  return sikpClient.patch<T>(endpoint, body);
 }
 
-/**
- * DELETE request helper (pengajuan/submission URL)
- */
+/** @deprecated Gunakan sikpClient.del() */
 export function del<T>(endpoint: string) {
-  return apiClient<T>(endpoint, { method: "DELETE" });
+  return sikpClient.del<T>(endpoint);
 }
 
-// ==================== INTERNSHIP CLIENT HELPERS ====================
-// Digunakan untuk: logbook, mentor, internship data, penilaian
-// URL: VITE_API_INTERNSHIP_URL (https://backend-sikp.mukarrobinujiantik.workers.dev)
-
-export function iget<T>(endpoint: string, params?: Record<string, string>) {
-  const url = params
-    ? `${endpoint}?${new URLSearchParams(params).toString()}`
-    : endpoint;
-  return apiClient<T>(url, {
-    method: "GET",
-    _baseUrl: INTERNSHIP_API_BASE_URL,
-  } as RequestInit & { _baseUrl: string });
+/** @deprecated Gunakan sikpClient.upload() */
+export function uploadFile<T>(endpoint: string, formData: FormData) {
+  return sikpClient.upload<T>(endpoint, formData);
 }
-
-export function ipost<T>(endpoint: string, body?: unknown) {
-  return apiClient<T>(endpoint, {
-    method: "POST",
-    body: body ? JSON.stringify(body) : undefined,
-    _baseUrl: INTERNSHIP_API_BASE_URL,
-  } as RequestInit & { _baseUrl: string });
-}
-
-export function iput<T>(endpoint: string, body?: unknown) {
-  return apiClient<T>(endpoint, {
-    method: "PUT",
-    body: body ? JSON.stringify(body) : undefined,
-    _baseUrl: INTERNSHIP_API_BASE_URL,
-  } as RequestInit & { _baseUrl: string });
-}
-
-export function idel<T>(endpoint: string) {
-  return apiClient<T>(endpoint, {
-    method: "DELETE",
-    _baseUrl: INTERNSHIP_API_BASE_URL,
-  } as RequestInit & { _baseUrl: string });
-}
-
-// Export base URLs for reference
-export { API_BASE_URL };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { Submission } from "~/feature/submission/types";
-import { getSubmissionByTeamId } from "~/lib/services/submission-api";
+import { getSubmissionByTeamId } from "~/lib/services/submission-api.service";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
 
 /**
@@ -63,13 +63,13 @@ export function useSubmissionStatus(): UseSubmissionStatusResult {
 
       if (submissionResponse.success && submissionResponse.data) {
         setSubmission(submissionResponse.data);
-        console.log("✅ Loaded submission status:", submissionResponse.data);
+        console.log("âœ… Loaded submission status:", submissionResponse.data);
       } else {
-        console.log("📭 No submission found for this team");
+        console.log("ðŸ“­ No submission found for this team");
         setSubmission(null);
       }
     } catch (err) {
-      console.error("❌ Error loading submission:", err);
+      console.error("âŒ Error loading submission:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Gagal memuat data";
       setError(errorMessage);

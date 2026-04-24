@@ -18,6 +18,7 @@ import {
 import { getSidebarMenuByUrl } from "../data/sidebar-data";
 import type { User } from "../types";
 import { useUser } from "~/contexts/user-context";
+import { useIdentity } from "~/contexts/identity-context";
 import type { EffectiveRole } from "~/lib/sso-types";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -47,7 +48,8 @@ const getDefaultUser = (pathname: string): User => {
 
 export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
   const location = useLocation();
-  const { user: contextUser, effectiveRoles, activeIdentity } = useUser();
+  const { user: contextUser } = useUser();
+  const { effectiveRoles, activeIdentity } = useIdentity();;
 
   const defaultUser = React.useMemo(
     () => getDefaultUser(location.pathname),

@@ -20,11 +20,11 @@ import {
   CheckCircle2,
   ExternalLink,
 } from "lucide-react";
-import { getMyProfile } from "~/lib/services/dosen-api";
+import { getMyProfile } from "~/lib/services/dosen.service";
 import {
   getActiveProfileSignature,
   getSignatureManageUrl,
-} from "~/lib/services/signature-api";
+} from "~/lib/services/signature.service";
 
 interface DosenProfile {
   id: string;
@@ -167,7 +167,7 @@ export function DosenProfilPage() {
         await loadSignatureManageUrl();
       } else {
         setNotification({
-          title: "⚠️ Gagal Memuat Profil",
+          title: "âš ï¸ Gagal Memuat Profil",
           description:
             response.message || "Terjadi kesalahan saat memuat profil",
           variant: "destructive",
@@ -183,7 +183,7 @@ export function DosenProfilPage() {
 
   const handleSaveProfile = async () => {
     setNotification({
-      title: "ℹ️ Profil Dikelola di SSO",
+      title: "â„¹ï¸ Profil Dikelola di SSO",
       description:
         "Perubahan profil dilakukan di SSO. Gunakan tombol Kelola Profil di SSO.",
     });
@@ -193,7 +193,7 @@ export function DosenProfilPage() {
   const openManageProfile = () => {
     if (!profileManageUrl) {
       setNotification({
-        title: "❌ URL SSO Tidak Tersedia",
+        title: "âŒ URL SSO Tidak Tersedia",
         description: "VITE_SSO_PROFILE_URL belum dikonfigurasi.",
         variant: "destructive",
       });
@@ -207,7 +207,7 @@ export function DosenProfilPage() {
   const openManageSignature = () => {
     if (!signatureManageUrl) {
       setNotification({
-        title: "❌ URL Signature SSO Tidak Tersedia",
+        title: "âŒ URL Signature SSO Tidak Tersedia",
         description:
           "Endpoint manage signature atau env URL signature belum siap.",
         variant: "destructive",

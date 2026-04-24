@@ -36,7 +36,7 @@ import type { Application } from "../types";
 import {
   getAllSubmissionsForAdmin,
   updateSubmissionStatus,
-} from "~/lib/services/submission-api";
+} from "~/lib/services/submission-api.service";
 import {
   mapSubmissionsToApplications,
   type SubmissionWithTeam,

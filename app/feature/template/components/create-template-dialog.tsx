@@ -25,7 +25,7 @@ import type { TemplateType, TemplateField } from "../types/template.types";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { autoGenerateFields } from "../services/template.service";
-import { createTemplate } from "~/lib/services/template-api";
+import { createTemplate } from "~/lib/services/template.service";
 
 interface CreateTemplateDialogProps {
   open: boolean;

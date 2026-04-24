@@ -39,18 +39,19 @@ import {
   updateSubmission,
   submitSubmission,
   deleteSubmissionDocument,
-} from "~/lib/services/submission-api";
-import { getSubmissionLetterRequestStatuses } from "~/lib/services/letter-request-status-api";
+} from "~/lib/services/submission-api.service";
+import { getSubmissionLetterRequestStatuses } from "~/lib/services/letter-request-status.service";
 import {
   reapplySuratKesediaanApproval,
   requestSuratKesediaanApproval,
-} from "~/lib/services/surat-kesediaan-api";
+} from "~/lib/services/surat-kesediaan.service";
 import {
   reapplySuratPermohonanApproval,
   requestSuratPermohonanApproval,
-} from "~/lib/services/surat-permohonan-api";
-import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa-api";
+} from "~/lib/services/surat-permohonan.service";
+import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa.service";
 import { useUser } from "~/contexts/user-context";
+import { useAuth } from "~/contexts/auth-context";
 import { AlertCircle, ArrowLeft, ArrowRight, Info } from "lucide-react";
 
 function normalizePlaceholderValue(value?: string | null): string {
@@ -67,7 +68,8 @@ type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
 
 function SubmissionPage() {
   const navigate = useNavigate();
-  const { user, isLoading: isUserLoading, isAuthenticated } = useUser();
+  const { user } = useUser();
+  const { isLoading: isUserLoading, isAuthenticated } = useAuth();;
 
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

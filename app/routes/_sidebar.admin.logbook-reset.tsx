@@ -33,7 +33,7 @@ import {
   resetGlobalLogbook,
   type LogbookStatusFilter,
   type LogbookResetResult,
-} from "~/lib/services/admin-logbook-api";
+} from "~/lib/services/admin-logbook.service";
 
 type FilterOption = "ALL" | LogbookStatusFilter;
 type ConfirmMode = "filter" | "period-end";

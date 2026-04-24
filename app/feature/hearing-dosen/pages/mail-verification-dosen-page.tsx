@@ -37,14 +37,14 @@ import {
   approveDosenSuratKesediaanRequest,
   getDosenSuratKesediaanRequests,
   rejectDosenSuratKesediaanRequest,
-} from "~/lib/services/surat-kesediaan-api";
+} from "~/lib/services/surat-kesediaan.service";
 import {
   approveBulkDosenSuratPermohonanRequests,
   approveDosenSuratPermohonanRequest,
   getDosenSuratPermohonanRequests,
   rejectDosenSuratPermohonanRequest,
-} from "~/lib/services/surat-permohonan-api";
-import { getMyProfile } from "~/lib/services/dosen-api";
+} from "~/lib/services/surat-permohonan.service";
+import { getMyProfile } from "~/lib/services/dosen.service";
 
 interface StatCardProps {
   title: string;
@@ -237,13 +237,13 @@ function MailVerificationDosenPage() {
 
       if (!kesediaanResponse.success) {
         console.warn(
-          "⚠️ Gagal memuat surat kesediaan:",
+          "âš ï¸ Gagal memuat surat kesediaan:",
           kesediaanResponse.message,
         );
       }
       if (!permohonanResponse.success) {
         console.warn(
-          "⚠️ Gagal memuat surat permohonan:",
+          "âš ï¸ Gagal memuat surat permohonan:",
           permohonanResponse.message,
         );
       }
@@ -336,7 +336,7 @@ function MailVerificationDosenPage() {
 
       setEntries([...kesediaanEntries, ...permohonanEntries]);
     } catch (error) {
-      console.error("❌ Error loading surat verification data:", error);
+      console.error("âŒ Error loading surat verification data:", error);
       toast.error("Terjadi kesalahan saat memuat data verifikasi surat.");
     } finally {
       setIsLoading(false);

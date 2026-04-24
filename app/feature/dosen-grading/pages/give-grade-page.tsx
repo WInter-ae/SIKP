@@ -11,8 +11,8 @@ import { GradingForm } from "../components/grading-form";
 import { RevisionReviewSection } from "../components/revision-review-section";
 import { MOCK_STUDENTS_FOR_GRADING } from "../data/mock-students";
 import type { GradingFormData } from "../types";
-import { getMyProfile } from "~/lib/services/dosen-api";
-import { getActiveProfileSignature } from "~/lib/services/signature-api";
+import { getMyProfile } from "~/lib/services/dosen.service";
+import { getActiveProfileSignature } from "~/lib/services/signature.service";
 
 export default function GiveGradePage() {
   const { id } = useParams();

@@ -1,8 +1,10 @@
+import { useIdentity } from "~/contexts/identity-context";
+import { useAuth } from "~/contexts/auth-context";
 import { useEffect, useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { AppSidebar } from "~/feature/sidebar";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
-import { useUser } from "~/contexts/user-context";
+
 import { type EffectiveRole, getDashboardPath } from "~/lib/sso-types";
 
 function getRequiredRoles(pathname: string): EffectiveRole[] {
@@ -28,13 +30,8 @@ function getRequiredRoles(pathname: string): EffectiveRole[] {
 export default function Page() {
   const navigate = useNavigate();
   const location = useLocation();
-  const {
-    isLoading,
-    isAuthenticated,
-    availableIdentities,
-    activeIdentity,
-    effectiveRoles,
-  } = useUser();
+  const { isLoading, isAuthenticated } = useAuth();
+  const { availableIdentities, activeIdentity, effectiveRoles } = useIdentity();;
 
   const requiredRoles = useMemo(
     () => getRequiredRoles(location.pathname),

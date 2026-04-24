@@ -1,14 +1,15 @@
+import { useAuth } from "~/contexts/auth-context";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { AlertCircle, Loader2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
-import { useUser } from "~/contexts/user-context";
+
 
 export default function CallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { handleCallback, setCallbackError } = useUser();
+  const { handleCallback, setCallbackError } = useAuth();;
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const hasProcessed = useRef(false);

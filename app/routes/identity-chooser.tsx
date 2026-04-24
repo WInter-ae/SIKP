@@ -4,22 +4,15 @@ import { Loader2, UserCheck } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import { useUser } from "~/contexts/user-context";
+import { useIdentity } from "~/contexts/identity-context";
+import { useAuth } from "~/contexts/auth-context";
 import { getDashboardPath } from "~/lib/sso-types";
 
 export default function IdentityChooserPage() {
   const navigate = useNavigate();
-  const {
-    user,
-    isAuthenticated,
-    isLoading,
-    availableIdentities,
-    activeIdentity,
-    effectiveRoles,
-    selectActiveIdentity,
-    hydrateSession,
-    callbackError,
-    setCallbackError,
-  } = useUser();
+  const { user } = useUser();
+  const { isAuthenticated, isLoading, hydrateSession, callbackError, setCallbackError } = useAuth();
+  const { availableIdentities, activeIdentity, effectiveRoles, selectActiveIdentity } = useIdentity();;
 
   const [selectedIdentityType, setSelectedIdentityType] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -41,6 +41,7 @@ interface ApiResponse<T> {
 
 // Import user context untuk akses user data
 import { useUser } from "~/contexts/user-context";
+import { useAuth } from "~/contexts/auth-context";
 
 // Import API services
 import {
@@ -58,12 +59,13 @@ import {
 import {
   createSubmission,
   getSubmissionByTeamId,
-} from "~/lib/services/submission-api";
-import { getResponseLetterBySubmission } from "~/lib/services/response-letter-api";
+} from "~/lib/services/submission-api.service";
+import { getResponseLetterBySubmission } from "~/lib/services/response-letter.service";
 
 const TeamCreationPage = () => {
   const navigate = useNavigate();
-  const { user, isLoading: isUserLoading, isAuthenticated } = useUser();
+  const { user } = useUser();
+  const { isLoading: isUserLoading, isAuthenticated } = useAuth();;
 
   const extractTeamCodeFromDisplayName = (name: string): string => {
     const match = name.match(/\((TEAM-[^)]+)\)/);
