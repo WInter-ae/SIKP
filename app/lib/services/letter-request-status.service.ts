@@ -6,6 +6,8 @@
 import { sikpClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
+import { z } from "zod";
+
 export type LetterRequestDocumentType = "SURAT_KESEDIAAN" | "FORM_PERMOHONAN";
 
 export interface LetterRequestStatusItem {
@@ -20,7 +22,8 @@ export interface LetterRequestStatusItem {
   dosenName: string | null;
 }
 
-type RawItem = Record<string, unknown>;
+const RawItemSchema = z.record(z.string(), z.unknown());
+type RawItem = z.infer<typeof RawItemSchema>;
 
 function normalizeDocumentType(value: unknown): LetterRequestDocumentType | null {
   if (typeof value !== "string") return null;
@@ -67,7 +70,8 @@ function normalizeStatusItem(item: RawItem): LetterRequestStatusItem | null {
   const signedFileUrl = getString(item, ["signedFileUrl", "signed_file_url", "signedUrl", "signed_url"]);
   const rejectionReason = getString(item, ["rejectionReason", "rejection_reason", "reason"]);
 
-  const dosenObject = typeof item.dosen === "object" && item.dosen !== null ? (item.dosen as RawItem) : null;
+  const dosenObjectResult = RawItemSchema.safeParse(item.dosen);
+  const dosenObject = dosenObjectResult.success ? dosenObjectResult.data : null;
   const dosenNameFromObject = dosenObject ? getString(dosenObject, ["name", "nama", "fullName", "namaLengkap", "nama_lengkap"]) : null;
   const dosenName = getString(item, ["dosenNama", "dosen_nama", "namaDosen", "nama_dosen", "dosenName", "dosen_name", "lecturerName", "lecturer_name"]) ?? dosenNameFromObject;
 
@@ -85,18 +89,32 @@ function normalizeStatusItem(item: RawItem): LetterRequestStatusItem | null {
 }
 
 function extractStatusItems(data: unknown): LetterRequestStatusItem[] {
-  const candidates: unknown[] = [
-    data,
-    typeof data === "object" && data !== null ? (data as Record<string, unknown>).items : null,
-    typeof data === "object" && data !== null ? (data as Record<string, unknown>).statuses : null,
-    typeof data === "object" && data !== null ? (data as Record<string, unknown>).records : null,
-  ];
-
-  for (const candidate of candidates) {
-    if (!Array.isArray(candidate)) continue;
-    return candidate
-      .map((item) => typeof item === "object" && item !== null ? normalizeStatusItem(item as RawItem) : null)
+  // 1. Cek jika data adalah array langsung
+  const arrayResult = z.array(RawItemSchema).safeParse(data);
+  if (arrayResult.success) {
+    return arrayResult.data
+      .map(normalizeStatusItem)
       .filter((item): item is LetterRequestStatusItem => item !== null);
+  }
+
+  // 2. Cek jika data dibungkus dalam objek
+  const ObjectWrappedSchema = z.object({
+    items: z.array(RawItemSchema).optional(),
+    statuses: z.array(RawItemSchema).optional(),
+    records: z.array(RawItemSchema).optional(),
+  });
+
+  const objectResult = ObjectWrappedSchema.safeParse(data);
+  if (objectResult.success && objectResult.data) {
+    const arr =
+      objectResult.data.items ||
+      objectResult.data.statuses ||
+      objectResult.data.records;
+    if (arr) {
+      return arr
+        .map(normalizeStatusItem)
+        .filter((item): item is LetterRequestStatusItem => item !== null);
+    }
   }
 
   return [];

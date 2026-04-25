@@ -49,10 +49,13 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string) => `/api/surat-kesediaan/${id}`,
     DELETE: (id: string) => `/api/surat-kesediaan/${id}`,
     DOSEN_GET_REQUESTS: "/api/dosen/surat-kesediaan/requests",
-    DOSEN_APPROVE: (id: string) => `/api/dosen/surat-kesediaan/requests/${id}/approve`,
-    DOSEN_REJECT: (id: string) => `/api/dosen/surat-kesediaan/requests/${id}/reject`,
+    DOSEN_APPROVE: (id: string) =>
+      `/api/dosen/surat-kesediaan/requests/${id}/approve`,
+    DOSEN_REJECT: (id: string) =>
+      `/api/dosen/surat-kesediaan/requests/${id}/reject`,
     DOSEN_APPROVE_BULK: "/api/dosen/surat-kesediaan/requests/approve-bulk",
-    MAHASISWA_REAPPLY: (id: string) => `/api/mahasiswa/surat-kesediaan/requests/${id}/reapply`,
+    MAHASISWA_REAPPLY: (id: string) =>
+      `/api/mahasiswa/surat-kesediaan/requests/${id}/reapply`,
   },
   SURAT_PERMOHONAN: {
     GET_BY_SUBMISSION: (submissionId: string) =>
@@ -62,11 +65,15 @@ export const API_ENDPOINTS = {
     GENERATE_PDF: (submissionId: string) =>
       `/api/surat-permohonan/generate-pdf/${submissionId}`,
     DOSEN_GET_REQUESTS: "/api/dosen/surat-permohonan/requests",
-    DOSEN_APPROVE: (id: string) => `/api/dosen/surat-permohonan/requests/${id}/approve`,
-    DOSEN_REJECT: (id: string) => `/api/dosen/surat-permohonan/requests/${id}/reject`,
+    DOSEN_APPROVE: (id: string) =>
+      `/api/dosen/surat-permohonan/requests/${id}/approve`,
+    DOSEN_REJECT: (id: string) =>
+      `/api/dosen/surat-permohonan/requests/${id}/reject`,
     DOSEN_APPROVE_BULK: "/api/dosen/surat-permohonan/requests/approve-bulk",
-    MAHASISWA_REAPPLY: (id: string) => `/api/mahasiswa/surat-permohonan/requests/${id}/reapply`,
-    MAHASISWA_RESUBMIT: (id: string) => `/api/mahasiswa/surat-permohonan/requests/${id}/resubmit`,
+    MAHASISWA_REAPPLY: (id: string) =>
+      `/api/mahasiswa/surat-permohonan/requests/${id}/reapply`,
+    MAHASISWA_RESUBMIT: (id: string) =>
+      `/api/mahasiswa/surat-permohonan/requests/${id}/resubmit`,
   },
   SURAT_PENGANTAR_DOSEN: {
     GET_BY_SUBMISSION: (submissionId: string) =>
@@ -74,8 +81,10 @@ export const API_ENDPOINTS = {
     CREATE: "/api/surat-pengantar-dosen",
     UPDATE: (id: string) => `/api/surat-pengantar-dosen/${id}`,
     DOSEN_GET_REQUESTS: "/api/dosen/surat-pengantar/requests",
-    DOSEN_APPROVE: (id: string) => `/api/dosen/surat-pengantar/requests/${id}/approve`,
-    DOSEN_REJECT: (id: string) => `/api/dosen/surat-pengantar/requests/${id}/reject`,
+    DOSEN_APPROVE: (id: string) =>
+      `/api/dosen/surat-pengantar/requests/${id}/approve`,
+    DOSEN_REJECT: (id: string) =>
+      `/api/dosen/surat-pengantar/requests/${id}/reject`,
   },
   TEMPLATE: {
     GET_ALL: "/api/templates",
@@ -97,6 +106,7 @@ export const API_ENDPOINTS = {
   SIGNATURE: {
     GET_ACTIVE: "/api/signatures/active",
     UPLOAD: "/api/signatures/upload",
-    GET_BY_ID: (id: string) => `/api/signatures/${id}`,
+    MANAGE_URL: "/api/profile/signature/manage-url",
+    GET_BY_ID: (signatureId: string) => `/api/signatures/${signatureId}`,
   },
 };
