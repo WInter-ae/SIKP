@@ -276,21 +276,28 @@ const TeamCreationPage = () => {
       const loadTime = Date.now() - startTime;
       console.log(`✅ Teams loaded in ${loadTime}ms`);
 
+      // Normalize response data if backend returns single object instead of array
+      let responseData = response.data;
+      if (response.success && responseData && !Array.isArray(responseData) && typeof responseData === "object") {
+        console.log("🔄 Normalizing single object response to array");
+        responseData = [responseData] as any;
+      }
+
       // Debug: Log response structure
       console.log("📋 API Response Details:", {
         success: response.success,
-        hasData: !!response.data,
-        dataType: typeof response.data,
-        dataLength: Array.isArray(response.data) ? response.data.length : "N/A",
+        hasData: !!responseData,
+        dataType: typeof responseData,
+        dataLength: Array.isArray(responseData) ? responseData.length : "N/A",
         rawResponse: response,
       });
 
-      if (response.success && response.data && response.data.length > 0) {
+      if (response.success && responseData && Array.isArray(responseData) && responseData.length > 0) {
         // Get the first team (user should only have one active team)
-        const teamData = response.data[0];
+        const teamData = responseData[0];
 
         // Ensure members array exists
-        let members = Array.isArray(teamData.members) ? teamData.members : [];
+        let members = Array.isArray((teamData as any).members) ? (teamData as any).members : [];
 
         console.log("🔍 Raw Team Data from Backend:", {
           teamId: teamData.id,
@@ -349,9 +356,10 @@ const TeamCreationPage = () => {
             teamData.dosen_kp_name ?? teamData.dosenKpName ?? undefined,
           leaderId:
             members.find((m: TeamMember) => m.role === "KETUA")?.user?.id ||
+            teamData.leaderId ||
             user?.id ||
             "",
-          isLeader: teamData.isLeader ?? false, // ✅ Use isLeader flag from backend
+          isLeader: teamData.isLeader ?? (teamData.leaderId === user?.id) ?? false,
           status: teamData.status,
           members: acceptedMembers
             .map((m: TeamMember) => ({
