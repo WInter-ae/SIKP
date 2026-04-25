@@ -84,7 +84,10 @@ export async function createSubmission(
 ): Promise<ApiResponse<Submission>> {
   const payload = data ? { teamId, ...data } : { teamId };
 
-  const response = await sikpClient.post<Submission>(API_ENDPOINTS.SUBMISSION.CREATE, payload);
+  const response = await sikpClient.post<Submission>(
+    API_ENDPOINTS.SUBMISSION.CREATE,
+    payload,
+  );
 
   // Toleransi validasi backend: retry dengan minimal payload jika validasi gagal
   if (!response.success && data) {
@@ -96,7 +99,9 @@ export async function createSubmission(
       message.includes("400");
 
     if (shouldRetryMinimal) {
-      return sikpClient.post<Submission>(API_ENDPOINTS.SUBMISSION.CREATE, { teamId });
+      return sikpClient.post<Submission>(API_ENDPOINTS.SUBMISSION.CREATE, {
+        teamId,
+      });
     }
   }
 

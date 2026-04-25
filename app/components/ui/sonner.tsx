@@ -4,13 +4,13 @@ import {
   Loader2Icon,
   OctagonXIcon,
   TriangleAlertIcon,
-} from "lucide-react"
-import { useTheme } from "~/contexts/theme-context"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
+} from "lucide-react";
+import { useTheme } from "~/contexts/theme-context";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { isDarkMode } = useTheme()
-  const theme = isDarkMode ? "dark" : "light"
+  const { isDarkMode } = useTheme();
+  const theme = isDarkMode ? "dark" : "light";
 
   return (
     <Sonner
@@ -33,7 +33,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       {...props}
     />
-  )
-}
+  );
+};
 
-export { Toaster }
+export { Toaster };

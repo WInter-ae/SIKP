@@ -30,13 +30,29 @@ import {
 } from "lucide-react";
 
 import { getAssessmentCriteria } from "~/lib/assessment-criteria-api";
-import { getAssessmentScoreBarClass, getAssessmentScoreTextClass } from "~/lib/assessment-score-style";
-import { getCompleteInternshipData, type CompleteInternshipData } from "~/feature/during-intern/services/student-api";
-import { getMyAssessment, type StudentAssessmentData } from "~/feature/during-intern/services/assessment-api";
-import { generateAssessmentForm, normalizeSignatureForDocument, printAssessmentForm } from "~/feature/during-intern/utils/generate-assessment-form";
+import {
+  getAssessmentScoreBarClass,
+  getAssessmentScoreTextClass,
+} from "~/lib/assessment-score-style";
+import {
+  getCompleteInternshipData,
+  type CompleteInternshipData,
+} from "~/feature/during-intern/services/student-api";
+import {
+  getMyAssessment,
+  type StudentAssessmentData,
+} from "~/feature/during-intern/services/assessment-api";
+import {
+  generateAssessmentForm,
+  normalizeSignatureForDocument,
+  printAssessmentForm,
+} from "~/feature/during-intern/utils/generate-assessment-form";
 import type { AssessmentCriterion } from "~/lib/assessment-criteria-api";
 
-const CATEGORY_ICONS: Record<"kehadiran" | "kerjasama" | "sikapEtika" | "prestasiKerja" | "kreatifitas", React.ElementType> = {
+const CATEGORY_ICONS: Record<
+  "kehadiran" | "kerjasama" | "sikapEtika" | "prestasiKerja" | "kreatifitas",
+  React.ElementType
+> = {
   kehadiran: Clock,
   kerjasama: Users,
   sikapEtika: Users,
@@ -59,26 +75,73 @@ function isSikapEtikaCategory(category: string): boolean {
   );
 }
 
-function getCriterionKey(criterion: Pick<AssessmentCriterion, "id" | "category">): CriterionKey | null {
-  const normalizedId = String(criterion.id || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+function getCriterionKey(
+  criterion: Pick<AssessmentCriterion, "id" | "category">,
+): CriterionKey | null {
+  const normalizedId = String(criterion.id || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
   const normalized = criterion.category.toLowerCase().replace(/[^a-z]/g, "");
 
-  if (normalizedId === "1" || normalizedId.includes("kehadiran") || normalizedId.includes("attendance")) return "kehadiran";
-  if (normalizedId === "2" || normalizedId.includes("kerjasama") || normalizedId.includes("cooperation")) return "kerjasama";
-  if (normalizedId === "3" || normalizedId.includes("sikap") || normalizedId.includes("etika") || normalizedId.includes("attitude")) return "sikapEtika";
-  if (normalizedId === "4" || normalizedId.includes("prestasi") || normalizedId.includes("workachievement") || normalizedId.includes("kinerja")) return "prestasiKerja";
-  if (normalizedId === "5" || normalizedId.includes("kreatif") || normalizedId.includes("creativ")) return "kreatifitas";
+  if (
+    normalizedId === "1" ||
+    normalizedId.includes("kehadiran") ||
+    normalizedId.includes("attendance")
+  )
+    return "kehadiran";
+  if (
+    normalizedId === "2" ||
+    normalizedId.includes("kerjasama") ||
+    normalizedId.includes("cooperation")
+  )
+    return "kerjasama";
+  if (
+    normalizedId === "3" ||
+    normalizedId.includes("sikap") ||
+    normalizedId.includes("etika") ||
+    normalizedId.includes("attitude")
+  )
+    return "sikapEtika";
+  if (
+    normalizedId === "4" ||
+    normalizedId.includes("prestasi") ||
+    normalizedId.includes("workachievement") ||
+    normalizedId.includes("kinerja")
+  )
+    return "prestasiKerja";
+  if (
+    normalizedId === "5" ||
+    normalizedId.includes("kreatif") ||
+    normalizedId.includes("creativ")
+  )
+    return "kreatifitas";
 
-  if (normalized.includes("kehadiran") || normalized.includes("attendance")) return "kehadiran";
-  if (normalized.includes("kerjasama") || normalized.includes("cooperation")) return "kerjasama";
+  if (normalized.includes("kehadiran") || normalized.includes("attendance"))
+    return "kehadiran";
+  if (normalized.includes("kerjasama") || normalized.includes("cooperation"))
+    return "kerjasama";
   if (isSikapEtikaCategory(criterion.category)) return "sikapEtika";
-  if (normalized.includes("prestasi") || normalized.includes("workachievement") || normalized.includes("kinerja")) return "prestasiKerja";
-  if (normalized.includes("kreatif") || normalized.includes("kreativ") || normalized.includes("creativ") || normalized.includes("inovasi")) return "kreatifitas";
+  if (
+    normalized.includes("prestasi") ||
+    normalized.includes("workachievement") ||
+    normalized.includes("kinerja")
+  )
+    return "prestasiKerja";
+  if (
+    normalized.includes("kreatif") ||
+    normalized.includes("kreativ") ||
+    normalized.includes("creativ") ||
+    normalized.includes("inovasi")
+  )
+    return "kreatifitas";
 
   return null;
 }
 
-function getScoreByCriterionKey(key: CriterionKey | null, data: StudentAssessmentData | null): number {
+function getScoreByCriterionKey(
+  key: CriterionKey | null,
+  data: StudentAssessmentData | null,
+): number {
   if (!key || !data) return 0;
   if (key === "kehadiran") return data.kehadiran ?? 0;
   if (key === "kerjasama") return data.kerjasama ?? 0;
@@ -100,18 +163,41 @@ type ViewAssessment = {
 function getCategoryIcon(category: string): React.ElementType {
   const normalized = normalizeKey(category);
 
-  if (normalized.includes("kehadiran") || normalized.includes("attendance")) return CATEGORY_ICONS.kehadiran;
-  if (normalized.includes("kerjasama") || normalized.includes("cooperation") || normalized.includes("teamwork")) return CATEGORY_ICONS.kerjasama;
-  if (normalized.includes("sikap") || normalized.includes("etika") || normalized.includes("attitude") || normalized.includes("ethics")) return CATEGORY_ICONS.sikapEtika;
-  if (normalized.includes("prestasi") || normalized.includes("workachievement") || normalized.includes("kinerja")) return CATEGORY_ICONS.prestasiKerja;
-  if (normalized.includes("kreatif") || normalized.includes("kreativ") || normalized.includes("creativ") || normalized.includes("inovasi")) return CATEGORY_ICONS.kreatifitas;
+  if (normalized.includes("kehadiran") || normalized.includes("attendance"))
+    return CATEGORY_ICONS.kehadiran;
+  if (
+    normalized.includes("kerjasama") ||
+    normalized.includes("cooperation") ||
+    normalized.includes("teamwork")
+  )
+    return CATEGORY_ICONS.kerjasama;
+  if (
+    normalized.includes("sikap") ||
+    normalized.includes("etika") ||
+    normalized.includes("attitude") ||
+    normalized.includes("ethics")
+  )
+    return CATEGORY_ICONS.sikapEtika;
+  if (
+    normalized.includes("prestasi") ||
+    normalized.includes("workachievement") ||
+    normalized.includes("kinerja")
+  )
+    return CATEGORY_ICONS.prestasiKerja;
+  if (
+    normalized.includes("kreatif") ||
+    normalized.includes("kreativ") ||
+    normalized.includes("creativ") ||
+    normalized.includes("inovasi")
+  )
+    return CATEGORY_ICONS.kreatifitas;
 
   return Award;
 }
 
 function getScoreFromComponents(
   criterion: Pick<AssessmentCriterion, "id" | "category">,
-  data: StudentAssessmentData | null
+  data: StudentAssessmentData | null,
 ): number | null {
   const components = data?.components;
   if (!components || components.length === 0) return null;
@@ -124,11 +210,22 @@ function getScoreFromComponents(
     const byKey = normalizeKey(String(component.categoryKey || ""));
     const byLabel = normalizeKey(String(component.label || ""));
 
-    if (criterionId && (byId === criterionId || byKey === criterionId || byId.includes(criterionId) || byKey.includes(criterionId))) {
+    if (
+      criterionId &&
+      (byId === criterionId ||
+        byKey === criterionId ||
+        byId.includes(criterionId) ||
+        byKey.includes(criterionId))
+    ) {
       return true;
     }
 
-    if (categoryLabel && (byLabel === categoryLabel || byLabel.includes(categoryLabel) || categoryLabel.includes(byLabel))) {
+    if (
+      categoryLabel &&
+      (byLabel === categoryLabel ||
+        byLabel.includes(categoryLabel) ||
+        categoryLabel.includes(byLabel))
+    ) {
       return true;
     }
 
@@ -144,8 +241,10 @@ function AssessmentPage() {
   const [assessments, setAssessments] = useState<ViewAssessment[]>([]);
   const [criteriaLoading, setCriteriaLoading] = useState(true);
   const [assessmentLoading, setAssessmentLoading] = useState(true);
-  const [backendAssessment, setBackendAssessment] = useState<StudentAssessmentData | null>(null);
-  const [internshipContext, setInternshipContext] = useState<CompleteInternshipData | null>(null);
+  const [backendAssessment, setBackendAssessment] =
+    useState<StudentAssessmentData | null>(null);
+  const [internshipContext, setInternshipContext] =
+    useState<CompleteInternshipData | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [supervisorInfo, setSupervisorInfo] = useState({
     name: "-",
@@ -174,7 +273,10 @@ function AssessmentPage() {
           setSupervisorInfo({
             name: internshipRes.data.mentor.name || "-",
             position: internshipRes.data.mentor.position || "-",
-            company: internshipRes.data.mentor.company || internshipRes.data.submission?.company || "-",
+            company:
+              internshipRes.data.mentor.company ||
+              internshipRes.data.submission?.company ||
+              "-",
           });
         } else if (internshipRes.success && internshipRes.data?.submission) {
           setInternshipContext(internshipRes.data);
@@ -184,21 +286,28 @@ function AssessmentPage() {
           }));
         }
 
-        const mappedAssessment = assessmentRes.success ? assessmentRes.data : null;
+        const mappedAssessment = assessmentRes.success
+          ? assessmentRes.data
+          : null;
         setBackendAssessment(mappedAssessment || null);
 
         setAssessments(
           criteria.map((c) => {
             const criterionKey = getCriterionKey(c);
-            const componentScore = getScoreFromComponents(c, mappedAssessment || null);
-            const score = componentScore ?? getScoreByCriterionKey(criterionKey, mappedAssessment || null);
+            const componentScore = getScoreFromComponents(
+              c,
+              mappedAssessment || null,
+            );
+            const score =
+              componentScore ??
+              getScoreByCriterionKey(criterionKey, mappedAssessment || null);
 
             return {
               ...c,
               score,
               icon: getCategoryIcon(c.category),
             };
-          })
+          }),
         );
       } finally {
         if (isMounted) {
@@ -217,7 +326,7 @@ function AssessmentPage() {
 
   const totalScore = useMemo(
     () => assessments.reduce((sum, a) => sum + (a.score * a.weight) / 100, 0),
-    [assessments]
+    [assessments],
   );
 
   const getGrade = (score: number) => {
@@ -257,7 +366,8 @@ function AssessmentPage() {
         : "-";
 
     const rows = assessments.map((item) => {
-      const weightedScore = (Number(item.score || 0) * Number(item.weight || 0)) / 100;
+      const weightedScore =
+        (Number(item.score || 0) * Number(item.weight || 0)) / 100;
       return {
         category: item.category,
         weight: Number(item.weight || 0),
@@ -266,12 +376,15 @@ function AssessmentPage() {
       };
     });
 
-    const totalWeightedScore = rows.reduce((sum, row) => sum + row.weightedScore, 0);
+    const totalWeightedScore = rows.reduce(
+      (sum, row) => sum + row.weightedScore,
+      0,
+    );
 
     setIsGeneratingPdf(true);
     try {
       const normalizedSignature = await normalizeSignatureForDocument(
-        internshipContext.mentor?.signature
+        internshipContext.mentor?.signature,
       );
 
       const formData = {
@@ -279,11 +392,18 @@ function AssessmentPage() {
         nim: internshipContext.student?.nim || "-",
         programStudi: internshipContext.student?.prodi || "-",
         fakultas: internshipContext.student?.fakultas || "-",
-        companyName: internshipContext.submission?.company || supervisorInfo.company || "-",
+        companyName:
+          internshipContext.submission?.company ||
+          supervisorInfo.company ||
+          "-",
         assessmentPeriod: periodText,
-        assessmentDate: backendAssessment.updatedAt ? formatDateId(backendAssessment.updatedAt) : formatDateId(new Date().toISOString()),
-        mentorName: internshipContext.mentor?.name || supervisorInfo.name || "-",
-        mentorPosition: internshipContext.mentor?.position || supervisorInfo.position || "-",
+        assessmentDate: backendAssessment.updatedAt
+          ? formatDateId(backendAssessment.updatedAt)
+          : formatDateId(new Date().toISOString()),
+        mentorName:
+          internshipContext.mentor?.name || supervisorInfo.name || "-",
+        mentorPosition:
+          internshipContext.mentor?.position || supervisorInfo.position || "-",
         mentorSignature: normalizedSignature,
         rows,
         totalWeightedScore,
@@ -297,7 +417,11 @@ function AssessmentPage() {
 
       toast.success("Dokumen penilaian berhasil digenerate.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal generate dokumen penilaian.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Gagal generate dokumen penilaian.",
+      );
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -306,7 +430,9 @@ function AssessmentPage() {
   if (criteriaLoading || assessmentLoading) {
     return (
       <div className="max-w-6xl mx-auto p-6">
-        <p className="text-muted-foreground text-sm">Memuat data penilaian...</p>
+        <p className="text-muted-foreground text-sm">
+          Memuat data penilaian...
+        </p>
       </div>
     );
   }
@@ -314,7 +440,9 @@ function AssessmentPage() {
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Penilaian Kerja Praktik</h1>
+        <h1 className="text-3xl font-bold text-foreground">
+          Penilaian Kerja Praktik
+        </h1>
         <p className="text-muted-foreground">
           Hasil penilaian dari pembimbing lapangan selama masa kerja praktik
         </p>
@@ -330,7 +458,8 @@ function AssessmentPage() {
       <Alert className="border-l-4 border-primary bg-primary/5">
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Penilaian ini diberikan oleh pembimbing lapangan berdasarkan kinerja Anda selama masa kerja praktik.
+          Penilaian ini diberikan oleh pembimbing lapangan berdasarkan kinerja
+          Anda selama masa kerja praktik.
         </AlertDescription>
       </Alert>
 
@@ -384,7 +513,9 @@ function AssessmentPage() {
                 <div className="relative">
                   <div className="w-32 h-32 rounded-full border-8 border-primary/20 flex items-center justify-center">
                     <div className="text-center">
-                      <p className={`text-4xl font-bold ${getAssessmentScoreTextClass(totalScore)}`}>
+                      <p
+                        className={`text-4xl font-bold ${getAssessmentScoreTextClass(totalScore)}`}
+                      >
                         {hasAssessment ? totalScore.toFixed(1) : "-"}
                       </p>
                       <p className="text-sm text-muted-foreground">dari 100</p>
@@ -398,8 +529,12 @@ function AssessmentPage() {
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className={`h-5 w-5 ${getAssessmentScoreTextClass(totalScore)}`} />
-                    <span className={`font-semibold ${getAssessmentScoreTextClass(totalScore)}`}>
+                    <TrendingUp
+                      className={`h-5 w-5 ${getAssessmentScoreTextClass(totalScore)}`}
+                    />
+                    <span
+                      className={`font-semibold ${getAssessmentScoreTextClass(totalScore)}`}
+                    >
                       {hasAssessment ? gradeInfo.label : "Belum Dinilai"}
                     </span>
                   </div>
@@ -413,13 +548,18 @@ function AssessmentPage() {
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div className="p-4 bg-background rounded-lg border">
                   <p className="text-2xl font-bold text-green-600">
-                    {hasAssessment ? assessments.filter((a) => a.score >= 85).length : "-"}
+                    {hasAssessment
+                      ? assessments.filter((a) => a.score >= 85).length
+                      : "-"}
                   </p>
                   <p className="text-xs text-muted-foreground">Sangat Baik</p>
                 </div>
                 <div className="p-4 bg-background rounded-lg border">
                   <p className="text-2xl font-bold text-yellow-600">
-                    {hasAssessment ? assessments.filter((a) => a.score >= 70 && a.score < 85).length : "-"}
+                    {hasAssessment
+                      ? assessments.filter((a) => a.score >= 70 && a.score < 85)
+                          .length
+                      : "-"}
                   </p>
                   <p className="text-xs text-muted-foreground">Baik</p>
                 </div>
@@ -436,7 +576,8 @@ function AssessmentPage() {
           <Alert>
             <Info className="h-4 w-4" />
             <AlertDescription>
-              Penilaian belum diinput oleh pembimbing lapangan. Silakan cek kembali nanti.
+              Penilaian belum diinput oleh pembimbing lapangan. Silakan cek
+              kembali nanti.
             </AlertDescription>
           </Alert>
         )}
@@ -447,7 +588,10 @@ function AssessmentPage() {
             const percentage = (assessment.score / assessment.maxScore) * 100;
 
             return (
-              <Card key={assessment.id} className="hover:shadow-md transition-shadow">
+              <Card
+                key={assessment.id}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -456,7 +600,9 @@ function AssessmentPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <CardTitle className="text-base">{assessment.category}</CardTitle>
+                          <CardTitle className="text-base">
+                            {assessment.category}
+                          </CardTitle>
                           <span className="text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                             {assessment.weight}%
                           </span>
@@ -472,8 +618,12 @@ function AssessmentPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Nilai</span>
-                      <span className={`font-semibold ${hasAssessment ? getAssessmentScoreTextClass(assessment.score) : "text-muted-foreground"}`}>
-                        {hasAssessment ? `${assessment.score} / ${assessment.maxScore}` : `- / ${assessment.maxScore}`}
+                      <span
+                        className={`font-semibold ${hasAssessment ? getAssessmentScoreTextClass(assessment.score) : "text-muted-foreground"}`}
+                      >
+                        {hasAssessment
+                          ? `${assessment.score} / ${assessment.maxScore}`
+                          : `- / ${assessment.maxScore}`}
                       </span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
@@ -497,11 +647,16 @@ function AssessmentPage() {
               Penilaian terakhir diperbarui pada{" "}
               <span className="font-medium">
                 {backendAssessment?.updatedAt
-                  ? new Date(backendAssessment.updatedAt).toLocaleDateString("id-ID")
+                  ? new Date(backendAssessment.updatedAt).toLocaleDateString(
+                      "id-ID",
+                    )
                   : "-"}
               </span>
             </p>
-            <Button disabled={!backendAssessment || isGeneratingPdf} onClick={handleDownloadAssessment}>
+            <Button
+              disabled={!backendAssessment || isGeneratingPdf}
+              onClick={handleDownloadAssessment}
+            >
               <Download className="mr-2 h-4 w-4" />
               {isGeneratingPdf ? "Generating..." : "Unduh Penilaian"}
             </Button>

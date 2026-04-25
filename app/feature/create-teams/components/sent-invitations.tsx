@@ -215,51 +215,51 @@ export function SentInvitations({
                     key={invitation.id}
                     className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                  <div className="flex items-center gap-3 flex-1">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                        {displayName.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="flex items-center gap-3 flex-1">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                          {displayName.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <div className="font-medium text-foreground">
-                          {displayName}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-foreground">
+                            {displayName}
+                          </div>
+                          <Badge
+                            variant="secondary"
+                            className="bg-yellow-100 text-yellow-800"
+                          >
+                            PENDING
+                          </Badge>
                         </div>
-                        <Badge
-                          variant="secondary"
-                          className="bg-yellow-100 text-yellow-800"
-                        >
-                          PENDING
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <span>NIM {displayNim}</span>
+                        <div className="text-sm text-muted-foreground">
+                          <span>NIM {displayNim}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() =>
-                      handleCancelInvitation(invitation.id, displayName)
-                    }
-                    disabled={cancelingId === invitation.id}
-                  >
-                    {cancelingId === invitation.id ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                        Membatalkan...
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Batalkan
-                      </>
-                    )}
-                  </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() =>
+                        handleCancelInvitation(invitation.id, displayName)
+                      }
+                      disabled={cancelingId === invitation.id}
+                    >
+                      {cancelingId === invitation.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          Membatalkan...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 mr-1" />
+                          Batalkan
+                        </>
+                      )}
+                    </Button>
                   </div>
                 );
               })}

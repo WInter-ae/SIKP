@@ -96,7 +96,19 @@ export async function getDosenSuratPengantarRequests(): Promise<
 
 export async function approveDosenSuratPengantarRequest(
   requestId: string,
-): Promise<ApiResponse<{ requestId: string; submissionId?: string; status: string; approvedAt?: string; approved_at?: string; signedFileUrl?: string; signed_file_url?: string; finalSignedFileUrl?: string; final_signed_file_url?: string }>> {
+): Promise<
+  ApiResponse<{
+    requestId: string;
+    submissionId?: string;
+    status: string;
+    approvedAt?: string;
+    approved_at?: string;
+    signedFileUrl?: string;
+    signed_file_url?: string;
+    finalSignedFileUrl?: string;
+    final_signed_file_url?: string;
+  }>
+> {
   return sikpClient.put(
     `/api/dosen/surat-pengantar/requests/${requestId}/approve`,
   );
@@ -105,7 +117,15 @@ export async function approveDosenSuratPengantarRequest(
 export async function rejectDosenSuratPengantarRequest(
   requestId: string,
   reason: string,
-): Promise<ApiResponse<{ requestId: string; submissionId?: string; status: string; rejectedAt?: string; rejectionReason?: string }>> {
+): Promise<
+  ApiResponse<{
+    requestId: string;
+    submissionId?: string;
+    status: string;
+    rejectedAt?: string;
+    rejectionReason?: string;
+  }>
+> {
   return sikpClient.put(
     `/api/dosen/surat-pengantar/requests/${requestId}/reject`,
     { rejection_reason: reason },

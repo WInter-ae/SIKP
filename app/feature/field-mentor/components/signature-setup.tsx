@@ -6,9 +6,25 @@
 import { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
-import { saveMentorSignature, deleteMentorSignature } from "../services/mentor-api";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import {
+  saveMentorSignature,
+  deleteMentorSignature,
+} from "../services/mentor-api";
 import { toast } from "sonner";
 
 interface SignatureSetupProps {
@@ -17,7 +33,11 @@ interface SignatureSetupProps {
   onSaved?: () => void;
 }
 
-export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: SignatureSetupProps) {
+export function SignatureSetup({
+  currentSignature,
+  signatureSetAt,
+  onSaved,
+}: SignatureSetupProps) {
   const sigCanvas = useRef<SignatureCanvas>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +57,9 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
     fileInputRef.current?.click();
   };
 
-  const handleUploadSignature = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadSignature = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -95,7 +117,11 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
   };
 
   const handleDelete = async () => {
-    if (!confirm("Hapus tanda tangan? Anda harus membuat ulang untuk approve logbook.")) {
+    if (
+      !confirm(
+        "Hapus tanda tangan? Anda harus membuat ulang untuk approve logbook.",
+      )
+    ) {
       return;
     }
 
@@ -120,7 +146,8 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
       <CardHeader>
         <CardTitle>Tanda Tangan Digital</CardTitle>
         <CardDescription>
-          Setup tanda tangan sekali saja. Akan digunakan untuk approve semua logbook mahasiswa.
+          Setup tanda tangan sekali saja. Akan digunakan untuk approve semua
+          logbook mahasiswa.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -178,7 +205,8 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
           <div className="space-y-3">
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
               <p className="text-sm text-yellow-800">
-                ⚠️ Anda belum setup tanda tangan. Silakan buat tanda tangan untuk approve logbook mahasiswa.
+                ⚠️ Anda belum setup tanda tangan. Silakan buat tanda tangan
+                untuk approve logbook mahasiswa.
               </p>
             </div>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -189,7 +217,8 @@ export function SignatureSetup({ currentSignature, signatureSetAt, onSaved }: Si
                 <DialogHeader>
                   <DialogTitle>Buat Tanda Tangan Digital</DialogTitle>
                   <DialogDescription>
-                    Tanda tangan ini akan digunakan untuk approve semua logbook mahasiswa
+                    Tanda tangan ini akan digunakan untuk approve semua logbook
+                    mahasiswa
                   </DialogDescription>
                 </DialogHeader>
                 <SignatureDialog

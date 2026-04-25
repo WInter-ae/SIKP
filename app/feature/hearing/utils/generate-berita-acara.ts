@@ -8,23 +8,28 @@ interface MahasiswaData {
 
 export const generateBeritaAcaraDOCX = async (
   beritaAcara: BeritaAcara,
-  mahasiswa: MahasiswaData
+  mahasiswa: MahasiswaData,
 ) => {
   // Dynamic import untuk menghindari SSR issues
   const [PizZip, { saveAs }] = await Promise.all([
-    import("pizzip").then(m => m.default),
-    import("file-saver")
+    import("pizzip").then((m) => m.default),
+    import("file-saver"),
   ]);
 
   try {
     // Buat template DOCX
-    const template = createBeritaAcaraDocxTemplate(beritaAcara, mahasiswa, PizZip);
-    
+    const template = createBeritaAcaraDocxTemplate(
+      beritaAcara,
+      mahasiswa,
+      PizZip,
+    );
+
     const zip = new PizZip(template);
-    
+
     const blob = zip.generate({
       type: "blob",
-      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
     saveAs(blob, `Berita_Acara_Ujian_KP_${mahasiswa.nim}.docx`);
@@ -37,7 +42,7 @@ export const generateBeritaAcaraDOCX = async (
 function createBeritaAcaraDocxTemplate(
   beritaAcara: BeritaAcara,
   mahasiswa: MahasiswaData,
-  PizZip: any
+  PizZip: any,
 ): ArrayBuffer {
   const tanggalObj = new Date(beritaAcara.tanggalSidang);
   const hari = tanggalObj.toLocaleDateString("id-ID", { weekday: "long" });
@@ -47,7 +52,7 @@ function createBeritaAcaraDocxTemplate(
 
   // Load profil dosen untuk nama dan NIP
   let dosenProfile = null;
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     try {
       const savedProfile = localStorage.getItem("dosen-profile");
       if (savedProfile) {
@@ -61,39 +66,39 @@ function createBeritaAcaraDocxTemplate(
   // Generate table rows untuk penguji dari beritaAcara.dosenPenguji
   // Fallback ke array kosong jika dosenPenguji tidak ada (data lama)
   const dosenPengujiList = beritaAcara.dosenPenguji || [];
-  
+
   // Jika tidak ada data dosen (data lama), gunakan data dari profil dosen
-  const finalDosenList = dosenPengujiList.length > 0 
-    ? dosenPengujiList 
-    : [
-        {
-          id: '1',
-          nama: dosenProfile?.nama || 'Dosen Pembimbing',
-          nip: dosenProfile?.nip || '-',
-          jabatan: 'pembimbing' as const
-        }
-      ];
-  
+  const finalDosenList =
+    dosenPengujiList.length > 0
+      ? dosenPengujiList
+      : [
+          {
+            id: "1",
+            nama: dosenProfile?.nama || "Dosen Pembimbing",
+            nip: dosenProfile?.nip || "-",
+            jabatan: "pembimbing" as const,
+          },
+        ];
+
   const pengujiRows = finalDosenList
-    .map(
-      (dosenData, index) => {
-        // Hitung nomor urut berdasarkan jabatan
-        let displayNumber = index + 1;
-        let displayStatus = '';
-        
-        if (dosenData.jabatan === 'pembimbing') {
-          displayNumber = 1;
-          displayStatus = 'Dosen Pembimbing KP';
-        } else {
-          // Hitung berapa banyak penguji sebelum dosen ini
-          const previousPengujiCount = finalDosenList
-            .slice(0, index)
-            .filter(d => d.jabatan === 'penguji').length;
-          displayNumber = index + 1;
-          displayStatus = `Penguji ${previousPengujiCount + 1}`;
-        }
-        
-        return `
+    .map((dosenData, index) => {
+      // Hitung nomor urut berdasarkan jabatan
+      let displayNumber = index + 1;
+      let displayStatus = "";
+
+      if (dosenData.jabatan === "pembimbing") {
+        displayNumber = 1;
+        displayStatus = "Dosen Pembimbing KP";
+      } else {
+        // Hitung berapa banyak penguji sebelum dosen ini
+        const previousPengujiCount = finalDosenList
+          .slice(0, index)
+          .filter((d) => d.jabatan === "penguji").length;
+        displayNumber = index + 1;
+        displayStatus = `Penguji ${previousPengujiCount + 1}`;
+      }
+
+      return `
     <w:tr>
       <w:tc>
         <w:tcPr>
@@ -149,8 +154,7 @@ function createBeritaAcaraDocxTemplate(
       </w:tc>
     </w:tr>
   `;
-      }
-    )
+    })
     .join("");
 
   const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -211,14 +215,14 @@ function createBeritaAcaraDocxTemplate(
     <w:p>
       <w:r><w:t>Dosen Pembimbing</w:t></w:r>
       <w:r><w:tab/></w:r>
-      <w:r><w:t>: ${beritaAcara.dosenSignature?.nama || finalDosenList.find(d => d.jabatan === "pembimbing")?.nama || "-"}</w:t></w:r>
+      <w:r><w:t>: ${beritaAcara.dosenSignature?.nama || finalDosenList.find((d) => d.jabatan === "pembimbing")?.nama || "-"}</w:t></w:r>
     </w:p>
 
     <!-- NIP Pembimbing -->
     <w:p>
       <w:r><w:t>NIP Pembimbing</w:t></w:r>
       <w:r><w:tab/></w:r>
-      <w:r><w:t>: ${beritaAcara.dosenSignature?.nip || finalDosenList.find(d => d.jabatan === "pembimbing")?.nip || "-"}</w:t></w:r>
+      <w:r><w:t>: ${beritaAcara.dosenSignature?.nip || finalDosenList.find((d) => d.jabatan === "pembimbing")?.nip || "-"}</w:t></w:r>
     </w:p>
 
     <!-- Pembimbing Lapangan -->
@@ -348,13 +352,13 @@ function createBeritaAcaraDocxTemplate(
       <w:pPr><w:jc w:val="right"/></w:pPr>
       <w:r>
         <w:rPr><w:b/></w:rPr>
-        <w:t>${beritaAcara.dosenSignature?.nama || finalDosenList.find(d => d.jabatan === "pembimbing")?.nama || "-"}</w:t>
+        <w:t>${beritaAcara.dosenSignature?.nama || finalDosenList.find((d) => d.jabatan === "pembimbing")?.nama || "-"}</w:t>
       </w:r>
     </w:p>
     
     <w:p>
       <w:pPr><w:jc w:val="right"/></w:pPr>
-      <w:r><w:t>NIP: ${beritaAcara.dosenSignature?.nip || finalDosenList.find(d => d.jabatan === "pembimbing")?.nip || "-"}</w:t></w:r>
+      <w:r><w:t>NIP: ${beritaAcara.dosenSignature?.nip || finalDosenList.find((d) => d.jabatan === "pembimbing")?.nip || "-"}</w:t></w:r>
     </w:p>
 
   </w:body>
@@ -371,16 +375,19 @@ function createBeritaAcaraDocxTemplate(
     `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
-</Relationships>`
+</Relationships>`,
   );
 
   // Add word/_rels/document.xml.rels
-  zip.folder("word")?.folder("_rels")?.file(
-    "document.xml.rels",
-    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  zip
+    .folder("word")
+    ?.folder("_rels")
+    ?.file(
+      "document.xml.rels",
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-</Relationships>`
-  );
+</Relationships>`,
+    );
 
   // Add [Content_Types].xml
   zip.file(
@@ -390,7 +397,7 @@ function createBeritaAcaraDocxTemplate(
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
-</Types>`
+</Types>`,
   );
 
   return zip.generate({ type: "arraybuffer" });

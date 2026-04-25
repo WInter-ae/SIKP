@@ -1,29 +1,29 @@
 /**
  * Pengujian Sidang Kerja Praktik Page
- * 
+ *
  * Alur Sistem:
  * 1. Mahasiswa mengisi form berita acara dengan data:
  *    - Judul Laporan
  *    - Tempat Pelaksanaan
  *    - Tanggal dan Waktu Sidang
  *    - Data Dosen Penguji (Pembimbing + Penguji tambahan opsional)
- * 
+ *
  * 2. Setelah submit, data dikirim ke dosen pembimbing yang dituju
  *    - Data dikirim berdasarkan NIP dosen yang diinput
  *    - Status: "submitted" - menunggu verifikasi
- * 
+ *
  * 3. Dosen melakukan verifikasi:
  *    a. DISETUJUI (approved):
  *       - Dosen menandatangani dengan e-signature
  *       - Mahasiswa dapat mengunduh PDF Berita Acara
  *       - Status: "approved"
- *    
+ *
  *    b. DITOLAK (rejected):
  *       - Dosen memberikan catatan/pesan penolakan
  *       - Mahasiswa melihat alasan penolakan
  *       - Mahasiswa dapat mengedit dan mengajukan ulang
  *       - Status: "rejected"
- * 
+ *
  * 4. Download PDF (hanya jika approved):
  *    - Dokumen dengan e-signature dosen
  *    - Format: PDF dan DOCX
@@ -48,7 +48,16 @@ import {
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
-import { ArrowLeft, Info, FileText, Clock, Edit, Trash2, RefreshCw, CheckCircle2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Info,
+  FileText,
+  Clock,
+  Edit,
+  Trash2,
+  RefreshCw,
+  CheckCircle2,
+} from "lucide-react";
 import type { BeritaAcara, DosenPenguji } from "../types";
 
 // Mock data - nanti akan diganti dengan data dari API/backend
@@ -82,9 +91,9 @@ const mockMahasiswa = {
 
 export default function PengujianSidangPage() {
   const navigate = useNavigate();
-  
+
   console.log("🚀 PengujianSidangPage Component Mounted");
-  
+
   // State untuk berita acara
   const [beritaAcara, setBeritaAcara] = useState<BeritaAcara | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -92,7 +101,8 @@ export default function PengujianSidangPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteDraftDialog, setShowDeleteDraftDialog] = useState(false);
   const [lastChecked, setLastChecked] = useState<Date>(new Date());
-  const [approvalNotificationShown, setApprovalNotificationShown] = useState(false);
+  const [approvalNotificationShown, setApprovalNotificationShown] =
+    useState(false);
   const [notification, setNotification] = useState<{
     title: string;
     description: string;
@@ -105,9 +115,12 @@ export default function PengujianSidangPage() {
     if (typeof window !== "undefined") {
       const loadBeritaAcara = () => {
         const savedDraft = localStorage.getItem("berita-acara-draft");
-        console.log("🔄 MAHASISWA: Checking localStorage for updates...", savedDraft ? "Data found" : "No data");
+        console.log(
+          "🔄 MAHASISWA: Checking localStorage for updates...",
+          savedDraft ? "Data found" : "No data",
+        );
         setLastChecked(new Date());
-        
+
         if (savedDraft) {
           try {
             const parsed = JSON.parse(savedDraft);
@@ -115,18 +128,20 @@ export default function PengujianSidangPage() {
               status: parsed.status,
               hasSignature: !!parsed.dosenSignature,
               signedAt: parsed.dosenSignature?.signedAt,
-              updatedAt: parsed.updatedAt
+              updatedAt: parsed.updatedAt,
             });
-            
+
             // Update state dengan data terbaru
             setBeritaAcara((prev) => {
               // Cek apakah ada perubahan status
               if (prev?.status !== parsed.status) {
-                console.log(`✨ MAHASISWA: Status changed: ${prev?.status} → ${parsed.status}`);
+                console.log(
+                  `✨ MAHASISWA: Status changed: ${prev?.status} → ${parsed.status}`,
+                );
               }
               return parsed;
             });
-            
+
             // Jangan auto-update form visibility di sini, biarkan user yang control
           } catch (error) {
             console.error("Error parsing saved draft:", error);
@@ -151,7 +166,7 @@ export default function PengujianSidangPage() {
             const parsed = JSON.parse(e.newValue);
             console.log("📥 MAHASISWA: Storage update received:", {
               status: parsed.status,
-              hasSignature: !!parsed.dosenSignature
+              hasSignature: !!parsed.dosenSignature,
             });
             setBeritaAcara(parsed);
           } catch (error) {
@@ -174,16 +189,21 @@ export default function PengujianSidangPage() {
   useEffect(() => {
     if (beritaAcara) {
       // Tampilkan notifikasi hanya sekali saat status berubah menjadi approved
-      if (beritaAcara.status === "approved" && beritaAcara.dosenSignature && !approvalNotificationShown) {
+      if (
+        beritaAcara.status === "approved" &&
+        beritaAcara.dosenSignature &&
+        !approvalNotificationShown
+      ) {
         setApprovalNotificationShown(true);
         setShowForm(false); // Tutup form jika approved
         setNotification({
           title: "✅ Berita Acara Disetujui!",
-          description: "Berita acara Anda telah disetujui oleh dosen. Silakan unduh dokumen.",
+          description:
+            "Berita acara Anda telah disetujui oleh dosen. Silakan unduh dokumen.",
         });
         setTimeout(() => setNotification(null), 5000);
       }
-      
+
       // Reset flag jika status kembali ke submitted/draft/rejected
       if (beritaAcara.status !== "approved" && approvalNotificationShown) {
         setApprovalNotificationShown(false);
@@ -232,22 +252,32 @@ export default function PengujianSidangPage() {
 
       setBeritaAcara(submitted);
       setShowForm(false);
-      
+
       // Simpan berita acara mahasiswa ke localStorage
       if (typeof window !== "undefined") {
         localStorage.setItem("berita-acara-draft", JSON.stringify(submitted));
-        
-        console.log("📤 MAHASISWA: Sending to dosen list with ID:", submitted.id);
-        
+
+        console.log(
+          "📤 MAHASISWA: Sending to dosen list with ID:",
+          submitted.id,
+        );
+
         // Kirim ke list pengajuan dosen
         const existingPengajuan = localStorage.getItem("pengajuan-sidang-list");
-        let pengajuanList = existingPengajuan ? JSON.parse(existingPengajuan) : [];
-        
-        console.log("📋 MAHASISWA: Current pengajuan list length:", pengajuanList.length);
-        
+        let pengajuanList = existingPengajuan
+          ? JSON.parse(existingPengajuan)
+          : [];
+
+        console.log(
+          "📋 MAHASISWA: Current pengajuan list length:",
+          pengajuanList.length,
+        );
+
         // Cek apakah pengajuan ini sudah ada (untuk edit)
-        const existingIndex = pengajuanList.findIndex((p: any) => p.id === submitted.id);
-        
+        const existingIndex = pengajuanList.findIndex(
+          (p: any) => p.id === submitted.id,
+        );
+
         const pengajuanData = {
           id: submitted.id,
           mahasiswa: {
@@ -264,27 +294,42 @@ export default function PengujianSidangPage() {
             waktuSelesai: submitted.waktuSelesai,
             dosenPenguji: submitted.dosenPenguji || [],
           },
-          dosenPembimbing: submitted.dosenPenguji?.find(d => d.jabatan === "pembimbing"),
+          dosenPembimbing: submitted.dosenPenguji?.find(
+            (d) => d.jabatan === "pembimbing",
+          ),
           status: "submitted",
           tanggalPengajuan: submitted.createdAt,
           tanggalUpdate: new Date().toISOString(),
         };
-        
+
         if (existingIndex >= 0) {
           // Update pengajuan yang sudah ada (untuk edit)
           pengajuanList[existingIndex] = pengajuanData;
-          console.log("🔄 MAHASISWA: Updated existing pengajuan at index:", existingIndex);
+          console.log(
+            "🔄 MAHASISWA: Updated existing pengajuan at index:",
+            existingIndex,
+          );
         } else {
           // Tambahkan pengajuan baru
           pengajuanList.push(pengajuanData);
-          console.log("➕ MAHASISWA: Added new pengajuan, total now:", pengajuanList.length);
+          console.log(
+            "➕ MAHASISWA: Added new pengajuan, total now:",
+            pengajuanList.length,
+          );
         }
-        
-        localStorage.setItem("pengajuan-sidang-list", JSON.stringify(pengajuanList));
-        console.log("✅ MAHASISWA: Successfully saved to pengajuan-sidang-list");
+
+        localStorage.setItem(
+          "pengajuan-sidang-list",
+          JSON.stringify(pengajuanList),
+        );
+        console.log(
+          "✅ MAHASISWA: Successfully saved to pengajuan-sidang-list",
+        );
       }
 
-      const dosenPembimbing = submitted.dosenPenguji?.find(d => d.jabatan === "pembimbing");
+      const dosenPembimbing = submitted.dosenPenguji?.find(
+        (d) => d.jabatan === "pembimbing",
+      );
       setNotification({
         title: "✅ Berhasil diajukan",
         description: `Berita acara telah diajukan dan terkirim ke ${dosenPembimbing?.nama || "dosen pembimbing"} (NIP: ${dosenPembimbing?.nip || "-"}).`,
@@ -358,7 +403,7 @@ export default function PengujianSidangPage() {
     setBeritaAcara(null);
     setShowForm(false);
     setShowDeleteDraftDialog(false);
-    
+
     setNotification({
       title: "✅ Draft berhasil dihapus",
       description: "Draft berita acara telah dihapus dari sistem.",
@@ -441,13 +486,18 @@ export default function PengujianSidangPage() {
                   <div className="flex items-center gap-3">
                     <FileText className="h-6 w-6 text-yellow-600" />
                     <div>
-                      <CardTitle className="text-xl">Draft Berita Acara</CardTitle>
+                      <CardTitle className="text-xl">
+                        Draft Berita Acara
+                      </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
                         Anda memiliki draft yang belum diajukan
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="border-yellow-600 text-yellow-700 dark:text-yellow-400">
+                  <Badge
+                    variant="outline"
+                    className="border-yellow-600 text-yellow-700 dark:text-yellow-400"
+                  >
                     Draft
                   </Badge>
                 </div>
@@ -456,39 +506,64 @@ export default function PengujianSidangPage() {
                 {/* Preview Draft */}
                 <div className="bg-background rounded-lg p-4 space-y-3 border">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Judul Laporan</p>
-                    <p className="font-medium">{beritaAcara.judulLaporan || "-"}</p>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Judul Laporan
+                    </p>
+                    <p className="font-medium">
+                      {beritaAcara.judulLaporan || "-"}
+                    </p>
                   </div>
-                  
+
                   {beritaAcara.tempatPelaksanaan && (
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Tempat Pelaksanaan</p>
-                      <p className="font-medium">{beritaAcara.tempatPelaksanaan}</p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Tempat Pelaksanaan
+                      </p>
+                      <p className="font-medium">
+                        {beritaAcara.tempatPelaksanaan}
+                      </p>
                     </div>
                   )}
-                  
+
                   {beritaAcara.tanggalSidang && (
                     <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">Tanggal</p>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          Tanggal
+                        </p>
                         <p className="font-medium">
-                          {new Date(beritaAcara.tanggalSidang).toLocaleDateString("id-ID")}
+                          {new Date(
+                            beritaAcara.tanggalSidang,
+                          ).toLocaleDateString("id-ID")}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">Waktu Mulai</p>
-                        <p className="font-medium">{beritaAcara.waktuMulai || "-"}</p>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          Waktu Mulai
+                        </p>
+                        <p className="font-medium">
+                          {beritaAcara.waktuMulai || "-"}
+                        </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground mb-1">Waktu Selesai</p>
-                        <p className="font-medium">{beritaAcara.waktuSelesai || "-"}</p>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          Waktu Selesai
+                        </p>
+                        <p className="font-medium">
+                          {beritaAcara.waktuSelesai || "-"}
+                        </p>
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
                     <Clock className="h-4 w-4" />
-                    <span>Terakhir disimpan: {beritaAcara.updatedAt ? formatDateTime(beritaAcara.updatedAt) : "-"}</span>
+                    <span>
+                      Terakhir disimpan:{" "}
+                      {beritaAcara.updatedAt
+                        ? formatDateTime(beritaAcara.updatedAt)
+                        : "-"}
+                    </span>
                   </div>
                 </div>
 
@@ -517,11 +592,11 @@ export default function PengujianSidangPage() {
           {/* Rejected Card - Tampilkan jika ditolak oleh dosen */}
           {beritaAcara && beritaAcara.status === "rejected" && !showForm && (
             <>
-              <BeritaAcaraDownload 
+              <BeritaAcaraDownload
                 beritaAcara={beritaAcara}
                 mahasiswa={mockMahasiswa}
               />
-              
+
               {/* Action Button untuk ajukan ulang */}
               <Card>
                 <CardContent className="pt-6">
@@ -545,13 +620,18 @@ export default function PengujianSidangPage() {
                   <div className="flex items-center gap-3">
                     <FileText className="h-6 w-6 text-blue-600" />
                     <div>
-                      <CardTitle className="text-xl">Jadwal Sidang Telah Diajukan</CardTitle>
+                      <CardTitle className="text-xl">
+                        Jadwal Sidang Telah Diajukan
+                      </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
                         Menunggu persetujuan jadwal dari dosen pembimbing
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="border-blue-600 text-blue-700 dark:text-blue-400">
+                  <Badge
+                    variant="outline"
+                    className="border-blue-600 text-blue-700 dark:text-blue-400"
+                  >
                     Menunggu Verifikasi
                   </Badge>
                 </div>
@@ -560,55 +640,88 @@ export default function PengujianSidangPage() {
                 {/* Preview Jadwal Sidang */}
                 <div className="bg-background rounded-lg p-4 space-y-3 border">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Judul Laporan</p>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Judul Laporan
+                    </p>
                     <p className="font-medium">{beritaAcara.judulLaporan}</p>
                   </div>
-                  
+
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">Tempat Pelaksanaan</p>
-                    <p className="font-medium">{beritaAcara.tempatPelaksanaan}</p>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Tempat Pelaksanaan
+                    </p>
+                    <p className="font-medium">
+                      {beritaAcara.tempatPelaksanaan}
+                    </p>
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Tanggal</p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Tanggal
+                      </p>
                       <p className="font-medium">
-                        {new Date(beritaAcara.tanggalSidang).toLocaleDateString("id-ID")}
+                        {new Date(beritaAcara.tanggalSidang).toLocaleDateString(
+                          "id-ID",
+                        )}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Waktu Mulai</p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Waktu Mulai
+                      </p>
                       <p className="font-medium">{beritaAcara.waktuMulai}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Waktu Selesai</p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Waktu Selesai
+                      </p>
                       <p className="font-medium">{beritaAcara.waktuSelesai}</p>
                     </div>
                   </div>
 
                   {/* Dosen Penguji */}
-                  {beritaAcara.dosenPenguji && beritaAcara.dosenPenguji.length > 0 && (
-                    <div className="pt-3 border-t">
-                      <p className="text-sm text-muted-foreground mb-2">Dosen Penguji</p>
-                      <div className="space-y-2">
-                        {beritaAcara.dosenPenguji.map((dosen) => (
-                          <div key={dosen.id} className="text-sm bg-muted px-3 py-2 rounded-md">
-                            <p className="font-medium">{dosen.nama}</p>
-                            <p className="text-xs text-muted-foreground">NIP: {dosen.nip} • {dosen.jabatan === "pembimbing" ? "Pembimbing" : "Penguji"}</p>
-                          </div>
-                        ))}
+                  {beritaAcara.dosenPenguji &&
+                    beritaAcara.dosenPenguji.length > 0 && (
+                      <div className="pt-3 border-t">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Dosen Penguji
+                        </p>
+                        <div className="space-y-2">
+                          {beritaAcara.dosenPenguji.map((dosen) => (
+                            <div
+                              key={dosen.id}
+                              className="text-sm bg-muted px-3 py-2 rounded-md"
+                            >
+                              <p className="font-medium">{dosen.nama}</p>
+                              <p className="text-xs text-muted-foreground">
+                                NIP: {dosen.nip} •{" "}
+                                {dosen.jabatan === "pembimbing"
+                                  ? "Pembimbing"
+                                  : "Penguji"}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  
+                    )}
+
                   <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
                     <Clock className="h-4 w-4" />
-                    <span>Diajukan pada: {beritaAcara.updatedAt ? formatDateTime(beritaAcara.updatedAt) : "-"}</span>
+                    <span>
+                      Diajukan pada:{" "}
+                      {beritaAcara.updatedAt
+                        ? formatDateTime(beritaAcara.updatedAt)
+                        : "-"}
+                    </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
                     <RefreshCw className="h-3 w-3 animate-spin" />
-                    <span>Auto-checking... Terakhir dicek: {lastChecked.toLocaleTimeString("id-ID")}</span>
+                    <span>
+                      Auto-checking... Terakhir dicek:{" "}
+                      {lastChecked.toLocaleTimeString("id-ID")}
+                    </span>
                   </div>
                 </div>
 
@@ -616,12 +729,16 @@ export default function PengujianSidangPage() {
                 <Alert className="border-blue-200 bg-blue-50">
                   <Info className="h-5 w-5 text-blue-600" />
                   <AlertDescription className="text-blue-800">
-                    <p className="font-semibold">Pengajuan Jadwal Sidang Anda sedang diproses</p>
+                    <p className="font-semibold">
+                      Pengajuan Jadwal Sidang Anda sedang diproses
+                    </p>
                     <p className="text-sm mt-1">
-                      Dosen pembimbing akan meninjau jadwal sidang Anda. Status akan otomatis terupdate setiap 2 detik.
+                      Dosen pembimbing akan meninjau jadwal sidang Anda. Status
+                      akan otomatis terupdate setiap 2 detik.
                     </p>
                     <p className="text-xs mt-2 opacity-75">
-                      💡 Tip: Biarkan halaman ini terbuka untuk menerima update otomatis saat disetujui.
+                      💡 Tip: Biarkan halaman ini terbuka untuk menerima update
+                      otomatis saat disetujui.
                     </p>
                   </AlertDescription>
                 </Alert>
@@ -642,12 +759,14 @@ export default function PengujianSidangPage() {
           )}
 
           {/* Jadwal Approved Card - Jadwal disetujui, menunggu sidang dilaksanakan */}
-          {beritaAcara && beritaAcara.status === "jadwal_approved" && !showForm && (
-            <BeritaAcaraDownload 
-              beritaAcara={beritaAcara}
-              mahasiswa={mockMahasiswa}
-            />
-          )}
+          {beritaAcara &&
+            beritaAcara.status === "jadwal_approved" &&
+            !showForm && (
+              <BeritaAcaraDownload
+                beritaAcara={beritaAcara}
+                mahasiswa={mockMahasiswa}
+              />
+            )}
 
           {/* Approved Card - Berita Acara Sudah Disetujui dan Ditandatangani */}
           {beritaAcara && beritaAcara.status === "approved" && !showForm && (
@@ -657,7 +776,9 @@ export default function PengujianSidangPage() {
                   <div className="flex items-center gap-3">
                     <CheckCircle2 className="h-6 w-6 text-green-600" />
                     <div>
-                      <CardTitle className="text-xl">Berita Acara Disetujui</CardTitle>
+                      <CardTitle className="text-xl">
+                        Berita Acara Disetujui
+                      </CardTitle>
                       <p className="text-sm text-muted-foreground mt-1">
                         Dokumen telah ditandatangani dan siap diunduh
                       </p>
@@ -670,7 +791,7 @@ export default function PengujianSidangPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Download Section */}
-                <BeritaAcaraDownload 
+                <BeritaAcaraDownload
                   beritaAcara={beritaAcara}
                   mahasiswa={mockMahasiswa}
                 />
@@ -681,14 +802,20 @@ export default function PengujianSidangPage() {
                   <AlertDescription className="text-green-800">
                     <p className="font-semibold">Proses Sidang Selesai</p>
                     <p className="text-sm mt-1">
-                      Berita Acara telah disetujui oleh dosen pembimbing. Anda dapat mengunduh dokumen di atas.
+                      Berita Acara telah disetujui oleh dosen pembimbing. Anda
+                      dapat mengunduh dokumen di atas.
                     </p>
                   </AlertDescription>
                 </Alert>
 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
                   <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <span>Disetujui pada: {beritaAcara.tanggalApproval ? formatDateTime(beritaAcara.tanggalApproval) : "-"}</span>
+                  <span>
+                    Disetujui pada:{" "}
+                    {beritaAcara.tanggalApproval
+                      ? formatDateTime(beritaAcara.tanggalApproval)
+                      : "-"}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -726,7 +853,10 @@ export default function PengujianSidangPage() {
         </div>
 
         {/* Delete Draft Confirmation Dialog */}
-        <AlertDialog open={showDeleteDraftDialog} onOpenChange={setShowDeleteDraftDialog}>
+        <AlertDialog
+          open={showDeleteDraftDialog}
+          onOpenChange={setShowDeleteDraftDialog}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Hapus Draft Berita Acara?</AlertDialogTitle>

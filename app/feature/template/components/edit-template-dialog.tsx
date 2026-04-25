@@ -29,7 +29,10 @@ import type {
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
 import { autoGenerateFields } from "../services/template.service";
-import { updateTemplate, type TemplateResponse } from "~/lib/services/template.service";
+import {
+  updateTemplate,
+  type TemplateResponse,
+} from "~/lib/services/template.service";
 
 interface EditTemplateDialogProps {
   template: TemplateResponse | null;
@@ -69,7 +72,9 @@ export function EditTemplateDialog({
     if (!file) return;
 
     setUploadedFile(file);
-    toast.success(`File ${file.name} dipilih. File akan diupload saat menyimpan perubahan.`);
+    toast.success(
+      `File ${file.name} dipilih. File akan diupload saat menyimpan perubahan.`,
+    );
   };
 
   const handleSubmit = async () => {
@@ -80,7 +85,11 @@ export function EditTemplateDialog({
       return;
     }
 
-    if (type === "Generate & Template" && fields.length === 0 && !uploadedFile) {
+    if (
+      type === "Generate & Template" &&
+      fields.length === 0 &&
+      !uploadedFile
+    ) {
       toast.error('Fields wajib diisi untuk tipe "Generate & Template"');
       return;
     }
@@ -99,7 +108,10 @@ export function EditTemplateDialog({
         onSuccess();
       } else {
         // Check for specific error messages
-        if (response.message?.includes("Forbidden") || response.message?.includes("admin")) {
+        if (
+          response.message?.includes("Forbidden") ||
+          response.message?.includes("admin")
+        ) {
           toast.error("Hanya admin yang dapat mengupdate template");
         } else {
           toast.error(response.message || "Gagal mengupdate template");
@@ -191,17 +203,14 @@ export function EditTemplateDialog({
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
             Batal
           </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={isLoading}
-          >
+          <Button onClick={handleSubmit} disabled={isLoading}>
             {isLoading ? "Menyimpan..." : "Simpan Perubahan"}
           </Button>
         </DialogFooter>

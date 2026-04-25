@@ -48,7 +48,7 @@ export function DocumentUploadForm({
     const MAX_SIZE = 10 * 1024 * 1024;
     if (selectedFile.size > MAX_SIZE) {
       errors.push(
-        `File size exceeds 10MB (current: ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB)`
+        `File size exceeds 10MB (current: ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB)`,
       );
     }
 
@@ -138,7 +138,7 @@ export function DocumentUploadForm({
         {
           method: "POST",
           body: formData,
-        }
+        },
       );
 
       if (!response.success) {
@@ -158,7 +158,7 @@ export function DocumentUploadForm({
         setSuccess(false);
         // Reset file input
         const fileInput = document.getElementById(
-          `file-upload-${submissionId}-${memberUserId}`
+          `file-upload-${submissionId}-${memberUserId}`,
         ) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
       }, 2000);
@@ -216,7 +216,7 @@ export function DocumentUploadForm({
                 isDragging
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50",
-                file && "border-primary bg-primary/5"
+                file && "border-primary bg-primary/5",
               )}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -262,7 +262,7 @@ export function DocumentUploadForm({
                 onClick={() => {
                   setFile(null);
                   const fileInput = document.getElementById(
-                    `file-upload-${submissionId}-${memberUserId}`
+                    `file-upload-${submissionId}-${memberUserId}`,
                   ) as HTMLInputElement;
                   if (fileInput) fileInput.value = "";
                 }}

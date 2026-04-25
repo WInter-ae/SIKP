@@ -7,8 +7,9 @@ import DashboardAdminPage, {
 } from "~/feature/dashboard/pages/dashboard-admin-page";
 
 export default function AdminDashboard() {
-  const [dashboardData, setDashboardData] =
-    useState<DashboardAdminData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardAdminData | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

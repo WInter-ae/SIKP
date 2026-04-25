@@ -20,7 +20,12 @@ export function ProtectedRoute({
 }) {
   const navigate = useNavigate();
   const { isLoading, isAuthenticated } = useAuth();
-  const { effectiveRoles, effectivePermissions, activeIdentity, availableIdentities } = useIdentity();;
+  const {
+    effectiveRoles,
+    effectivePermissions,
+    activeIdentity,
+    availableIdentities,
+  } = useIdentity();
 
   const hasRoleAccess =
     !requiredRoles ||

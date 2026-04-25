@@ -293,10 +293,14 @@ function Component(props: ComponentProps) {
 
 ```tsx
 // Short circuit untuk simple rendering
-{isLoading && <Spinner />}
+{
+  isLoading && <Spinner />;
+}
 
 // Ternary untuk dua kondisi
-{isAuthenticated ? <Dashboard /> : <Login />}
+{
+  isAuthenticated ? <Dashboard /> : <Login />;
+}
 
 // Early return untuk complex logic
 if (!data) {
@@ -594,7 +598,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
 ```
 
@@ -636,36 +640,36 @@ import { Check, XCircle, Eye, FileText, Upload, ChevronDown } from "lucide-react
 
 ```tsx
 // ❌ SALAH - Font Awesome
-<i className="fas fa-check"></i>
+<i className="fas fa-check"></i>;
 
 // ❌ SALAH - Custom icon components
 import { CheckIcon } from "~/components/icons/check";
 
 // ❌ SALAH - Inline SVG
-<svg>...</svg>
+<svg>...</svg>;
 ```
 
 **Icon yang sering dipakai:**
 
-| Kegunaan | Icon Lucide |
-|----------|-------------|
-| Success/Check | `Check`, `CheckCircle` |
-| Error/Close | `X`, `XCircle` |
-| Warning | `AlertTriangle` |
-| Info | `Info` |
-| Eye/Preview | `Eye`, `EyeOff` |
-| Document | `FileText`, `File` |
-| Upload | `Upload`, `CloudUpload` |
-| Download | `Download` |
-| Edit | `Pencil`, `Edit` |
-| Delete | `Trash2` |
-| Search | `Search` |
-| Settings | `Settings` |
-| User | `User`, `Users` |
-| Arrow | `ArrowLeft`, `ArrowRight`, `ChevronDown`, `ChevronUp` |
-| Calendar | `Calendar` |
-| Clock/Time | `Clock` |
-| Location | `MapPin` |
+| Kegunaan      | Icon Lucide                                           |
+| ------------- | ----------------------------------------------------- |
+| Success/Check | `Check`, `CheckCircle`                                |
+| Error/Close   | `X`, `XCircle`                                        |
+| Warning       | `AlertTriangle`                                       |
+| Info          | `Info`                                                |
+| Eye/Preview   | `Eye`, `EyeOff`                                       |
+| Document      | `FileText`, `File`                                    |
+| Upload        | `Upload`, `CloudUpload`                               |
+| Download      | `Download`                                            |
+| Edit          | `Pencil`, `Edit`                                      |
+| Delete        | `Trash2`                                              |
+| Search        | `Search`                                              |
+| Settings      | `Settings`                                            |
+| User          | `User`, `Users`                                       |
+| Arrow         | `ArrowLeft`, `ArrowRight`, `ChevronDown`, `ChevronUp` |
+| Calendar      | `Calendar`                                            |
+| Clock/Time    | `Clock`                                               |
+| Location      | `MapPin`                                              |
 
 ---
 
@@ -715,7 +719,12 @@ interface ProcessStepProps {
   onAction?: () => void;
 }
 
-function ProcessStep({ title, description, status, onAction }: ProcessStepProps) {
+function ProcessStep({
+  title,
+  description,
+  status,
+  onAction,
+}: ProcessStepProps) {
   return <div>...</div>;
 }
 

@@ -79,7 +79,9 @@ export function StudentCard({ student, summary, onClick }: StudentCardProps) {
               <h3 className="font-semibold text-lg text-gray-900 dark:text-gray-100 group-hover:text-green-700 dark:group-hover:text-green-400 transition-colors truncate">
                 {student.name}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{student.studentId}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {student.studentId}
+              </p>
               <div className="flex gap-2 mt-2">
                 <Badge
                   className={`${getGradeBadgeColor(summary.grade)} font-bold`}
@@ -96,7 +98,9 @@ export function StudentCard({ student, summary, onClick }: StudentCardProps) {
             <div className="text-2xl font-bold text-green-700 dark:text-green-400">
               {summary.finalScore.toFixed(1)}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">Nilai Akhir</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              Nilai Akhir
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -139,7 +143,9 @@ export function StudentCard({ student, summary, onClick }: StudentCardProps) {
             >
               {summary.fieldSupervisorTotal.toFixed(1)}
             </Badge>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Nilai Pembimbing</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              Nilai Pembimbing
+            </div>
           </div>
           <div className="text-center p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-md space-y-1">
             <Badge
@@ -148,7 +154,9 @@ export function StudentCard({ student, summary, onClick }: StudentCardProps) {
             >
               {summary.academicSupervisorTotal.toFixed(1)}
             </Badge>
-            <div className="text-xs text-gray-600 dark:text-gray-400">Nilai Dosen</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">
+              Nilai Dosen
+            </div>
           </div>
         </div>
 

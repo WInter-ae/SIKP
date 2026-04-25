@@ -64,14 +64,17 @@ const getWeekNumber = (dateString: string, startDate: string): number => {
   return Math.ceil((diffDays + 1) / 7);
 };
 
-const getEntryForDate = (date: string, entries: LogbookEntry[]): LogbookEntry | undefined => {
-  return entries.find(entry => entry.date === date);
+const getEntryForDate = (
+  date: string,
+  entries: LogbookEntry[],
+): LogbookEntry | undefined => {
+  return entries.find((entry) => entry.date === date);
 };
 
 const getStatusText = (entry: LogbookEntry | undefined): string => {
   if (!entry) return "Belum diisi";
   if (!entry.mentorSignature) return "Menunggu Paraf";
-  
+
   switch (entry.mentorSignature.status) {
     case "approved":
       return "✓ Disetujui";
@@ -87,7 +90,7 @@ const getStatusText = (entry: LogbookEntry | undefined): string => {
 export const generateLogbookHTML = (data: LogbookData): string => {
   // Group dates by week
   const weekGroups: { [key: number]: string[] } = {};
-  data.generatedDates.forEach(date => {
+  data.generatedDates.forEach((date) => {
     const weekNum = getWeekNumber(date, data.workPeriod.startDate);
     if (!weekGroups[weekNum]) {
       weekGroups[weekNum] = [];
@@ -96,16 +99,23 @@ export const generateLogbookHTML = (data: LogbookData): string => {
   });
 
   // Generate table rows
-  const tableRows = data.generatedDates.map((date, index) => {
-    const entry = getEntryForDate(date, data.entries);
-    const weekNum = getWeekNumber(date, data.workPeriod.startDate);
-    const prevWeekNum = index > 0 ? getWeekNumber(data.generatedDates[index - 1], data.workPeriod.startDate) : 0;
-    const showWeekNumber = weekNum !== prevWeekNum;
-    const weekRowSpan = weekGroups[weekNum]?.length || 1;
+  const tableRows = data.generatedDates
+    .map((date, index) => {
+      const entry = getEntryForDate(date, data.entries);
+      const weekNum = getWeekNumber(date, data.workPeriod.startDate);
+      const prevWeekNum =
+        index > 0
+          ? getWeekNumber(
+              data.generatedDates[index - 1],
+              data.workPeriod.startDate,
+            )
+          : 0;
+      const showWeekNumber = weekNum !== prevWeekNum;
+      const weekRowSpan = weekGroups[weekNum]?.length || 1;
 
-    return `
+      return `
     <tr>
-      ${showWeekNumber ? `<td rowspan="${weekRowSpan}" style="border: 1px solid black; padding: 8px; text-align: center; font-weight: bold;">${weekNum}</td>` : ''}
+      ${showWeekNumber ? `<td rowspan="${weekRowSpan}" style="border: 1px solid black; padding: 8px; text-align: center; font-weight: bold;">${weekNum}</td>` : ""}
       <td style="border: 1px solid black; padding: 8px;">
         <div style="font-weight: 500;">${getDayName(date)}</div>
         <div style="font-size: 0.9em; color: #666;">${formatDate(date)}</div>
@@ -115,11 +125,12 @@ export const generateLogbookHTML = (data: LogbookData): string => {
       </td>
       <td style="border: 1px solid black; padding: 8px; text-align: center;">
         <div style="font-weight: 500; margin-bottom: 4px;">${getStatusText(entry)}</div>
-        ${entry?.mentorSignature?.signedAt ? `<div style="font-size: 0.85em; color: #666;">Ditandatangani: ${formatDate(entry.mentorSignature.signedAt)}</div>` : ''}
-        ${entry?.mentorSignature?.notes ? `<div style="font-size: 0.85em; color: #666; margin-top: 4px; font-style: italic;">${entry.mentorSignature.notes}</div>` : ''}
+        ${entry?.mentorSignature?.signedAt ? `<div style="font-size: 0.85em; color: #666;">Ditandatangani: ${formatDate(entry.mentorSignature.signedAt)}</div>` : ""}
+        ${entry?.mentorSignature?.notes ? `<div style="font-size: 0.85em; color: #666; margin-top: 4px; font-style: italic;">${entry.mentorSignature.notes}</div>` : ""}
       </td>
     </tr>`;
-  }).join('');
+    })
+    .join("");
 
   return `
 <!DOCTYPE html>
@@ -240,13 +251,17 @@ export const generateLogbookHTML = (data: LogbookData): string => {
       <td>:</td>
       <td>${data.student.prodi}</td>
     </tr>
-    ${data.student.fakultas ? `
+    ${
+      data.student.fakultas
+        ? `
     <tr>
       <td>Fakultas</td>
       <td>:</td>
       <td>${data.student.fakultas}</td>
     </tr>
-    ` : ''}
+    `
+        : ""
+    }
   </table>
 
   <h2>Data Tempat Kerja Praktik</h2>
@@ -256,27 +271,39 @@ export const generateLogbookHTML = (data: LogbookData): string => {
       <td>:</td>
       <td><strong>${data.internship.company}</strong></td>
     </tr>
-    ${data.internship.division ? `
+    ${
+      data.internship.division
+        ? `
     <tr>
       <td>Bagian/Divisi</td>
       <td>:</td>
       <td>${data.internship.division}</td>
     </tr>
-    ` : ''}
-    ${data.internship.position ? `
+    `
+        : ""
+    }
+    ${
+      data.internship.position
+        ? `
     <tr>
       <td>Posisi</td>
       <td>:</td>
       <td>${data.internship.position}</td>
     </tr>
-    ` : ''}
-    ${data.internship.mentorName ? `
+    `
+        : ""
+    }
+    ${
+      data.internship.mentorName
+        ? `
     <tr>
       <td>Pembimbing Lapangan</td>
       <td>:</td>
       <td>${data.internship.mentorName}</td>
     </tr>
-    ` : ''}
+    `
+        : ""
+    }
     <tr>
       <td>Periode Kerja Praktik</td>
       <td>:</td>
@@ -300,31 +327,39 @@ export const generateLogbookHTML = (data: LogbookData): string => {
   </table>
 
   <div class="footer">
-    <p>Dicetak pada: ${new Date().toLocaleDateString("id-ID", { 
-      day: "numeric", 
-      month: "long", 
+    <p>Dicetak pada: ${new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
       year: "numeric",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
     })}</p>
   </div>
 
-  ${data.internship.mentorName ? `
+  ${
+    data.internship.mentorName
+      ? `
   <div class="signature-section">
     <p>Mengetahui,</p>
     <p style="margin-top: 10px;">Pembimbing Lapangan</p>
-    ${data.internship.mentorSignature ? `
+    ${
+      data.internship.mentorSignature
+        ? `
       <div style="height: 80px; margin: 10px 0; display: flex; align-items: center; justify-content: center;">
         <img src="${data.internship.mentorSignature}" alt="Paraf Mentor" style="max-width: 200px; max-height: 80px; object-fit: contain;" />
       </div>
-    ` : `
+    `
+        : `
       <div style="height: 80px; margin: 10px 0; display: flex; align-items: center; justify-content: center; color: #999; font-style: italic;">
         (Belum ada tanda tangan digital)
       </div>
-    `}
+    `
+    }
     <p style="font-weight: bold; text-decoration: underline;">${data.internship.mentorName}</p>
   </div>
-  ` : ''}
+  `
+      : ""
+  }
 </body>
 </html>
   `;
@@ -332,16 +367,16 @@ export const generateLogbookHTML = (data: LogbookData): string => {
 
 export const downloadLogbookHTML = (data: LogbookData) => {
   const htmlContent = generateLogbookHTML(data);
-  
+
   // Create a Blob and download
-  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const blob = new Blob([htmlContent], { type: "text/html" });
   const url = URL.createObjectURL(blob);
-  
+
   // Open in new window for printing
-  const printWindow = window.open(url, '_blank');
-  
+  const printWindow = window.open(url, "_blank");
+
   if (printWindow) {
-    printWindow.addEventListener('load', () => {
+    printWindow.addEventListener("load", () => {
       // Auto-print after a short delay
       setTimeout(() => {
         printWindow.focus();
@@ -350,9 +385,9 @@ export const downloadLogbookHTML = (data: LogbookData) => {
     });
   } else {
     // Fallback: direct download if popup blocked
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = `Logbook_KP_${data.student.nim}_${new Date().toISOString().split('T')[0]}.html`;
+    link.download = `Logbook_KP_${data.student.nim}_${new Date().toISOString().split("T")[0]}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

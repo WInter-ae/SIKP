@@ -44,7 +44,10 @@ export async function submitResponseLetter(data: {
   formData.append("file", data.file);
   formData.append("letterStatus", data.letterStatus);
 
-  return sikpClient.upload<ResponseLetterData>(API_ENDPOINTS.RESPONSE_LETTER.CREATE, formData);
+  return sikpClient.upload<ResponseLetterData>(
+    API_ENDPOINTS.RESPONSE_LETTER.CREATE,
+    formData,
+  );
 }
 
 /**

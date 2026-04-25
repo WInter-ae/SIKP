@@ -39,36 +39,48 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
 
   // --- Identity State ---
-  const [availableIdentities, setAvailableIdentities] = useState<SSOIdentity[]>([]);
-  const [activeIdentity, setActiveIdentity] = useState<SSOIdentity | null>(null);
+  const [availableIdentities, setAvailableIdentities] = useState<SSOIdentity[]>(
+    [],
+  );
+  const [activeIdentity, setActiveIdentity] = useState<SSOIdentity | null>(
+    null,
+  );
   const [effectiveRoles, setEffectiveRoles] = useState<EffectiveRole[]>([]);
-  const [effectivePermissions, setEffectivePermissions] = useState<EffectivePermission[]>([]);
+  const [effectivePermissions, setEffectivePermissions] = useState<
+    EffectivePermission[]
+  >([]);
 
   // --- Core Session Application Logic ---
-  const applySession = useCallback((session: ReturnType<typeof getAuthSession>) => {
-    const hasPendingIdentitySelection =
-      Boolean(session?.requiresIdentitySelection) &&
-      (session?.availableIdentities?.length || 0) > 0;
+  const applySession = useCallback(
+    (session: ReturnType<typeof getAuthSession>) => {
+      const hasPendingIdentitySelection =
+        Boolean(session?.requiresIdentitySelection) &&
+        (session?.availableIdentities?.length || 0) > 0;
 
-    if (!session || (!session.sessionEstablished && !hasPendingIdentitySelection)) {
-      setUser(null);
-      setToken(null);
-      setAvailableIdentities([]);
-      setActiveIdentity(null);
-      setEffectiveRoles([]);
-      setEffectivePermissions([]);
-      setAuthStatus("unauthenticated");
-      return;
-    }
+      if (
+        !session ||
+        (!session.sessionEstablished && !hasPendingIdentitySelection)
+      ) {
+        setUser(null);
+        setToken(null);
+        setAvailableIdentities([]);
+        setActiveIdentity(null);
+        setEffectiveRoles([]);
+        setEffectivePermissions([]);
+        setAuthStatus("unauthenticated");
+        return;
+      }
 
-    setUser(session.user);
-    setToken(session.token);
-    setAvailableIdentities(session.availableIdentities);
-    setActiveIdentity(session.activeIdentity);
-    setEffectiveRoles(session.effectiveRoles);
-    setEffectivePermissions(session.effectivePermissions);
-    setAuthStatus("authenticated");
-  }, []);
+      setUser(session.user);
+      setToken(session.token);
+      setAvailableIdentities(session.availableIdentities);
+      setActiveIdentity(session.activeIdentity);
+      setEffectiveRoles(session.effectiveRoles);
+      setEffectivePermissions(session.effectivePermissions);
+      setAuthStatus("authenticated");
+    },
+    [],
+  );
 
   const hydrateSession = useCallback(async () => {
     setIsLoading(true);
@@ -130,7 +142,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
         requiresIdentitySelection: result.requiresIdentitySelection,
       };
     },
-    [applySession]
+    [applySession],
   );
 
   const logout = useCallback(async () => {
@@ -167,7 +179,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
       setIsLoading(false);
       return true;
     },
-    [applySession]
+    [applySession],
   );
 
   // --- Memoized Context Values ---
@@ -184,7 +196,16 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
       hydrateSession,
       logout,
     }),
-    [token, authStatus, isLoading, callbackError, initiateLogin, handleCallback, hydrateSession, logout]
+    [
+      token,
+      authStatus,
+      isLoading,
+      callbackError,
+      initiateLogin,
+      handleCallback,
+      hydrateSession,
+      logout,
+    ],
   );
 
   const userValue = useMemo(
@@ -192,7 +213,7 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
       user,
       setUser: setUserCompat,
     }),
-    [user, setUserCompat]
+    [user, setUserCompat],
   );
 
   const identityValue = useMemo(
@@ -203,7 +224,13 @@ export const SessionProvider = ({ children }: SessionProviderProps) => {
       effectivePermissions,
       selectActiveIdentity,
     }),
-    [availableIdentities, activeIdentity, effectiveRoles, effectivePermissions, selectActiveIdentity]
+    [
+      availableIdentities,
+      activeIdentity,
+      effectiveRoles,
+      effectivePermissions,
+      selectActiveIdentity,
+    ],
   );
 
   return (

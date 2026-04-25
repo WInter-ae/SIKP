@@ -88,7 +88,10 @@ export function CreateTemplateDialog({
         onSuccess();
       } else {
         // Check for specific error messages
-        if (response.message?.includes("Forbidden") || response.message?.includes("admin")) {
+        if (
+          response.message?.includes("Forbidden") ||
+          response.message?.includes("admin")
+        ) {
           toast.error("Hanya admin yang dapat membuat template");
         } else {
           toast.error(response.message || "Gagal membuat template");
@@ -190,17 +193,14 @@ export function CreateTemplateDialog({
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
             Batal
           </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={isLoading}
-          >
+          <Button onClick={handleSubmit} disabled={isLoading}>
             {isLoading ? "Menyimpan..." : "Simpan Template"}
           </Button>
         </DialogFooter>

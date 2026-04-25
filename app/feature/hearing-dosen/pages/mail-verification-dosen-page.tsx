@@ -714,10 +714,16 @@ function MailVerificationDosenPage() {
                     </TableHead>
                     <TableHead className="whitespace-nowrap">Tanggal</TableHead>
                     <TableHead className="whitespace-nowrap">NIM</TableHead>
-                    <TableHead className="whitespace-nowrap">Nama Mahasiswa</TableHead>
-                    <TableHead className="whitespace-nowrap">Jenis Surat</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Nama Mahasiswa
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Jenis Surat
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">Aksi</TableHead>
+                    <TableHead className="pr-6 whitespace-nowrap">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

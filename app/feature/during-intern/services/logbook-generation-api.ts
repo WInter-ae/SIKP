@@ -16,32 +16,37 @@ interface ApiResponse<T> {
 /**
  * Generate DOCX logbook untuk mahasiswa
  * Signature diambil otomatis dari mentors.signature di database
- * 
+ *
  * @param request - Optional filters (weekNumber, studentId)
  * @returns URL download DOCX file
  */
 export async function generateLogbookDocx(
-  request?: GenerateLogbookRequest
+  request?: GenerateLogbookRequest,
 ): Promise<ApiResponse<{ docxUrl: string; fileName: string }>> {
   try {
     const queryParams = new URLSearchParams();
     if (request?.weekNumber) {
-      queryParams.append('weekNumber', request.weekNumber.toString());
+      queryParams.append("weekNumber", request.weekNumber.toString());
     }
     if (request?.studentId) {
-      queryParams.append('studentId', request.studentId);
+      queryParams.append("studentId", request.studentId);
     }
 
-    const response = await apiClient<{ docxUrl: string; fileName: string; generatedAt: string }>(
-      `/api/logbook/generate-docx${queryParams.toString() ? '?' + queryParams.toString() : ''}`,
-      { method: "POST" }
+    const response = await apiClient<{
+      docxUrl: string;
+      fileName: string;
+      generatedAt: string;
+    }>(
+      `/api/logbook/generate-docx${queryParams.toString() ? "?" + queryParams.toString() : ""}`,
+      { method: "POST" },
     );
 
     return response;
   } catch (error: any) {
     return {
       success: false,
-      message: error.response?.data?.message || "Failed to generate logbook DOCX",
+      message:
+        error.response?.data?.message || "Failed to generate logbook DOCX",
       data: null,
     };
   }
@@ -49,19 +54,19 @@ export async function generateLogbookDocx(
 
 /**
  * Get logbook data for preview before generating DOCX
- * 
+ *
  * @param weekNumber - Optional specific week
  * @returns Logbook data with student info and entries
  */
 export async function getLogbookPreview(
-  weekNumber?: number
+  weekNumber?: number,
 ): Promise<ApiResponse<LogbookDocxData>> {
   try {
-    const queryParams = weekNumber ? `?weekNumber=${weekNumber}` : '';
-    
+    const queryParams = weekNumber ? `?weekNumber=${weekNumber}` : "";
+
     const response = await apiClient<LogbookDocxData>(
       `/api/logbook/preview${queryParams}`,
-      { method: "GET" }
+      { method: "GET" },
     );
 
     return response;
@@ -76,7 +81,7 @@ export async function getLogbookPreview(
 
 /**
  * Get download URL for existing logbook DOCX
- * 
+ *
  * @param logbookId - Logbook record ID
  * @returns Signed URL for download
  */
@@ -89,7 +94,7 @@ export function getLogbookDownloadUrl(logbookId: string): string {
  * Requirements:
  * - At least 1 approved entry
  * - Mentor signature exists in database
- * 
+ *
  * @returns Validation result
  */
 export async function validateLogbookGeneration(): Promise<
@@ -98,7 +103,7 @@ export async function validateLogbookGeneration(): Promise<
   try {
     const response = await apiClient<{ canGenerate: boolean; reason?: string }>(
       "/api/logbook/validate-generation",
-      { method: "GET" }
+      { method: "GET" },
     );
 
     return response;

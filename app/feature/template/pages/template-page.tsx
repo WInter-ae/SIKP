@@ -23,7 +23,7 @@ import {
 
 export default function TemplatePage() {
   const navigate = useNavigate();
-  const { user } = useUser();;
+  const { user } = useUser();
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [selectedTemplate, setSelectedTemplate] =
     useState<TemplateResponse | null>(null);
@@ -37,7 +37,7 @@ export default function TemplatePage() {
       navigate("/login");
       return;
     }
-    
+
     fetchTemplates();
   }, [user, navigate]);
 
@@ -52,13 +52,13 @@ export default function TemplatePage() {
       }
     } catch (error: unknown) {
       console.error("Error fetching templates:", error);
-      
+
       if ((error as Error).message?.includes("Unauthorized")) {
         toast.error("Sesi Anda telah berakhir");
         navigate("/login");
         return;
       }
-      
+
       toast.error("Terjadi kesalahan saat memuat templates");
     } finally {
       setIsLoading(false);
@@ -71,7 +71,7 @@ export default function TemplatePage() {
       toast.success(`Template "${template.name}" berhasil didownload.`);
     } catch (error: unknown) {
       console.error("Error downloading template:", error);
-      
+
       if (
         (error as Error).message?.includes("Forbidden") ||
         (error as Error).message?.includes("Unauthorized")
@@ -79,7 +79,7 @@ export default function TemplatePage() {
         toast.error("Anda tidak memiliki akses untuk mendownload template");
         return;
       }
-      
+
       toast.error("Gagal mendownload template");
     }
   };

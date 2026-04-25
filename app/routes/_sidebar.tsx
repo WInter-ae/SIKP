@@ -3,7 +3,11 @@ import { useAuth } from "~/contexts/auth-context";
 import { useEffect, useMemo } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { AppSidebar } from "~/feature/sidebar";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "~/components/ui/sidebar";
 
 import { type EffectiveRole, getDashboardPath } from "~/lib/sso-types";
 
@@ -31,7 +35,7 @@ export default function Page() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isLoading, isAuthenticated } = useAuth();
-  const { availableIdentities, activeIdentity, effectiveRoles } = useIdentity();;
+  const { availableIdentities, activeIdentity, effectiveRoles } = useIdentity();
 
   const requiredRoles = useMemo(
     () => getRequiredRoles(location.pathname),
@@ -104,7 +108,9 @@ export default function Page() {
         <header className="flex h-14 md:hidden shrink-0 items-center gap-2 border-b bg-background px-4 sticky top-0 z-10">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1" />
-          <span className="font-semibold text-sm text-primary">SIKP Mobile</span>
+          <span className="font-semibold text-sm text-primary">
+            SIKP Mobile
+          </span>
         </header>
         <Outlet />
       </SidebarInset>

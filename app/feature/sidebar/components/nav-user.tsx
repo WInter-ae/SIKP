@@ -34,7 +34,7 @@ import type { User } from "../types";
 
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
-  const { logout } = useAuth();;
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);

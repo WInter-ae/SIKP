@@ -74,7 +74,7 @@ import {
 
 export default function TemplateManagementPage() {
   const navigate = useNavigate();
-  const { user } = useUser();;
+  const { user } = useUser();
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<TemplateType | "all">("all");
@@ -123,7 +123,7 @@ export default function TemplateManagementPage() {
       }
     } catch (error: unknown) {
       console.error("Error fetching templates:", error);
-      
+
       // Handle authorization errors
       if (
         (error as Error).message?.includes("Unauthorized") ||
@@ -133,7 +133,7 @@ export default function TemplateManagementPage() {
         navigate("/login");
         return;
       }
-      
+
       toast.error("Terjadi kesalahan saat memuat templates");
     } finally {
       setIsLoading(false);
@@ -181,7 +181,7 @@ export default function TemplateManagementPage() {
   // Delete template
   const handleDeleteTemplate = async () => {
     if (!templateToDelete) return;
-    
+
     setIsLoading(true);
     try {
       const response = await deleteTemplate(templateToDelete.id);
@@ -193,13 +193,13 @@ export default function TemplateManagementPage() {
       }
     } catch (error: unknown) {
       console.error("Error deleting template:", error);
-      
+
       if ((error as Error).message?.includes("Forbidden")) {
         toast.error("Anda tidak memiliki izin untuk menghapus template");
         navigate("/login");
         return;
       }
-      
+
       toast.error("Terjadi kesalahan saat menghapus template");
     } finally {
       setIsLoading(false);
@@ -221,13 +221,13 @@ export default function TemplateManagementPage() {
       }
     } catch (error: unknown) {
       console.error("Error toggling template status:", error);
-      
+
       if ((error as Error).message?.includes("Forbidden")) {
         toast.error("Anda tidak memiliki izin untuk mengubah status template");
         navigate("/login");
         return;
       }
-      
+
       toast.error("Terjadi kesalahan saat mengubah status");
     } finally {
       setIsLoading(false);
@@ -241,12 +241,12 @@ export default function TemplateManagementPage() {
       toast.success("Template berhasil didownload");
     } catch (error: unknown) {
       console.error("Error downloading template:", error);
-      
+
       if ((error as Error).message?.includes("Forbidden")) {
         toast.error("Anda tidak memiliki akses untuk mendownload template");
         return;
       }
-      
+
       toast.error("Gagal mendownload template");
     }
   };
@@ -311,7 +311,10 @@ export default function TemplateManagementPage() {
                 Kelola semua template dokumen di sini
               </CardDescription>
             </div>
-            <Button onClick={() => setCreateDialogOpen(true)} className="w-full sm:w-auto">
+            <Button
+              onClick={() => setCreateDialogOpen(true)}
+              className="w-full sm:w-auto"
+            >
               <Plus className="h-4 w-4 mr-2" />
               Tambah Template
             </Button>
@@ -357,11 +360,17 @@ export default function TemplateManagementPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="whitespace-nowrap">Nama Template</TableHead>
+                  <TableHead className="whitespace-nowrap">
+                    Nama Template
+                  </TableHead>
                   <TableHead className="whitespace-nowrap">Tipe</TableHead>
                   <TableHead className="whitespace-nowrap">Status</TableHead>
-                  <TableHead className="whitespace-nowrap">Terakhir Diupdate</TableHead>
-                  <TableHead className="text-right whitespace-nowrap">Aksi</TableHead>
+                  <TableHead className="whitespace-nowrap">
+                    Terakhir Diupdate
+                  </TableHead>
+                  <TableHead className="text-right whitespace-nowrap">
+                    Aksi
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

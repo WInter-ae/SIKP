@@ -63,7 +63,9 @@ function mapBackendStudent(mentee: MenteeData): Student | null {
 export default function MentorLogbookPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
-  const [mentorProfile, setMentorProfile] = useState<MentorProfile | null>(null);
+  const [mentorProfile, setMentorProfile] = useState<MentorProfile | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -89,7 +91,9 @@ export default function MentorLogbookPage() {
         if (!menteeResponse.success || !menteeResponse.data) {
           setStudents([]);
           setLogbookEntries([]);
-          setErrorMessage(menteeResponse.message || "Gagal memuat mahasiswa mentor.");
+          setErrorMessage(
+            menteeResponse.message || "Gagal memuat mahasiswa mentor.",
+          );
           return;
         }
 
@@ -102,17 +106,23 @@ export default function MentorLogbookPage() {
         const backendEntries = await Promise.all(
           backendStudents.map(async (student) => {
             try {
-              const menteeData = menteeResponse.data?.find((m) => m.userId === student.id);
-              
-                // Backend expects userId for GET /api/mentor/logbook/:studentId
-                const studentUserId = menteeData?.userId || student.id;
-                if (!studentUserId) {
-                  return [] as LogbookEntry[];
-                }
-              
-                let response = await getStudentLogbook(studentUserId);
-              
-              if (!response.success || !response.data?.entries || response.data.entries.length === 0) {
+              const menteeData = menteeResponse.data?.find(
+                (m) => m.userId === student.id,
+              );
+
+              // Backend expects userId for GET /api/mentor/logbook/:studentId
+              const studentUserId = menteeData?.userId || student.id;
+              if (!studentUserId) {
+                return [] as LogbookEntry[];
+              }
+
+              let response = await getStudentLogbook(studentUserId);
+
+              if (
+                !response.success ||
+                !response.data?.entries ||
+                response.data.entries.length === 0
+              ) {
                 // no-op: empty logbook is valid for some students
               }
 
@@ -120,13 +130,13 @@ export default function MentorLogbookPage() {
                 console.warn(
                   `❌ Logbook fetch failed for student ${student.id}:`,
                   response.message,
-                  {menteeData}
+                  { menteeData },
                 );
                 return [] as LogbookEntry[];
               }
 
               const entries = response.data?.entries || [];
-              
+
               if (!entries || entries.length === 0) {
                 return [] as LogbookEntry[];
               }
@@ -161,17 +171,23 @@ export default function MentorLogbookPage() {
                       : undefined,
               })) as LogbookEntry[];
             } catch (error) {
-              console.error(`❌ Error loading logbook for student ${student.id}:`, error);
+              console.error(
+                `❌ Error loading logbook for student ${student.id}:`,
+                error,
+              );
               return [] as LogbookEntry[];
             }
-          })
+          }),
         );
 
         setLogbookEntries(backendEntries.flat());
       } catch (error) {
         if (!isMounted) return;
 
-        const message = error instanceof Error ? error.message : "Gagal memuat logbook mentor.";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat logbook mentor.";
         setErrorMessage(message);
         setStudents([]);
         setLogbookEntries([]);
@@ -192,21 +208,29 @@ export default function MentorLogbookPage() {
 
   // Calculate statistics per student
   const getStudentStats = (studentId: string) => {
-    const studentEntries = logbookEntries.filter((e) => e.studentId === studentId);
+    const studentEntries = logbookEntries.filter(
+      (e) => e.studentId === studentId,
+    );
     const total = studentEntries.length;
-    const approved = studentEntries.filter((e) => e.mentorSignature?.status === "approved").length;
+    const approved = studentEntries.filter(
+      (e) => e.mentorSignature?.status === "approved",
+    ).length;
     const pending = studentEntries.filter((e) => !e.mentorSignature).length;
     const revision = studentEntries.filter(
-      (e) => e.mentorSignature?.status === "revision" || e.mentorSignature?.status === "rejected"
+      (e) =>
+        e.mentorSignature?.status === "revision" ||
+        e.mentorSignature?.status === "rejected",
     ).length;
 
     return { total, approved, pending, revision };
   };
 
   // Calculate global statistics
-  const pendingCount = logbookEntries.filter((entry) => !entry.mentorSignature).length;
+  const pendingCount = logbookEntries.filter(
+    (entry) => !entry.mentorSignature,
+  ).length;
   const approvedCount = logbookEntries.filter(
-    (entry) => entry.mentorSignature?.status === "approved"
+    (entry) => entry.mentorSignature?.status === "approved",
   ).length;
 
   return (
@@ -254,7 +278,9 @@ export default function MentorLogbookPage() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Jabatan</p>
-                  <p className="font-medium">{mentorProfile?.position || "-"}</p>
+                  <p className="font-medium">
+                    {mentorProfile?.position || "-"}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -323,17 +349,24 @@ export default function MentorLogbookPage() {
                       <TableHead>NIM</TableHead>
                       <TableHead>Program Studi</TableHead>
                       <TableHead>Periode Magang</TableHead>
-                      <TableHead className="text-center">Total Logbook</TableHead>
+                      <TableHead className="text-center">
+                        Total Logbook
+                      </TableHead>
                       <TableHead className="text-center">Disetujui</TableHead>
                       <TableHead className="text-center">Menunggu</TableHead>
-                      <TableHead className="text-center">Revisi / Ditolak</TableHead>
+                      <TableHead className="text-center">
+                        Revisi / Ditolak
+                      </TableHead>
                       <TableHead className="text-center">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
-                        <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                        <TableCell
+                          colSpan={9}
+                          className="text-center py-8 text-muted-foreground"
+                        >
                           Memuat data mahasiswa dan logbook dari backend...
                         </TableCell>
                       </TableRow>
@@ -373,14 +406,30 @@ export default function MentorLogbookPage() {
                             <TableCell className="font-mono text-sm">
                               {student.nim}
                             </TableCell>
-                            <TableCell className="text-sm">{student.major}</TableCell>
+                            <TableCell className="text-sm">
+                              {student.major}
+                            </TableCell>
                             <TableCell className="text-sm">
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                                 <div>
-                                  <p>{new Date(student.startDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short" })}</p>
+                                  <p>
+                                    {new Date(
+                                      student.startDate,
+                                    ).toLocaleDateString("id-ID", {
+                                      day: "2-digit",
+                                      month: "short",
+                                    })}
+                                  </p>
                                   <p className="text-xs text-muted-foreground">
-                                    s/d {new Date(student.endDate).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
+                                    s/d{" "}
+                                    {new Date(
+                                      student.endDate,
+                                    ).toLocaleDateString("id-ID", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })}
                                   </p>
                                 </div>
                               </div>
@@ -408,7 +457,9 @@ export default function MentorLogbookPage() {
                             </TableCell>
                             <TableCell className="text-center">
                               <Button variant="outline" size="sm" asChild>
-                                <Link to={`/mentor/logbook-detail/${student.id}`}>
+                                <Link
+                                  to={`/mentor/logbook-detail/${student.id}`}
+                                >
                                   <Eye className="h-4 w-4 mr-2" />
                                   Detail
                                 </Link>

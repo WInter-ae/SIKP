@@ -9,7 +9,9 @@ import type { Team, TeamMember } from "~/lib/types";
 
 /** Create a new team. Backend requires 'name' field in request. */
 export async function createTeam() {
-  return sikpClient.post<Team>(API_ENDPOINTS.TEAM.CREATE, { name: "Tim Kerja Praktik" });
+  return sikpClient.post<Team>(API_ENDPOINTS.TEAM.CREATE, {
+    name: "Tim Kerja Praktik",
+  });
 }
 
 /** Get user's teams. */

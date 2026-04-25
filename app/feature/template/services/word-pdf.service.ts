@@ -1,6 +1,6 @@
 /**
  * Word & PDF Template Service
- * 
+ *
  * Service untuk handle Word (.docx) templates dan PDF generation
  */
 
@@ -12,7 +12,7 @@ import type { Template } from "../types/template.types";
 
 /**
  * Generate Word document dari template .docx
- * 
+ *
  * @example
  * const wordBlob = await generateWordDocument(template, {
  *   nama_mahasiswa: "John Doe",
@@ -23,15 +23,15 @@ import type { Template } from "../types/template.types";
  */
 export async function generateWordDocument(
   template: Template,
-  data: Record<string, string>
+  data: Record<string, string>,
 ): Promise<Blob> {
   try {
     // Load template content (base64 or binary)
     const content = template.content;
-    
+
     // Create PizZip instance
     const zip = new PizZip(content);
-    
+
     // Create docxtemplater instance
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
@@ -44,7 +44,8 @@ export async function generateWordDocument(
     // Generate binary blob
     const blob = doc.getZip().generate({
       type: "blob",
-      mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
     return blob;
@@ -57,7 +58,7 @@ export async function generateWordDocument(
 /**
  * Generate PDF dari HTML template
  * Menggunakan html2canvas + jsPDF
- * 
+ *
  * @example
  * const pdfBlob = await generatePDFFromHTML(htmlContent);
  * downloadBlob(pdfBlob, "Berita_Acara.pdf");
@@ -112,7 +113,9 @@ export async function generatePDFFromHTML(htmlContent: string): Promise<Blob> {
  * Generate PDF dari HTML dengan multiple pages
  * Untuk dokumen yang panjang
  */
-export async function generatePDFFromHTMLMultiPage(htmlContent: string): Promise<Blob> {
+export async function generatePDFFromHTMLMultiPage(
+  htmlContent: string,
+): Promise<Blob> {
   try {
     // Create temporary container
     const container = document.createElement("div");
@@ -186,7 +189,7 @@ export async function readWordFile(file: File): Promise<string> {
     const arrayBuffer = await file.arrayBuffer();
     const zip = new PizZip(arrayBuffer);
     const doc = new Docxtemplater(zip);
-    
+
     // Get raw text content
     // Note: This is simplified, for full text extraction need xml parsing
     return arrayBuffer.toString();
@@ -236,7 +239,7 @@ export function extractWordVariables(content: string): string[] {
  */
 export function renderWordTemplate(
   content: string,
-  data: Record<string, string>
+  data: Record<string, string>,
 ): string {
   let rendered = content;
 
@@ -268,5 +271,5 @@ export function getReadableFileSize(bytes: number): string {
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
 }

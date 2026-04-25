@@ -290,7 +290,9 @@ export function MahasiswaProfilPage() {
                 <User className="h-4 w-4" />
                 Nama Lengkap
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.nama || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.nama || "-"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -298,7 +300,9 @@ export function MahasiswaProfilPage() {
                 <IdCard className="h-4 w-4" />
                 NIM
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.nim || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.nim || "-"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -306,7 +310,9 @@ export function MahasiswaProfilPage() {
                 <Mail className="h-4 w-4" />
                 Email
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.email || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.email || "-"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -314,7 +320,9 @@ export function MahasiswaProfilPage() {
                 <Phone className="h-4 w-4" />
                 Telepon
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.phone || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.phone || "-"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -322,7 +330,9 @@ export function MahasiswaProfilPage() {
                 <Building2 className="h-4 w-4" />
                 Fakultas
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.fakultas || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.fakultas || "-"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -330,7 +340,9 @@ export function MahasiswaProfilPage() {
                 <Building2 className="h-4 w-4" />
                 Program Studi
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.prodi || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.prodi || "-"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -338,7 +350,9 @@ export function MahasiswaProfilPage() {
                 <Building2 className="h-4 w-4" />
                 Semester
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.semester || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.semester || "-"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
@@ -346,7 +360,9 @@ export function MahasiswaProfilPage() {
                 <Building2 className="h-4 w-4" />
                 Jumlah SKS Selesai
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.jumlahSksSelesai || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.jumlahSksSelesai || "-"}
+              </p>
             </div>
 
             <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:col-span-2">
@@ -354,7 +370,9 @@ export function MahasiswaProfilPage() {
                 <Building2 className="h-4 w-4" />
                 Angkatan
               </Label>
-              <p className="text-base font-semibold tracking-tight">{profile.angkatan || "-"}</p>
+              <p className="text-base font-semibold tracking-tight">
+                {profile.angkatan || "-"}
+              </p>
             </div>
           </div>
         </CardContent>
@@ -382,7 +400,8 @@ export function MahasiswaProfilPage() {
                 <div className="flex min-h-32 items-center justify-center rounded-lg border-2 border-dashed bg-white p-4">
                   {signatureImageError ? (
                     <p className="text-xs text-red-600 break-all text-center">
-                      Preview tanda tangan gagal dimuat. URL: {profile.esignature.url}
+                      Preview tanda tangan gagal dimuat. URL:{" "}
+                      {profile.esignature.url}
                     </p>
                   ) : (
                     <img
@@ -394,12 +413,18 @@ export function MahasiswaProfilPage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Terakhir diupdate: {" "}
-                  {new Date(profile.esignature.uploadedAt).toLocaleString("id-ID")}
+                  Terakhir diupdate:{" "}
+                  {new Date(profile.esignature.uploadedAt).toLocaleString(
+                    "id-ID",
+                  )}
                 </p>
               </div>
 
-              <Button onClick={openManageSignature} variant="outline" className="w-full gap-2">
+              <Button
+                onClick={openManageSignature}
+                variant="outline"
+                className="w-full gap-2"
+              >
                 <ExternalLink className="h-4 w-4" />
                 Kelola Signature di SSO
               </Button>
@@ -411,12 +436,16 @@ export function MahasiswaProfilPage() {
                 <AlertDescription>
                   <p className="font-semibold">Tanda Tangan Belum Dibuat</p>
                   <p className="text-sm mt-1">
-                    Anda perlu membuat tanda tangan digital untuk kebutuhan dokumen Anda.
+                    Anda perlu membuat tanda tangan digital untuk kebutuhan
+                    dokumen Anda.
                   </p>
                 </AlertDescription>
               </Alert>
 
-              <Button onClick={openManageSignature} className="h-11 w-full gap-2">
+              <Button
+                onClick={openManageSignature}
+                className="h-11 w-full gap-2"
+              >
                 <ExternalLink className="h-5 w-5" />
                 Kelola Signature di SSO
               </Button>

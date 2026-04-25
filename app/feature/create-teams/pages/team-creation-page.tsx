@@ -171,8 +171,12 @@ const TeamCreationPage = () => {
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
 
   // State untuk permintaan gabung dan ajakan
-  const [incomingJoinRequests, setIncomingJoinRequests] = useState<Member[]>([]);
-  const [outgoingJoinRequests, setOutgoingJoinRequests] = useState<Member[]>([]);
+  const [incomingJoinRequests, setIncomingJoinRequests] = useState<Member[]>(
+    [],
+  );
+  const [outgoingJoinRequests, setOutgoingJoinRequests] = useState<Member[]>(
+    [],
+  );
   const [inviteRequests, setInviteRequests] = useState<Member[]>([]);
 
   // State untuk pending invitations (undangan yang sudah kita kirim)
@@ -278,8 +282,6 @@ const TeamCreationPage = () => {
       loadMyInvitations();
     }
   }, [isUserLoading, isAuthenticated, user]);
-
-
 
   const loadFixedTeamDeletePermission = async (teamData: Team) => {
     if (teamData.status !== "FIXED") {
@@ -791,9 +793,9 @@ const TeamCreationPage = () => {
         // Timeout error - show helpful message
         console.warn(
           "⚠️ PERFORMANCE ISSUE: Backend response is slow (>5s). Possible causes:\n" +
-          "1. Database query not optimized\n" +
-          "2. Network latency too high\n" +
-          "3. Server resources limited",
+            "1. Database query not optimized\n" +
+            "2. Network latency too high\n" +
+            "3. Server resources limited",
         );
       } else if (
         errorMsg.includes("userId") ||
@@ -1074,25 +1076,49 @@ const TeamCreationPage = () => {
           if (!user) return false;
           const currentUserId = String(user.id);
 
-          if (inv.invitedBy && String(inv.invitedBy) === currentUserId) return true;
-          if (inv.inviter?.id && String(inv.inviter.id) === currentUserId) return true;
+          if (inv.invitedBy && String(inv.invitedBy) === currentUserId)
+            return true;
+          if (inv.inviter?.id && String(inv.inviter.id) === currentUserId)
+            return true;
 
           // Check by NIM or Name just in case ID is missing but it's the same person
           const inviterIdentity = getPersonIdentity(inv.inviter);
-          if (inviterIdentity.nim && user.nim && inviterIdentity.nim === user.nim) return true;
-          if (inviterIdentity.name && user.nama && inviterIdentity.name === user.nama) return true;
+          if (
+            inviterIdentity.nim &&
+            user.nim &&
+            inviterIdentity.nim === user.nim
+          )
+            return true;
+          if (
+            inviterIdentity.name &&
+            user.nama &&
+            inviterIdentity.name === user.nama
+          )
+            return true;
 
           // Fallback: Check if the invitation is NOT from the team leader
           const leaderId = inv.team?.leaderId || inv.team?.leader?.id;
           if (leaderId) {
             const strLeaderId = String(leaderId);
-            if (inv.invitedBy && String(inv.invitedBy) === strLeaderId) return false;
-            if (inv.inviter?.id && String(inv.inviter.id) === strLeaderId) return false;
+            if (inv.invitedBy && String(inv.invitedBy) === strLeaderId)
+              return false;
+            if (inv.inviter?.id && String(inv.inviter.id) === strLeaderId)
+              return false;
 
             // Check leader NIM or Name
             const leaderIdentity = getPersonIdentity(inv.team?.leader);
-            if (leaderIdentity.nim && inviterIdentity.nim && leaderIdentity.nim === inviterIdentity.nim) return false;
-            if (leaderIdentity.name && inviterIdentity.name && leaderIdentity.name === inviterIdentity.name) return false;
+            if (
+              leaderIdentity.nim &&
+              inviterIdentity.nim &&
+              leaderIdentity.nim === inviterIdentity.nim
+            )
+              return false;
+            if (
+              leaderIdentity.name &&
+              inviterIdentity.name &&
+              leaderIdentity.name === inviterIdentity.name
+            )
+              return false;
 
             // If we have a leader but the inviter is NOT the leader, it's a join request sent by the user
             return true;
@@ -1937,7 +1963,9 @@ const TeamCreationPage = () => {
 
           if (response.success) {
             setIncomingJoinRequests(
-              incomingJoinRequests.filter((m) => m.id !== confirmAction.memberId),
+              incomingJoinRequests.filter(
+                (m) => m.id !== confirmAction.memberId,
+              ),
             );
             setNotificationData({
               type: "success",
@@ -1996,7 +2024,9 @@ const TeamCreationPage = () => {
 
           if (response.success) {
             setIncomingJoinRequests(
-              incomingJoinRequests.filter((m) => m.id !== confirmAction.memberId),
+              incomingJoinRequests.filter(
+                (m) => m.id !== confirmAction.memberId,
+              ),
             );
             setNotificationData({
               type: "success",
@@ -2054,7 +2084,9 @@ const TeamCreationPage = () => {
 
           if (response.success) {
             setOutgoingJoinRequests(
-              outgoingJoinRequests.filter((m) => m.id !== confirmAction.memberId),
+              outgoingJoinRequests.filter(
+                (m) => m.id !== confirmAction.memberId,
+              ),
             );
             setNotificationData({
               type: "success",
@@ -2267,9 +2299,9 @@ const TeamCreationPage = () => {
         setTeam((prev) =>
           prev
             ? {
-              ...prev,
-              status: "FIXED",
-            }
+                ...prev,
+                status: "FIXED",
+              }
             : null,
         );
 
@@ -2990,10 +3022,11 @@ const TeamCreationPage = () => {
                 {team.members.map((member) => (
                   <div
                     key={member.id}
-                    className={`p-4 rounded-lg border ${member.isLeader
+                    className={`p-4 rounded-lg border ${
+                      member.isLeader
                         ? "border-primary/30 bg-primary/5"
                         : "border-border bg-muted/50"
-                      }`}
+                    }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <Badge
@@ -3196,20 +3229,31 @@ const TeamCreationPage = () => {
             )}
 
             {/* Join Requests */}
-            {team?.status !== "FIXED" && (team?.isLeader ? incomingJoinRequests.length > 0 : outgoingJoinRequests.length > 0) && (
-              <MemberList
-                title="Daftar Permintaan Gabung Tim"
-                members={team?.isLeader ? incomingJoinRequests : outgoingJoinRequests}
-                showActions={!!team?.isLeader}
-                showRole={false}
-                isLeader={!!team?.isLeader}
-                currentUserId={user?.id}
-                onAccept={team?.isLeader ? handleAcceptJoinRequest : undefined}
-                onReject={team?.isLeader ? handleRejectJoinRequest : undefined}
-                showCancel={!team?.isLeader}
-                onCancel={!team?.isLeader ? handleCancelJoinRequest : undefined}
-              />
-            )}
+            {team?.status !== "FIXED" &&
+              (team?.isLeader
+                ? incomingJoinRequests.length > 0
+                : outgoingJoinRequests.length > 0) && (
+                <MemberList
+                  title="Daftar Permintaan Gabung Tim"
+                  members={
+                    team?.isLeader ? incomingJoinRequests : outgoingJoinRequests
+                  }
+                  showActions={!!team?.isLeader}
+                  showRole={false}
+                  isLeader={!!team?.isLeader}
+                  currentUserId={user?.id}
+                  onAccept={
+                    team?.isLeader ? handleAcceptJoinRequest : undefined
+                  }
+                  onReject={
+                    team?.isLeader ? handleRejectJoinRequest : undefined
+                  }
+                  showCancel={!team?.isLeader}
+                  onCancel={
+                    !team?.isLeader ? handleCancelJoinRequest : undefined
+                  }
+                />
+              )}
 
             {team?.status !== "FIXED" && (
               <MemberList
@@ -3283,8 +3327,8 @@ const TeamCreationPage = () => {
           onConfirm={executeConfirmAction}
           variant={
             confirmAction.type.includes("reject") ||
-              confirmAction.type === "remove" ||
-              confirmAction.type === "cancel-invite"
+            confirmAction.type === "remove" ||
+            confirmAction.type === "cancel-invite"
               ? "destructive"
               : "default"
           }

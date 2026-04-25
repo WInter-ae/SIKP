@@ -13,8 +13,14 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"form">) {
   const navigate = useNavigate();
-  const { initiateLogin, isLoading, isAuthenticated, callbackError, setCallbackError } = useAuth();
-  const { effectiveRoles, activeIdentity } = useIdentity();;
+  const {
+    initiateLogin,
+    isLoading,
+    isAuthenticated,
+    callbackError,
+    setCallbackError,
+  } = useAuth();
+  const { effectiveRoles, activeIdentity } = useIdentity();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

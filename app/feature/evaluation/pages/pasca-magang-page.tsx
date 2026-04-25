@@ -13,10 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { 
-  FileText, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  FileText,
+  AlertCircle,
+  CheckCircle2,
   Clock,
   Upload as UploadIcon,
   Eye,
@@ -26,15 +26,15 @@ import {
   Info,
   Download,
   History as HistoryIcon,
-  Printer
+  Printer,
 } from "lucide-react";
 import { printFormNilai, type NilaiKPData } from "../utils/generate-form-nilai";
 
 // Status types
-type LaporanStatus = 
-  | "belum_upload" 
-  | "menunggu_review" 
-  | "perlu_revisi" 
+type LaporanStatus =
+  | "belum_upload"
+  | "menunggu_review"
+  | "perlu_revisi"
   | "disetujui";
 
 interface LaporanKP {
@@ -74,12 +74,12 @@ const getLoggedInMahasiswa = () => {
     dosenPembimbing: "Dr. Ahmad Santoso, M.Kom",
     pembimbingLapangan: "Budi Hartono, S.Kom",
   };
-  
+
   // Only access localStorage in browser
   if (typeof window === "undefined") {
     return defaultData;
   }
-  
+
   // Try to get from localStorage profile
   const savedProfile = localStorage.getItem("mahasiswa-profile");
   if (savedProfile) {
@@ -87,13 +87,13 @@ const getLoggedInMahasiswa = () => {
       const profile = JSON.parse(savedProfile);
       return {
         ...defaultData,
-        ...profile
+        ...profile,
       };
     } catch (e) {
       console.error("Error loading mahasiswa profile:", e);
     }
   }
-  
+
   return defaultData;
 };
 
@@ -111,20 +111,19 @@ const mockNilai = {
   waktuPelaksanaan: "",
   dosenPembimbing: "",
   pembimbingLapangan: "",
-  
+
   // Nilai
   kesesuaianLaporan: 85,
   penguasaanMateri: 88,
   analisisPerancangan: 82,
   sikapEtika: 90,
-  
+
   // Data Dosen
   dosenPenguji: "Dr. Ahmad Santoso, M.Kom",
   nipDosen: "198501122010121001",
   eSignatureUrl: "", // Will be loaded from localStorage
   tanggalPenilaian: "",
 };
-
 
 // Mock data laporan - uncomment untuk testing different states
 const mockLaporan: LaporanKP = {
@@ -167,13 +166,16 @@ export default function PascaMagangPage() {
   const [laporan, setLaporan] = useState<LaporanKP>(mockLaporan);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [revisionStatus, setRevisionStatus] = useState<"revisi" | "tidak-revisi" | "">("");
+  const [revisionStatus, setRevisionStatus] = useState<
+    "revisi" | "tidak-revisi" | ""
+  >("");
   const [notification, setNotification] = useState<{
     title: string;
     description: string;
     variant?: "default" | "destructive";
   } | null>(null);
-  const [nilaiKP, setNilaiKP] = useState(mockNilai);  const [hasGradeFromDosen, setHasGradeFromDosen] = useState(false);
+  const [nilaiKP, setNilaiKP] = useState(mockNilai);
+  const [hasGradeFromDosen, setHasGradeFromDosen] = useState(false);
   const [revisionHistory, setRevisionHistory] = useState<RevisionHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   // Load data
@@ -182,7 +184,7 @@ export default function PascaMagangPage() {
       // Load dari localStorage atau API
       if (typeof window !== "undefined") {
         const savedLaporan = localStorage.getItem("laporan-kp");
-        
+
         if (savedLaporan) {
           const parsedLaporan = JSON.parse(savedLaporan);
           setLaporan(parsedLaporan);
@@ -194,43 +196,48 @@ export default function PascaMagangPage() {
         // Load nilai from localStorage - try student-specific first, then generic
         const studentNim = mockMahasiswa.nim;
         let savedNilai = localStorage.getItem(`nilai-kp-${studentNim}`);
-        
+
         // Fallback to generic key
         if (!savedNilai) {
           savedNilai = localStorage.getItem("nilai-kp");
         }
-        
+
         if (savedNilai) {
           const parsedNilai = JSON.parse(savedNilai);
-          
+
           // HANYA set nilai dan hasGradeFromDosen jika tanggalPenilaian ada
           // Artinya dosen sudah benar-benar memberikan nilai, bukan hanya merevisi
           if (parsedNilai.tanggalPenilaian) {
             setNilaiKP(parsedNilai);
-            
+
             // Check if this is newly graded
             if (!hasGradeFromDosen) {
               setHasGradeFromDosen(true);
-              
+
               // Show notification for new grade only once
-              if (!sessionStorage.getItem('grade-notification-shown')) {
+              if (!sessionStorage.getItem("grade-notification-shown")) {
                 setNotification({
                   title: "✅ Nilai KP Sudah Tersedia!",
-                  description: `Dosen ${parsedNilai.dosenPenguji || 'pembimbing'} telah memberikan nilai. Anda dapat mencetak Form Nilai KP.`,
+                  description: `Dosen ${parsedNilai.dosenPenguji || "pembimbing"} telah memberikan nilai. Anda dapat mencetak Form Nilai KP.`,
                 });
-                
-                sessionStorage.setItem('grade-notification-shown', 'true');
-                
+
+                sessionStorage.setItem("grade-notification-shown", "true");
+
                 // Auto-dismiss after 8 seconds
                 setTimeout(() => setNotification(null), 8000);
               }
             }
-            
-            console.log("Loaded nilai for student (with tanggalPenilaian):", parsedNilai);
+
+            console.log(
+              "Loaded nilai for student (with tanggalPenilaian):",
+              parsedNilai,
+            );
           } else {
             // Jika tidak ada tanggalPenilaian, reset state
             setHasGradeFromDosen(false);
-            console.log("Nilai data exists but no tanggalPenilaian - dosen masih merevisi");
+            console.log(
+              "Nilai data exists but no tanggalPenilaian - dosen masih merevisi",
+            );
           }
         } else {
           // Tidak ada data nilai sama sekali
@@ -248,19 +255,19 @@ export default function PascaMagangPage() {
     };
 
     loadData();
-    
+
     // Check for changes periodically (every 500ms for faster updates)
     const intervalId = setInterval(() => {
       loadData();
     }, 500);
-    
+
     // Also reload when window gets focus
     const handleFocus = () => {
       loadData();
     };
-    
+
     window.addEventListener("focus", handleFocus);
-    
+
     return () => {
       clearInterval(intervalId);
       window.removeEventListener("focus", handleFocus);
@@ -281,17 +288,17 @@ export default function PascaMagangPage() {
       alert("Mohon pilih file terlebih dahulu");
       return;
     }
-    
+
     if (!revisionStatus) {
       alert("Mohon pilih status revisi");
       return;
     }
 
     setIsLoading(true);
-    
+
     // Simulasi upload file
     await new Promise((resolve) => setTimeout(resolve, 2000));
-    
+
     const updatedLaporan: LaporanKP = {
       ...laporan,
       id: `LAP-${Date.now()}`,
@@ -300,7 +307,7 @@ export default function PascaMagangPage() {
       uploadedAt: new Date().toISOString(),
       status: "menunggu_review",
     };
-    
+
     // Save to history
     const newHistoryItem: RevisionHistory = {
       id: updatedLaporan.id!,
@@ -310,21 +317,22 @@ export default function PascaMagangPage() {
       status: "menunggu_review",
       version: revisionHistory.length + 1,
     };
-    
+
     const updatedHistory = [...revisionHistory, newHistoryItem];
     setRevisionHistory(updatedHistory);
     localStorage.setItem("revision-history-kp", JSON.stringify(updatedHistory));
-    
+
     setLaporan(updatedLaporan);
     localStorage.setItem("laporan-kp", JSON.stringify(updatedLaporan));
-    
+
     setSelectedFile(null);
     setRevisionStatus("");
     setIsLoading(false);
-    
+
     setNotification({
       title: "✅ Laporan berhasil diupload",
-      description: "Laporan KP Anda telah disubmit dan menunggu review dari dosen.",
+      description:
+        "Laporan KP Anda telah disubmit dan menunggu review dari dosen.",
     });
     setTimeout(() => setNotification(null), 5000);
   };
@@ -334,7 +342,7 @@ export default function PascaMagangPage() {
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + " " + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
   };
 
   const formatDate = (dateString: string): string => {
@@ -352,7 +360,7 @@ export default function PascaMagangPage() {
     console.log("=== DEBUGGING PDF GENERATION ===");
     console.log("Current nilaiKP state:", nilaiKP);
     console.log("Current mockMahasiswa:", mockMahasiswa);
-    
+
     // Use data from nilaiKP which was saved by dosen
     const formData: NilaiKPData = {
       // Data from saved nilai (includes student data saved by dosen)
@@ -361,18 +369,20 @@ export default function PascaMagangPage() {
       programStudi: nilaiKP.programStudi || mockMahasiswa.programStudi,
       tempatKP: nilaiKP.tempatKP || mockMahasiswa.tempatKP,
       judulLaporan: nilaiKP.judulLaporan || mockMahasiswa.judulLaporan,
-      waktuPelaksanaan: nilaiKP.waktuPelaksanaan || mockMahasiswa.waktuPelaksanaan,
+      waktuPelaksanaan:
+        nilaiKP.waktuPelaksanaan || mockMahasiswa.waktuPelaksanaan,
       dosenPembimbing: nilaiKP.dosenPembimbing || mockMahasiswa.dosenPembimbing,
-      pembimbingLapangan: nilaiKP.pembimbingLapangan || mockMahasiswa.pembimbingLapangan,
-      
+      pembimbingLapangan:
+        nilaiKP.pembimbingLapangan || mockMahasiswa.pembimbingLapangan,
+
       // Nilai from dosen
       kesesuaianLaporan: nilaiKP.kesesuaianLaporan || 0,
       penguasaanMateri: nilaiKP.penguasaanMateri || 0,
       analisisPerancangan: nilaiKP.analisisPerancangan || 0,
       sikapEtika: nilaiKP.sikapEtika || 0,
-      
+
       // Dosen data with e-signature
-      tanggalPenilaian: nilaiKP.tanggalPenilaian 
+      tanggalPenilaian: nilaiKP.tanggalPenilaian
         ? new Date(nilaiKP.tanggalPenilaian).toLocaleDateString("id-ID", {
             day: "numeric",
             month: "long",
@@ -400,12 +410,16 @@ export default function PascaMagangPage() {
     console.log("- dosenPenguji:", formData.dosenPenguji);
     console.log("- eSignatureUrl:", formData.eSignatureUrl);
     console.log("================================");
-    
+
     printFormNilai(formData);
   };
 
   const handleReset = () => {
-    if (confirm("Apakah Anda yakin ingin mereset semua data? Ini akan menghapus laporan dan status yang sudah diupload.")) {
+    if (
+      confirm(
+        "Apakah Anda yakin ingin mereset semua data? Ini akan menghapus laporan dan status yang sudah diupload.",
+      )
+    ) {
       // Clear localStorage
       localStorage.removeItem("laporan-kp");
       localStorage.removeItem("nilai-kp");
@@ -414,7 +428,7 @@ export default function PascaMagangPage() {
       localStorage.removeItem("revision-history-kp");
       localStorage.removeItem("grade-notification-shown");
       sessionStorage.removeItem("grade-notification-shown");
-      
+
       // Reset state to initial mock data
       const resetLaporan = { status: "belum_upload" as LaporanStatus };
       const resetNilai = {
@@ -435,7 +449,7 @@ export default function PascaMagangPage() {
         eSignatureUrl: "",
         tanggalPenilaian: "",
       };
-      
+
       setLaporan(resetLaporan);
       setNilaiKP(resetNilai);
       setSelectedFile(null);
@@ -443,16 +457,16 @@ export default function PascaMagangPage() {
       setRevisionHistory([]);
       setShowHistory(false);
       setHasGradeFromDosen(false);
-      
+
       // Save reset state to localStorage
       localStorage.setItem("laporan-kp", JSON.stringify(resetLaporan));
-      
+
       setNotification({
         title: "Data berhasil direset",
         description: "Semua data telah dihapus. Anda dapat memulai dari awal.",
       });
       setTimeout(() => setNotification(null), 3000);
-      
+
       // Reload page to ensure clean state
       window.location.reload();
     }
@@ -461,13 +475,42 @@ export default function PascaMagangPage() {
   const getStatusBadge = (status: LaporanStatus) => {
     switch (status) {
       case "belum_upload":
-        return <Badge variant="outline" className="bg-gray-50"><Clock className="h-3 w-3 mr-1" />Belum Upload</Badge>;
+        return (
+          <Badge variant="outline" className="bg-gray-50">
+            <Clock className="h-3 w-3 mr-1" />
+            Belum Upload
+          </Badge>
+        );
       case "menunggu_review":
-        return <Badge variant="outline" className="bg-blue-50 border-blue-200 text-blue-700"><Clock className="h-3 w-3 mr-1" />Menunggu Review</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-blue-50 border-blue-200 text-blue-700"
+          >
+            <Clock className="h-3 w-3 mr-1" />
+            Menunggu Review
+          </Badge>
+        );
       case "perlu_revisi":
-        return <Badge variant="outline" className="bg-orange-50 border-orange-200 text-orange-700"><XCircle className="h-3 w-3 mr-1" />Perlu Revisi</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-orange-50 border-orange-200 text-orange-700"
+          >
+            <XCircle className="h-3 w-3 mr-1" />
+            Perlu Revisi
+          </Badge>
+        );
       case "disetujui":
-        return <Badge variant="outline" className="bg-green-50 border-green-200 text-green-700"><CheckCircle2 className="h-3 w-3 mr-1" />Disetujui</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="bg-green-50 border-green-200 text-green-700"
+          >
+            <CheckCircle2 className="h-3 w-3 mr-1" />
+            Disetujui
+          </Badge>
+        );
     }
   };
 
@@ -507,8 +550,10 @@ export default function PascaMagangPage() {
         <CardContent className="p-6">
           {/* Upload Section */}
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">Upload Laporan Kerja Praktik</h2>
-            
+            <h2 className="text-xl font-semibold mb-4">
+              Upload Laporan Kerja Praktik
+            </h2>
+
             {/* Status Current */}
             {laporan.fileName && (
               <Card className="mb-4 bg-muted/50">
@@ -521,8 +566,9 @@ export default function PascaMagangPage() {
                       <div>
                         <p className="font-medium">{laporan.fileName}</p>
                         <p className="text-sm text-muted-foreground">
-                          {laporan.fileSize && formatFileSize(laporan.fileSize)} • 
-                          Diupload: {laporan.uploadedAt && formatDate(laporan.uploadedAt)}
+                          {laporan.fileSize && formatFileSize(laporan.fileSize)}{" "}
+                          • Diupload:{" "}
+                          {laporan.uploadedAt && formatDate(laporan.uploadedAt)}
                         </p>
                         {laporan.revisionMessage && (
                           <Alert className="mt-2 bg-orange-50 border-orange-200">
@@ -530,15 +576,15 @@ export default function PascaMagangPage() {
                             <AlertDescription className="text-orange-800 text-sm">
                               <strong>Pesan Revisi:</strong>
                               <p className="mt-1">{laporan.revisionMessage}</p>
-                              <p className="text-xs mt-2">Direview oleh: {laporan.reviewedBy}</p>
+                              <p className="text-xs mt-2">
+                                Direview oleh: {laporan.reviewedBy}
+                              </p>
                             </AlertDescription>
                           </Alert>
                         )}
                       </div>
                     </div>
-                    <div>
-                      {getStatusBadge(laporan.status)}
-                    </div>
+                    <div>{getStatusBadge(laporan.status)}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -548,7 +594,7 @@ export default function PascaMagangPage() {
             {revisionHistory.length > 0 && (
               <Card className="mb-4 border-gray-200">
                 <CardContent className="p-4">
-                  <button 
+                  <button
                     onClick={() => setShowHistory(!showHistory)}
                     className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded transition-colors"
                   >
@@ -561,11 +607,13 @@ export default function PascaMagangPage() {
                         {revisionHistory.length} versi
                       </Badge>
                     </div>
-                    <div className={`transition-transform ${showHistory ? 'rotate-180' : ''}`}>
+                    <div
+                      className={`transition-transform ${showHistory ? "rotate-180" : ""}`}
+                    >
                       <ArrowRight className="h-5 w-5 text-gray-600 rotate-90" />
                     </div>
                   </button>
-                  
+
                   {showHistory && (
                     <div className="mt-4 space-y-3">
                       {revisionHistory
@@ -574,32 +622,38 @@ export default function PascaMagangPage() {
                         .map((item, index) => {
                           const actualVersion = revisionHistory.length - index;
                           const isLatest = index === 0;
-                          
+
                           return (
-                            <div 
+                            <div
                               key={item.id}
                               className={`border rounded-lg p-4 ${
-                                isLatest 
-                                  ? 'border-blue-300 bg-blue-50' 
-                                  : 'border-gray-200 bg-white'
+                                isLatest
+                                  ? "border-blue-300 bg-blue-50"
+                                  : "border-gray-200 bg-white"
                               }`}
                             >
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex items-center gap-2">
-                                  <Badge 
+                                  <Badge
                                     variant={isLatest ? "default" : "secondary"}
                                     className={isLatest ? "bg-blue-600" : ""}
                                   >
                                     Versi {actualVersion}
                                   </Badge>
                                   {isLatest && (
-                                    <Badge variant="outline" className="border-blue-300 text-blue-700">
+                                    <Badge
+                                      variant="outline"
+                                      className="border-blue-300 text-blue-700"
+                                    >
                                       Terbaru
                                     </Badge>
                                   )}
                                 </div>
                                 {item.status === "perlu_revisi" && (
-                                  <Badge variant="destructive" className="bg-orange-100 text-orange-700 border-orange-300">
+                                  <Badge
+                                    variant="destructive"
+                                    className="bg-orange-100 text-orange-700 border-orange-300"
+                                  >
                                     Perlu Revisi
                                   </Badge>
                                 )}
@@ -609,16 +663,21 @@ export default function PascaMagangPage() {
                                   </Badge>
                                 )}
                                 {item.status === "menunggu_review" && (
-                                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-300">
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-yellow-100 text-yellow-700 border-yellow-300"
+                                  >
                                     Menunggu Review
                                   </Badge>
                                 )}
                               </div>
-                              
+
                               <div className="space-y-1 text-sm">
                                 <div className="flex items-center gap-2 text-gray-700">
                                   <FileText className="h-4 w-4" />
-                                  <span className="font-medium">{item.fileName}</span>
+                                  <span className="font-medium">
+                                    {item.fileName}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-gray-600">
                                   <Clock className="h-4 w-4" />
@@ -627,19 +686,24 @@ export default function PascaMagangPage() {
                                   </span>
                                 </div>
                                 <div className="text-gray-600">
-                                  <span>Ukuran: {formatFileSize(item.fileSize)}</span>
+                                  <span>
+                                    Ukuran: {formatFileSize(item.fileSize)}
+                                  </span>
                                 </div>
                               </div>
-                              
+
                               {item.revisionMessage && (
                                 <Alert className="mt-3 bg-orange-50 border-orange-200">
                                   <AlertCircle className="h-4 w-4 text-orange-600" />
                                   <AlertDescription className="text-orange-800 text-xs">
                                     <strong>Pesan Revisi:</strong>
-                                    <p className="mt-1">{item.revisionMessage}</p>
+                                    <p className="mt-1">
+                                      {item.revisionMessage}
+                                    </p>
                                     {item.reviewedBy && (
                                       <p className="text-xs mt-2">
-                                        Direview oleh: {item.reviewedBy} pada {formatDate(item.reviewedAt!)}
+                                        Direview oleh: {item.reviewedBy} pada{" "}
+                                        {formatDate(item.reviewedAt!)}
                                       </p>
                                     )}
                                   </AlertDescription>
@@ -667,56 +731,86 @@ export default function PascaMagangPage() {
                         Nilai KP Sudah Diberikan
                       </h3>
                       <p className="text-blue-800 text-sm mb-4">
-                        Dosen {nilaiKP.dosenPenguji} telah memberikan penilaian untuk Kerja Praktik Anda.
+                        Dosen {nilaiKP.dosenPenguji} telah memberikan penilaian
+                        untuk Kerja Praktik Anda.
                       </p>
-                      
+
                       <div className="bg-white rounded-lg p-4 border border-blue-200">
-                        <h4 className="font-semibold text-gray-900 mb-3">Rincian Nilai:</h4>
+                        <h4 className="font-semibold text-gray-900 mb-3">
+                          Rincian Nilai:
+                        </h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Kesesuaian Laporan dengan Format (30%):</span>
-                            <span className="font-semibold">{nilaiKP.kesesuaianLaporan}</span>
+                            <span className="text-gray-600">
+                              Kesesuaian Laporan dengan Format (30%):
+                            </span>
+                            <span className="font-semibold">
+                              {nilaiKP.kesesuaianLaporan}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Penguasaan Materi KP (30%):</span>
-                            <span className="font-semibold">{nilaiKP.penguasaanMateri}</span>
+                            <span className="text-gray-600">
+                              Penguasaan Materi KP (30%):
+                            </span>
+                            <span className="font-semibold">
+                              {nilaiKP.penguasaanMateri}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Analisis dan Perancangan (30%):</span>
-                            <span className="font-semibold">{nilaiKP.analisisPerancangan}</span>
+                            <span className="text-gray-600">
+                              Analisis dan Perancangan (30%):
+                            </span>
+                            <span className="font-semibold">
+                              {nilaiKP.analisisPerancangan}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-600">Sikap dan Etika (10%):</span>
-                            <span className="font-semibold">{nilaiKP.sikapEtika}</span>
+                            <span className="text-gray-600">
+                              Sikap dan Etika (10%):
+                            </span>
+                            <span className="font-semibold">
+                              {nilaiKP.sikapEtika}
+                            </span>
                           </div>
                           <div className="border-t border-gray-200 pt-2 mt-2">
                             <div className="flex justify-between text-base">
-                              <span className="font-semibold text-gray-900">Rata-rata:</span>
+                              <span className="font-semibold text-gray-900">
+                                Rata-rata:
+                              </span>
                               <span className="font-bold text-blue-600">
                                 {(
-                                  (nilaiKP.kesesuaianLaporan * 0.3) +
-                                  (nilaiKP.penguasaanMateri * 0.3) +
-                                  (nilaiKP.analisisPerancangan * 0.3) +
-                                  (nilaiKP.sikapEtika * 0.1)
+                                  nilaiKP.kesesuaianLaporan * 0.3 +
+                                  nilaiKP.penguasaanMateri * 0.3 +
+                                  nilaiKP.analisisPerancangan * 0.3 +
+                                  nilaiKP.sikapEtika * 0.1
                                 ).toFixed(2)}
                               </span>
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-700">
-                          <p>Dinilai oleh: {nilaiKP.dosenPenguji} (NIP: {nilaiKP.nipDosen})</p>
-                          <p>Tanggal: {nilaiKP.tanggalPenilaian && new Date(nilaiKP.tanggalPenilaian).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'long', 
-                            year: 'numeric'
-                          })}</p>
+                          <p>
+                            Dinilai oleh: {nilaiKP.dosenPenguji} (NIP:{" "}
+                            {nilaiKP.nipDosen})
+                          </p>
+                          <p>
+                            Tanggal:{" "}
+                            {nilaiKP.tanggalPenilaian &&
+                              new Date(
+                                nilaiKP.tanggalPenilaian,
+                              ).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })}
+                          </p>
                         </div>
                       </div>
-                      
+
                       {/* Tombol Cetak PDF - langsung tersedia */}
                       <div className="mt-4">
-                        <Button 
+                        <Button
                           onClick={handlePrintFormNilai}
                           size="lg"
                           className="w-full bg-blue-600 hover:bg-blue-700"
@@ -724,15 +818,20 @@ export default function PascaMagangPage() {
                           <Printer className="h-5 w-5 mr-2" />
                           Cetak Form Nilai KP (PDF)
                         </Button>
-                        
+
                         <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                           <p className="text-xs text-blue-800 font-medium mb-1">
                             📝 Cara menyimpan sebagai PDF:
                           </p>
                           <ol className="text-xs text-blue-700 space-y-1 ml-4 list-decimal">
                             <li>Klik tombol di atas</li>
-                            <li>Pilih "Save as PDF" atau "Microsoft Print to PDF"</li>
-                            <li>Di "More settings", hilangkan centang "Headers and footers"</li>
+                            <li>
+                              Pilih "Save as PDF" atau "Microsoft Print to PDF"
+                            </li>
+                            <li>
+                              Di "More settings", hilangkan centang "Headers and
+                              footers"
+                            </li>
                             <li>Klik Save</li>
                           </ol>
                         </div>
@@ -744,14 +843,19 @@ export default function PascaMagangPage() {
             )}
 
             {/* Upload Form */}
-            {(laporan.status === "belum_upload" || laporan.status === "perlu_revisi") && (
+            {(laporan.status === "belum_upload" ||
+              laporan.status === "perlu_revisi") && (
               <Card>
                 <CardContent className="p-6">
                   <div className="space-y-4">
                     {/* File Upload */}
                     <div>
-                      <Label htmlFor="file-upload" className="text-base font-semibold">
-                        Laporan Kerja Praktik (PDF) <span className="text-red-500">*</span>
+                      <Label
+                        htmlFor="file-upload"
+                        className="text-base font-semibold"
+                      >
+                        Laporan Kerja Praktik (PDF){" "}
+                        <span className="text-red-500">*</span>
                       </Label>
                       <div className="mt-2 border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
                         <input
@@ -764,7 +868,9 @@ export default function PascaMagangPage() {
                         <label htmlFor="file-upload" className="cursor-pointer">
                           <UploadIcon className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                           <p className="text-sm font-medium">
-                            {selectedFile ? selectedFile.name : "Klik untuk upload atau drag and drop file"}
+                            {selectedFile
+                              ? selectedFile.name
+                              : "Klik untuk upload atau drag and drop file"}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
                             PDF (max. 10MB)
@@ -775,20 +881,29 @@ export default function PascaMagangPage() {
 
                     {/* Revision Status */}
                     <div>
-                      <Label htmlFor="revision-status" className="text-base font-semibold">
+                      <Label
+                        htmlFor="revision-status"
+                        className="text-base font-semibold"
+                      >
                         Status Revisi <span className="text-red-500">*</span>
                       </Label>
-                      <Select value={revisionStatus} onValueChange={(value: any) => setRevisionStatus(value)}>
+                      <Select
+                        value={revisionStatus}
+                        onValueChange={(value: any) => setRevisionStatus(value)}
+                      >
                         <SelectTrigger className="mt-2">
                           <SelectValue placeholder="-- Pilih Status --" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="tidak-revisi">Tidak Ada Revisi</SelectItem>
+                          <SelectItem value="tidak-revisi">
+                            Tidak Ada Revisi
+                          </SelectItem>
                           <SelectItem value="revisi">Ada Revisi</SelectItem>
                         </SelectContent>
                       </Select>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Pilih "Tidak Ada Revisi" jika dokumen sudah final, atau "Ada Revisi" jika masih akan direvisi
+                        Pilih "Tidak Ada Revisi" jika dokumen sudah final, atau
+                        "Ada Revisi" jika masih akan direvisi
                       </p>
                     </div>
 

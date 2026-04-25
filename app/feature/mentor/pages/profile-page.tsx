@@ -80,7 +80,8 @@ function ProfilePage() {
     newEmail: "",
     reason: "",
   });
-  const [isSubmittingEmailRequest, setIsSubmittingEmailRequest] = useState(false);
+  const [isSubmittingEmailRequest, setIsSubmittingEmailRequest] =
+    useState(false);
   const sigCanvasRef = useRef<SignatureCanvas>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
@@ -104,10 +105,12 @@ function ProfilePage() {
   useEffect(() => {
     if (showSignatureModal && modalRef.current) {
       const focusableElements = modalRef.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
 
       function handleTabKey(e: KeyboardEvent) {
         if (e.key !== "Tab") return;
@@ -150,7 +153,11 @@ function ProfilePage() {
         setEditData(mapped);
       } catch (error) {
         if (!isMounted) return;
-        toast.error(error instanceof Error ? error.message : "Gagal memuat profil mentor.");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat profil mentor.",
+        );
       } finally {
         if (isMounted) {
           setIsLoadingProfile(false);
@@ -166,7 +173,7 @@ function ProfilePage() {
   }, []);
 
   function handleInputChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) {
     const { name, value } = e.target;
     setEditData((prev) => ({ ...prev, [name]: value }));
@@ -176,19 +183,24 @@ function ProfilePage() {
     const file = e.target.files?.[0];
     if (file) {
       // Validate file type with allowlist
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+      ];
       if (!allowedTypes.includes(file.type)) {
         toast.error("File harus berupa gambar (JPEG, PNG, GIF, atau WebP)!");
         return;
       }
-      
+
       // Validate file size (max 5MB)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
         toast.error("Ukuran file maksimal 5MB!");
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onloadend = () => {
         setEditData((prev) => ({ ...prev, photo: reader.result as string }));
@@ -222,7 +234,11 @@ function ProfilePage() {
       setIsEditing(false);
       toast.success("Profil berhasil diperbarui!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal memperbarui profil mentor.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Gagal memperbarui profil mentor.",
+      );
     } finally {
       setIsSavingProfile(false);
     }
@@ -280,7 +296,9 @@ function ProfilePage() {
     fileInputRef.current?.click();
   };
 
-  const handleUploadSignature = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadSignature = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -309,7 +327,12 @@ function ProfilePage() {
   async function saveSignature() {
     // Auto-generate preview from canvas if empty but canvas has content
     let finalPreview = signaturePreview;
-    if (!finalPreview && sigCanvasRef.current && sigCanvasRef.current.isEmpty && !sigCanvasRef.current.isEmpty()) {
+    if (
+      !finalPreview &&
+      sigCanvasRef.current &&
+      sigCanvasRef.current.isEmpty &&
+      !sigCanvasRef.current.isEmpty()
+    ) {
       finalPreview = sigCanvasRef.current.toDataURL("image/png");
       setSignaturePreview(finalPreview);
     }
@@ -333,7 +356,11 @@ function ProfilePage() {
       handleClearSignature();
       toast.success("Tanda tangan berhasil disimpan!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal menyimpan tanda tangan.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Gagal menyimpan tanda tangan.",
+      );
     } finally {
       setIsUpdatingSignature(false);
     }
@@ -352,7 +379,11 @@ function ProfilePage() {
       handleClearSignature();
       toast.success("Tanda tangan berhasil dihapus!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal menghapus tanda tangan.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Gagal menghapus tanda tangan.",
+      );
     }
   }
 
@@ -361,7 +392,9 @@ function ProfilePage() {
       <div className="p-6">
         <PageHeader title="Profil" description="Kelola informasi profil Anda" />
         <Card>
-          <CardContent className="pt-6 text-muted-foreground">Memuat profil mentor...</CardContent>
+          <CardContent className="pt-6 text-muted-foreground">
+            Memuat profil mentor...
+          </CardContent>
         </Card>
       </div>
     );
@@ -492,14 +525,16 @@ function ProfilePage() {
               )}
               {isEditing && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Email tidak dapat diubah di sini. Ajukan perubahan melalui Dosen PA/Admin.
+                  Email tidak dapat diubah di sini. Ajukan perubahan melalui
+                  Dosen PA/Admin.
                 </p>
               )}
 
               <div className="mt-3 rounded-md border border-dashed p-3">
                 <p className="text-sm font-medium">Butuh ganti email?</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Kirim pengajuan ke Dosen PA/Admin. Email akun akan diperbarui setelah disetujui.
+                  Kirim pengajuan ke Dosen PA/Admin. Email akun akan diperbarui
+                  setelah disetujui.
                 </p>
 
                 <div className="grid gap-3 mt-3">
@@ -581,7 +616,8 @@ function ProfilePage() {
               )}
               {isEditing && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Perusahaan dikunci sesuai data persetujuan pembimbing lapangan.
+                  Perusahaan dikunci sesuai data persetujuan pembimbing
+                  lapangan.
                 </p>
               )}
             </div>
@@ -721,7 +757,7 @@ function ProfilePage() {
 
       {/* E-Signature Modal */}
       {showSignatureModal && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
           role="dialog"
           aria-modal="true"
@@ -729,7 +765,9 @@ function ProfilePage() {
         >
           <Card className="w-full max-w-2xl mx-4" ref={modalRef}>
             <CardHeader>
-              <CardTitle id="signature-modal-title">Buat Tanda Tangan Digital</CardTitle>
+              <CardTitle id="signature-modal-title">
+                Buat Tanda Tangan Digital
+              </CardTitle>
               <CardDescription>
                 Gambar atau upload tanda tangan Anda pada area di bawah ini
               </CardDescription>

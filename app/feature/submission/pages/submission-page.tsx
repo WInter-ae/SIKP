@@ -69,7 +69,7 @@ type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
 function SubmissionPage() {
   const navigate = useNavigate();
   const { user } = useUser();
-  const { isLoading: isUserLoading, isAuthenticated } = useAuth();;
+  const { isLoading: isUserLoading, isAuthenticated } = useAuth();
 
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -452,7 +452,10 @@ function SubmissionPage() {
           doc.documentType === docInfo.type && doc.memberUserId === memberId,
       );
 
-      if (existingDoc && (existingDoc.status === "REJECTED" || existingDoc.status === "PENDING")) {
+      if (
+        existingDoc &&
+        (existingDoc.status === "REJECTED" || existingDoc.status === "PENDING")
+      ) {
         console.log(
           `🗑️ Deleting old document (${existingDoc.id}) before reupload...`,
         );

@@ -25,7 +25,7 @@ export class ApiError extends Error {
     message: string,
     public statusCode?: number,
     public endpoint?: string,
-    public originalError?: unknown
+    public originalError?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
@@ -35,7 +35,10 @@ export class ApiError extends Error {
 /**
  * Get user-friendly error message based on status code
  */
-export function getErrorMessage(statusCode?: number, defaultMessage?: string): string {
+export function getErrorMessage(
+  statusCode?: number,
+  defaultMessage?: string,
+): string {
   if (!statusCode) {
     return defaultMessage || API_ERROR_MESSAGES.UNKNOWN_ERROR;
   }
@@ -78,7 +81,7 @@ export async function parseJsonResponse(response: Response): Promise<unknown> {
     throw new ApiError(
       API_ERROR_MESSAGES.EMPTY_RESPONSE,
       response.status,
-      response.url
+      response.url,
     );
   }
 
@@ -89,7 +92,7 @@ export async function parseJsonResponse(response: Response): Promise<unknown> {
       API_ERROR_MESSAGES.INVALID_JSON,
       response.status,
       response.url,
-      error
+      error,
     );
   }
 }

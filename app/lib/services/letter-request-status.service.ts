@@ -25,15 +25,20 @@ export interface LetterRequestStatusItem {
 const RawItemSchema = z.record(z.string(), z.unknown());
 type RawItem = z.infer<typeof RawItemSchema>;
 
-function normalizeDocumentType(value: unknown): LetterRequestDocumentType | null {
+function normalizeDocumentType(
+  value: unknown,
+): LetterRequestDocumentType | null {
   if (typeof value !== "string") return null;
   const v = value.trim().toUpperCase();
   if (v === "SURAT_KESEDIAAN") return "SURAT_KESEDIAAN";
-  if (v === "FORM_PERMOHONAN" || v === "SURAT_PERMOHONAN" || v === "PERMOHONAN") return "FORM_PERMOHONAN";
+  if (v === "FORM_PERMOHONAN" || v === "SURAT_PERMOHONAN" || v === "PERMOHONAN")
+    return "FORM_PERMOHONAN";
   return null;
 }
 
-function normalizeLatestStatus(value: unknown): LetterRequestStatusItem["latestStatus"] {
+function normalizeLatestStatus(
+  value: unknown,
+): LetterRequestStatusItem["latestStatus"] {
   if (typeof value !== "string") return null;
   const v = value.trim().toUpperCase();
   if (v === "MENUNGGU" || v === "PENDING") return "MENUNGGU";
@@ -59,26 +64,82 @@ function getBool(item: RawItem, keys: string[]): boolean | null {
 }
 
 function normalizeStatusItem(item: RawItem): LetterRequestStatusItem | null {
-  const memberUserId = getString(item, ["memberUserId", "member_user_id", "memberId", "member_id", "userId", "user_id"]);
-  const documentType = normalizeDocumentType(getString(item, ["documentType", "document_type", "type", "letterType"]));
+  const memberUserId = getString(item, [
+    "memberUserId",
+    "member_user_id",
+    "memberId",
+    "member_id",
+    "userId",
+    "user_id",
+  ]);
+  const documentType = normalizeDocumentType(
+    getString(item, ["documentType", "document_type", "type", "letterType"]),
+  );
   if (!memberUserId || !documentType) return null;
 
-  const latestStatus = normalizeLatestStatus(getString(item, ["latestStatus", "latest_status", "status"]));
-  const latestRequestId = getString(item, ["latestRequestId", "latest_request_id", "requestId", "request_id", "id"]);
-  const submittedAt = getString(item, ["submittedAt", "submitted_at", "createdAt", "created_at"]);
-  const explicitSubmitted = getBool(item, ["isAlreadySubmitted", "is_already_submitted", "alreadySubmitted", "already_submitted"]);
-  const signedFileUrl = getString(item, ["signedFileUrl", "signed_file_url", "signedUrl", "signed_url"]);
-  const rejectionReason = getString(item, ["rejectionReason", "rejection_reason", "reason"]);
+  const latestStatus = normalizeLatestStatus(
+    getString(item, ["latestStatus", "latest_status", "status"]),
+  );
+  const latestRequestId = getString(item, [
+    "latestRequestId",
+    "latest_request_id",
+    "requestId",
+    "request_id",
+    "id",
+  ]);
+  const submittedAt = getString(item, [
+    "submittedAt",
+    "submitted_at",
+    "createdAt",
+    "created_at",
+  ]);
+  const explicitSubmitted = getBool(item, [
+    "isAlreadySubmitted",
+    "is_already_submitted",
+    "alreadySubmitted",
+    "already_submitted",
+  ]);
+  const signedFileUrl = getString(item, [
+    "signedFileUrl",
+    "signed_file_url",
+    "signedUrl",
+    "signed_url",
+  ]);
+  const rejectionReason = getString(item, [
+    "rejectionReason",
+    "rejection_reason",
+    "reason",
+  ]);
 
   const dosenObjectResult = RawItemSchema.safeParse(item.dosen);
   const dosenObject = dosenObjectResult.success ? dosenObjectResult.data : null;
-  const dosenNameFromObject = dosenObject ? getString(dosenObject, ["name", "nama", "fullName", "namaLengkap", "nama_lengkap"]) : null;
-  const dosenName = getString(item, ["dosenNama", "dosen_nama", "namaDosen", "nama_dosen", "dosenName", "dosen_name", "lecturerName", "lecturer_name"]) ?? dosenNameFromObject;
+  const dosenNameFromObject = dosenObject
+    ? getString(dosenObject, [
+        "name",
+        "nama",
+        "fullName",
+        "namaLengkap",
+        "nama_lengkap",
+      ])
+    : null;
+  const dosenName =
+    getString(item, [
+      "dosenNama",
+      "dosen_nama",
+      "namaDosen",
+      "nama_dosen",
+      "dosenName",
+      "dosen_name",
+      "lecturerName",
+      "lecturer_name",
+    ]) ?? dosenNameFromObject;
 
   return {
     memberUserId,
     documentType,
-    isAlreadySubmitted: explicitSubmitted ?? Boolean(latestStatus || latestRequestId || submittedAt),
+    isAlreadySubmitted:
+      explicitSubmitted ??
+      Boolean(latestStatus || latestRequestId || submittedAt),
     latestStatus,
     latestRequestId,
     submittedAt,

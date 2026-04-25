@@ -62,20 +62,22 @@ function ProcessStep({
       className={cn(
         "border-l-4 rounded-lg p-5 mb-4",
         statusStyles.bg,
-        statusStyles.border
+        statusStyles.border,
       )}
     >
       <div className="flex items-start">
         <div
           className={cn(
             "w-12 h-12 rounded-full flex items-center justify-center text-primary-foreground mr-4 flex-shrink-0",
-            statusStyles.iconBg
+            statusStyles.iconBg,
           )}
         >
           {statusStyles.iconComponent}
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-1">
+            {title}
+          </h3>
           <p className="text-muted-foreground mb-3">{description}</p>
 
           {comment && (
@@ -93,7 +95,9 @@ function ProcessStep({
                 <Eye className="size-5" />
               </div>
               <div>
-                <div className="font-medium text-foreground">Surat Pengantar Kerja Praktik</div>
+                <div className="font-medium text-foreground">
+                  Surat Pengantar Kerja Praktik
+                </div>
                 <div className="text-sm text-muted-foreground">
                   Dibuat pada: 15 Juni 2023
                 </div>
@@ -102,11 +106,7 @@ function ProcessStep({
           )}
 
           {onAction && actionText && (
-            <Button
-              onClick={onAction}
-              size="sm"
-              className="mt-3"
-            >
+            <Button onClick={onAction} size="sm" className="mt-3">
               {actionText}
             </Button>
           )}

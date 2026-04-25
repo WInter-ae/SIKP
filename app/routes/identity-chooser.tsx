@@ -11,8 +11,19 @@ import { getDashboardPath } from "~/lib/sso-types";
 export default function IdentityChooserPage() {
   const navigate = useNavigate();
   const { user } = useUser();
-  const { isAuthenticated, isLoading, hydrateSession, callbackError, setCallbackError } = useAuth();
-  const { availableIdentities, activeIdentity, effectiveRoles, selectActiveIdentity } = useIdentity();;
+  const {
+    isAuthenticated,
+    isLoading,
+    hydrateSession,
+    callbackError,
+    setCallbackError,
+  } = useAuth();
+  const {
+    availableIdentities,
+    activeIdentity,
+    effectiveRoles,
+    selectActiveIdentity,
+  } = useIdentity();
 
   const [selectedIdentityType, setSelectedIdentityType] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -1,13 +1,19 @@
 /**
  * Contoh Implementasi Dynamic Form untuk Mahasiswa
- * 
+ *
  * Form ini akan otomatis update ketika admin mengubah template
  */
 
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { DynamicFormFromTemplate } from "../components/dynamic-form-from-template";
 import type { Template } from "../types/template.types";
@@ -106,14 +112,14 @@ export function MahasiswaDynamicFormExample() {
 
   const handleSubmit = (formData: Record<string, string>) => {
     console.log("Form Data:", formData);
-    
+
     // Render template dengan data
     const renderedHTML = renderTemplateWithData(template.content, formData);
-    
+
     // Download or send to backend
     toast.success("Form berhasil disubmit!");
     console.log("Rendered HTML:", renderedHTML);
-    
+
     // Download HTML
     const blob = new Blob([renderedHTML], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -123,7 +129,10 @@ export function MahasiswaDynamicFormExample() {
     a.click();
   };
 
-  const renderTemplateWithData = (template: string, data: Record<string, string>): string => {
+  const renderTemplateWithData = (
+    template: string,
+    data: Record<string, string>,
+  ): string => {
     let result = template;
     Object.entries(data).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, "g");

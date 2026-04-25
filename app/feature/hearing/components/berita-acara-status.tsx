@@ -1,5 +1,11 @@
 import { FileCheck, Clock, CheckCircle, XCircle, FileText } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Separator } from "~/components/ui/separator";
@@ -81,7 +87,10 @@ export function BeritaAcaraStatus({
               Informasi pengajuan berita acara sidang Anda
             </CardDescription>
           </div>
-          <Badge variant={status.badgeVariant} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold">
+          <Badge
+            variant={status.badgeVariant}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold"
+          >
             <StatusIcon className="h-4 w-4" />
             {status.label}
           </Badge>
@@ -99,13 +108,17 @@ export function BeritaAcaraStatus({
               <span className="text-sm font-semibold text-muted-foreground">
                 Judul Laporan
               </span>
-              <span className="font-medium text-base">{beritaAcara.judulLaporan}</span>
+              <span className="font-medium text-base">
+                {beritaAcara.judulLaporan}
+              </span>
             </div>
             <div className="flex flex-col space-y-1.5">
               <span className="text-sm font-semibold text-muted-foreground">
                 Tempat Pelaksanaan
               </span>
-              <span className="font-medium text-base">{beritaAcara.tempatPelaksanaan}</span>
+              <span className="font-medium text-base">
+                {beritaAcara.tempatPelaksanaan}
+              </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col space-y-1.5">
@@ -120,13 +133,17 @@ export function BeritaAcaraStatus({
                 <span className="text-sm font-semibold text-muted-foreground">
                   Waktu Mulai
                 </span>
-                <span className="font-medium text-base">{formatTime(beritaAcara.waktuMulai)}</span>
+                <span className="font-medium text-base">
+                  {formatTime(beritaAcara.waktuMulai)}
+                </span>
               </div>
               <div className="flex flex-col space-y-1.5">
                 <span className="text-sm font-semibold text-muted-foreground">
                   Waktu Selesai
                 </span>
-                <span className="font-medium text-base">{formatTime(beritaAcara.waktuSelesai)}</span>
+                <span className="font-medium text-base">
+                  {formatTime(beritaAcara.waktuSelesai)}
+                </span>
               </div>
             </div>
           </div>
@@ -150,9 +167,14 @@ export function BeritaAcaraStatus({
                   >
                     <div>
                       <p className="font-semibold text-base">{dosen.nama}</p>
-                      <p className="text-sm text-muted-foreground">NIP: {dosen.nip}</p>
+                      <p className="text-sm text-muted-foreground">
+                        NIP: {dosen.nip}
+                      </p>
                     </div>
-                    <Badge variant="outline" className="capitalize font-semibold">
+                    <Badge
+                      variant="outline"
+                      className="capitalize font-semibold"
+                    >
                       {dosen.jabatan}
                     </Badge>
                   </div>
@@ -185,7 +207,9 @@ export function BeritaAcaraStatus({
                     <p className="text-sm font-semibold text-primary mb-2">
                       Catatan Dosen:
                     </p>
-                    <p className="text-sm text-muted-foreground">{beritaAcara.catatanDosen}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {beritaAcara.catatanDosen}
+                    </p>
                   </div>
                 )}
               </div>
@@ -203,7 +227,9 @@ export function BeritaAcaraStatus({
                 Alasan Penolakan
               </h3>
               <div className="bg-gradient-to-br from-destructive/5 to-destructive/10 border-2 border-destructive/30 rounded-lg p-5 shadow-md">
-                <p className="text-sm text-muted-foreground">{beritaAcara.catatanDosen}</p>
+                <p className="text-sm text-muted-foreground">
+                  {beritaAcara.catatanDosen}
+                </p>
               </div>
             </div>
             <Separator />
@@ -212,11 +238,17 @@ export function BeritaAcaraStatus({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          {(beritaAcara.status === "draft" || beritaAcara.status === "rejected") && onEdit && (
-            <Button variant="outline" onClick={onEdit} className="w-full sm:w-auto h-11 font-semibold">
-              Edit Berita Acara
-            </Button>
-          )}
+          {(beritaAcara.status === "draft" ||
+            beritaAcara.status === "rejected") &&
+            onEdit && (
+              <Button
+                variant="outline"
+                onClick={onEdit}
+                className="w-full sm:w-auto h-11 font-semibold"
+              >
+                Edit Berita Acara
+              </Button>
+            )}
           {beritaAcara.status === "approved" && onGenerateSurat && (
             <Button
               onClick={onGenerateSurat}

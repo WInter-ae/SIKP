@@ -33,9 +33,7 @@ export default function ReportDetailPage() {
             <h2 className="text-xl font-semibold mb-2">
               Laporan Tidak Ditemukan
             </h2>
-            <p className="mb-4">
-              Laporan KP yang Anda cari tidak tersedia.
-            </p>
+            <p className="mb-4">Laporan KP yang Anda cari tidak tersedia.</p>
             <Button onClick={() => navigate("/mahasiswa/repositori")}>
               Kembali ke Repositori
             </Button>
@@ -195,9 +193,7 @@ export default function ReportDetailPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="text-sm font-medium mb-1">
-                    Tahun & Periode
-                  </h4>
+                  <h4 className="text-sm font-medium mb-1">Tahun & Periode</h4>
                   <p className="">
                     {report.year} - Semester {report.semester}
                   </p>
@@ -206,18 +202,14 @@ export default function ReportDetailPage() {
                 <Separator />
 
                 <div>
-                  <h4 className="text-sm font-medium mb-1">
-                    Kategori
-                  </h4>
+                  <h4 className="text-sm font-medium mb-1">Kategori</h4>
                   <p className="">{report.category}</p>
                 </div>
 
                 <Separator />
 
                 <div>
-                  <h4 className="text-sm font-medium mb-1">
-                    Tanggal Upload
-                  </h4>
+                  <h4 className="text-sm font-medium mb-1">Tanggal Upload</h4>
                   <p className="">
                     {new Date(report.uploadDate).toLocaleDateString("id-ID", {
                       weekday: "long",
@@ -275,12 +267,8 @@ export default function ReportDetailPage() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <p className="font-semibold">
-                      {report.student.name}
-                    </p>
-                    <p className="text-sm">
-                      {report.student.studentId}
-                    </p>
+                    <p className="font-semibold">{report.student.name}</p>
+                    <p className="text-sm">{report.student.studentId}</p>
                   </div>
                 </div>
               </CardContent>
@@ -308,12 +296,8 @@ export default function ReportDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className=" font-medium">
-                  {report.supervisor.name}
-                </p>
-                <p className="text-sm mt-1">
-                  NIDN: {report.supervisor.nidn}
-                </p>
+                <p className=" font-medium">{report.supervisor.name}</p>
+                <p className="text-sm mt-1">NIDN: {report.supervisor.nidn}</p>
               </CardContent>
             </Card>
           </div>

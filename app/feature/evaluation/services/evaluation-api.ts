@@ -9,7 +9,12 @@ import type {
 } from "../types";
 import type { AssessmentCriterion } from "~/lib/assessment-criteria-api";
 
-type CriterionKey = "kehadiran" | "kerjasama" | "sikapEtika" | "prestasiKerja" | "kreatifitas";
+type CriterionKey =
+  | "kehadiran"
+  | "kerjasama"
+  | "sikapEtika"
+  | "prestasiKerja"
+  | "kreatifitas";
 
 const ADMIN_LIST_ENDPOINTS = [
   "/api/admin/penilaian",
@@ -41,21 +46,64 @@ function normalizeKey(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function getCriterionKey(criterion: Pick<AssessmentCriterion, "id" | "category">): CriterionKey | null {
+function getCriterionKey(
+  criterion: Pick<AssessmentCriterion, "id" | "category">,
+): CriterionKey | null {
   const idKey = normalizeKey(String(criterion.id || ""));
   const categoryKey = normalizeKey(criterion.category || "");
 
-  if (idKey === "1" || idKey.includes("kehadiran") || idKey.includes("attendance")) return "kehadiran";
-  if (idKey === "2" || idKey.includes("kerjasama") || idKey.includes("cooperation")) return "kerjasama";
-  if (idKey === "3" || idKey.includes("sikap") || idKey.includes("etika") || idKey.includes("attitude")) return "sikapEtika";
-  if (idKey === "4" || idKey.includes("prestasi") || idKey.includes("workachievement") || idKey.includes("kinerja")) return "prestasiKerja";
-  if (idKey === "5" || idKey.includes("kreatif") || idKey.includes("creativ")) return "kreatifitas";
+  if (
+    idKey === "1" ||
+    idKey.includes("kehadiran") ||
+    idKey.includes("attendance")
+  )
+    return "kehadiran";
+  if (
+    idKey === "2" ||
+    idKey.includes("kerjasama") ||
+    idKey.includes("cooperation")
+  )
+    return "kerjasama";
+  if (
+    idKey === "3" ||
+    idKey.includes("sikap") ||
+    idKey.includes("etika") ||
+    idKey.includes("attitude")
+  )
+    return "sikapEtika";
+  if (
+    idKey === "4" ||
+    idKey.includes("prestasi") ||
+    idKey.includes("workachievement") ||
+    idKey.includes("kinerja")
+  )
+    return "prestasiKerja";
+  if (idKey === "5" || idKey.includes("kreatif") || idKey.includes("creativ"))
+    return "kreatifitas";
 
-  if (categoryKey.includes("kehadiran") || categoryKey.includes("attendance")) return "kehadiran";
-  if (categoryKey.includes("kerjasama") || categoryKey.includes("cooperation")) return "kerjasama";
-  if (categoryKey.includes("sikap") || categoryKey.includes("etika") || categoryKey.includes("attitude")) return "sikapEtika";
-  if (categoryKey.includes("prestasi") || categoryKey.includes("workachievement") || categoryKey.includes("kinerja")) return "prestasiKerja";
-  if (categoryKey.includes("kreatif") || categoryKey.includes("kreativ") || categoryKey.includes("creativ") || categoryKey.includes("inovasi")) return "kreatifitas";
+  if (categoryKey.includes("kehadiran") || categoryKey.includes("attendance"))
+    return "kehadiran";
+  if (categoryKey.includes("kerjasama") || categoryKey.includes("cooperation"))
+    return "kerjasama";
+  if (
+    categoryKey.includes("sikap") ||
+    categoryKey.includes("etika") ||
+    categoryKey.includes("attitude")
+  )
+    return "sikapEtika";
+  if (
+    categoryKey.includes("prestasi") ||
+    categoryKey.includes("workachievement") ||
+    categoryKey.includes("kinerja")
+  )
+    return "prestasiKerja";
+  if (
+    categoryKey.includes("kreatif") ||
+    categoryKey.includes("kreativ") ||
+    categoryKey.includes("creativ") ||
+    categoryKey.includes("inovasi")
+  )
+    return "kreatifitas";
 
   return null;
 }
@@ -72,16 +120,29 @@ function statusFromScore(score: number): EvaluationSummary["status"] {
   return score >= 60 ? "passed" : "failed";
 }
 
-function scoreFromAssessment(assessment: Record<string, unknown>, key: CriterionKey): number {
-  if (key === "kehadiran") return parseNumber(assessment.kehadiran ?? assessment.attendance ?? assessment.nilaiKehadiran);
-  if (key === "kerjasama") return parseNumber(assessment.kerjasama ?? assessment.cooperation ?? assessment.nilaiKerjasama);
+function scoreFromAssessment(
+  assessment: Record<string, unknown>,
+  key: CriterionKey,
+): number {
+  if (key === "kehadiran")
+    return parseNumber(
+      assessment.kehadiran ??
+        assessment.attendance ??
+        assessment.nilaiKehadiran,
+    );
+  if (key === "kerjasama")
+    return parseNumber(
+      assessment.kerjasama ??
+        assessment.cooperation ??
+        assessment.nilaiKerjasama,
+    );
   if (key === "sikapEtika") {
     return parseNumber(
       assessment.sikapEtika ??
         assessment.sikap_etika ??
         assessment.sikapDanEtika ??
         assessment.attitudeEthics ??
-        assessment.nilaiSikapEtika
+        assessment.nilaiSikapEtika,
     );
   }
   if (key === "prestasiKerja") {
@@ -89,20 +150,27 @@ function scoreFromAssessment(assessment: Record<string, unknown>, key: Criterion
       assessment.prestasiKerja ??
         assessment.prestasi_kerja ??
         assessment.workAchievement ??
-        assessment.nilaiPrestasiKerja
+        assessment.nilaiPrestasiKerja,
     );
   }
-  return parseNumber(assessment.kreatifitas ?? assessment.kreativitas ?? assessment.creativity ?? assessment.nilaiKreatifitas);
+  return parseNumber(
+    assessment.kreatifitas ??
+      assessment.kreativitas ??
+      assessment.creativity ??
+      assessment.nilaiKreatifitas,
+  );
 }
 
 function buildFieldGrades(
   criteria: AssessmentCriterion[],
-  assessment: Record<string, unknown>
+  assessment: Record<string, unknown>,
 ): { components: GradeComponent[]; totalScore: number; maxScore: number } {
   const components = criteria.map((criterion) => {
     const key = getCriterionKey(criterion);
     const score = key ? scoreFromAssessment(assessment, key) : 0;
-    const name = key ? criterion.category : `${criterion.category} (Belum Sinkron Backend)`;
+    const name = key
+      ? criterion.category
+      : `${criterion.category} (Belum Sinkron Backend)`;
 
     return {
       name,
@@ -112,7 +180,9 @@ function buildFieldGrades(
     } satisfies GradeComponent;
   });
 
-  const supportedCriteria = criteria.filter((criterion) => Boolean(getCriterionKey(criterion)));
+  const supportedCriteria = criteria.filter((criterion) =>
+    Boolean(getCriterionKey(criterion)),
+  );
 
   const totalScore = supportedCriteria.reduce((sum, criterion) => {
     const key = getCriterionKey(criterion);
@@ -122,7 +192,10 @@ function buildFieldGrades(
   }, 0);
 
   const maxScore =
-    supportedCriteria.reduce((sum, criterion) => sum + (criterion.maxScore * criterion.weight) / 100, 0) || 100;
+    supportedCriteria.reduce(
+      (sum, criterion) => sum + (criterion.maxScore * criterion.weight) / 100,
+      0,
+    ) || 100;
 
   return { components, totalScore, maxScore };
 }
@@ -152,13 +225,24 @@ function pickFirstObject(payload: unknown): Record<string, unknown> | null {
 
 function extractRows(payload: unknown): Record<string, unknown>[] {
   if (Array.isArray(payload)) {
-    return payload.filter((item): item is Record<string, unknown> => !!item && typeof item === "object");
+    return payload.filter(
+      (item): item is Record<string, unknown> =>
+        !!item && typeof item === "object",
+    );
   }
 
   if (!payload || typeof payload !== "object") return [];
 
   const row = payload as Record<string, unknown>;
-  const candidates = [row.data, row.items, row.rows, row.results, row.list, row.evaluations, row.penilaian];
+  const candidates = [
+    row.data,
+    row.items,
+    row.rows,
+    row.results,
+    row.list,
+    row.evaluations,
+    row.penilaian,
+  ];
   for (const candidate of candidates) {
     const extracted = extractRows(candidate);
     if (extracted.length > 0) return extracted;
@@ -169,32 +253,46 @@ function extractRows(payload: unknown): Record<string, unknown>[] {
 
 function mapRowToEvaluation(
   row: Record<string, unknown>,
-  criteria: AssessmentCriterion[]
+  criteria: AssessmentCriterion[],
 ): StudentEvaluation | null {
   const studentNode =
-    (row.student && typeof row.student === "object" ? (row.student as Record<string, unknown>) : null) || row;
+    (row.student && typeof row.student === "object"
+      ? (row.student as Record<string, unknown>)
+      : null) || row;
 
   const assessmentNode =
-    (row.assessment && typeof row.assessment === "object" ? (row.assessment as Record<string, unknown>) : null) ||
-    (row.penilaian && typeof row.penilaian === "object" ? (row.penilaian as Record<string, unknown>) : null) ||
+    (row.assessment && typeof row.assessment === "object"
+      ? (row.assessment as Record<string, unknown>)
+      : null) ||
+    (row.penilaian && typeof row.penilaian === "object"
+      ? (row.penilaian as Record<string, unknown>)
+      : null) ||
     row;
 
   const studentId = normalizeText(
-    studentNode.id || studentNode.studentId || studentNode.studentUserId || studentNode.userId,
-    ""
+    studentNode.id ||
+      studentNode.studentId ||
+      studentNode.studentUserId ||
+      studentNode.userId,
+    "",
   );
   if (!studentId) return null;
 
   const { components, totalScore } = buildFieldGrades(criteria, assessmentNode);
-  const mentorTotal =
-    parseNumber(assessmentNode.totalScore ?? assessmentNode.finalScore ?? assessmentNode.nilaiAkhir, totalScore);
+  const mentorTotal = parseNumber(
+    assessmentNode.totalScore ??
+      assessmentNode.finalScore ??
+      assessmentNode.nilaiAkhir,
+    totalScore,
+  );
 
   const academicTotal = parseNumber(
     row.academicScore ?? row.nilaiDosen ?? row.academicTotal ?? row.dosenTotal,
-    0
+    0,
   );
 
-  const finalScore = academicTotal > 0 ? (mentorTotal + academicTotal) / 2 : mentorTotal;
+  const finalScore =
+    academicTotal > 0 ? (mentorTotal + academicTotal) / 2 : mentorTotal;
 
   const fieldSupervisorGrades: FieldSupervisorGrade[] = [
     {
@@ -228,20 +326,31 @@ function mapRowToEvaluation(
   return {
     student: {
       id: studentId,
-      name: normalizeText(studentNode.name || studentNode.nama || row.studentName, "Mahasiswa"),
-      studentId: normalizeText(studentNode.nim || studentNode.studentNim || row.nim || studentId, studentId),
-      photo: typeof studentNode.photo === "string" ? studentNode.photo : undefined,
+      name: normalizeText(
+        studentNode.name || studentNode.nama || row.studentName,
+        "Mahasiswa",
+      ),
+      studentId: normalizeText(
+        studentNode.nim || studentNode.studentNim || row.nim || studentId,
+        studentId,
+      ),
+      photo:
+        typeof studentNode.photo === "string" ? studentNode.photo : undefined,
       company: normalizeText(
-        row.companyName || row.company || (row.submission as Record<string, unknown> | undefined)?.companyName,
-        "-"
+        row.companyName ||
+          row.company ||
+          (row.submission as Record<string, unknown> | undefined)?.companyName,
+        "-",
       ),
       supervisor: normalizeText(
-        row.mentorName || (row.mentor as Record<string, unknown> | undefined)?.name,
-        "-"
+        row.mentorName ||
+          (row.mentor as Record<string, unknown> | undefined)?.name,
+        "-",
       ),
       academicSupervisor: normalizeText(
-        row.lecturerName || (row.lecturer as Record<string, unknown> | undefined)?.name,
-        "-"
+        row.lecturerName ||
+          (row.lecturer as Record<string, unknown> | undefined)?.name,
+        "-",
       ),
       internPeriod: {
         start: normalizeText(row.startDate || row.internshipStartDate, "-"),
@@ -259,14 +368,16 @@ function mapRowToEvaluation(
     },
     notes: normalizeText(assessmentNode.feedback || assessmentNode.catatan, ""),
     evaluatedAt: normalizeText(
-      assessmentNode.updatedAt || assessmentNode.updated_at || assessmentNode.createdAt,
-      ""
+      assessmentNode.updatedAt ||
+        assessmentNode.updated_at ||
+        assessmentNode.createdAt,
+      "",
     ),
   } satisfies StudentEvaluation;
 }
 
 export async function getAdminEvaluations(
-  criteria: AssessmentCriterion[]
+  criteria: AssessmentCriterion[],
 ): Promise<ApiResponse<StudentEvaluation[]>> {
   let lastMessage = "Gagal memuat data penilaian admin.";
 
@@ -302,7 +413,7 @@ export async function getAdminEvaluations(
 
 export async function getAdminEvaluationByStudentId(
   studentId: string,
-  criteria: AssessmentCriterion[]
+  criteria: AssessmentCriterion[],
 ): Promise<ApiResponse<StudentEvaluation | null>> {
   let lastMessage = "Gagal memuat detail penilaian mahasiswa.";
 

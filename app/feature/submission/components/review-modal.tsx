@@ -65,7 +65,7 @@ function ReviewModal({
   onApprove,
   onReject,
 }: ReviewModalProps) {
-  const { user } = useUser();;
+  const { user } = useUser();
   const [comment, setComment] = useState("");
   const [letterNumber, setLetterNumber] = useState("");
   const [isLetterNumberDialogOpen, setIsLetterNumberDialogOpen] =

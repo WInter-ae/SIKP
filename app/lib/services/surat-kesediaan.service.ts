@@ -84,8 +84,7 @@ export async function requestSuratKesediaanApproval(
     if (response.success) return response;
 
     const message = response.message?.toLowerCase() || "";
-    const isNotFound =
-      message.includes("404") || message.includes("not found");
+    const isNotFound = message.includes("404") || message.includes("not found");
     if (!isNotFound) return response;
   }
 
@@ -179,8 +178,7 @@ export async function approveBulkDosenSuratKesediaanRequests(
     failed?: Array<{ requestId: string; reason: string }>;
   }>
 > {
-  return sikpClient.put(
-    API_ENDPOINTS.SURAT_KESEDIAAN.DOSEN_APPROVE_BULK,
-    { requestIds },
-  );
+  return sikpClient.put(API_ENDPOINTS.SURAT_KESEDIAAN.DOSEN_APPROVE_BULK, {
+    requestIds,
+  });
 }

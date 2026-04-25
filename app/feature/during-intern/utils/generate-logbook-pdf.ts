@@ -1,6 +1,9 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
-import { convertLogbookDOCXBlobToHtml, createLogbookDOCXBlob } from "~/feature/during-intern/utils/generate-logbook-docx";
+import {
+  convertLogbookDOCXBlobToHtml,
+  createLogbookDOCXBlob,
+} from "~/feature/during-intern/utils/generate-logbook-docx";
 
 interface StudentData {
   name: string;
@@ -96,7 +99,9 @@ const createPdfFromHtml = async (htmlContent: string): Promise<Blob> => {
   }
 };
 
-export const createLogbookPDFBlob = async (data: LogbookData): Promise<Blob> => {
+export const createLogbookPDFBlob = async (
+  data: LogbookData,
+): Promise<Blob> => {
   try {
     const docxBlob = await createLogbookDOCXBlob(data);
     const docxHtml = await convertLogbookDOCXBlobToHtml(docxBlob);

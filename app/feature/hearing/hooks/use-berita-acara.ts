@@ -14,18 +14,18 @@ export function useBeritaAcara() {
     } as BeritaAcara;
 
     setBeritaAcara(draft);
-    
+
     if (typeof window !== "undefined") {
       localStorage.setItem("berita-acara-draft", JSON.stringify(draft));
     }
-    
+
     if (onSuccess) onSuccess();
   };
 
   const submitBeritaAcara = async (
     data: Partial<BeritaAcara>,
     onSuccess?: () => void,
-    onError?: () => void
+    onError?: () => void,
   ) => {
     setIsSubmitting(true);
 
@@ -42,7 +42,7 @@ export function useBeritaAcara() {
       } as BeritaAcara;
 
       setBeritaAcara(submitted);
-      
+
       if (typeof window !== "undefined") {
         localStorage.removeItem("berita-acara-draft");
       }
@@ -58,7 +58,10 @@ export function useBeritaAcara() {
     }
   };
 
-  const generateSurat = (onSuccess?: (nomorSurat: string) => void, onError?: () => void) => {
+  const generateSurat = (
+    onSuccess?: (nomorSurat: string) => void,
+    onError?: () => void,
+  ) => {
     if (!beritaAcara || beritaAcara.status !== "approved") {
       if (onError) onError();
       return;
@@ -69,7 +72,7 @@ export function useBeritaAcara() {
     )
       .toString()
       .padStart(4, "0")}`;
-    
+
     if (onSuccess) onSuccess(nomorSurat);
   };
 
