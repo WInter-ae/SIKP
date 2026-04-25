@@ -58,110 +58,116 @@ function MemberList({
           </div>
         ) : (
           <div className="space-y-3">
-            {sortedMembers.map((member) => (
-              <div
-                key={member.id}
-                className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-3 flex-1">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback
-                      className={`font-bold ${
-                        member.isLeader
-                          ? "bg-yellow-500 text-white"
-                          : "bg-primary text-primary-foreground"
-                      }`}
-                    >
-                      {member.name.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+            {sortedMembers.map((member) => {
+              const displayName =
+                member.name?.trim() || member.email?.trim() || "Unknown User";
+              const displayNim = member.nim?.trim() || "-";
 
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <div className="font-medium text-foreground">
-                        {member.name}
-                        {showRole && (
-                          <span>{` (${member.isLeader ? "Ketua" : "Anggota"})`}</span>
-                        )}
+              return (
+                <div
+                  key={member.id}
+                  className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3 flex-1">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback
+                        className={`font-bold ${
+                          member.isLeader
+                            ? "bg-yellow-500 text-white"
+                            : "bg-primary text-primary-foreground"
+                        }`}
+                      >
+                        {displayName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium text-foreground">
+                          {displayName}
+                          {showRole && (
+                            <span>{` (${member.isLeader ? "Ketua" : "Anggota"})`}</span>
+                          )}
+                        </div>
+                        {member.status &&
+                          (!isLeader || member.status !== "PENDING") && (
+                            <Badge
+                              variant="secondary"
+                              className={
+                                member.status === "PENDING"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : member.status === "REJECTED" ||
+                                      member.status === "DITOLAK"
+                                    ? "border-red-200 text-red-700 bg-red-50"
+                                    : member.status === "ACCEPTED" ||
+                                        member.status === "DITERIMA"
+                                      ? "border-green-200 text-green-700 bg-green-50"
+                                      : ""
+                              }
+                            >
+                              {getStatusLabel(member.status)}
+                            </Badge>
+                          )}
                       </div>
-                      {member.status &&
-                        (!isLeader || member.status !== "PENDING") && (
-                          <Badge
-                            variant="secondary"
-                            className={
-                              member.status === "PENDING"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : member.status === "REJECTED" ||
-                                    member.status === "DITOLAK"
-                                  ? "border-red-200 text-red-700 bg-red-50"
-                                  : member.status === "ACCEPTED" ||
-                                      member.status === "DITERIMA"
-                                    ? "border-green-200 text-green-700 bg-green-50"
-                                    : ""
-                            }
-                          >
-                            {getStatusLabel(member.status)}
-                          </Badge>
-                        )}
-                    </div>
-                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                      {<span>NIM {member.nim}</span>}
+                      <div className="text-sm text-muted-foreground flex items-center gap-2">
+                        {<span>NIM {displayNim}</span>}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {showActions && (
-                  <div className="flex gap-2">
+                  {showActions && (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => onAccept?.(member.id)}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Terima
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onReject?.(member.id)}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Tolak
+                      </Button>
+                    </div>
+                  )}
+
+                  {showCancel && (
                     <Button
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => onAccept?.(member.id)}
+                      variant="secondary"
+                      onClick={() => onCancel?.(member.id)}
                     >
-                      <Check className="h-4 w-4 mr-1" />
-                      Terima
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onReject?.(member.id)}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Tolak
-                    </Button>
-                  </div>
-                )}
-
-                {showCancel && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => onCancel?.(member.id)}
-                  >
-                    <XCircle className="h-4 w-4 mr-1" />
-                    Batalkan
-                  </Button>
-                )}
-
-                {!showActions &&
-                  !showCancel &&
-                  !member.isLeader &&
-                  onRemove &&
-                  (isLeader || member.userId === currentUserId) && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={() => onRemove?.(member.id)}
-                    >
-                      <LogOut className="h-4 w-4 mr-1" />
-                      {/* Jika user adalah anggota dan melihat diri sendiri, tampilkan 'Keluar' */}
-                      {/* Jika user adalah ketua dan melihat anggota lain, tampilkan 'Keluarkan' */}
-                      {!isLeader && member.userId === currentUserId
-                        ? "Keluar"
-                        : "Keluarkan"}
+                      <XCircle className="h-4 w-4 mr-1" />
+                      Batalkan
                     </Button>
                   )}
-              </div>
-            ))}
+
+                  {!showActions &&
+                    !showCancel &&
+                    !member.isLeader &&
+                    onRemove &&
+                    (isLeader || member.userId === currentUserId) && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => onRemove?.(member.id)}
+                      >
+                        <LogOut className="h-4 w-4 mr-1" />
+                        {/* Jika user adalah anggota dan melihat diri sendiri, tampilkan 'Keluar' */}
+                        {/* Jika user adalah ketua dan melihat anggota lain, tampilkan 'Keluarkan' */}
+                        {!isLeader && member.userId === currentUserId
+                          ? "Keluar"
+                          : "Keluarkan"}
+                      </Button>
+                    )}
+                </div>
+              );
+            })}
           </div>
         )}
       </CardContent>

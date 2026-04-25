@@ -203,22 +203,29 @@ export function SentInvitations({
             </div>
           ) : (
             <div className="space-y-3">
-              {members.map((invitation) => (
-                <div
-                  key={invitation.id}
-                  className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
+              {members.map((invitation) => {
+                const displayName =
+                  invitation.name?.trim() ||
+                  invitation.email?.trim() ||
+                  "Unknown User";
+                const displayNim = invitation.nim?.trim() || "-";
+
+                return (
+                  <div
+                    key={invitation.id}
+                    className="flex justify-between items-center p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
                   <div className="flex items-center gap-3 flex-1">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-primary text-primary-foreground font-bold">
-                        {invitation.name.charAt(0).toUpperCase()}
+                        {displayName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
 
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <div className="font-medium text-foreground">
-                          {invitation.name}
+                          {displayName}
                         </div>
                         <Badge
                           variant="secondary"
@@ -228,7 +235,7 @@ export function SentInvitations({
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        <span>NIM {invitation.nim}</span>
+                        <span>NIM {displayNim}</span>
                       </div>
                     </div>
                   </div>
@@ -237,7 +244,7 @@ export function SentInvitations({
                     size="sm"
                     variant="destructive"
                     onClick={() =>
-                      handleCancelInvitation(invitation.id, invitation.name)
+                      handleCancelInvitation(invitation.id, displayName)
                     }
                     disabled={cancelingId === invitation.id}
                   >
@@ -253,8 +260,9 @@ export function SentInvitations({
                       </>
                     )}
                   </Button>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </CardContent>

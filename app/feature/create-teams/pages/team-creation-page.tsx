@@ -65,7 +65,7 @@ import { getResponseLetterBySubmission } from "~/lib/services/response-letter.se
 const TeamCreationPage = () => {
   const navigate = useNavigate();
   const { user } = useUser();
-  const { isLoading: isUserLoading, isAuthenticated } = useAuth();;
+  const { isLoading: isUserLoading, isAuthenticated } = useAuth();
 
   const extractTeamCodeFromDisplayName = (name: string): string => {
     const match = name.match(/\((TEAM-[^)]+)\)/);
@@ -81,6 +81,78 @@ const TeamCreationPage = () => {
       }
     }
     return Array.from(map.values());
+  };
+
+  const pickFirstNonEmptyString = (...values: unknown[]): string => {
+    for (const value of values) {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        if (trimmed.length > 0) {
+          return trimmed;
+        }
+      }
+    }
+    return "";
+  };
+
+  const toRecord = (value: unknown): Record<string, unknown> | null => {
+    return value && typeof value === "object"
+      ? (value as Record<string, unknown>)
+      : null;
+  };
+
+  const getPersonIdentity = (value: unknown) => {
+    const person = toRecord(value);
+    return {
+      id: pickFirstNonEmptyString(person?.id),
+      name: pickFirstNonEmptyString(
+        person?.name,
+        person?.nama,
+        person?.fullName,
+        person?.full_name,
+      ),
+      nim: pickFirstNonEmptyString(
+        person?.nim,
+        person?.studentNim,
+        person?.student_nim,
+      ),
+      email: pickFirstNonEmptyString(person?.email),
+    };
+  };
+
+  const getTeamMemberIdentity = (member: TeamMember) => {
+    const memberRecord = toRecord(member);
+    const userIdentity = getPersonIdentity(memberRecord?.user);
+    const mahasiswaIdentity = getPersonIdentity(memberRecord?.mahasiswa);
+
+    return {
+      id: pickFirstNonEmptyString(
+        userIdentity.id,
+        member.userId,
+        memberRecord?.userId,
+      ),
+      name: pickFirstNonEmptyString(
+        userIdentity.name,
+        memberRecord?.name,
+        memberRecord?.nama,
+        memberRecord?.fullName,
+        memberRecord?.full_name,
+        mahasiswaIdentity.name,
+      ),
+      nim: pickFirstNonEmptyString(
+        userIdentity.nim,
+        memberRecord?.nim,
+        memberRecord?.studentNim,
+        memberRecord?.student_nim,
+        mahasiswaIdentity.nim,
+      ),
+      email: pickFirstNonEmptyString(
+        userIdentity.email,
+        memberRecord?.email,
+        memberRecord?.userEmail,
+        memberRecord?.user_email,
+      ),
+    };
   };
 
   // Redirect ke login jika tidak terautentikasi
@@ -241,6 +313,20 @@ const TeamCreationPage = () => {
     setIsLoading(true);
     setLoadError(null);
     try {
+      type TeamPayload = {
+        id: string;
+        name: string;
+        code: string;
+        dosen_kp_id?: string;
+        dosen_kp_name?: string;
+        dosenKpId?: string;
+        dosenKpName?: string;
+        leaderId: string;
+        isLeader: boolean;
+        status: string;
+        members: TeamMember[];
+      };
+
       console.log("📥 Loading teams...");
       const startTime = Date.now();
 
@@ -257,30 +343,19 @@ const TeamCreationPage = () => {
 
       // Race antara actual request dan timeout
       // eslint-disable-next-line prettier/prettier
-      const response = (await Promise.race([getMyTeams(), timeoutPromise])) as unknown as ApiResponse<
-        Array<{
-          id: string;
-          name: string;
-          code: string;
-          dosen_kp_id?: string;
-          dosen_kp_name?: string;
-          dosenKpId?: string;
-          dosenKpName?: string;
-          leaderId: string;
-          isLeader: boolean;
-          status: string;
-          members: TeamMember[];
-        }>
-      >;
+      const response = (await Promise.race([getMyTeams(), timeoutPromise])) as unknown as ApiResponse<unknown>;
 
       const loadTime = Date.now() - startTime;
       console.log(`✅ Teams loaded in ${loadTime}ms`);
 
       // Normalize response data if backend returns single object instead of array
-      let responseData = response.data;
-      if (response.success && responseData && !Array.isArray(responseData) && typeof responseData === "object") {
+      const rawData = response.data;
+      let responseData: TeamPayload[] = [];
+      if (Array.isArray(rawData)) {
+        responseData = rawData as TeamPayload[];
+      } else if (response.success && rawData && typeof rawData === "object") {
         console.log("🔄 Normalizing single object response to array");
-        responseData = [responseData] as any;
+        responseData = [rawData as TeamPayload];
       }
 
       // Debug: Log response structure
@@ -292,12 +367,14 @@ const TeamCreationPage = () => {
         rawResponse: response,
       });
 
-      if (response.success && responseData && Array.isArray(responseData) && responseData.length > 0) {
+      if (response.success && responseData.length > 0) {
         // Get the first team (user should only have one active team)
         const teamData = responseData[0];
 
         // Ensure members array exists
-        let members = Array.isArray((teamData as any).members) ? (teamData as any).members : [];
+        let members: TeamMember[] = Array.isArray(teamData.members)
+          ? teamData.members
+          : [];
 
         console.log("🔍 Raw Team Data from Backend:", {
           teamId: teamData.id,
@@ -346,6 +423,7 @@ const TeamCreationPage = () => {
         const acceptedMembers = members.filter(
           (m: TeamMember) => m.status === "ACCEPTED",
         );
+        const ketuaMember = members.find((m: TeamMember) => m.role === "KETUA");
 
         const transformedTeam: Team = {
           id: teamData.id,
@@ -355,22 +433,34 @@ const TeamCreationPage = () => {
           dosen_kp_name:
             teamData.dosen_kp_name ?? teamData.dosenKpName ?? undefined,
           leaderId:
-            members.find((m: TeamMember) => m.role === "KETUA")?.user?.id ||
+            (ketuaMember ? getTeamMemberIdentity(ketuaMember).id : "") ||
             teamData.leaderId ||
             user?.id ||
             "",
-          isLeader: teamData.isLeader ?? (teamData.leaderId === user?.id) ?? false,
+          isLeader: teamData.isLeader ?? teamData.leaderId === user?.id,
           status: teamData.status,
           members: acceptedMembers
-            .map((m: TeamMember) => ({
-              id: m.id, // team member id (needed for backend mutations)
-              userId: m.user.id,
-              name: m.user.name,
-              role: m.role === "KETUA" ? "Ketua" : "Anggota",
-              isLeader: m.role === "KETUA",
-              nim: m.user.nim,
-              email: m.user.email,
-            }))
+            .map((m: TeamMember) => {
+              const memberIdentity = getTeamMemberIdentity(m);
+              const isCurrentMember =
+                (memberIdentity.id || m.userId) === user?.id;
+              const resolvedName =
+                memberIdentity.name ||
+                (isCurrentMember ? (user?.nama ?? "") : "");
+              const resolvedNim =
+                memberIdentity.nim ||
+                (isCurrentMember ? (user?.nim ?? "") : "");
+
+              return {
+                id: m.id, // team member id (needed for backend mutations)
+                userId: memberIdentity.id || m.userId,
+                name: resolvedName || "-",
+                role: m.role === "KETUA" ? "Ketua" : "Anggota",
+                isLeader: m.role === "KETUA",
+                nim: resolvedNim || "-",
+                email: memberIdentity.email,
+              };
+            })
             .sort(
               (
                 a: { isLeader: boolean; name: string },
@@ -389,7 +479,7 @@ const TeamCreationPage = () => {
           totalMembers: members.length,
           acceptedCount: acceptedMembers.length,
           acceptedMembers: acceptedMembers.map((m: TeamMember) => ({
-            name: m.user.name,
+            name: getTeamMemberIdentity(m).name,
             role: m.role,
             status: m.status,
           })),
@@ -439,34 +529,40 @@ const TeamCreationPage = () => {
           (m: TeamMember) => m.status === "PENDING",
         );
 
-        const pendingInvitesListRaw = pendingMembers
+        const pendingInvitesListRaw: Member[] = pendingMembers
           .filter((m: TeamMember) => m.invitedBy === teamData.leaderId)
-          .map((m: TeamMember) => ({
-            id: m.id, // ✅ memberId
-            userId: m.user.id,
-            name: m.user.name,
-            role: "Mahasiswa",
-            nim: m.user.nim,
-            email: m.user.email,
-            status: m.status,
-          }));
-        const pendingInvitesList = dedupeByKey(
+          .map((m: TeamMember) => {
+            const memberIdentity = getTeamMemberIdentity(m);
+            return {
+              id: m.id, // ✅ memberId
+              userId: memberIdentity.id || m.userId,
+              name: memberIdentity.name || "Mahasiswa",
+              role: "Mahasiswa",
+              nim: memberIdentity.nim || "-",
+              email: memberIdentity.email,
+              status: m.status,
+            };
+          });
+        const pendingInvitesList = dedupeByKey<Member>(
           pendingInvitesListRaw,
           (m) => `${m.userId || ""}-${m.nim || ""}-${m.status || ""}`,
         );
 
-        const incomingJoinRequestsRaw = pendingMembers
+        const incomingJoinRequestsRaw: Member[] = pendingMembers
           .filter((m: TeamMember) => m.invitedBy !== teamData.leaderId)
-          .map((m: TeamMember) => ({
-            id: m.id,
-            userId: m.user.id,
-            name: m.user.name,
-            role: "Permintaan Gabung",
-            nim: m.user.nim,
-            email: m.user.email,
-            status: m.status,
-          }));
-        const incomingJoinRequests = dedupeByKey(
+          .map((m: TeamMember) => {
+            const memberIdentity = getTeamMemberIdentity(m);
+            return {
+              id: m.id,
+              userId: memberIdentity.id || m.userId,
+              name: memberIdentity.name || "Pemohon",
+              role: "Permintaan Gabung",
+              nim: memberIdentity.nim || "-",
+              email: memberIdentity.email,
+              status: m.status,
+            };
+          });
+        const incomingJoinRequests = dedupeByKey<Member>(
           incomingJoinRequestsRaw,
           (m) => `${m.userId || ""}-${m.nim || ""}-${m.status || ""}`,
         );
@@ -474,12 +570,15 @@ const TeamCreationPage = () => {
         console.log("📤 Pending Invites (Sent):", {
           total: members.length,
           pendingCount: pendingInvitesList.length,
-          allStatuses: members.map((m: TeamMember) => ({
-            memberId: m.id, // ✅ ID ini yang akan dipakai untuk cancel
-            userId: m.user.id,
-            name: m.user.name,
-            status: m.status,
-          })),
+          allStatuses: members.map((m: TeamMember) => {
+            const memberIdentity = getTeamMemberIdentity(m);
+            return {
+              memberId: m.id, // ✅ ID ini yang akan dipakai untuk cancel
+              userId: memberIdentity.id || m.userId,
+              name: memberIdentity.name,
+              status: m.status,
+            };
+          }),
           pendingInvites: pendingInvitesList,
           joinRequests: incomingJoinRequests,
         });
@@ -494,10 +593,8 @@ const TeamCreationPage = () => {
         // Response kosong atau error
         console.log("⚠️ No teams found in response:", {
           success: response.success,
-          dataEmpty: !response.data || response.data.length === 0,
-          dataLength: Array.isArray(response.data)
-            ? response.data.length
-            : "N/A",
+          dataEmpty: responseData.length === 0,
+          dataLength: responseData.length,
           message: response.message || "No message",
         });
 
@@ -618,15 +715,27 @@ const TeamCreationPage = () => {
                       isLeader: false, // ✅ User is member, not leader (from invitations)
                       status: "PENDING",
                       members: acceptedMembers
-                        .map((m: TeamMember) => ({
-                          id: m.id,
-                          userId: m.user.id,
-                          name: m.user.name,
-                          role: m.role === "KETUA" ? "Ketua" : "Anggota",
-                          isLeader: m.role === "KETUA",
-                          nim: m.user.nim,
-                          email: m.user.email,
-                        }))
+                        .map((m: TeamMember) => {
+                          const memberIdentity = getTeamMemberIdentity(m);
+                          const isCurrentMember =
+                            (memberIdentity.id || m.userId) === user?.id;
+                          const resolvedName =
+                            memberIdentity.name ||
+                            (isCurrentMember ? (user?.nama ?? "") : "");
+                          const resolvedNim =
+                            memberIdentity.nim ||
+                            (isCurrentMember ? (user?.nim ?? "") : "");
+
+                          return {
+                            id: m.id,
+                            userId: memberIdentity.id || m.userId,
+                            name: resolvedName || "-",
+                            role: m.role === "KETUA" ? "Ketua" : "Anggota",
+                            isLeader: m.role === "KETUA",
+                            nim: resolvedNim || "-",
+                            email: memberIdentity.email,
+                          };
+                        })
                         .sort((a, b) => {
                           if (a.isLeader) return -1;
                           if (b.isLeader) return 1;
@@ -975,8 +1084,37 @@ const TeamCreationPage = () => {
         // Split between invitations received vs join requests sent by me
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const isJoinSentByMe = (inv: any) => {
-          // prefer invitedBy; fallback to inviter.id
-          return inv.invitedBy === user?.id || inv.inviter?.id === user?.id;
+          if (!user) return false;
+          const currentUserId = String(user.id);
+          
+          if (inv.invitedBy && String(inv.invitedBy) === currentUserId) return true;
+          if (inv.inviter?.id && String(inv.inviter.id) === currentUserId) return true;
+          
+          // Check by NIM or Name just in case ID is missing but it's the same person
+          const inviterIdentity = getPersonIdentity(inv.inviter);
+          if (inviterIdentity.nim && user.nim && inviterIdentity.nim === user.nim) return true;
+          if (inviterIdentity.name && user.nama && inviterIdentity.name === user.nama) return true;
+          
+          // Fallback: Check if the invitation is NOT from the team leader
+          const leaderId = inv.team?.leaderId || inv.team?.leader?.id;
+          if (leaderId) {
+            const strLeaderId = String(leaderId);
+            if (inv.invitedBy && String(inv.invitedBy) === strLeaderId) return false;
+            if (inv.inviter?.id && String(inv.inviter.id) === strLeaderId) return false;
+            
+            // Check leader NIM or Name
+            const leaderIdentity = getPersonIdentity(inv.team?.leader);
+            if (leaderIdentity.nim && inviterIdentity.nim && leaderIdentity.nim === inviterIdentity.nim) return false;
+            if (leaderIdentity.name && inviterIdentity.name && leaderIdentity.name === inviterIdentity.name) return false;
+            
+            // If we have a leader but the inviter is NOT the leader, it's a join request sent by the user
+            return true;
+          }
+          
+          // If there is no invitedBy data at all, assume it's a join request
+          if (!inv.invitedBy && !inv.inviter) return true;
+
+          return false;
         };
 
         const invitationsReceivedRaw = pendingAll.filter(
@@ -988,12 +1126,15 @@ const TeamCreationPage = () => {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const invitationsRaw = invitationsReceivedRaw.map((inv: any) => {
+          const inviterIdentity = getPersonIdentity(inv.inviter);
+          const leaderIdentity = getPersonIdentity(inv.team?.leader);
+
           // Debug logging
           console.log("🔍 Invitation data:", {
             id: inv.id,
             hasInviter: !!inv.inviter,
-            inviterName: inv.inviter?.name,
-            inviterNim: inv.inviter?.nim,
+            inviterName: inviterIdentity.name,
+            inviterNim: inviterIdentity.nim,
             hasUser: !!inv.user,
             userName: inv.user?.name,
             hasTeam: !!inv.team,
@@ -1001,8 +1142,12 @@ const TeamCreationPage = () => {
           });
 
           // Get inviter info (person who invited us)
-          const inviterName = inv.inviter?.name;
-          const inviterNim = inv.inviter?.nim;
+          const inviterName =
+            inviterIdentity.name ||
+            pickFirstNonEmptyString(inv.team?.leaderName, leaderIdentity.name);
+          const inviterNim =
+            inviterIdentity.nim ||
+            pickFirstNonEmptyString(inv.team?.leaderNim, leaderIdentity.nim);
 
           // Fallback untuk debug
           if (!inviterName) {
@@ -1015,10 +1160,12 @@ const TeamCreationPage = () => {
           return {
             id: inv.id, // member ID untuk respond (string utuh)
             memberId: inv.id, // Simpan member ID asli (string utuh)
-            name: inviterName || "Unknown",
+            name: inviterName || "Unknown User",
             role: "Undangan dari Tim",
-            nim: inviterNim || "",
-            email: inv.inviter?.email || inv.user?.email || "",
+            nim: inviterNim || "-",
+            email:
+              inviterIdentity.email ||
+              pickFirstNonEmptyString(inv.inviter?.email, inv.user?.email),
             teamId: inv.teamId,
             invitedAt: inv.invitedAt,
           };
@@ -1041,8 +1188,16 @@ const TeamCreationPage = () => {
 
           // Get team leader info from backend response
           // Backend should provide team.leaderName and team.leaderNim
-          const leaderName = inv.team?.leaderName || "Ketua Tim";
-          const leaderNim = inv.team?.leaderNim || "";
+          const leaderName =
+            pickFirstNonEmptyString(
+              inv.team?.leaderName,
+              inv.team?.leader?.name,
+            ) || "Ketua Tim";
+          const leaderNim =
+            pickFirstNonEmptyString(
+              inv.team?.leaderNim,
+              inv.team?.leader?.nim,
+            ) || "-";
           const teamCode = inv.team?.code || "";
 
           console.log("📋 Parsed leader info:", {
@@ -2994,6 +3149,7 @@ const TeamCreationPage = () => {
               <MemberList
                 title="Daftar Anggota"
                 members={team.members}
+                showRole={false}
                 onRemove={
                   team.status !== "FIXED" ? handleRemoveMember : undefined
                 }
