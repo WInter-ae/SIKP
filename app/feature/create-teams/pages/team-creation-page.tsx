@@ -171,7 +171,8 @@ const TeamCreationPage = () => {
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
 
   // State untuk permintaan gabung dan ajakan
-  const [joinRequests, setJoinRequests] = useState<Member[]>([]);
+  const [incomingJoinRequests, setIncomingJoinRequests] = useState<Member[]>([]);
+  const [outgoingJoinRequests, setOutgoingJoinRequests] = useState<Member[]>([]);
   const [inviteRequests, setInviteRequests] = useState<Member[]>([]);
 
   // State untuk pending invitations (undangan yang sudah kita kirim)
@@ -278,8 +279,7 @@ const TeamCreationPage = () => {
     }
   }, [isUserLoading, isAuthenticated, user]);
 
-  // ⏱️ Optimized: Timeout constant
-  const LOAD_TIMEOUT_MS = 5000; // 5 detik timeout
+
 
   const loadFixedTeamDeletePermission = async (teamData: Team) => {
     if (teamData.status !== "FIXED") {
@@ -330,20 +330,7 @@ const TeamCreationPage = () => {
       console.log("📥 Loading teams...");
       const startTime = Date.now();
 
-      // Create timeout promise untuk prevent infinite loading
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => {
-          reject(
-            new Error(
-              `Loading took too long (>${LOAD_TIMEOUT_MS / 1000}s). Backend may be slow.`,
-            ),
-          );
-        }, LOAD_TIMEOUT_MS),
-      );
-
-      // Race antara actual request dan timeout
-      // eslint-disable-next-line prettier/prettier
-      const response = (await Promise.race([getMyTeams(), timeoutPromise])) as unknown as ApiResponse<unknown>;
+      const response = (await getMyTeams()) as unknown as ApiResponse<unknown>;
 
       const loadTime = Date.now() - startTime;
       console.log(`✅ Teams loaded in ${loadTime}ms`);
@@ -587,7 +574,7 @@ const TeamCreationPage = () => {
 
         // Untuk ketua tim, tampilkan permintaan gabung yang masuk dengan tombol terima/tolak
         if (teamData.isLeader) {
-          setJoinRequests(incomingJoinRequests);
+          setIncomingJoinRequests(incomingJoinRequests);
         }
       } else {
         // Response kosong atau error
@@ -804,9 +791,9 @@ const TeamCreationPage = () => {
         // Timeout error - show helpful message
         console.warn(
           "⚠️ PERFORMANCE ISSUE: Backend response is slow (>5s). Possible causes:\n" +
-            "1. Database query not optimized\n" +
-            "2. Network latency too high\n" +
-            "3. Server resources limited",
+          "1. Database query not optimized\n" +
+          "2. Network latency too high\n" +
+          "3. Server resources limited",
         );
       } else if (
         errorMsg.includes("userId") ||
@@ -872,7 +859,7 @@ const TeamCreationPage = () => {
         // Reset flag setelah 5 detik (untuk animation/highlight)
         setTimeout(() => {
           setIsNewlyCreated(false);
-        }, 5000);
+        }, 10000);
       } else {
         console.error("Create team failed:", {
           success: response.success,
@@ -939,7 +926,7 @@ const TeamCreationPage = () => {
     }
 
     // Blokir request gabung duplikat hanya untuk team yang sama
-    const hasPendingForSameTeam = joinRequests.some((req) => {
+    const hasPendingForSameTeam = outgoingJoinRequests.some((req) => {
       const reqCode = extractTeamCodeFromDisplayName(req.name || "");
       return req.status === "PENDING" && reqCode === code;
     });
@@ -1024,7 +1011,7 @@ const TeamCreationPage = () => {
 
   // Fungsi terima anggota dari permintaan gabung
   const handleAcceptJoinRequest = (memberId: string) => {
-    const member = joinRequests.find((m: Member) => m.id === memberId);
+    const member = incomingJoinRequests.find((m: Member) => m.id === memberId);
     if (!member || !team) return;
 
     setConfirmAction({
@@ -1036,7 +1023,7 @@ const TeamCreationPage = () => {
 
   // Fungsi tolak anggota dari permintaan gabung
   const handleRejectJoinRequest = (memberId: string) => {
-    const member = joinRequests.find((m: Member) => m.id === memberId);
+    const member = incomingJoinRequests.find((m: Member) => m.id === memberId);
     if (!member) return;
 
     setConfirmAction({
@@ -1048,7 +1035,7 @@ const TeamCreationPage = () => {
 
   // Fungsi batalkan permintaan gabung tim
   const handleCancelJoinRequest = (memberId: string) => {
-    const member = joinRequests.find((m: Member) => m.id === memberId);
+    const member = outgoingJoinRequests.find((m: Member) => m.id === memberId);
     if (!member) return;
 
     setConfirmAction({
@@ -1086,31 +1073,31 @@ const TeamCreationPage = () => {
         const isJoinSentByMe = (inv: any) => {
           if (!user) return false;
           const currentUserId = String(user.id);
-          
+
           if (inv.invitedBy && String(inv.invitedBy) === currentUserId) return true;
           if (inv.inviter?.id && String(inv.inviter.id) === currentUserId) return true;
-          
+
           // Check by NIM or Name just in case ID is missing but it's the same person
           const inviterIdentity = getPersonIdentity(inv.inviter);
           if (inviterIdentity.nim && user.nim && inviterIdentity.nim === user.nim) return true;
           if (inviterIdentity.name && user.nama && inviterIdentity.name === user.nama) return true;
-          
+
           // Fallback: Check if the invitation is NOT from the team leader
           const leaderId = inv.team?.leaderId || inv.team?.leader?.id;
           if (leaderId) {
             const strLeaderId = String(leaderId);
             if (inv.invitedBy && String(inv.invitedBy) === strLeaderId) return false;
             if (inv.inviter?.id && String(inv.inviter.id) === strLeaderId) return false;
-            
+
             // Check leader NIM or Name
             const leaderIdentity = getPersonIdentity(inv.team?.leader);
             if (leaderIdentity.nim && inviterIdentity.nim && leaderIdentity.nim === inviterIdentity.nim) return false;
             if (leaderIdentity.name && inviterIdentity.name && leaderIdentity.name === inviterIdentity.name) return false;
-            
+
             // If we have a leader but the inviter is NOT the leader, it's a join request sent by the user
             return true;
           }
-          
+
           // If there is no invitedBy data at all, assume it's a join request
           if (!inv.invitedBy && !inv.inviter) return true;
 
@@ -1252,15 +1239,13 @@ const TeamCreationPage = () => {
         );
 
         setInviteRequests(invitations);
-        // If user is NOT a leader, show the requests they sent under 'Daftar Permintaan Gabung Tim'
-        if (!team || !team.isLeader) {
-          setJoinRequests(myJoinRequests);
-          console.log(
-            "📌 Setting joinRequests for non-leader user:",
-            myJoinRequests.length,
-            "items",
-          );
-        }
+        // Simpan outgoing join requests
+        setOutgoingJoinRequests(myJoinRequests);
+        console.log(
+          "📌 Setting outgoingJoinRequests:",
+          myJoinRequests.length,
+          "items",
+        );
       } else {
         console.warn("⚠️ No invitations found or request failed", {
           success: response.success,
@@ -1929,14 +1914,14 @@ const TeamCreationPage = () => {
 
         setIsLoading(true);
         try {
-          const joinReq = joinRequests.find(
+          const joinReq = incomingJoinRequests.find(
             (m) => m.id === confirmAction.memberId,
           );
           console.log("✅ Accepting join request - DEBUG:", {
             confirmMemberId: confirmAction.memberId,
             foundInList: !!joinReq,
             joinReqData: joinReq,
-            allJoinRequests: joinRequests.map((j) => ({
+            allJoinRequests: incomingJoinRequests.map((j) => ({
               id: j.id,
               name: j.name,
               status: j.status,
@@ -1951,8 +1936,8 @@ const TeamCreationPage = () => {
           console.log("📨 Backend response:", response);
 
           if (response.success) {
-            setJoinRequests(
-              joinRequests.filter((m) => m.id !== confirmAction.memberId),
+            setIncomingJoinRequests(
+              incomingJoinRequests.filter((m) => m.id !== confirmAction.memberId),
             );
             setNotificationData({
               type: "success",
@@ -1988,14 +1973,14 @@ const TeamCreationPage = () => {
         if (!confirmAction.memberId) break;
         setIsLoading(true);
         try {
-          const joinReq = joinRequests.find(
+          const joinReq = incomingJoinRequests.find(
             (m) => m.id === confirmAction.memberId,
           );
           console.log("🚫 Rejecting join request - DEBUG:", {
             confirmMemberId: confirmAction.memberId,
             foundInList: !!joinReq,
             joinReqData: joinReq,
-            allJoinRequests: joinRequests.map((j) => ({
+            allJoinRequests: incomingJoinRequests.map((j) => ({
               id: j.id,
               name: j.name,
               status: j.status,
@@ -2010,8 +1995,8 @@ const TeamCreationPage = () => {
           console.log("📨 Backend response:", response);
 
           if (response.success) {
-            setJoinRequests(
-              joinRequests.filter((m) => m.id !== confirmAction.memberId),
+            setIncomingJoinRequests(
+              incomingJoinRequests.filter((m) => m.id !== confirmAction.memberId),
             );
             setNotificationData({
               type: "success",
@@ -2046,14 +2031,14 @@ const TeamCreationPage = () => {
         if (!confirmAction.memberId) break;
         setIsLoading(true);
         try {
-          const joinReq = joinRequests.find(
+          const joinReq = outgoingJoinRequests.find(
             (m) => m.id === confirmAction.memberId,
           );
           console.log("🚫 Canceling join request - DEBUG:", {
             confirmMemberId: confirmAction.memberId,
             foundInList: !!joinReq,
             joinReqData: joinReq,
-            allJoinRequests: joinRequests.map((j) => ({
+            allJoinRequests: outgoingJoinRequests.map((j) => ({
               id: j.id,
               name: j.name,
               status: j.status,
@@ -2068,8 +2053,8 @@ const TeamCreationPage = () => {
           console.log("📨 Backend response:", response);
 
           if (response.success) {
-            setJoinRequests(
-              joinRequests.filter((m) => m.id !== confirmAction.memberId),
+            setOutgoingJoinRequests(
+              outgoingJoinRequests.filter((m) => m.id !== confirmAction.memberId),
             );
             setNotificationData({
               type: "success",
@@ -2282,9 +2267,9 @@ const TeamCreationPage = () => {
         setTeam((prev) =>
           prev
             ? {
-                ...prev,
-                status: "FIXED",
-              }
+              ...prev,
+              status: "FIXED",
+            }
             : null,
         );
 
@@ -2431,7 +2416,8 @@ const TeamCreationPage = () => {
                 // NOW clear all state after successful acceptance
                 setTeam(null);
                 setPendingInvites([]);
-                setJoinRequests([]);
+                setIncomingJoinRequests([]);
+                setOutgoingJoinRequests([]);
                 setInviteRequests([]);
 
                 // Reload teams and invitations
@@ -2446,7 +2432,8 @@ const TeamCreationPage = () => {
                 // Clear states anyway since old team is deleted
                 setTeam(null);
                 setPendingInvites([]);
-                setJoinRequests([]);
+                setIncomingJoinRequests([]);
+                setOutgoingJoinRequests([]);
                 setInviteRequests([]);
 
                 if (
@@ -2478,7 +2465,8 @@ const TeamCreationPage = () => {
               // Clear states since old team is deleted
               setTeam(null);
               setPendingInvites([]);
-              setJoinRequests([]);
+              setIncomingJoinRequests([]);
+              setOutgoingJoinRequests([]);
               setInviteRequests([]);
 
               setNotificationData({
@@ -2514,7 +2502,8 @@ const TeamCreationPage = () => {
               // Clear local state before reload to avoid stale data
               setTeam(null);
               setPendingInvites([]);
-              setJoinRequests([]);
+              setIncomingJoinRequests([]);
+              setOutgoingJoinRequests([]);
               setInviteRequests([]);
 
               if (joinResponse.success) {
@@ -2555,7 +2544,8 @@ const TeamCreationPage = () => {
               // Clear state to avoid stale data
               setTeam(null);
               setPendingInvites([]);
-              setJoinRequests([]);
+              setIncomingJoinRequests([]);
+              setOutgoingJoinRequests([]);
               setInviteRequests([]);
 
               setNotificationData({
@@ -2574,7 +2564,8 @@ const TeamCreationPage = () => {
           console.log("🗑️ Manual team delete, clearing all state");
           setTeam(null);
           setPendingInvites([]);
-          setJoinRequests([]);
+          setIncomingJoinRequests([]);
+          setOutgoingJoinRequests([]);
           setInviteRequests([]);
 
           // Show success dialog instead of alert
@@ -2999,11 +2990,10 @@ const TeamCreationPage = () => {
                 {team.members.map((member) => (
                   <div
                     key={member.id}
-                    className={`p-4 rounded-lg border ${
-                      member.isLeader
+                    className={`p-4 rounded-lg border ${member.isLeader
                         ? "border-primary/30 bg-primary/5"
                         : "border-border bg-muted/50"
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <Badge
@@ -3206,10 +3196,10 @@ const TeamCreationPage = () => {
             )}
 
             {/* Join Requests */}
-            {team?.status !== "FIXED" && joinRequests.length > 0 && (
+            {team?.status !== "FIXED" && (team?.isLeader ? incomingJoinRequests.length > 0 : outgoingJoinRequests.length > 0) && (
               <MemberList
                 title="Daftar Permintaan Gabung Tim"
-                members={joinRequests}
+                members={team?.isLeader ? incomingJoinRequests : outgoingJoinRequests}
                 showActions={!!team?.isLeader}
                 showRole={false}
                 isLeader={!!team?.isLeader}
@@ -3293,8 +3283,8 @@ const TeamCreationPage = () => {
           onConfirm={executeConfirmAction}
           variant={
             confirmAction.type.includes("reject") ||
-            confirmAction.type === "remove" ||
-            confirmAction.type === "cancel-invite"
+              confirmAction.type === "remove" ||
+              confirmAction.type === "cancel-invite"
               ? "destructive"
               : "default"
           }

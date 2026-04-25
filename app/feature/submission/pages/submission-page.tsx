@@ -274,7 +274,7 @@ function SubmissionPage() {
 
           // Tentukan apakah user adalah ketua
           const currentUserMember = mappedMembers.find(
-            (m) => m.id === user?.id,
+            (m) => m.id === user?.id || (user?.nim && m.nim === user?.nim),
           );
           setIsCurrentUserLeader(currentUserMember?.role === "Ketua");
 
@@ -354,9 +354,9 @@ function SubmissionPage() {
       const response = await uploadSubmissionDocument(
         currentSubmission.id,
         "PROPOSAL_KETUA",
-        user.id,
+        currentMemberId || user.id,
         file,
-        user.id,
+        currentMemberId,
       );
 
       if (response.success && response.data) {
@@ -470,7 +470,7 @@ function SubmissionPage() {
         docInfo.type,
         memberId,
         file,
-        user?.id,
+        currentMemberId,
       );
 
       if (response.success && response.data) {
@@ -793,6 +793,11 @@ function SubmissionPage() {
     };
   };
 
+  const currentMember = teamMembers.find(
+    (m) => m.id === user?.id || (user?.nim && m.nim === user?.nim),
+  );
+  const currentMemberId = currentMember?.id;
+
   if (isUserLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -1054,7 +1059,7 @@ function SubmissionPage() {
                 document={document}
                 members={teamMembers}
                 documents={filteredSubmissionDocuments}
-                currentUserId={user?.id}
+                currentUserId={currentMemberId}
                 submittedRequestKeys={submittedRequestKeys}
                 submittedRequestStatusByKey={submittedRequestStatusByKey}
                 dosenNameByKey={dosenNameByKey}
