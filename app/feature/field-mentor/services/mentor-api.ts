@@ -321,7 +321,7 @@ function normalizeAssessmentPayload(payload: unknown): AssessmentData | null {
  * GET /api/mentor/profile
  */
 export async function getMentorProfile(): Promise<ApiResponse<MentorProfile>> {
-  return iget<MentorProfile>("/api/mentor/profile");
+  return iget<MentorProfile>("/api/mentorship/profile");
 }
 
 /**
@@ -333,7 +333,7 @@ export async function updateMentorProfile(
     Omit<MentorProfile, "id" | "userId" | "createdAt" | "updatedAt">
   >,
 ): Promise<ApiResponse<MentorProfile>> {
-  return iput<MentorProfile>("/api/mentor/profile", data);
+  return iput<MentorProfile>("/api/mentorship/profile", data);
 }
 
 /**
@@ -341,7 +341,7 @@ export async function updateMentorProfile(
  * GET /api/mentor/mentees
  */
 export async function getMentees(): Promise<ApiResponse<MenteeData[]>> {
-  return iget<MenteeData[]>("/api/mentor/mentees");
+  return iget<MenteeData[]>("/api/mentorship/mentees");
 }
 
 /**
@@ -351,7 +351,7 @@ export async function getMentees(): Promise<ApiResponse<MenteeData[]>> {
 export async function getMenteeDetail(
   studentId: string,
 ): Promise<ApiResponse<MenteeData>> {
-  return iget<MenteeData>(`/api/mentor/mentees/${studentId}`);
+  return iget<MenteeData>(`/api/mentorship/mentees/${studentId}`);
 }
 
 /**
@@ -361,7 +361,7 @@ export async function getMenteeDetail(
 export async function getStudentLogbook(
   studentId: string,
 ): Promise<ApiResponse<LogbookEntry[]>> {
-  return get<LogbookEntry[]>(`/api/mentor/logbook/${studentId}`);
+  return iget<LogbookEntry[]>(`/api/mentorship/mentees/${studentId}/logbooks`);
 }
 
 /**
@@ -372,7 +372,7 @@ export async function getStudentLogbook(
 export async function approveLogbook(
   logbookId: string,
 ): Promise<ApiResponse<LogbookEntry>> {
-  return ipost<LogbookEntry>(`/api/mentor/logbook/${logbookId}/approve`, {});
+  return ipost<LogbookEntry>(`/api/mentorship/logbooks/${logbookId}/approve`, {});
 }
 
 /**
@@ -383,7 +383,7 @@ export async function rejectLogbook(
   logbookId: string,
   rejectionReason: string,
 ): Promise<ApiResponse<LogbookEntry>> {
-  return ipost<LogbookEntry>(`/api/mentor/logbook/${logbookId}/reject`, {
+  return ipost<LogbookEntry>(`/api/mentorship/logbooks/${logbookId}/reject`, {
     rejectionReason,
   });
 }
@@ -439,7 +439,7 @@ export async function submitAssessment(data: {
     attitudeEthics: data.sikapEtika,
   };
 
-  const response = await ipost<unknown>("/api/mentor/assessment", payload);
+  const response = await ipost<unknown>("/api/mentorship/assessments", payload);
 
   if (!response.success) {
     return response as ApiResponse<AssessmentData>;
@@ -461,9 +461,7 @@ export async function getStudentAssessment(
   studentId: string,
 ): Promise<ApiResponse<AssessmentData>> {
   const endpoints = [
-    `/api/mentor/assessment/${studentId}`,
-    `/api/mentor/assessment/me/${studentId}`,
-    `/api/mentor/assessment/current/${studentId}`,
+    `/api/mentorship/assessments/${studentId}`,
   ];
 
   let lastMessage = "Gagal mengambil data penilaian mahasiswa.";
@@ -542,7 +540,7 @@ export async function updateAssessment(
   };
 
   const response = await iput<unknown>(
-    `/api/mentor/assessment/${assessmentId}`,
+    `/api/mentorship/assessments/${assessmentId}`,
     payload,
   );
 

@@ -309,7 +309,7 @@ export async function getCompleteInternshipData(): Promise<ApiResponse<CompleteI
   
   try {
     // Call the real backend endpoint
-    const response = await iget<BackendInternshipResponse>("/api/mahasiswa/internship");
+    const response = await iget<BackendInternshipResponse>("/api/internships");
     console.log('✅ Backend response received:', response);
     
     if (response.success && response.data) {
@@ -474,7 +474,7 @@ async function getCompleteInternshipDataFallback(): Promise<ApiResponse<Complete
  * GET /api/mahasiswa/internship (legacy - use getCompleteInternshipData instead)
  */
 export async function getMyInternship(): Promise<ApiResponse<InternshipData>> {
-  return iget<InternshipData>("/api/mahasiswa/internship");
+  return iget<InternshipData>("/api/internships");
 }
 
 /**
@@ -484,7 +484,7 @@ export async function getMyInternship(): Promise<ApiResponse<InternshipData>> {
 export async function getStudentInternship(
   studentId: string
 ): Promise<ApiResponse<InternshipData>> {
-  return iget<InternshipData>(`/api/mahasiswa/${studentId}/internship`);
+  return iget<InternshipData>(`/api/internships/${studentId}`);
 }
 
 /**

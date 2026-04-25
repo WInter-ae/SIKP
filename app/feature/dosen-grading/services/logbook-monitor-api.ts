@@ -31,14 +31,11 @@ export interface DosenLogbookMonitorByStudentItem {
 type RawObject = Record<string, unknown>;
 
 const LIST_ENDPOINTS = [
-  "/api/dosen/logbook-monitor",
-  "/api/dosen/logbook/monitor",
-  "/api/dosen/logbook-monitoring",
+  "/api/internship-monitoring/logbook",
 ] as const;
 
 const DETAIL_ENDPOINT_BUILDERS = [
-  (studentId: string) => `/api/dosen/logbook-monitor/${studentId}`,
-  (studentId: string) => `/api/dosen/logbook/monitor/${studentId}`,
+  (studentId: string) => `/api/internship-monitoring/logbook/${studentId}`,
 ] as const;
 
 function asRecord(value: unknown): RawObject | null {

@@ -51,17 +51,17 @@ export interface LogbookStatsResponse {
 
 /**
  * Create new logbook entry
- * POST /api/mahasiswa/logbook
+ * POST /api/logbooks
  */
 export async function createLogbookEntry(
   data: CreateLogbookData
 ): Promise<ApiResponse<LogbookEntry>> {
-  return ipost<LogbookEntry>("/api/mahasiswa/logbook", data);
+  return ipost<LogbookEntry>("/api/logbooks", data);
 }
 
 /**
  * Get all logbook entries for current student
- * GET /api/mahasiswa/logbook?startDate=...&endDate=...&status=...
+ * GET /api/logbooks?startDate=...&endDate=...&status=...
  */
 export interface LogbookListResponse {
   internshipId: string;
@@ -79,57 +79,70 @@ export async function getLogbookEntries(params?: {
   if (params?.status) queryParams.append("status", params.status);
   
   const query = queryParams.toString();
-  const url = query ? `/api/mahasiswa/logbook?${query}` : "/api/mahasiswa/logbook";
+  const url = query ? `/api/logbooks?${query}` : "/api/logbooks";
   
   return iget<LogbookListResponse>(url);
 }
 
 /**
  * Get single logbook entry by ID
- * GET /api/mahasiswa/logbook/:id
+ * GET /api/logbooks/:id
  */
 export async function getLogbookEntry(
   id: string
 ): Promise<ApiResponse<LogbookEntry>> {
-  return iget<LogbookEntry>(`/api/mahasiswa/logbook/${id}`);
+  return iget<LogbookEntry>(`/api/logbooks/${id}`);
 }
 
 /**
  * Update logbook entry
- * PUT /api/mahasiswa/logbook/:id
+ * PUT /api/logbooks/:id
  */
 export async function updateLogbookEntry(
   id: string,
   data: UpdateLogbookData
 ): Promise<ApiResponse<LogbookEntry>> {
-  return iput<LogbookEntry>(`/api/mahasiswa/logbook/${id}`, data);
+  return iput<LogbookEntry>(`/api/logbooks/${id}`, data);
 }
 
 /**
  * Delete logbook entry (only if PENDING)
- * DELETE /api/mahasiswa/logbook/:id
+ * DELETE /api/logbooks/:id
  */
 export async function deleteLogbookEntry(
   id: string
 ): Promise<ApiResponse<void>> {
-  return idel<void>(`/api/mahasiswa/logbook/${id}`);
+  return idel<void>(`/api/logbooks/${id}`);
 }
 
 /**
  * Get logbook statistics
- * GET /api/mahasiswa/logbook/stats
+ * GET /api/logbooks/stats
  */
 export async function getLogbookStats(): Promise<ApiResponse<LogbookStatsResponse>> {
-  return iget<LogbookStatsResponse>("/api/mahasiswa/logbook/stats");
+  return iget<LogbookStatsResponse>("/api/logbooks/stats");
 }
 
 /**
  * Submit logbook for mentor approval (if needed)
- * POST /api/mahasiswa/logbook/:id/submit
- * Note: According to backend docs, logbooks are auto-submitted when created
+ * POST /api/logbooks/:id/submit
  */
 export async function submitLogbookForApproval(
   id: string
 ): Promise<ApiResponse<LogbookEntry>> {
-  return ipost<LogbookEntry>(`/api/mahasiswa/logbook/${id}/submit`, {});
+  return ipost<LogbookEntry>(`/api/logbooks/${id}/submit`, {});
+}
+
+/**
+ * Upload logbook photo
+ * POST /api/logbooks/:id/photo
+ */
+export async function uploadLogbookPhoto(
+  id: string,
+  file: File
+): Promise<ApiResponse<{ photoUrl: string }>> {
+  const formData = new FormData();
+  formData.append("photo", file);
+  
+  return ipost<{ photoUrl: string }>(`/api/logbooks/${id}/photo`, formData);
 }

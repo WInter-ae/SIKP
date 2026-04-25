@@ -20,9 +20,8 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:3000";
-const DEFAULT_PROD_API_BASE_URL =
-  "https://backend-sikp.backend-sikp.workers.dev";
+const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:8789";
+const DEFAULT_PROD_API_BASE_URL = "http://localhost:8789";
 
 // Gunakan backend lokal saat development, fallback ke URL Workers saat production.
 const API_BASE_URL =
@@ -55,10 +54,6 @@ function handleLegacyAuthCutover() {
   // login here creates auth loops even when session is valid.
 }
 
-// URL untuk pelaksanaan magang: logbook, mentor, internship, penilaian (URL baru)
-export const INTERNSHIP_API_BASE_URL =
-  import.meta.env.VITE_API_INTERNSHIP_URL ||
-  "https://backend-sikp.mukarrobinujiantik.workers.dev";
 
 /**
  * Standard API Response format
@@ -168,9 +163,7 @@ export async function apiClient<T>(
   options: RequestInit & { _baseUrl?: string } = {},
 ): Promise<ApiResponse<T>> {
   const token = getAuthToken();
-  const { _baseUrl, ...fetchOptions } = options as RequestInit & {
-    _baseUrl?: string;
-  };
+  const { ...fetchOptions } = options;
   const isFormData = fetchOptions.body instanceof FormData;
 
   try {
@@ -317,40 +310,23 @@ export function del<T>(endpoint: string) {
 }
 
 // ==================== INTERNSHIP CLIENT HELPERS ====================
-// Digunakan untuk: logbook, mentor, internship data, penilaian
-// URL: VITE_API_INTERNSHIP_URL (https://backend-sikp.mukarrobinujiantik.workers.dev)
+// Alias backward compatibility untuk fungsi-fungsi lama
+// Semua request sekarang menggunakan API_BASE_URL yang sama
 
 export function iget<T>(endpoint: string, params?: Record<string, string>) {
-  const url = params
-    ? `${endpoint}?${new URLSearchParams(params).toString()}`
-    : endpoint;
-  return apiClient<T>(url, {
-    method: "GET",
-    _baseUrl: INTERNSHIP_API_BASE_URL,
-  } as RequestInit & { _baseUrl: string });
+  return get<T>(endpoint, params);
 }
 
 export function ipost<T>(endpoint: string, body?: unknown) {
-  return apiClient<T>(endpoint, {
-    method: "POST",
-    body: body ? JSON.stringify(body) : undefined,
-    _baseUrl: INTERNSHIP_API_BASE_URL,
-  } as RequestInit & { _baseUrl: string });
+  return post<T>(endpoint, body);
 }
 
 export function iput<T>(endpoint: string, body?: unknown) {
-  return apiClient<T>(endpoint, {
-    method: "PUT",
-    body: body ? JSON.stringify(body) : undefined,
-    _baseUrl: INTERNSHIP_API_BASE_URL,
-  } as RequestInit & { _baseUrl: string });
+  return put<T>(endpoint, body);
 }
 
 export function idel<T>(endpoint: string) {
-  return apiClient<T>(endpoint, {
-    method: "DELETE",
-    _baseUrl: INTERNSHIP_API_BASE_URL,
-  } as RequestInit & { _baseUrl: string });
+  return del<T>(endpoint);
 }
 
 // Export base URLs for reference
