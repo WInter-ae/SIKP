@@ -7,6 +7,8 @@
 
 import { sikpClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
+import { API_ENDPOINTS } from "~/lib/constants/endpoints";
+import { z } from "zod";
 
 // ==================== TYPES ====================
 
@@ -17,24 +19,7 @@ export interface SignatureAsset {
   isActive?: boolean;
 }
 
-interface SignaturePayload {
-  id?: unknown;
-  signatureImage?: unknown;
-  signatureUrl?: unknown;
-  url?: unknown;
-  uploadedAt?: unknown;
-  createdAt?: unknown;
-  isActive?: unknown;
-}
-
-interface SignatureListPayload {
-  signatures?: unknown;
-  items?: unknown;
-}
-
-interface SignatureManageUrlPayload {
-  manageUrl?: unknown;
-}
+// Types digantikan validasi Zod
 
 // ==================== NORMALIZERS ====================
 
@@ -48,9 +33,10 @@ function pickString(...values: unknown[]): string | null {
 }
 
 function normalizeSignaturePayload(payload: unknown): SignatureAsset | null {
-  if (!payload || typeof payload !== "object") return null;
+  const result = z.record(z.string(), z.unknown()).safeParse(payload);
+  if (!result.success) return null;
 
-  const data = payload as SignaturePayload;
+  const data = result.data;
   const id = pickString(data.id);
   const signatureImage = pickString(
     data.signatureImage,
@@ -69,9 +55,10 @@ function normalizeSignaturePayload(payload: unknown): SignatureAsset | null {
 }
 
 function normalizeSignatureList(payload: unknown): SignatureAsset[] {
-  if (!payload || typeof payload !== "object") return [];
+  const result = z.record(z.string(), z.unknown()).safeParse(payload);
+  if (!result.success) return [];
 
-  const listPayload = payload as SignatureListPayload;
+  const listPayload = result.data;
   const rawItems = Array.isArray(listPayload.signatures)
     ? listPayload.signatures
     : Array.isArray(listPayload.items)
@@ -89,8 +76,8 @@ function normalizeSignatureList(payload: unknown): SignatureAsset[] {
  * Ambil URL kelola signature di SSO.
  */
 export async function getSignatureManageUrl(): Promise<ApiResponse<string>> {
-  const response = await sikpClient.get<SignatureManageUrlPayload>(
-    "/api/profile/signature/manage-url",
+  const response = await sikpClient.get<Record<string, unknown>>(
+    API_ENDPOINTS.SIGNATURE.MANAGE_URL || "/api/profile/signature/manage-url",
   );
 
   if (!response.success || !response.data) {
