@@ -351,6 +351,23 @@ function SubmissionPage() {
         return;
       }
 
+      // ✅ NEW: Delete old proposal from backend if exists (both REJECTED and PENDING)
+      const oldProposal = submissionDocuments.find(
+        (doc) =>
+          doc.documentType === "PROPOSAL_KETUA" &&
+          (doc.status === "REJECTED" || doc.status === "PENDING"),
+      );
+
+      if (oldProposal) {
+        console.log(
+          `🗑️ Deleting old proposal (${oldProposal.id}) before reupload...`,
+        );
+        const deleteResponse = await deleteSubmissionDocument(oldProposal.id);
+        if (!deleteResponse.success) {
+          console.warn("⚠️ Failed to delete old proposal, but continuing...");
+        }
+      }
+
       const response = await uploadSubmissionDocument(
         currentSubmission.id,
         "PROPOSAL_KETUA",
@@ -361,19 +378,6 @@ function SubmissionPage() {
 
       if (response.success && response.data) {
         const docToAdd = response.data;
-
-        // ✅ NEW: Delete old REJECTED proposal from backend if exists
-        const oldRejectedProposal = submissionDocuments.find(
-          (doc) =>
-            doc.documentType === "PROPOSAL_KETUA" && doc.status === "REJECTED",
-        );
-
-        if (oldRejectedProposal) {
-          console.log(
-            `🗑️ Deleting old REJECTED proposal (${oldRejectedProposal.id})...`,
-          );
-          await deleteSubmissionDocument(oldRejectedProposal.id);
-        }
 
         setSubmissionDocuments((prev) => {
           // Hapus proposal lama jika ada
@@ -441,16 +445,16 @@ function SubmissionPage() {
         return;
       }
 
-      // ✅ NEW: Check if document already exists with REJECTED status
+      // ✅ NEW: Check if document already exists with REJECTED or PENDING status
       // If exists, delete it before uploading new one
       const existingDoc = submissionDocuments.find(
         (doc) =>
           doc.documentType === docInfo.type && doc.memberUserId === memberId,
       );
 
-      if (existingDoc && existingDoc.status === "REJECTED") {
+      if (existingDoc && (existingDoc.status === "REJECTED" || existingDoc.status === "PENDING")) {
         console.log(
-          `🗑️ Deleting old REJECTED document (${existingDoc.id}) before reupload...`,
+          `🗑️ Deleting old document (${existingDoc.id}) before reupload...`,
         );
         const deleteResponse = await deleteSubmissionDocument(existingDoc.id);
 
@@ -460,8 +464,8 @@ function SubmissionPage() {
           );
           // Continue anyway - backend might handle this automatically
         } else {
-          console.log("✅ Old REJECTED document deleted successfully");
-          toast.success("Dokumen lama yang ditolak berhasil dihapus");
+          console.log("✅ Old document deleted successfully");
+          toast.success("Dokumen lama berhasil dihapus sebelum diganti");
         }
       }
 
