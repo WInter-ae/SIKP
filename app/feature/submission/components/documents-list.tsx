@@ -174,7 +174,7 @@ export function DocumentsList({
                             doc.documentType}
                         </span>
                       </div>
-                      <p className="font-medium text-sm break-words">
+                      <p className="font-medium text-sm wrap-break-word">
                         {doc.originalName}
                       </p>
                       <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-muted-foreground">
@@ -188,7 +188,7 @@ export function DocumentsList({
                         </div>
                         <div>
                           <span className="font-medium">Member:</span>{" "}
-                          {doc.memberUserId}
+                          {doc.memberMahasiswaId}
                         </div>
                         <div>
                           <span className="font-medium">Uploaded:</span>{" "}
@@ -196,7 +196,7 @@ export function DocumentsList({
                         </div>
                       </div>
                     </div>
-                    <div className="flex gap-2 ml-4 flex-shrink-0">
+                    <div className="flex gap-2 ml-4 shrink-0">
                       <Button
                         variant="outline"
                         size="sm"
@@ -260,7 +260,7 @@ export function DocumentsList({
                       Dibuat Otomatis oleh Sistem
                     </Badge>
                   </div>
-                  <p className="font-medium text-sm break-words">
+                  <p className="font-medium text-sm wrap-break-word">
                     {suratPengantar.originalName}
                   </p>
                   <div className="grid grid-cols-2 gap-2 mt-2 text-xs text-muted-foreground">
@@ -278,7 +278,7 @@ export function DocumentsList({
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-2 ml-4 flex-shrink-0">
+                <div className="flex gap-2 ml-4 shrink-0">
                   <Button
                     variant="outline"
                     size="sm"
@@ -340,7 +340,7 @@ export function DocumentsList({
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               {previewDoc?.documentType} • {previewDoc?.fileType} •{" "}
-              {previewDoc?.memberUserId}
+              {previewDoc?.memberMahasiswaId}
             </DialogDescription>
           </DialogHeader>
 

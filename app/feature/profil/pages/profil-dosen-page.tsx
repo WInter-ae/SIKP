@@ -248,7 +248,11 @@ export function DosenProfilPage() {
             Profil dan e-signature bersifat read-only di SIKP
           </p>
         </div>
-        <Button onClick={openManageProfile} variant="outline" className="gap-2 self-start">
+        <Button
+          onClick={openManageProfile}
+          variant="outline"
+          className="gap-2 self-start"
+        >
           <ExternalLink className="h-4 w-4" />
           Kelola Profil di SSO
         </Button>
@@ -379,7 +383,11 @@ export function DosenProfilPage() {
             </p>
           </div>
           <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:justify-end">
-            <Button onClick={handleSaveProfile} disabled={isSaving} className="gap-2 sm:min-w-44">
+            <Button
+              onClick={handleSaveProfile}
+              disabled={isSaving}
+              className="gap-2 sm:min-w-44"
+            >
               <ExternalLink className="h-4 w-4" />
               Kelola Profil di SSO
             </Button>
@@ -432,7 +440,11 @@ export function DosenProfilPage() {
               </div>
 
               {/* Action Buttons */}
-              <Button onClick={openManageSignature} variant="outline" className="w-full gap-2">
+              <Button
+                onClick={openManageSignature}
+                variant="outline"
+                className="w-full gap-2"
+              >
                 <ExternalLink className="h-4 w-4" />
                 Kelola Signature di SSO
               </Button>

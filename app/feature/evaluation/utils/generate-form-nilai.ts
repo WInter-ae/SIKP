@@ -15,18 +15,18 @@ export interface NilaiKPData {
   programStudi: string;
   tempatKP: string;
   judulLaporan: string;
-  
+
   // Data KP
   waktuPelaksanaan: string;
   dosenPembimbing: string;
   pembimbingLapangan: string;
-  
+
   // Nilai
   kesesuaianLaporan: number; // 30%
-  penguasaanMateri: number;  // 30%
+  penguasaanMateri: number; // 30%
   analisisPerancangan: number; // 30%
   sikapEtika: number; // 10%
-  
+
   // Metadata
   tanggalPenilaian: string;
   dosenPenguji: string;
@@ -40,21 +40,22 @@ export function generateFormNilaiPDF(data: NilaiKPData) {
   const bobotPenguasaan = (data.penguasaanMateri * 30) / 100;
   const bobotAnalisis = (data.analisisPerancangan * 30) / 100;
   const bobotSikap = (data.sikapEtika * 10) / 100;
-  
-  const nilaiAkhir = bobotKesesuaian + bobotPenguasaan + bobotAnalisis + bobotSikap;
-  
+
+  const nilaiAkhir =
+    bobotKesesuaian + bobotPenguasaan + bobotAnalisis + bobotSikap;
+
   // Konversi nilai huruf
-  let nilaiHuruf = '';
-  if (nilaiAkhir >= 85) nilaiHuruf = 'A';
-  else if (nilaiAkhir >= 80) nilaiHuruf = 'A-';
-  else if (nilaiAkhir >= 75) nilaiHuruf = 'B+';
-  else if (nilaiAkhir >= 70) nilaiHuruf = 'B';
-  else if (nilaiAkhir >= 65) nilaiHuruf = 'B-';
-  else if (nilaiAkhir >= 60) nilaiHuruf = 'C+';
-  else if (nilaiAkhir >= 55) nilaiHuruf = 'C';
-  else if (nilaiAkhir >= 50) nilaiHuruf = 'D';
-  else nilaiHuruf = 'E';
-  
+  let nilaiHuruf = "";
+  if (nilaiAkhir >= 85) nilaiHuruf = "A";
+  else if (nilaiAkhir >= 80) nilaiHuruf = "A-";
+  else if (nilaiAkhir >= 75) nilaiHuruf = "B+";
+  else if (nilaiAkhir >= 70) nilaiHuruf = "B";
+  else if (nilaiAkhir >= 65) nilaiHuruf = "B-";
+  else if (nilaiAkhir >= 60) nilaiHuruf = "C+";
+  else if (nilaiAkhir >= 55) nilaiHuruf = "C";
+  else if (nilaiAkhir >= 50) nilaiHuruf = "D";
+  else nilaiHuruf = "E";
+
   // Create HTML content for PDF
   const htmlContent = `
 <!DOCTYPE html>
@@ -347,7 +348,9 @@ export function generateFormNilaiPDF(data: NilaiKPData) {
       <div class="signature-box">
         <div>Palembang, ${data.tanggalPenilaian}</div>
         <div>Dosen Penguji,</div>
-        ${data.eSignatureUrl ? `
+        ${
+          data.eSignatureUrl
+            ? `
         <div class="signature-space">
           <img src="${data.eSignatureUrl}" alt="E-Signature" class="signature-image" />
         </div>
@@ -355,30 +358,32 @@ export function generateFormNilaiPDF(data: NilaiKPData) {
           <div>${data.dosenPenguji}</div>
           <div>NIP. ${data.nipDosen}</div>
         </div>
-        ` : `
+        `
+            : `
         <div class="signature-line">
           <div>${data.dosenPenguji}</div>
           <div>NIP. ${data.nipDosen}</div>
         </div>
-        `}
+        `
+        }
       </div>
     </div>
   </div>
 </body>
 </html>
   `;
-  
+
   return htmlContent;
 }
 
 // Function to download as HTML (can be printed to PDF)
 export function downloadFormNilaiHTML(data: NilaiKPData) {
   const htmlContent = generateFormNilaiPDF(data);
-  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const blob = new Blob([htmlContent], { type: "text/html" });
   const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = url;
-  link.download = `Form_Nilai_KP_${data.namaMahasiswa.replace(/\s+/g, '_')}.html`;
+  link.download = `Form_Nilai_KP_${data.namaMahasiswa.replace(/\s+/g, "_")}.html`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -388,75 +393,85 @@ export function downloadFormNilaiHTML(data: NilaiKPData) {
 // Helper function to convert oklch and other modern colors to rgb
 function convertModernColorsToRGB(element: HTMLElement) {
   // Get all elements including the root
-  const allElements = [element, ...Array.from(element.querySelectorAll('*'))];
-  
+  const allElements = [element, ...Array.from(element.querySelectorAll("*"))];
+
   allElements.forEach((el) => {
     if (el instanceof HTMLElement) {
       const computedStyle = window.getComputedStyle(el);
-      
+
       // List of all color-related properties
       const colorProps = [
-        'color', 
-        'backgroundColor', 
-        'borderColor', 
-        'borderTopColor', 
-        'borderRightColor', 
-        'borderBottomColor', 
-        'borderLeftColor',
-        'outlineColor',
-        'textDecorationColor',
-        'fill',
-        'stroke'
+        "color",
+        "backgroundColor",
+        "borderColor",
+        "borderTopColor",
+        "borderRightColor",
+        "borderBottomColor",
+        "borderLeftColor",
+        "outlineColor",
+        "textDecorationColor",
+        "fill",
+        "stroke",
       ];
-      
-      colorProps.forEach(prop => {
+
+      colorProps.forEach((prop) => {
         const value = computedStyle.getPropertyValue(prop);
-        if (value && value.trim() && value !== 'none' && value !== 'transparent') {
+        if (
+          value &&
+          value.trim() &&
+          value !== "none" &&
+          value !== "transparent"
+        ) {
           // Get the computed color value (browser will convert oklch to rgb automatically)
           const computedColor = computedStyle[prop as any];
           if (computedColor) {
             // Set it explicitly as inline style to override any oklch
-            el.style.setProperty(prop, computedColor, 'important');
+            el.style.setProperty(prop, computedColor, "important");
           }
         }
       });
-      
+
       // Also remove any CSS variables that might contain oklch
-      el.style.cssText = el.style.cssText.replace(/oklch\([^)]+\)/g, 'rgb(0, 0, 0)');
+      el.style.cssText = el.style.cssText.replace(
+        /oklch\([^)]+\)/g,
+        "rgb(0, 0, 0)",
+      );
     }
   });
 }
 
 // Function to open in new window for printing
 export function printFormNilai(data: NilaiKPData) {
-  console.log('printFormNilai called with data:', data);
-  
+  console.log("printFormNilai called with data:", data);
+
   // Validate data first
   if (!data.namaMahasiswa || !data.nim) {
-    alert('Data mahasiswa tidak lengkap. Pastikan dosen sudah memberikan nilai.');
+    alert(
+      "Data mahasiswa tidak lengkap. Pastikan dosen sudah memberikan nilai.",
+    );
     return;
   }
-  
+
   const htmlContent = generateFormNilaiPDF(data);
-  console.log('HTML content generated, length:', htmlContent.length);
-  
+  console.log("HTML content generated, length:", htmlContent.length);
+
   // Use simple window.print approach - more reliable
-  const printWindow = window.open('', '_blank');
-  
+  const printWindow = window.open("", "_blank");
+
   if (printWindow) {
-    console.log('Opening print window...');
+    console.log("Opening print window...");
     printWindow.document.write(htmlContent);
     printWindow.document.close();
-    
+
     printWindow.onload = () => {
-      console.log('Print window loaded');
+      console.log("Print window loaded");
       printWindow.focus();
-      
+
       // Add small delay to ensure content is fully rendered
       setTimeout(() => {
-        console.log('Triggering print dialog...');
+        console.log("Triggering print dialog...");
         printWindow.print();
-        
+
         // Close window after print dialog closes
         printWindow.onafterprint = () => {
           printWindow.close();
@@ -464,7 +479,9 @@ export function printFormNilai(data: NilaiKPData) {
       }, 500);
     };
   } else {
-    console.error('Failed to open print window. Pop-up might be blocked.');
-    alert('Gagal membuka jendela print. Pastikan pop-up tidak diblokir oleh browser.');
+    console.error("Failed to open print window. Pop-up might be blocked.");
+    alert(
+      "Gagal membuka jendela print. Pastikan pop-up tidak diblokir oleh browser.",
+    );
   }
 }

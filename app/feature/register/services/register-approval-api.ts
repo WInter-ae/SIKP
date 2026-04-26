@@ -125,7 +125,11 @@ function normalizeStatus(value: string): "pending" | "approved" | "rejected" {
 
 function shouldTryNextEndpoint(message: string): boolean {
   const text = message.toLowerCase();
-  return text.includes("404") || text.includes("not found") || text.includes("tidak ditemukan");
+  return (
+    text.includes("404") ||
+    text.includes("not found") ||
+    text.includes("tidak ditemukan")
+  );
 }
 
 function getArrayData(data: unknown): RawObj[] {
@@ -146,11 +150,21 @@ function mapRegistration(raw: RawObj, index: number): PendingRegistration {
     name: getFirstString(mentor, ["name", "nama", "mentorName"], "-"),
     email: getFirstString(mentor, ["email", "mentorEmail"], "-"),
     nip: getFirstString(mentor, ["nip"], ""),
-    company: getFirstString(mentor, ["company", "companyName", "perusahaan"], "-"),
+    company: getFirstString(
+      mentor,
+      ["company", "companyName", "perusahaan"],
+      "-",
+    ),
     position: getFirstString(mentor, ["position", "jabatan"], "-"),
     phone: getFirstString(mentor, ["phone", "noHp", "no_hp"], "-"),
-    registeredAt: getFirstString(raw, ["registeredAt", "createdAt", "requestedAt"], new Date().toISOString()),
-    status: normalizeStatus(getFirstString(raw, ["status", "verificationStatus"], "pending")),
+    registeredAt: getFirstString(
+      raw,
+      ["registeredAt", "createdAt", "requestedAt"],
+      new Date().toISOString(),
+    ),
+    status: normalizeStatus(
+      getFirstString(raw, ["status", "verificationStatus"], "pending"),
+    ),
     studentName: getFirstString(student, ["name", "nama", "studentName"], "-"),
     studentNim: getFirstString(student, ["nim", "studentNim"], "-"),
     studentEmail: getFirstString(student, ["email", "studentEmail"], "-"),
@@ -160,12 +174,32 @@ function mapRegistration(raw: RawObj, index: number): PendingRegistration {
 function mapEmailChange(raw: RawObj, index: number): PendingEmailChangeRequest {
   return {
     id: getFirstString(raw, ["id", "requestId"], `email-change-${index}`),
-    mentorName: getFirstString(raw, ["mentorName", "namaMentor", "mentor"], "-"),
-    currentEmail: getFirstString(raw, ["currentEmail", "oldEmail", "emailSaatIni"], "-"),
-    requestedEmail: getFirstString(raw, ["requestedEmail", "newEmail", "emailBaru"], "-"),
+    mentorName: getFirstString(
+      raw,
+      ["mentorName", "namaMentor", "mentor"],
+      "-",
+    ),
+    currentEmail: getFirstString(
+      raw,
+      ["currentEmail", "oldEmail", "emailSaatIni"],
+      "-",
+    ),
+    requestedEmail: getFirstString(
+      raw,
+      ["requestedEmail", "newEmail", "emailBaru"],
+      "-",
+    ),
     reason: getFirstString(raw, ["reason", "alasan"], "-"),
-    requestedAt: getFirstString(raw, ["requestedAt", "createdAt"], new Date().toISOString()),
-    studentName: getFirstString(raw, ["studentName", "mahasiswa", "namaMahasiswa"], "-"),
+    requestedAt: getFirstString(
+      raw,
+      ["requestedAt", "createdAt"],
+      new Date().toISOString(),
+    ),
+    studentName: getFirstString(
+      raw,
+      ["studentName", "mahasiswa", "namaMahasiswa"],
+      "-",
+    ),
     status: normalizeStatus(getFirstString(raw, ["status"], "pending")),
   };
 }
@@ -228,7 +262,9 @@ async function performActionOnEndpointList(
   };
 }
 
-export async function getMentorRegistrationRequests(): Promise<ApiResponse<PendingRegistration[]>> {
+export async function getMentorRegistrationRequests(): Promise<
+  ApiResponse<PendingRegistration[]>
+> {
   const response = await getFromEndpointList(MENTOR_REQUEST_LIST_ENDPOINTS);
   if (!response.success) {
     return {
@@ -241,7 +277,9 @@ export async function getMentorRegistrationRequests(): Promise<ApiResponse<Pendi
   return {
     success: true,
     message: response.message,
-    data: (response.data || []).map((item, index) => mapRegistration(item, index)),
+    data: (response.data || []).map((item, index) =>
+      mapRegistration(item, index),
+    ),
   };
 }
 
@@ -249,13 +287,18 @@ export async function approveMentorRegistrationRequest(id: string) {
   return performActionOnEndpointList(MENTOR_REQUEST_APPROVE_ENDPOINTS, id);
 }
 
-export async function rejectMentorRegistrationRequest(id: string, reason: string) {
+export async function rejectMentorRegistrationRequest(
+  id: string,
+  reason: string,
+) {
   return performActionOnEndpointList(MENTOR_REQUEST_REJECT_ENDPOINTS, id, {
     reason,
   });
 }
 
-export async function getMentorEmailChangeRequests(): Promise<ApiResponse<PendingEmailChangeRequest[]>> {
+export async function getMentorEmailChangeRequests(): Promise<
+  ApiResponse<PendingEmailChangeRequest[]>
+> {
   const response = await getFromEndpointList(EMAIL_CHANGE_LIST_ENDPOINTS);
   if (!response.success) {
     return {
@@ -268,7 +311,9 @@ export async function getMentorEmailChangeRequests(): Promise<ApiResponse<Pendin
   return {
     success: true,
     message: response.message,
-    data: (response.data || []).map((item, index) => mapEmailChange(item, index)),
+    data: (response.data || []).map((item, index) =>
+      mapEmailChange(item, index),
+    ),
   };
 }
 
@@ -276,7 +321,10 @@ export async function approveMentorEmailChangeRequest(id: string) {
   return performActionOnEndpointList(EMAIL_CHANGE_APPROVE_ENDPOINTS, id);
 }
 
-export async function rejectMentorEmailChangeRequest(id: string, reason: string) {
+export async function rejectMentorEmailChangeRequest(
+  id: string,
+  reason: string,
+) {
   return performActionOnEndpointList(EMAIL_CHANGE_REJECT_ENDPOINTS, id, {
     reason,
   });

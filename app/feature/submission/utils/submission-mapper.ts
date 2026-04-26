@@ -519,10 +519,10 @@ export function mapSubmissionToApplication(
         uploaderName = doc.uploadedByUser.name;
       }
       // Fallback 1: Cari dari team members jika uploadedByUser tidak ada
-      else if (doc.uploadedByUserId) {
+      else if (doc.uploadedByMahasiswaId) {
         const uploader = acceptedMembers.find((m) => {
           const userId = m.user?.id || m.userId;
-          return userId === doc.uploadedByUserId;
+          return userId === doc.uploadedByMahasiswaId;
         });
         uploaderName = uploader?.user?.name || uploader?.name || "Unknown";
       }
@@ -541,7 +541,7 @@ export function mapSubmissionToApplication(
         documentType: doc.documentType,
         hasUploadedByUser: !!doc.uploadedByUser,
         uploadedByUserName: doc.uploadedByUser?.name,
-        uploadedByUserId: doc.uploadedByUserId,
+        uploadedByUserId: doc.uploadedByMahasiswaId,
         resolvedUploaderName: uploaderName,
         fileName: doc.fileName,
         fileUrl: doc.fileUrl,

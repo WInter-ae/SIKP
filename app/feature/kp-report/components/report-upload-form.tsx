@@ -2,7 +2,14 @@ import { useState, useRef } from "react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { Upload, FileText, X, Eye, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Upload,
+  FileText,
+  X,
+  Eye,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 const URL_CLEANUP_DELAY = 1000; // 1 second
@@ -97,7 +104,7 @@ export default function ReportUploadForm({
   const handlePreview = (file: File) => {
     const fileURL = URL.createObjectURL(file);
     const newWindow = window.open(fileURL, "_blank");
-    
+
     // Cleanup after a reasonable delay to ensure the window has loaded
     if (newWindow) {
       newWindow.addEventListener("load", () => {
@@ -159,7 +166,8 @@ export default function ReportUploadForm({
           <Alert className="mb-4 border-l-4 border-yellow-500 bg-yellow-50">
             <AlertCircle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-800">
-              Judul laporan harus disetujui terlebih dahulu sebelum upload laporan
+              Judul laporan harus disetujui terlebih dahulu sebelum upload
+              laporan
             </AlertDescription>
           </Alert>
         )}
@@ -177,7 +185,8 @@ export default function ReportUploadForm({
                     {getStatusBadge(currentReport.status)}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Ukuran: {currentReport.ukuranFile} • Diupload: {currentReport.tanggalUpload}
+                    Ukuran: {currentReport.ukuranFile} • Diupload:{" "}
+                    {currentReport.tanggalUpload}
                   </p>
                 </div>
               </div>
@@ -186,7 +195,9 @@ export default function ReportUploadForm({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => toast.info("Preview file (implementasi backend diperlukan)")}
+                  onClick={() =>
+                    toast.info("Preview file (implementasi backend diperlukan)")
+                  }
                 >
                   <Eye className="w-4 h-4" />
                 </Button>
@@ -211,7 +222,9 @@ export default function ReportUploadForm({
               <div className="flex items-start space-x-3 flex-1">
                 <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">{selectedFile.name}</p>
+                  <p className="font-medium text-foreground truncate">
+                    {selectedFile.name}
+                  </p>
                   <p className="text-sm text-muted-foreground">
                     {formatFileSize(selectedFile.size)}
                   </p>
@@ -250,7 +263,9 @@ export default function ReportUploadForm({
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            onClick={() => !disabled && titleApproved && fileInputRef.current?.click()}
+            onClick={() =>
+              !disabled && titleApproved && fileInputRef.current?.click()
+            }
           >
             <input
               ref={fileInputRef}
@@ -284,9 +299,9 @@ export default function ReportUploadForm({
           <Alert className="border-l-4 border-blue-500 bg-blue-50">
             <FileText className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
-              <strong>Catatan:</strong> Pastikan laporan sudah final dan sesuai format sebelum
-              diupload. Laporan yang sudah disubmit tidak dapat diubah kecuali diminta revisi oleh
-              dosen pembimbing.
+              <strong>Catatan:</strong> Pastikan laporan sudah final dan sesuai
+              format sebelum diupload. Laporan yang sudah disubmit tidak dapat
+              diubah kecuali diminta revisi oleh dosen pembimbing.
             </AlertDescription>
           </Alert>
         </div>

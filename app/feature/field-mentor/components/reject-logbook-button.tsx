@@ -54,9 +54,11 @@ export function RejectLogbookButton({
     setIsSubmitting(true);
     try {
       const response = await rejectLogbook(logbookId, rejectionNote.trim());
-      
+
       if (response.success) {
-        toast.success("Logbook ditolak. Mahasiswa akan melihat catatan revisi Anda.");
+        toast.success(
+          "Logbook ditolak. Mahasiswa akan melihat catatan revisi Anda.",
+        );
         setIsOpen(false);
         setRejectionNote("");
         onSuccess?.();
@@ -86,7 +88,8 @@ export function RejectLogbookButton({
             Tolak Logbook
           </DialogTitle>
           <DialogDescription>
-            Berikan catatan revisi untuk mahasiswa agar mereka tahu apa yang perlu diperbaiki.
+            Berikan catatan revisi untuk mahasiswa agar mereka tahu apa yang
+            perlu diperbaiki.
           </DialogDescription>
         </DialogHeader>
 
@@ -101,7 +104,8 @@ export function RejectLogbookButton({
               )}
               {date && (
                 <p>
-                  <span className="font-medium">Tanggal:</span> {new Date(date).toLocaleDateString("id-ID")}
+                  <span className="font-medium">Tanggal:</span>{" "}
+                  {new Date(date).toLocaleDateString("id-ID")}
                 </p>
               )}
               {activity && (
@@ -116,7 +120,8 @@ export function RejectLogbookButton({
           <Alert className="border-amber-200 bg-amber-50">
             <AlertCircle className="h-4 w-4 text-amber-600" />
             <AlertDescription className="text-amber-800">
-              Setelah ditolak, mahasiswa perlu memperbaiki logbook sesuai catatan Anda dan submit ulang.
+              Setelah ditolak, mahasiswa perlu memperbaiki logbook sesuai
+              catatan Anda dan submit ulang.
             </AlertDescription>
           </Alert>
 

@@ -10,7 +10,8 @@ export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 /**
  * Make specific properties optional
  */
-export type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type WithOptional<T, K extends keyof T> = Omit<T, K> &
+  Partial<Pick<T, K>>;
 
 /**
  * Make all properties required and non-nullable
@@ -66,12 +67,23 @@ export type KeysOfType<T, V> = {
 /**
  * Extract string literal type from union
  */
-export type StringLiteral<T> = T extends string ? (string extends T ? never : T) : never;
+export type StringLiteral<T> = T extends string
+  ? string extends T
+    ? never
+    : T
+  : never;
 
 /**
  * Primitive types
  */
-export type Primitive = string | number | boolean | null | undefined | symbol | bigint;
+export type Primitive =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | symbol
+  | bigint;
 
 /**
  * Function with no parameters
@@ -108,13 +120,17 @@ export type Await<T> = T extends Promise<infer U> ? U : T;
 /**
  * Extract function parameters type
  */
-export type Parameters<T extends (...args: any) => any> = T extends (...args: infer P) => any
+export type Parameters<T extends (...args: any) => any> = T extends (
+  ...args: infer P
+) => any
   ? P
   : never;
 
 /**
  * Extract function return type
  */
-export type ReturnType<T extends (...args: any) => any> = T extends (...args: any) => infer R
+export type ReturnType<T extends (...args: any) => any> = T extends (
+  ...args: any
+) => infer R
   ? R
   : any;

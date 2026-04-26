@@ -23,7 +23,7 @@ interface DocumentDropdownProps {
   document: Document;
   members: Member[];
   documents: SubmissionDocument[];
-  currentUserId?: string;
+  currentMahasiswaId?: string;
   submittedRequestKeys?: Set<string>;
   submittedRequestStatusByKey?: Record<
     string,
@@ -44,7 +44,7 @@ function DocumentDropdown({
   document,
   members,
   documents,
-  currentUserId,
+  currentMahasiswaId,
   submittedRequestKeys,
   submittedRequestStatusByKey,
   dosenNameByKey,
@@ -77,7 +77,8 @@ function DocumentDropdown({
   const getDocumentForMember = (memberId: string) => {
     return documents.find(
       (doc) =>
-        doc.documentType === document.type && doc.memberUserId === memberId,
+        doc.documentType === document.type &&
+        doc.memberMahasiswaId === memberId,
     );
   };
 
@@ -251,10 +252,7 @@ function DocumentDropdown({
                     </svg>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent
-                  side="right"
-                  className="w-[22rem] max-w-[90vw] p-3"
-                >
+                <TooltipContent side="right" className="w-88 max-w-[90vw] p-3">
                   <div className="space-y-2">
                     <p className="text-sm font-semibold text-foreground">
                       {activeTooltip.title}
@@ -276,7 +274,7 @@ function DocumentDropdown({
           </AccordionTrigger>
           <AccordionContent className="bg-card px-4 pb-0">
             {members.map((member) => {
-              const isCurrentUser = currentUserId === member.id;
+              const isCurrentUser = currentMahasiswaId === member.id;
               const memberDocument = getDocumentForMember(member.id);
               const isUploaded = !!memberDocument;
               const isSuratKesediaan = document.type === "SURAT_KESEDIAAN";
@@ -385,7 +383,7 @@ function DocumentDropdown({
                                 </TooltipTrigger>
                                 <TooltipContent
                                   side="top"
-                                  className="w-[22rem] max-w-[90vw]"
+                                  className="w-88 max-w-[90vw]"
                                 >
                                   <p className="font-bold text-sm mb-1 text-red-500">
                                     Alasan Penolakan :
@@ -395,7 +393,7 @@ function DocumentDropdown({
                                       {(dosenNameByKey?.[requestKey] ||
                                         "Dosen") + " :"}
                                     </span>
-                                    <span className="font-medium whitespace-normal break-words">
+                                    <span className="font-medium whitespace-normal wrap-break-word">
                                       {rejectionReasonByKey[requestKey]}
                                     </span>
                                   </div>

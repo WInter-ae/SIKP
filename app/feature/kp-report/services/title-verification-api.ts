@@ -53,10 +53,16 @@ const VERIFY_ENDPOINT_BUILDERS = [
 ] as const;
 
 function asRecord(value: unknown): RawObject | null {
-  return typeof value === "object" && value !== null ? (value as RawObject) : null;
+  return typeof value === "object" && value !== null
+    ? (value as RawObject)
+    : null;
 }
 
-function getFirstString(record: RawObject, keys: string[], fallback = ""): string {
+function getFirstString(
+  record: RawObject,
+  keys: string[],
+  fallback = "",
+): string {
   for (const key of keys) {
     const value = record[key];
     if (typeof value === "string" && value.trim()) return value;
@@ -69,13 +75,26 @@ function normalizeStatus(rawStatus: string): TitleSubmissionItem["status"] {
   const status = rawStatus.toLowerCase();
   if (["approved", "disetujui", "approve"].includes(status)) return "APPROVED";
   if (["rejected", "ditolak", "reject"].includes(status)) return "REJECTED";
-  if (["revision", "revisi", "revise", "needs_revision", "revision_needed"].includes(status)) return "REVISION";
+  if (
+    [
+      "revision",
+      "revisi",
+      "revise",
+      "needs_revision",
+      "revision_needed",
+    ].includes(status)
+  )
+    return "REVISION";
   return "PENDING";
 }
 
 function canTryNextEndpoint(message: string): boolean {
   const lower = message.toLowerCase();
-  return lower.includes("404") || lower.includes("not found") || lower.includes("tidak ditemukan");
+  return (
+    lower.includes("404") ||
+    lower.includes("not found") ||
+    lower.includes("tidak ditemukan")
+  );
 }
 
 function getArrayFromResponse(data: unknown): RawObject[] {
@@ -95,28 +114,74 @@ function getArrayFromResponse(data: unknown): RawObject[] {
   return [];
 }
 
-function mapRawToTitleSubmissionItem(raw: RawObject, index: number): TitleSubmissionItem {
+function mapRawToTitleSubmissionItem(
+  raw: RawObject,
+  index: number,
+): TitleSubmissionItem {
   const student = asRecord(raw.student) || asRecord(raw.mahasiswa) || {};
   const team = asRecord(raw.team) || asRecord(raw.tim) || {};
   const proposal = asRecord(raw.proposal) || asRecord(raw.data) || raw;
 
   return {
-    id: getFirstString(raw, ["id", "requestId", "submissionId", "titleSubmissionId"], `title-${index}`),
-    studentId: getFirstString(student, ["id", "studentId", "userId"], getFirstString(raw, ["studentId"], `student-${index}`)),
-    studentName: getFirstString(student, ["name", "nama", "studentName"], "Mahasiswa"),
-    studentNim: getFirstString(student, ["nim", "studentNim", "studentNumber"], "-"),
-    studentEmail: getFirstString(student, ["email", "studentEmail"], "") || null,
+    id: getFirstString(
+      raw,
+      ["id", "requestId", "submissionId", "titleSubmissionId"],
+      `title-${index}`,
+    ),
+    studentId: getFirstString(
+      student,
+      ["id", "studentId", "userId"],
+      getFirstString(raw, ["studentId"], `student-${index}`),
+    ),
+    studentName: getFirstString(
+      student,
+      ["name", "nama", "studentName"],
+      "Mahasiswa",
+    ),
+    studentNim: getFirstString(
+      student,
+      ["nim", "studentNim", "studentNumber"],
+      "-",
+    ),
+    studentEmail:
+      getFirstString(student, ["email", "studentEmail"], "") || null,
     teamName: getFirstString(team, ["name", "nama", "teamName"], "") || null,
-    companyName: getFirstString(raw, ["companyName", "tempatMagang", "company", "instansi"], "") || null,
-    proposedTitle: getFirstString(proposal, ["proposedTitle", "judulLaporan", "title", "judul"], "Judul belum tersedia"),
+    companyName:
+      getFirstString(
+        raw,
+        ["companyName", "tempatMagang", "company", "instansi"],
+        "",
+      ) || null,
+    proposedTitle: getFirstString(
+      proposal,
+      ["proposedTitle", "judulLaporan", "title", "judul"],
+      "Judul belum tersedia",
+    ),
     description: getFirstString(proposal, ["description", "deskripsi"], "-"),
-    status: normalizeStatus(getFirstString(raw, ["status", "verificationStatus", "titleStatus"], "PENDING")),
-    submittedAt: getFirstString(raw, ["submittedAt", "createdAt", "tanggalPengajuan"], new Date().toISOString()),
-    verifiedAt: getFirstString(raw, ["verifiedAt", "tanggalVerifikasi", "updatedAt"], "") || null,
+    status: normalizeStatus(
+      getFirstString(
+        raw,
+        ["status", "verificationStatus", "titleStatus"],
+        "PENDING",
+      ),
+    ),
+    submittedAt: getFirstString(
+      raw,
+      ["submittedAt", "createdAt", "tanggalPengajuan"],
+      new Date().toISOString(),
+    ),
+    verifiedAt:
+      getFirstString(
+        raw,
+        ["verifiedAt", "tanggalVerifikasi", "updatedAt"],
+        "",
+      ) || null,
     verifiedBy: getFirstString(raw, ["verifiedBy", "approvedBy"], "") || null,
     notes: getFirstString(raw, ["notes", "catatan", "feedback"], "") || null,
-    rejectionReason: getFirstString(raw, ["rejectionReason", "rejectedReason"], "") || null,
-    revisedTitle: getFirstString(raw, ["revisedTitle", "judulRevisi"], "") || null,
+    rejectionReason:
+      getFirstString(raw, ["rejectionReason", "rejectedReason"], "") || null,
+    revisedTitle:
+      getFirstString(raw, ["revisedTitle", "judulRevisi"], "") || null,
   };
 }
 
@@ -152,10 +217,10 @@ export function mapTitleSubmissionItemToPengajuanJudul(
       item.status === "APPROVED"
         ? "disetujui"
         : item.status === "REJECTED"
-        ? "ditolak"
-        : item.status === "REVISION"
-        ? "revisi"
-        : "diajukan",
+          ? "ditolak"
+          : item.status === "REVISION"
+            ? "revisi"
+            : "diajukan",
     tanggalPengajuan: item.submittedAt,
     tanggalVerifikasi: item.verifiedAt || undefined,
     catatanDosen: item.notes || item.rejectionReason || undefined,
@@ -180,7 +245,9 @@ async function tryGetList(endpoint: string): Promise<ApiResponse<RawObject[]>> {
   };
 }
 
-export async function getTitleSubmissionItemsForLecturer(): Promise<ApiResponse<TitleSubmissionItem[]>> {
+export async function getTitleSubmissionItemsForLecturer(): Promise<
+  ApiResponse<TitleSubmissionItem[]>
+> {
   let lastMessage = "Endpoint verifikasi judul belum tersedia";
 
   for (const endpoint of LIST_ENDPOINTS) {
@@ -190,7 +257,9 @@ export async function getTitleSubmissionItemsForLecturer(): Promise<ApiResponse<
       return {
         success: true,
         message: response.message || "OK",
-        data: (response.data || []).map((item, index) => mapRawToTitleSubmissionItem(item, index)),
+        data: (response.data || []).map((item, index) =>
+          mapRawToTitleSubmissionItem(item, index),
+        ),
       };
     }
 
@@ -205,7 +274,9 @@ export async function getTitleSubmissionItemsForLecturer(): Promise<ApiResponse<
   };
 }
 
-export async function getTitleSubmissionsForLecturer(): Promise<ApiResponse<PengajuanJudul[]>> {
+export async function getTitleSubmissionsForLecturer(): Promise<
+  ApiResponse<PengajuanJudul[]>
+> {
   const response = await getTitleSubmissionItemsForLecturer();
   if (!response.success) {
     return {
@@ -242,11 +313,33 @@ export async function verifyTitleSubmission(
         message: response.message || "Berhasil memverifikasi judul",
         data: {
           id: getFirstString(verified, ["id", "requestId", "submissionId"], id),
-          status: normalizeStatus(getFirstString(verified, ["status", "verificationStatus"], payload.action)),
-          notes: getFirstString(verified, ["notes", "catatan", "feedback"], payload.notes || "") || null,
-          revisedTitle: getFirstString(verified, ["revisedTitle", "judulRevisi"], payload.revisedTitle || "") || null,
-          verifiedAt: getFirstString(verified, ["verifiedAt", "tanggalVerifikasi", "updatedAt"], "") || null,
-          verifiedBy: getFirstString(verified, ["verifiedBy", "approvedBy"], "") || null,
+          status: normalizeStatus(
+            getFirstString(
+              verified,
+              ["status", "verificationStatus"],
+              payload.action,
+            ),
+          ),
+          notes:
+            getFirstString(
+              verified,
+              ["notes", "catatan", "feedback"],
+              payload.notes || "",
+            ) || null,
+          revisedTitle:
+            getFirstString(
+              verified,
+              ["revisedTitle", "judulRevisi"],
+              payload.revisedTitle || "",
+            ) || null,
+          verifiedAt:
+            getFirstString(
+              verified,
+              ["verifiedAt", "tanggalVerifikasi", "updatedAt"],
+              "",
+            ) || null,
+          verifiedBy:
+            getFirstString(verified, ["verifiedBy", "approvedBy"], "") || null,
         },
       };
     }

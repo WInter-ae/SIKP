@@ -5,11 +5,10 @@ import { AlertCircle, Loader2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
-
 export default function CallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { handleCallback, setCallbackError } = useAuth();;
+  const { handleCallback, setCallbackError } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(true);
   const hasProcessed = useRef(false);

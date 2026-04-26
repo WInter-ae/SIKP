@@ -54,7 +54,7 @@ export interface LogbookStatsResponse {
  * POST /api/mahasiswa/logbook
  */
 export async function createLogbookEntry(
-  data: CreateLogbookData
+  data: CreateLogbookData,
 ): Promise<ApiResponse<LogbookEntry>> {
   return ipost<LogbookEntry>("/api/mahasiswa/logbook", data);
 }
@@ -77,10 +77,12 @@ export async function getLogbookEntries(params?: {
   if (params?.startDate) queryParams.append("startDate", params.startDate);
   if (params?.endDate) queryParams.append("endDate", params.endDate);
   if (params?.status) queryParams.append("status", params.status);
-  
+
   const query = queryParams.toString();
-  const url = query ? `/api/mahasiswa/logbook?${query}` : "/api/mahasiswa/logbook";
-  
+  const url = query
+    ? `/api/mahasiswa/logbook?${query}`
+    : "/api/mahasiswa/logbook";
+
   return iget<LogbookListResponse>(url);
 }
 
@@ -89,7 +91,7 @@ export async function getLogbookEntries(params?: {
  * GET /api/mahasiswa/logbook/:id
  */
 export async function getLogbookEntry(
-  id: string
+  id: string,
 ): Promise<ApiResponse<LogbookEntry>> {
   return iget<LogbookEntry>(`/api/mahasiswa/logbook/${id}`);
 }
@@ -100,7 +102,7 @@ export async function getLogbookEntry(
  */
 export async function updateLogbookEntry(
   id: string,
-  data: UpdateLogbookData
+  data: UpdateLogbookData,
 ): Promise<ApiResponse<LogbookEntry>> {
   return iput<LogbookEntry>(`/api/mahasiswa/logbook/${id}`, data);
 }
@@ -110,7 +112,7 @@ export async function updateLogbookEntry(
  * DELETE /api/mahasiswa/logbook/:id
  */
 export async function deleteLogbookEntry(
-  id: string
+  id: string,
 ): Promise<ApiResponse<void>> {
   return idel<void>(`/api/mahasiswa/logbook/${id}`);
 }
@@ -119,7 +121,9 @@ export async function deleteLogbookEntry(
  * Get logbook statistics
  * GET /api/mahasiswa/logbook/stats
  */
-export async function getLogbookStats(): Promise<ApiResponse<LogbookStatsResponse>> {
+export async function getLogbookStats(): Promise<
+  ApiResponse<LogbookStatsResponse>
+> {
   return iget<LogbookStatsResponse>("/api/mahasiswa/logbook/stats");
 }
 
@@ -129,7 +133,7 @@ export async function getLogbookStats(): Promise<ApiResponse<LogbookStatsRespons
  * Note: According to backend docs, logbooks are auto-submitted when created
  */
 export async function submitLogbookForApproval(
-  id: string
+  id: string,
 ): Promise<ApiResponse<LogbookEntry>> {
   return ipost<LogbookEntry>(`/api/mahasiswa/logbook/${id}/submit`, {});
 }

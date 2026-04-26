@@ -32,7 +32,9 @@ export function GradeSection({
             <div className="text-2xl font-bold text-green-700 dark:text-green-400">
               {totalScore.toFixed(1)}
             </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">dari {maxScore}</div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              dari {maxScore}
+            </div>
           </div>
         </div>
         <Progress value={percentage} className="mt-2" />
@@ -64,7 +66,9 @@ export function GradeSection({
                 >
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600"></div>
-                    <span className="text-gray-700 dark:text-gray-300">{component.name}</span>
+                    <span className="text-gray-700 dark:text-gray-300">
+                      {component.name}
+                    </span>
                     {component.weight && (
                       <span className="text-xs text-gray-500 dark:text-gray-400">
                         (Bobot: {component.weight}%)

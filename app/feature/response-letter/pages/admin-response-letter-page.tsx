@@ -439,11 +439,19 @@ function AdminResponseLetterPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="pl-6 whitespace-nowrap">Tanggal</TableHead>
-                    <TableHead className="whitespace-nowrap">Nama Mahasiswa</TableHead>
-                    <TableHead className="whitespace-nowrap">Perusahaan</TableHead>
+                    <TableHead className="pl-6 whitespace-nowrap">
+                      Tanggal
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Nama Mahasiswa
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Perusahaan
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">Aksi</TableHead>
+                    <TableHead className="pr-6 whitespace-nowrap">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

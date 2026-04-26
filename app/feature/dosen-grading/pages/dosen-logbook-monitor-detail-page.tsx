@@ -23,7 +23,11 @@ import {
 
 function getStatusBadge(status: DosenLogbookMonitorItem["status"]) {
   if (status === "APPROVED") {
-    return <Badge className="bg-green-600 hover:bg-green-600">Disetujui Mentor</Badge>;
+    return (
+      <Badge className="bg-green-600 hover:bg-green-600">
+        Disetujui Mentor
+      </Badge>
+    );
   }
 
   if (status === "REJECTED") {
@@ -55,14 +59,16 @@ async function resolveStudentId(studentAlias: string): Promise<string> {
       item.studentId === studentAlias ||
       item.detailRouteKey === studentAlias ||
       item.nim === studentAlias ||
-      item.id === studentAlias
+      item.id === studentAlias,
   );
   if (exactMatch?.studentId) return exactMatch.studentId;
 
   const byNim = response.data.find((item) => item.nim === studentAlias);
   if (byNim?.studentId) return byNim.studentId;
 
-  const byRouteKey = response.data.find((item) => item.detailRouteKey === studentAlias);
+  const byRouteKey = response.data.find(
+    (item) => item.detailRouteKey === studentAlias,
+  );
   if (byRouteKey?.studentId) return byRouteKey.studentId;
 
   const byLegacyId = response.data.find((item) => item.id === studentAlias);
@@ -74,7 +80,9 @@ async function resolveStudentId(studentAlias: string): Promise<string> {
 export default function DosenLogbookMonitorDetailPage() {
   const { studentId } = useParams();
 
-  const [detail, setDetail] = useState<DosenLogbookMonitorByStudentItem | null>(null);
+  const [detail, setDetail] = useState<DosenLogbookMonitorByStudentItem | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -93,7 +101,8 @@ export default function DosenLogbookMonitorDetailPage() {
 
       try {
         const resolvedStudentId = await resolveStudentId(studentId);
-        const response = await getDosenLogbookMonitorByStudent(resolvedStudentId);
+        const response =
+          await getDosenLogbookMonitorByStudent(resolvedStudentId);
 
         if (!isMounted) return;
 
@@ -103,11 +112,16 @@ export default function DosenLogbookMonitorDetailPage() {
         }
 
         setDetail(null);
-        setErrorMessage(response.message || "Detail logbook mahasiswa tidak tersedia.");
+        setErrorMessage(
+          response.message || "Detail logbook mahasiswa tidak tersedia.",
+        );
       } catch (error) {
         if (!isMounted) return;
 
-        const message = error instanceof Error ? error.message : "Gagal memuat detail logbook.";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat detail logbook.";
         setDetail(null);
         setErrorMessage(message);
       } finally {
@@ -150,7 +164,9 @@ export default function DosenLogbookMonitorDetailPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Detail Monitoring Logbook</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Detail Monitoring Logbook
+          </h1>
           <p className="text-sm text-muted-foreground">
             Tampilan read-only untuk meninjau riwayat logbook mahasiswa.
           </p>
@@ -176,19 +192,27 @@ export default function DosenLogbookMonitorDetailPage() {
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Nama</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Nama
+            </p>
             <p className="font-medium">{detail?.studentName || "-"}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">NIM</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              NIM
+            </p>
             <p className="font-medium">{detail?.nim || "-"}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Perusahaan</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Perusahaan
+            </p>
             <p className="font-medium">{detail?.company || "-"}</p>
           </div>
           <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Email</p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">
+              Email
+            </p>
             <p className="font-medium">{detail?.email || "-"}</p>
           </div>
         </CardContent>
@@ -253,7 +277,10 @@ export default function DosenLogbookMonitorDetailPage() {
               <TableBody>
                 {(detail?.logbooks || []).length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-20 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={6}
+                      className="h-20 text-center text-muted-foreground"
+                    >
                       Tidak ada data logbook untuk mahasiswa ini.
                     </TableCell>
                   </TableRow>
@@ -266,10 +293,14 @@ export default function DosenLogbookMonitorDetailPage() {
                           {formatDate(item.date)}
                         </div>
                       </TableCell>
-                      <TableCell className="max-w-[380px] truncate">{item.activity}</TableCell>
+                      <TableCell className="max-w-[380px] truncate">
+                        {item.activity}
+                      </TableCell>
                       <TableCell>{item.hours ?? "-"}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
-                      <TableCell className="max-w-[320px] truncate">{item.rejectionReason || "-"}</TableCell>
+                      <TableCell className="max-w-[320px] truncate">
+                        {item.rejectionReason || "-"}
+                      </TableCell>
                       <TableCell>{item.mentorName || "-"}</TableCell>
                     </TableRow>
                   ))

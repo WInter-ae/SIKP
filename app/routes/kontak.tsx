@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { 
-  MapPin, 
-  ExternalLink, 
-  Send, 
-  MessageSquare, 
-  Mail, 
+import {
+  MapPin,
+  ExternalLink,
+  Send,
+  MessageSquare,
+  Mail,
   Phone,
   Sparkles,
   ArrowRight,
-  CheckCircle
+  CheckCircle,
 } from "lucide-react";
 
 import { cn } from "~/lib/utils";
@@ -18,7 +18,13 @@ import Footer from "~/components/footer";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
 
 // Types
@@ -51,47 +57,57 @@ const INITIAL_FORM_DATA: FormData = {
 // Components
 function ContactInfo({ icon, title, value, index }: ContactInfoProps) {
   const { isDarkMode } = useTheme();
-  
+
   return (
-    <div 
+    <div
       className="group flex items-start gap-4 p-4 rounded-xl transition-all duration-300 hover:scale-[1.02]"
       style={{ animationDelay: `${index * 100}ms` }}
     >
       {/* Icon with glow */}
       <div className="relative">
-        <div className={cn(
-          "absolute inset-0 rounded-xl blur-lg opacity-0 group-hover:opacity-50 transition-opacity duration-300",
-          isDarkMode ? "bg-primary/50" : "bg-primary/30"
-        )} />
-        <div className={cn(
-          "relative p-4 rounded-xl transition-all duration-300 group-hover:scale-110",
-          isDarkMode 
-            ? "bg-gradient-to-br from-gray-700 to-gray-600" 
-            : "bg-gradient-to-br from-primary/20 to-secondary/20"
-        )}>
+        <div
+          className={cn(
+            "absolute inset-0 rounded-xl blur-lg opacity-0 group-hover:opacity-50 transition-opacity duration-300",
+            isDarkMode ? "bg-primary/50" : "bg-primary/30",
+          )}
+        />
+        <div
+          className={cn(
+            "relative p-4 rounded-xl transition-all duration-300 group-hover:scale-110",
+            isDarkMode
+              ? "bg-gradient-to-br from-gray-700 to-gray-600"
+              : "bg-gradient-to-br from-primary/20 to-secondary/20",
+          )}
+        >
           {icon}
         </div>
       </div>
-      
+
       <div className="flex-1">
-        <p className={cn(
-          "font-semibold text-lg transition-colors duration-300",
-          isDarkMode ? "text-white" : "text-gray-900"
-        )}>
+        <p
+          className={cn(
+            "font-semibold text-lg transition-colors duration-300",
+            isDarkMode ? "text-white" : "text-gray-900",
+          )}
+        >
           {title}
         </p>
-        <p className={cn(
-          "text-sm mt-1",
-          isDarkMode ? "text-gray-400" : "text-gray-600"
-        )}>
+        <p
+          className={cn(
+            "text-sm mt-1",
+            isDarkMode ? "text-gray-400" : "text-gray-600",
+          )}
+        >
           {value}
         </p>
       </div>
-      
-      <ArrowRight className={cn(
-        "h-5 w-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300",
-        isDarkMode ? "text-primary" : "text-primary"
-      )} />
+
+      <ArrowRight
+        className={cn(
+          "h-5 w-5 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300",
+          isDarkMode ? "text-primary" : "text-primary",
+        )}
+      />
     </div>
   );
 }
@@ -109,7 +125,7 @@ function Kontak() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -121,10 +137,10 @@ function Kontak() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // Simulate API call
     console.log("Form submitted:", formData);
-    
+
     // Reset form after submission
     setTimeout(() => {
       setFormData(INITIAL_FORM_DATA);
@@ -141,49 +157,68 @@ function Kontak() {
       <section
         className={cn(
           "py-14 sm:py-24 min-h-[calc(100vh-300px)] transition-colors duration-300 relative overflow-hidden",
-          isDarkMode ? "bg-gray-900" : "bg-gradient-to-br from-gray-50 via-white to-gray-50"
+          isDarkMode
+            ? "bg-gray-900"
+            : "bg-gradient-to-br from-gray-50 via-white to-gray-50",
         )}
       >
         {/* Background decorations */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className={cn(
-            "absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl",
-            isDarkMode ? "bg-primary/5" : "bg-primary/10"
-          )} />
-          <div className={cn(
-            "absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl",
-            isDarkMode ? "bg-secondary/5" : "bg-secondary/10"
-          )} />
-          <div className={cn(
-            "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-30",
-            isDarkMode ? "bg-gradient-to-r from-primary/10 to-secondary/10" : "bg-gradient-to-r from-primary/5 to-secondary/5"
-          )} />
+          <div
+            className={cn(
+              "absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl",
+              isDarkMode ? "bg-primary/5" : "bg-primary/10",
+            )}
+          />
+          <div
+            className={cn(
+              "absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl",
+              isDarkMode ? "bg-secondary/5" : "bg-secondary/10",
+            )}
+          />
+          <div
+            className={cn(
+              "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl opacity-30",
+              isDarkMode
+                ? "bg-gradient-to-r from-primary/10 to-secondary/10"
+                : "bg-gradient-to-r from-primary/5 to-secondary/5",
+            )}
+          />
         </div>
 
         <div className="container mx-auto px-4 relative z-10">
           {/* Page Header */}
           <div className="text-center mb-16">
             {/* Badge */}
-            <div className={cn(
-              "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6",
-              isDarkMode ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary"
-            )}>
+            <div
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6",
+                isDarkMode
+                  ? "bg-primary/20 text-primary"
+                  : "bg-primary/10 text-primary",
+              )}
+            >
               <MessageSquare className="h-4 w-4" />
-              <span className="text-sm font-semibold tracking-wide">Hubungi Kami</span>
+              <span className="text-sm font-semibold tracking-wide">
+                Hubungi Kami
+              </span>
             </div>
-            
+
             <h1
               className={cn(
                 "text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black mb-4 sm:mb-6 tracking-tight",
-                isDarkMode ? "text-white" : "text-gray-900"
+                isDarkMode ? "text-white" : "text-gray-900",
               )}
             >
-              Kami Siap <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Membantu</span>
+              Kami Siap{" "}
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                Membantu
+              </span>
             </h1>
             <p
               className={cn(
                 "text-xl max-w-2xl mx-auto leading-relaxed",
-                isDarkMode ? "text-gray-400" : "text-gray-600"
+                isDarkMode ? "text-gray-400" : "text-gray-600",
               )}
             >
               Punya pertanyaan atau feedback? Kami senang mendengar dari kamu!
@@ -195,35 +230,45 @@ function Kontak() {
             <div className="space-y-8">
               {/* Map Card */}
               <div className="group relative">
-                <div className={cn(
-                  "absolute -inset-1 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500",
-                  "bg-gradient-to-r from-primary via-secondary to-primary"
-                )} />
-                
-                <Card className={cn(
-                  "relative overflow-hidden border-0 rounded-2xl",
-                  isDarkMode 
-                    ? "bg-gray-800/80 backdrop-blur-xl" 
-                    : "bg-white/80 backdrop-blur-xl shadow-xl"
-                )}>
+                <div
+                  className={cn(
+                    "absolute -inset-1 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500",
+                    "bg-gradient-to-r from-primary via-secondary to-primary",
+                  )}
+                />
+
+                <Card
+                  className={cn(
+                    "relative overflow-hidden border-0 rounded-2xl",
+                    isDarkMode
+                      ? "bg-gray-800/80 backdrop-blur-xl"
+                      : "bg-white/80 backdrop-blur-xl shadow-xl",
+                  )}
+                >
                   <CardHeader className="pb-4">
                     <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "p-3 rounded-xl",
-                        isDarkMode 
-                          ? "bg-gradient-to-br from-primary/30 to-secondary/30" 
-                          : "bg-gradient-to-br from-primary/20 to-secondary/20"
-                      )}>
+                      <div
+                        className={cn(
+                          "p-3 rounded-xl",
+                          isDarkMode
+                            ? "bg-gradient-to-br from-primary/30 to-secondary/30"
+                            : "bg-gradient-to-br from-primary/20 to-secondary/20",
+                        )}
+                      >
                         <MapPin className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <CardTitle className={cn(
-                          "text-xl",
-                          isDarkMode ? "text-white" : ""
-                        )}>
+                        <CardTitle
+                          className={cn(
+                            "text-xl",
+                            isDarkMode ? "text-white" : "",
+                          )}
+                        >
                           Lokasi Kami
                         </CardTitle>
-                        <CardDescription className={isDarkMode ? "text-gray-400" : ""}>
+                        <CardDescription
+                          className={isDarkMode ? "text-gray-400" : ""}
+                        >
                           {ORGANIZATION_LOCATION.name}
                         </CardDescription>
                       </div>
@@ -236,7 +281,7 @@ function Kontak() {
                         onClick={() => setShowMap(!showMap)}
                         className={cn(
                           "flex-1 rounded-xl transition-all duration-300",
-                          showMap && "shadow-lg shadow-primary/25"
+                          showMap && "shadow-lg shadow-primary/25",
                         )}
                       >
                         <MapPin className="h-4 w-4 mr-2" />
@@ -256,7 +301,7 @@ function Kontak() {
                       className={cn(
                         "w-full h-64 rounded-xl overflow-hidden relative transition-all duration-500",
                         isDarkMode ? "bg-gray-700/50" : "bg-gray-100",
-                        showMap && "ring-2 ring-primary/50"
+                        showMap && "ring-2 ring-primary/50",
                       )}
                     >
                       {!showMap ? (
@@ -265,15 +310,21 @@ function Kontak() {
                             <div className="absolute inset-0 animate-ping">
                               <MapPin className="h-12 w-12 text-primary/30" />
                             </div>
-                            <MapPin className={cn(
-                              "h-12 w-12 relative",
-                              isDarkMode ? "text-gray-500" : "text-primary/50"
-                            )} />
+                            <MapPin
+                              className={cn(
+                                "h-12 w-12 relative",
+                                isDarkMode
+                                  ? "text-gray-500"
+                                  : "text-primary/50",
+                              )}
+                            />
                           </div>
-                          <span className={cn(
-                            "text-sm font-medium",
-                            isDarkMode ? "text-gray-400" : "text-gray-500"
-                          )}>
+                          <span
+                            className={cn(
+                              "text-sm font-medium",
+                              isDarkMode ? "text-gray-400" : "text-gray-500",
+                            )}
+                          >
                             Klik tombol untuk melihat peta
                           </span>
                         </div>
@@ -297,31 +348,39 @@ function Kontak() {
 
               {/* Contact Info Card */}
               <div className="group relative">
-                <div className={cn(
-                  "absolute -inset-1 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500",
-                  "bg-gradient-to-r from-secondary via-primary to-secondary"
-                )} />
-                
-                <Card className={cn(
-                  "relative border-0 rounded-2xl overflow-hidden",
-                  isDarkMode 
-                    ? "bg-gray-800/80 backdrop-blur-xl" 
-                    : "bg-white/80 backdrop-blur-xl shadow-xl"
-                )}>
+                <div
+                  className={cn(
+                    "absolute -inset-1 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500",
+                    "bg-gradient-to-r from-secondary via-primary to-secondary",
+                  )}
+                />
+
+                <Card
+                  className={cn(
+                    "relative border-0 rounded-2xl overflow-hidden",
+                    isDarkMode
+                      ? "bg-gray-800/80 backdrop-blur-xl"
+                      : "bg-white/80 backdrop-blur-xl shadow-xl",
+                  )}
+                >
                   <CardHeader className="pb-2">
                     <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "p-3 rounded-xl",
-                        isDarkMode 
-                          ? "bg-gradient-to-br from-secondary/30 to-primary/30" 
-                          : "bg-gradient-to-br from-secondary/20 to-primary/20"
-                      )}>
+                      <div
+                        className={cn(
+                          "p-3 rounded-xl",
+                          isDarkMode
+                            ? "bg-gradient-to-br from-secondary/30 to-primary/30"
+                            : "bg-gradient-to-br from-secondary/20 to-primary/20",
+                        )}
+                      >
                         <Sparkles className="h-6 w-6 text-secondary" />
                       </div>
-                      <CardTitle className={cn(
-                        "text-xl",
-                        isDarkMode ? "text-white" : ""
-                      )}>
+                      <CardTitle
+                        className={cn(
+                          "text-xl",
+                          isDarkMode ? "text-white" : "",
+                        )}
+                      >
                         Informasi Kontak
                       </CardTitle>
                     </div>
@@ -352,38 +411,48 @@ function Kontak() {
 
             {/* Contact Form */}
             <div className="group relative">
-              <div className={cn(
-                "absolute -inset-1 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500",
-                "bg-gradient-to-r from-primary via-secondary to-primary"
-              )} />
-              
-              <Card className={cn(
-                "relative border-0 rounded-2xl h-full",
-                isDarkMode 
-                  ? "bg-gray-800/80 backdrop-blur-xl" 
-                  : "bg-white/80 backdrop-blur-xl shadow-xl"
-              )}>
+              <div
+                className={cn(
+                  "absolute -inset-1 rounded-3xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-500",
+                  "bg-gradient-to-r from-primary via-secondary to-primary",
+                )}
+              />
+
+              <Card
+                className={cn(
+                  "relative border-0 rounded-2xl h-full",
+                  isDarkMode
+                    ? "bg-gray-800/80 backdrop-blur-xl"
+                    : "bg-white/80 backdrop-blur-xl shadow-xl",
+                )}
+              >
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "p-4 rounded-2xl",
-                      isDarkMode 
-                        ? "bg-gradient-to-br from-primary/30 to-secondary/30" 
-                        : "bg-gradient-to-br from-primary/20 to-secondary/20"
-                    )}>
+                    <div
+                      className={cn(
+                        "p-4 rounded-2xl",
+                        isDarkMode
+                          ? "bg-gradient-to-br from-primary/30 to-secondary/30"
+                          : "bg-gradient-to-br from-primary/20 to-secondary/20",
+                      )}
+                    >
                       <MessageSquare className="h-8 w-8 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className={cn(
-                        "text-2xl",
-                        isDarkMode ? "text-white" : ""
-                      )}>
+                      <CardTitle
+                        className={cn(
+                          "text-2xl",
+                          isDarkMode ? "text-white" : "",
+                        )}
+                      >
                         Kirim Pesan
                       </CardTitle>
-                      <CardDescription className={cn(
-                        "text-base mt-1",
-                        isDarkMode ? "text-gray-400" : ""
-                      )}>
+                      <CardDescription
+                        className={cn(
+                          "text-base mt-1",
+                          isDarkMode ? "text-gray-400" : "",
+                        )}
+                      >
                         Isi form di bawah untuk mengirim feedback
                       </CardDescription>
                     </div>
@@ -392,11 +461,11 @@ function Kontak() {
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-2">
-                      <Label 
+                      <Label
                         htmlFor="jenisFeedback"
                         className={cn(
                           "text-sm font-semibold",
-                          isDarkMode ? "text-white" : ""
+                          isDarkMode ? "text-white" : "",
                         )}
                       >
                         Jenis Feedback
@@ -409,20 +478,20 @@ function Kontak() {
                         placeholder="Contoh: Saran, Keluhan, Pertanyaan"
                         className={cn(
                           "h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-primary/50",
-                          isDarkMode 
-                            ? "bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400" 
-                            : "bg-gray-50/50 border-gray-200"
+                          isDarkMode
+                            ? "bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
+                            : "bg-gray-50/50 border-gray-200",
                         )}
                         required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label 
+                      <Label
                         htmlFor="detailPesan"
                         className={cn(
                           "text-sm font-semibold",
-                          isDarkMode ? "text-white" : ""
+                          isDarkMode ? "text-white" : "",
                         )}
                       >
                         Detail Pesan
@@ -436,20 +505,20 @@ function Kontak() {
                         rows={5}
                         className={cn(
                           "rounded-xl transition-all duration-300 focus:ring-2 focus:ring-primary/50 resize-none",
-                          isDarkMode 
-                            ? "bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400" 
-                            : "bg-gray-50/50 border-gray-200"
+                          isDarkMode
+                            ? "bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
+                            : "bg-gray-50/50 border-gray-200",
                         )}
                         required
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label 
+                      <Label
                         htmlFor="informasiKontak"
                         className={cn(
                           "text-sm font-semibold",
-                          isDarkMode ? "text-white" : ""
+                          isDarkMode ? "text-white" : "",
                         )}
                       >
                         Informasi Kontak
@@ -462,20 +531,21 @@ function Kontak() {
                         placeholder="Email atau nomor telepon"
                         className={cn(
                           "h-12 rounded-xl transition-all duration-300 focus:ring-2 focus:ring-primary/50",
-                          isDarkMode 
-                            ? "bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400" 
-                            : "bg-gray-50/50 border-gray-200"
+                          isDarkMode
+                            ? "bg-gray-700/50 border-gray-600 text-white placeholder:text-gray-400"
+                            : "bg-gray-50/50 border-gray-200",
                         )}
                         required
                       />
                     </div>
 
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className={cn(
                         "w-full h-14 rounded-xl font-semibold text-lg transition-all duration-300",
                         "bg-gradient-to-r from-primary to-secondary hover:shadow-lg hover:shadow-primary/25 hover:scale-[1.02]",
-                        isSuccess && "bg-gradient-to-r from-green-500 to-emerald-500"
+                        isSuccess &&
+                          "bg-gradient-to-r from-green-500 to-emerald-500",
                       )}
                       disabled={isSubmitting}
                     >

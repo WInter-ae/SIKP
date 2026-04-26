@@ -65,9 +65,9 @@ export interface SuratKesediaanRequestItem {
  * Mencoba beberapa endpoint secara berurutan untuk kompatibilitas backend.
  */
 export async function requestSuratKesediaanApproval(
-  memberUserId: string,
+  memberMahasiswaId: string,
 ): Promise<ApiResponse<{ requestId: string }>> {
-  const body = JSON.stringify({ memberUserId });
+  const body = JSON.stringify({ memberMahasiswaId });
 
   const endpoints = [
     "/api/mahasiswa/surat-kesediaan/requests",
@@ -84,8 +84,7 @@ export async function requestSuratKesediaanApproval(
     if (response.success) return response;
 
     const message = response.message?.toLowerCase() || "";
-    const isNotFound =
-      message.includes("404") || message.includes("not found");
+    const isNotFound = message.includes("404") || message.includes("not found");
     if (!isNotFound) return response;
   }
 
@@ -101,11 +100,11 @@ export async function requestSuratKesediaanApproval(
  */
 export async function reapplySuratKesediaanApproval(
   requestId: string,
-  memberUserId: string,
+  memberMahasiswaId: string,
 ): Promise<ApiResponse<{ requestId: string }>> {
   return sikpClient.put<{ requestId: string }>(
     `/api/mahasiswa/surat-kesediaan/requests/${requestId}/reapply`,
-    { memberUserId },
+    { memberMahasiswaId },
   );
 }
 
@@ -179,8 +178,7 @@ export async function approveBulkDosenSuratKesediaanRequests(
     failed?: Array<{ requestId: string; reason: string }>;
   }>
 > {
-  return sikpClient.put(
-    API_ENDPOINTS.SURAT_KESEDIAAN.DOSEN_APPROVE_BULK,
-    { requestIds },
-  );
+  return sikpClient.put(API_ENDPOINTS.SURAT_KESEDIAAN.DOSEN_APPROVE_BULK, {
+    requestIds,
+  });
 }

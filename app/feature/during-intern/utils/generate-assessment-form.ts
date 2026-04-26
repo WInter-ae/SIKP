@@ -21,7 +21,7 @@ export interface AssessmentFormData {
 }
 
 export async function normalizeSignatureForDocument(
-  signatureDataUrl?: string | null
+  signatureDataUrl?: string | null,
 ): Promise<string | undefined> {
   if (!signatureDataUrl) return undefined;
 
@@ -29,7 +29,8 @@ export async function normalizeSignatureForDocument(
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
       img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error("Gagal memuat gambar tanda tangan."));
+      img.onerror = () =>
+        reject(new Error("Gagal memuat gambar tanda tangan."));
       img.src = signatureDataUrl;
     });
 
@@ -40,7 +41,12 @@ export async function normalizeSignatureForDocument(
     if (!srcCtx) return signatureDataUrl;
 
     srcCtx.drawImage(image, 0, 0);
-    const { data, width, height } = srcCtx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+    const { data, width, height } = srcCtx.getImageData(
+      0,
+      0,
+      srcCanvas.width,
+      srcCanvas.height,
+    );
 
     let minX = width;
     let minY = height;
@@ -85,7 +91,17 @@ export async function normalizeSignatureForDocument(
     const cropCtx = cropCanvas.getContext("2d");
     if (!cropCtx) return signatureDataUrl;
 
-    cropCtx.drawImage(srcCanvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    cropCtx.drawImage(
+      srcCanvas,
+      cropX,
+      cropY,
+      cropW,
+      cropH,
+      0,
+      0,
+      cropW,
+      cropH,
+    );
     return cropCanvas.toDataURL("image/png");
   } catch {
     return signatureDataUrl;
@@ -339,7 +355,9 @@ function buildAssessmentFormHtml(data: AssessmentFormData): string {
 function openPrintFallback(html: string): void {
   const printWindow = window.open("", "_blank");
   if (!printWindow) {
-    throw new Error("Gagal membuka jendela print. Pastikan pop-up tidak diblokir browser.");
+    throw new Error(
+      "Gagal membuka jendela print. Pastikan pop-up tidak diblokir browser.",
+    );
   }
 
   printWindow.document.write(html);
@@ -354,7 +372,9 @@ function openPrintFallback(html: string): void {
   };
 }
 
-export async function generateAssessmentForm(data: AssessmentFormData): Promise<void> {
+export async function generateAssessmentForm(
+  data: AssessmentFormData,
+): Promise<void> {
   const html = buildAssessmentFormHtml(data);
   const html2pdfInstance = (window as Window & { html2pdf?: any }).html2pdf;
 
@@ -369,7 +389,9 @@ export async function generateAssessmentForm(data: AssessmentFormData): Promise<
   wrapper.innerHTML = html;
   document.body.appendChild(wrapper);
 
-  const element = wrapper.querySelector("#assessment-form-root") as HTMLElement | null;
+  const element = wrapper.querySelector(
+    "#assessment-form-root",
+  ) as HTMLElement | null;
   if (!element) {
     document.body.removeChild(wrapper);
     throw new Error("Gagal membangun dokumen penilaian.");
@@ -400,7 +422,9 @@ export function printAssessmentForm(data: AssessmentFormData): void {
   const printWindow = window.open("", "_blank");
 
   if (!printWindow) {
-    throw new Error("Gagal membuka jendela print. Pastikan pop-up tidak diblokir browser.");
+    throw new Error(
+      "Gagal membuka jendela print. Pastikan pop-up tidak diblokir browser.",
+    );
   }
 
   printWindow.document.write(html);

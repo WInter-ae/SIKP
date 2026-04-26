@@ -36,7 +36,10 @@ function formatRelativeDate(dateString?: string) {
   return new Date(dateString).toLocaleDateString("id-ID");
 }
 
-function buildNotifications(mentees: MenteeData[], entriesByStudent: Record<string, LogbookEntry[]>): Notification[] {
+function buildNotifications(
+  mentees: MenteeData[],
+  entriesByStudent: Record<string, LogbookEntry[]>,
+): Notification[] {
   const notifications: Notification[] = [];
 
   mentees.forEach((mentee) => {
@@ -44,8 +47,12 @@ function buildNotifications(mentees: MenteeData[], entriesByStudent: Record<stri
 
     const studentName = mentee.nama || mentee.name || "Mahasiswa";
     const studentEntries = entriesByStudent[mentee.userId] || [];
-    const pendingCount = studentEntries.filter((entry) => entry.status === "PENDING").length;
-    const approvedCount = studentEntries.filter((entry) => entry.status === "APPROVED").length;
+    const pendingCount = studentEntries.filter(
+      (entry) => entry.status === "PENDING",
+    ).length;
+    const approvedCount = studentEntries.filter(
+      (entry) => entry.status === "APPROVED",
+    ).length;
     const latestDate = studentEntries
       .map((entry) => entry.updatedAt || entry.createdAt || entry.date)
       .filter(Boolean)
@@ -100,7 +107,9 @@ function NotificationPage() {
           return;
         }
 
-        const validMentees = menteesRes.data.filter((mentee) => Boolean(mentee.userId));
+        const validMentees = menteesRes.data.filter((mentee) =>
+          Boolean(mentee.userId),
+        );
 
         const entriesByStudent = await Promise.all(
           validMentees.map(async (mentee) => {
@@ -110,7 +119,10 @@ function NotificationPage() {
                 getStudentAssessment(mentee.userId),
               ]);
 
-              const logbookEntries = logbookRes.success && logbookRes.data?.entries ? logbookRes.data.entries : [];
+              const logbookEntries =
+                logbookRes.success && logbookRes.data?.entries
+                  ? logbookRes.data.entries
+                  : [];
               const existingEntries = [...logbookEntries];
 
               if (!assessmentRes.success || !assessmentRes.data) {
@@ -121,8 +133,10 @@ function NotificationPage() {
                   activity: "Penilaian akhir belum diisi",
                   description: "Penilaian akhir belum diisi",
                   status: "PENDING",
-                  createdAt: mentee.internshipEndDate || new Date().toISOString(),
-                  updatedAt: mentee.internshipEndDate || new Date().toISOString(),
+                  createdAt:
+                    mentee.internshipEndDate || new Date().toISOString(),
+                  updatedAt:
+                    mentee.internshipEndDate || new Date().toISOString(),
                 });
               }
 
@@ -130,15 +144,19 @@ function NotificationPage() {
             } catch {
               return [mentee.userId, []] as const;
             }
-          })
+          }),
         );
 
         if (!isMounted) return;
 
         const map = Object.fromEntries(entriesByStudent);
         const built = buildNotifications(validMentees, map).sort((a, b) => {
-          const aTime = a.timestamp.includes("yang lalu") ? Date.now() : new Date(a.timestamp).getTime();
-          const bTime = b.timestamp.includes("yang lalu") ? Date.now() : new Date(b.timestamp).getTime();
+          const aTime = a.timestamp.includes("yang lalu")
+            ? Date.now()
+            : new Date(a.timestamp).getTime();
+          const bTime = b.timestamp.includes("yang lalu")
+            ? Date.now()
+            : new Date(b.timestamp).getTime();
           return bTime - aTime;
         });
 
@@ -146,7 +164,11 @@ function NotificationPage() {
       } catch (error) {
         if (!isMounted) return;
         setNotifications([]);
-        toast.error(error instanceof Error ? error.message : "Gagal memuat notifikasi mentor.");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat notifikasi mentor.",
+        );
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -163,7 +185,7 @@ function NotificationPage() {
 
   const unreadCount = useMemo(
     () => notifications.filter((notification) => !notification.isRead).length,
-    [notifications]
+    [notifications],
   );
 
   return (
@@ -174,18 +196,29 @@ function NotificationPage() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <StatsCard title="Total Notifikasi" value={isLoading ? "..." : notifications.length} />
-        <StatsCard title="Belum Dibaca" value={isLoading ? "..." : unreadCount} />
+        <StatsCard
+          title="Total Notifikasi"
+          value={isLoading ? "..." : notifications.length}
+        />
+        <StatsCard
+          title="Belum Dibaca"
+          value={isLoading ? "..." : unreadCount}
+        />
       </div>
 
       <div className="space-y-4 mb-8">
         {isLoading ? (
           <Card>
-            <CardContent className="py-8 text-muted-foreground">Memuat notifikasi dari backend...</CardContent>
+            <CardContent className="py-8 text-muted-foreground">
+              Memuat notifikasi dari backend...
+            </CardContent>
           </Card>
         ) : (
           notifications.map((notification) => (
-            <NotificationCard key={notification.id} notification={notification} />
+            <NotificationCard
+              key={notification.id}
+              notification={notification}
+            />
           ))
         )}
       </div>

@@ -1,6 +1,20 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
-import { History, FileText, Upload, Eye, CheckCircle, XCircle, RefreshCw } from "lucide-react";
+import {
+  History,
+  FileText,
+  Upload,
+  Eye,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+} from "lucide-react";
 import type { HistoryRevisi } from "../types";
 
 interface RevisiHistoryProps {
@@ -104,7 +118,9 @@ export function RevisiHistory({ history }: RevisiHistoryProps) {
           {history.map((item, index) => (
             <div key={item.id} className="relative flex gap-4 group">
               {/* Timeline Dot */}
-              <div className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 ${getActionColor(item.action)}`}>
+              <div
+                className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 ${getActionColor(item.action)}`}
+              >
                 {getActionIcon(item.action)}
               </div>
 
@@ -116,7 +132,10 @@ export function RevisiHistory({ history }: RevisiHistoryProps) {
                       <p className="font-medium capitalize">
                         {item.action.replace(/_/g, " ")}
                       </p>
-                      <Badge variant="outline" className={`text-xs ${getRoleColor(item.actor.role)}`}>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${getRoleColor(item.actor.role)}`}
+                      >
                         {item.actor.role}
                       </Badge>
                     </div>
@@ -132,7 +151,9 @@ export function RevisiHistory({ history }: RevisiHistoryProps) {
                               <span className="text-muted-foreground capitalize">
                                 {key.replace(/_/g, " ")}:
                               </span>
-                              <span className="font-medium">{String(value)}</span>
+                              <span className="font-medium">
+                                {String(value)}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -140,8 +161,12 @@ export function RevisiHistory({ history }: RevisiHistoryProps) {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">{formatDateTime(item.timestamp)}</p>
-                    <p className="text-xs font-medium mt-1">{item.actor.nama}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateTime(item.timestamp)}
+                    </p>
+                    <p className="text-xs font-medium mt-1">
+                      {item.actor.nama}
+                    </p>
                   </div>
                 </div>
               </div>

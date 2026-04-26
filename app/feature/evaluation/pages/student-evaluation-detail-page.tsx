@@ -48,7 +48,11 @@ export default function StudentEvaluationDetailPage() {
       } catch (error) {
         if (!isMounted) return;
         setEvaluation(null);
-        toast.error(error instanceof Error ? error.message : "Gagal memuat detail penilaian.");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat detail penilaian.",
+        );
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -66,7 +70,9 @@ export default function StudentEvaluationDetailPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <Card className="max-w-md w-full dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="p-6 text-center">
-            <p className="text-gray-600 dark:text-gray-300">Memuat detail penilaian mahasiswa...</p>
+            <p className="text-gray-600 dark:text-gray-300">
+              Memuat detail penilaian mahasiswa...
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -177,7 +183,9 @@ export default function StudentEvaluationDetailPage() {
                   <CardTitle className="text-2xl mb-2 dark:text-gray-100">
                     {student.name}
                   </CardTitle>
-                  <p className="text-gray-600 dark:text-gray-400 mb-3">{student.studentId}</p>
+                  <p className="text-gray-600 dark:text-gray-400 mb-3">
+                    {student.studentId}
+                  </p>
                   <div className="flex gap-2">
                     <Badge
                       className={`${getGradeBadgeColor(summary.grade)} font-bold text-lg px-4 py-1`}
@@ -196,7 +204,9 @@ export default function StudentEvaluationDetailPage() {
                 <div className="text-4xl font-bold text-green-700 dark:text-green-400">
                   {summary.finalScore.toFixed(2)}
                 </div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">Nilai Akhir</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Nilai Akhir
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -209,7 +219,9 @@ export default function StudentEvaluationDetailPage() {
                   <Building2 className="h-4 w-4" />
                   <span>Perusahaan</span>
                 </div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">{student.company}</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">
+                  {student.company}
+                </p>
               </div>
 
               {/* Intern Period */}
@@ -305,7 +317,9 @@ export default function StudentEvaluationDetailPage() {
         {/* Final Summary */}
         <Card className="dark:bg-gray-800 dark:border-gray-700">
           <CardHeader>
-            <CardTitle className="dark:text-gray-100">Rekap Nilai Akhir</CardTitle>
+            <CardTitle className="dark:text-gray-100">
+              Rekap Nilai Akhir
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -341,10 +355,14 @@ export default function StudentEvaluationDetailPage() {
         {notes && (
           <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardHeader>
-              <CardTitle className="dark:text-gray-100">Catatan Penilaian</CardTitle>
+              <CardTitle className="dark:text-gray-100">
+                Catatan Penilaian
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{notes}</p>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {notes}
+              </p>
             </CardContent>
           </Card>
         )}

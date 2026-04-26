@@ -4,7 +4,10 @@ import StudentLogbookDetailPage from "~/feature/field-mentor/pages/student-logbo
 export function meta() {
   return [
     { title: "Detail Logbook Mahasiswa - SIKP" },
-    { name: "description", content: "Detail logbook mahasiswa untuk pembimbing lapangan" },
+    {
+      name: "description",
+      content: "Detail logbook mahasiswa untuk pembimbing lapangan",
+    },
   ];
 }
 

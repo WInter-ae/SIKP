@@ -123,7 +123,7 @@ export async function getMyProfile(): Promise<ApiResponse<StudentProfile>> {
  * GET /api/mahasiswa/:studentId
  */
 export async function getStudentById(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<StudentDetailResponse>> {
   return iget<StudentDetailResponse>(`/api/mahasiswa/${studentId}`);
 }
@@ -133,7 +133,7 @@ export async function getStudentById(
  * GET /api/mahasiswa/nim/:nim
  */
 export async function getStudentByNim(
-  nim: string
+  nim: string,
 ): Promise<ApiResponse<StudentDetailResponse>> {
   return iget<StudentDetailResponse>(`/api/mahasiswa/nim/${nim}`);
 }
@@ -143,7 +143,9 @@ export async function getStudentByNim(
  * PUT /api/mahasiswa/profile
  */
 export async function updateStudentProfile(
-  data: Partial<Omit<StudentProfile, "id" | "userId" | "nim" | "createdAt" | "updatedAt">>
+  data: Partial<
+    Omit<StudentProfile, "id" | "userId" | "nim" | "createdAt" | "updatedAt">
+  >,
 ): Promise<ApiResponse<StudentProfile>> {
   return iput<StudentProfile>("/api/mahasiswa/profile", data);
 }
@@ -185,7 +187,8 @@ interface BackendInternshipResponse {
     pembimbingDosenId: number | null;
     createdAt: string;
   } | null; // ← Can be null if not created yet
-  mentor?: { // ← NEW: Mentor data from backend
+  mentor?: {
+    // ← NEW: Mentor data from backend
     id: number;
     name: string;
     email: string;
@@ -194,7 +197,8 @@ interface BackendInternshipResponse {
     phone?: string;
     signature?: string | null; // ← Base64 Data URI for PDF paraf
   } | null;
-  lecturer?: { // ← OPTIONAL: Lecturer/dosen data
+  lecturer?: {
+    // ← OPTIONAL: Lecturer/dosen data
     id: number;
     name: string;
     email: string;
@@ -207,7 +211,9 @@ interface BackendInternshipResponse {
  * Map backend response to frontend interface
  * Handles field name differences and type conversions
  */
-function mapBackendToFrontend(backendData: BackendInternshipResponse): CompleteInternshipData {
+function mapBackendToFrontend(
+  backendData: BackendInternshipResponse,
+): CompleteInternshipData {
   const { student, submission, internship, mentor, lecturer } = backendData;
 
   // Handle backend variants: companyName/company and companyAddress/address
@@ -215,14 +221,19 @@ function mapBackendToFrontend(backendData: BackendInternshipResponse): CompleteI
   const company =
     (typeof submission.companyName === "string" && submission.companyName) ||
     (typeof submission.company === "string" && submission.company) ||
-    (typeof submissionAny.namaPerusahaan === "string" ? (submissionAny.namaPerusahaan as string) : "") ||
+    (typeof submissionAny.namaPerusahaan === "string"
+      ? (submissionAny.namaPerusahaan as string)
+      : "") ||
     "";
   const address =
-    (typeof submission.companyAddress === "string" && submission.companyAddress) ||
+    (typeof submission.companyAddress === "string" &&
+      submission.companyAddress) ||
     (typeof submission.address === "string" && submission.address) ||
-    (typeof submissionAny.alamatPerusahaan === "string" ? (submissionAny.alamatPerusahaan as string) : "") ||
+    (typeof submissionAny.alamatPerusahaan === "string"
+      ? (submissionAny.alamatPerusahaan as string)
+      : "") ||
     "";
-  
+
   return {
     student: {
       id: student.id.toString(),
@@ -230,7 +241,7 @@ function mapBackendToFrontend(backendData: BackendInternshipResponse): CompleteI
       nim: student.nim,
       name: student.name,
       email: student.email,
-      phone: '', // Backend doesn't return phone in this endpoint
+      phone: "", // Backend doesn't return phone in this endpoint
       prodi: student.prodi,
       fakultas: student.fakultas,
       angkatan: student.angkatan,
@@ -240,19 +251,23 @@ function mapBackendToFrontend(backendData: BackendInternshipResponse): CompleteI
       id: submission.id.toString(),
       teamId: submission.teamId?.toString(),
       company,
-      division: submission.division || '',
+      division: submission.division || "",
       address,
       startDate: submission.startDate,
       endDate: submission.endDate,
       status: submission.status,
     },
     internship: internship
-          ? {
+      ? {
           id: internship.id.toString(),
           studentId: student.id.toString(),
           submissionId: submission.id.toString(),
           teamId: submission.teamId?.toString(),
-          status: internship.status as "PENDING" | "AKTIF" | "SELESAI" | "BATAL",
+          status: internship.status as
+            | "PENDING"
+            | "AKTIF"
+            | "SELESAI"
+            | "BATAL",
           mentorId: internship.pembimbingLapanganId?.toString(),
           dosenPembimbingId: internship.pembimbingDosenId?.toString(),
           createdAt: internship.createdAt,
@@ -260,32 +275,36 @@ function mapBackendToFrontend(backendData: BackendInternshipResponse): CompleteI
         }
       : {
           // Default internship object when backend returns null
-          id: 'pending',
+          id: "pending",
           studentId: student.id.toString(),
           submissionId: submission.id.toString(),
           teamId: submission.teamId?.toString(),
-          status: 'PENDING',
+          status: "PENDING",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
     // ← NEW: Map mentor data (will be populated when backend implements it)
-    mentor: mentor ? {
-      id: mentor.id.toString(),
-      name: mentor.name,
-      email: mentor.email,
-      company: mentor.company,
-      position: mentor.position,
-      phone: mentor.phone,
-      signature: mentor.signature || undefined, // ← Base64 signature for PDF
-    } : undefined,
+    mentor: mentor
+      ? {
+          id: mentor.id.toString(),
+          name: mentor.name,
+          email: mentor.email,
+          company: mentor.company,
+          position: mentor.position,
+          phone: mentor.phone,
+          signature: mentor.signature || undefined, // ← Base64 signature for PDF
+        }
+      : undefined,
     // ← OPTIONAL: Map lecturer data
-    lecturer: lecturer ? {
-      id: lecturer.id.toString(),
-      name: lecturer.name,
-      email: lecturer.email,
-      nip: lecturer.nip,
-      phone: lecturer.phone,
-    } : undefined,
+    lecturer: lecturer
+      ? {
+          id: lecturer.id.toString(),
+          name: lecturer.name,
+          email: lecturer.email,
+          nip: lecturer.nip,
+          phone: lecturer.phone,
+        }
+      : undefined,
   };
 }
 
@@ -298,39 +317,42 @@ function mapBackendToFrontend(backendData: BackendInternshipResponse): CompleteI
  * - Team info (if applicable)
  * - Mentor info (if assigned)
  * - Lecturer info (if assigned)
- * 
+ *
  * GET /api/mahasiswa/internship
- * 
+ *
  * ✅ NOW USING REAL BACKEND ENDPOINT (18 Feb 2026)
  * Fallback mechanism kept for safety but should not be needed.
  */
-export async function getCompleteInternshipData(): Promise<ApiResponse<CompleteInternshipData>> {
-  console.log('📡 Calling API: GET /api/mahasiswa/internship');
-  
+export async function getCompleteInternshipData(): Promise<
+  ApiResponse<CompleteInternshipData>
+> {
+  console.log("📡 Calling API: GET /api/mahasiswa/internship");
+
   try {
     // Call the real backend endpoint
-    const response = await iget<BackendInternshipResponse>("/api/mahasiswa/internship");
-    console.log('✅ Backend response received:', response);
-    
+    const response = await iget<BackendInternshipResponse>(
+      "/api/mahasiswa/internship",
+    );
+    console.log("✅ Backend response received:", response);
+
     if (response.success && response.data) {
       // Map backend structure to frontend interface
       const mappedData = mapBackendToFrontend(response.data);
-      console.log('✅ Data mapped to frontend structure:', mappedData);
-      
+      console.log("✅ Data mapped to frontend structure:", mappedData);
+
       return {
         success: true,
         message: response.message || "Data loaded successfully",
         data: mappedData,
       };
     }
-    
+
     // If response not successful, try fallback
-    console.warn('⚠️ Backend response not successful, using fallback...');
+    console.warn("⚠️ Backend response not successful, using fallback...");
     return await getCompleteInternshipDataFallback();
-    
   } catch (error) {
-    console.error('❌ Error calling backend endpoint:', error);
-    console.warn('⚠️ Falling back to localStorage + submissions API...');
+    console.error("❌ Error calling backend endpoint:", error);
+    console.warn("⚠️ Falling back to localStorage + submissions API...");
     return await getCompleteInternshipDataFallback();
   }
 }
@@ -339,55 +361,62 @@ export async function getCompleteInternshipData(): Promise<ApiResponse<CompleteI
  * Fallback function: Combine data from multiple endpoints
  * Used when /api/mahasiswa/internship is not available
  */
-async function getCompleteInternshipDataFallback(): Promise<ApiResponse<CompleteInternshipData>> {
-  console.log('🔄 Using fallback: Combining multiple endpoints...');
-  
+async function getCompleteInternshipDataFallback(): Promise<
+  ApiResponse<CompleteInternshipData>
+> {
+  console.log("🔄 Using fallback: Combining multiple endpoints...");
+
   try {
     // Try to get profile first
     let studentData = null;
-    
+
     try {
       const profileResponse = await getMyProfile();
-      console.log('📦 Profile response:', profileResponse);
-      
+      console.log("📦 Profile response:", profileResponse);
+
       if (profileResponse.success && profileResponse.data) {
         studentData = profileResponse.data;
       }
     } catch (profileError) {
-      console.warn('⚠️ Profile endpoint failed, using localStorage data');
+      console.warn("⚠️ Profile endpoint failed, using localStorage data");
     }
-    
+
     // If profile endpoint failed, try to get user data from localStorage
     if (!studentData) {
-      const userDataStr = typeof window !== 'undefined' ? localStorage.getItem('user_data') : null;
+      const userDataStr =
+        typeof window !== "undefined"
+          ? localStorage.getItem("user_data")
+          : null;
       if (userDataStr) {
         try {
           const userData = JSON.parse(userDataStr);
-          console.log('📦 User data from localStorage:', userData);
-          
+          console.log("📦 User data from localStorage:", userData);
+
           // Map user data to student structure
           studentData = {
-            id: userData.id || '',
-            userId: userData.id || '',
-            nim: userData.nim || '',
-            name: userData.name || userData.nama || '',
-            email: userData.email || '',
-            phone: userData.phone || '',
-            prodi: userData.prodi || 'Manajemen Informatika',
-            fakultas: userData.fakultas || 'Ilmu Komputer',
-            angkatan: userData.angkatan || '',
+            id: userData.id || "",
+            userId: userData.id || "",
+            nim: userData.nim || "",
+            name: userData.name || userData.nama || "",
+            email: userData.email || "",
+            phone: userData.phone || "",
+            prodi: userData.prodi || "Manajemen Informatika",
+            fakultas: userData.fakultas || "Ilmu Komputer",
+            angkatan: userData.angkatan || "",
             semester: userData.semester || 0,
           };
         } catch (e) {
-          console.error('❌ Failed to parse user data from localStorage');
+          console.error("❌ Failed to parse user data from localStorage");
         }
       }
     }
-    
+
     // Get submissions data
-    const submissionsResponse = await get<any[]>("/api/submissions/my-submissions");
-    console.log('📦 Submissions response:', submissionsResponse);
-    
+    const submissionsResponse = await get<any[]>(
+      "/api/submissions/my-submissions",
+    );
+    console.log("📦 Submissions response:", submissionsResponse);
+
     // If we don't have student data at all, return error
     if (!studentData) {
       return {
@@ -396,27 +425,34 @@ async function getCompleteInternshipDataFallback(): Promise<ApiResponse<Complete
         data: null,
       };
     }
-    
+
     // Find the latest approved submission
     let submission = null;
-    if (submissionsResponse.success && submissionsResponse.data && submissionsResponse.data.length > 0) {
-      const approved = submissionsResponse.data.find((s: any) => s.status === 'APPROVED');
+    if (
+      submissionsResponse.success &&
+      submissionsResponse.data &&
+      submissionsResponse.data.length > 0
+    ) {
+      const approved = submissionsResponse.data.find(
+        (s: any) => s.status === "APPROVED",
+      );
       const submissionToUse = approved || submissionsResponse.data[0];
-      
+
       if (submissionToUse) {
         submission = {
           id: submissionToUse.id,
           teamId: submissionToUse.teamId,
           company: submissionToUse.companyName || submissionToUse.company || "",
           division: submissionToUse.division || "",
-          address: submissionToUse.companyAddress || submissionToUse.address || "",
+          address:
+            submissionToUse.companyAddress || submissionToUse.address || "",
           startDate: submissionToUse.startDate || "",
           endDate: submissionToUse.endDate || "",
           status: submissionToUse.status,
         };
       }
     }
-    
+
     // Build complete data structure
     const completeData: CompleteInternshipData = {
       student: {
@@ -450,17 +486,16 @@ async function getCompleteInternshipDataFallback(): Promise<ApiResponse<Complete
         status: "PENDING",
       },
     };
-    
-    console.log('✅ Fallback data compiled:', completeData);
-    
+
+    console.log("✅ Fallback data compiled:", completeData);
+
     return {
       success: true,
       message: "Data loaded successfully (from fallback + localStorage)",
       data: completeData,
     };
-    
   } catch (error) {
-    console.error('❌ Fallback also failed:', error);
+    console.error("❌ Fallback also failed:", error);
     return {
       success: false,
       message: "Failed to load data from all endpoints",
@@ -482,7 +517,7 @@ export async function getMyInternship(): Promise<ApiResponse<InternshipData>> {
  * GET /api/mahasiswa/:studentId/internship
  */
 export async function getStudentInternship(
-  studentId: string
+  studentId: string,
 ): Promise<ApiResponse<InternshipData>> {
   return iget<InternshipData>(`/api/mahasiswa/${studentId}/internship`);
 }

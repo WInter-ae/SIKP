@@ -67,7 +67,7 @@ function SubmissionAdminPage() {
 
         if (response.success && response.data && response.data.length > 0) {
           console.log("✅ Loaded submissions from backend:", response.data);
-          
+
           // Debug: Log raw documents from backend
           console.log("📦 Backend documents structure:", {
             firstSubmission: response.data[0]?.id,
@@ -82,7 +82,7 @@ function SubmissionAdminPage() {
                 }
               : null,
           });
-          
+
           const submissions = response.data as SubmissionWithTeam[];
           const missingTeamCount = submissions.filter(
             (submission) => !submission.team,
@@ -284,7 +284,8 @@ function SubmissionAdminPage() {
         // ✅ Backend validation errors
         console.error("❌ Backend validation error:", response.message);
         toast.error(
-          response.message || "Gagal menyetujui pengajuan. Periksa validasi dokumen.",
+          response.message ||
+            "Gagal menyetujui pengajuan. Periksa validasi dokumen.",
         );
       }
     } catch (error) {
@@ -338,7 +339,8 @@ function SubmissionAdminPage() {
         // ✅ Backend validation errors
         console.error("❌ Backend validation error:", response.message);
         toast.error(
-          response.message || "Gagal menolak pengajuan. Pastikan validasi terpenuhi.",
+          response.message ||
+            "Gagal menolak pengajuan. Pastikan validasi terpenuhi.",
         );
       }
     } catch (error) {
@@ -349,7 +351,9 @@ function SubmissionAdminPage() {
 
   const getStatusBadge = (
     status: string,
-    pendingLabel: "Menunggu Review" | "Menunggu TTD Wakil Dekan" = "Menunggu Review",
+    pendingLabel:
+      | "Menunggu Review"
+      | "Menunggu TTD Wakil Dekan" = "Menunggu Review",
   ) => {
     switch (status) {
       case "pending":
@@ -469,11 +473,19 @@ function SubmissionAdminPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="pl-6 whitespace-nowrap">Tanggal</TableHead>
-                    <TableHead className="whitespace-nowrap">Nama Mahasiswa</TableHead>
-                    <TableHead className="whitespace-nowrap">Perusahaan</TableHead>
+                    <TableHead className="pl-6 whitespace-nowrap">
+                      Tanggal
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Nama Mahasiswa
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Perusahaan
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">Aksi</TableHead>
+                    <TableHead className="pr-6 whitespace-nowrap">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

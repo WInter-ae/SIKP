@@ -129,7 +129,8 @@ export async function uploadESignature(
     return {
       success: false,
       message:
-        manageUrlResponse.message || "Kelola e-signature hanya tersedia di SSO.",
+        manageUrlResponse.message ||
+        "Kelola e-signature hanya tersedia di SSO.",
       data: null,
     };
   }
@@ -151,7 +152,8 @@ export async function deleteESignature(): Promise<ApiResponse<null>> {
     return {
       success: false,
       message:
-        manageUrlResponse.message || "Kelola e-signature hanya tersedia di SSO.",
+        manageUrlResponse.message ||
+        "Kelola e-signature hanya tersedia di SSO.",
       data: null,
     };
   }

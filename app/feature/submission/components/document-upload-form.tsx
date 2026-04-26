@@ -4,7 +4,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Label } from "~/components/ui/label";
-import { apiClient, API_BASE_URL } from "~/lib/api-client";
+import { apiClient } from "~/lib/api-client";
 import { cn } from "~/lib/utils";
 
 import type { SubmissionDocument } from "../types";
@@ -19,7 +19,7 @@ type DocumentType =
 
 interface DocumentUploadFormProps {
   submissionId: string;
-  memberUserId: string;
+  memberMahasiswaId: string;
   memberName: string;
   documentType: DocumentType;
   onUploadSuccess?: (document: SubmissionDocument) => void;
@@ -28,7 +28,7 @@ interface DocumentUploadFormProps {
 
 export function DocumentUploadForm({
   submissionId,
-  memberUserId,
+  memberMahasiswaId,
   memberName,
   documentType,
   onUploadSuccess,
@@ -48,7 +48,7 @@ export function DocumentUploadForm({
     const MAX_SIZE = 10 * 1024 * 1024;
     if (selectedFile.size > MAX_SIZE) {
       errors.push(
-        `File size exceeds 10MB (current: ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB)`
+        `File size exceeds 10MB (current: ${(selectedFile.size / 1024 / 1024).toFixed(2)}MB)`,
       );
     }
 
@@ -130,7 +130,7 @@ export function DocumentUploadForm({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("documentType", documentType);
-      formData.append("memberUserId", memberUserId);
+      formData.append("memberMahasiswaId", memberMahasiswaId);
 
       // Use apiClient with FormData body
       const response = await apiClient<SubmissionDocument>(
@@ -138,7 +138,7 @@ export function DocumentUploadForm({
         {
           method: "POST",
           body: formData,
-        }
+        },
       );
 
       if (!response.success) {
@@ -158,7 +158,7 @@ export function DocumentUploadForm({
         setSuccess(false);
         // Reset file input
         const fileInput = document.getElementById(
-          `file-upload-${submissionId}-${memberUserId}`
+          `file-upload-${submissionId}-${memberMahasiswaId}`,
         ) as HTMLInputElement;
         if (fileInput) fileInput.value = "";
       }, 2000);
@@ -216,7 +216,7 @@ export function DocumentUploadForm({
                 isDragging
                   ? "border-primary bg-primary/5"
                   : "border-border hover:border-primary/50",
-                file && "border-primary bg-primary/5"
+                file && "border-primary bg-primary/5",
               )}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -225,13 +225,13 @@ export function DocumentUploadForm({
               <input
                 type="file"
                 className="hidden"
-                id={`file-upload-${submissionId}-${memberUserId}`}
+                id={`file-upload-${submissionId}-${memberMahasiswaId}`}
                 onChange={handleFileChange}
                 accept=".pdf,.doc,.docx"
                 disabled={isLoading}
               />
               <label
-                htmlFor={`file-upload-${submissionId}-${memberUserId}`}
+                htmlFor={`file-upload-${submissionId}-${memberMahasiswaId}`}
                 className="cursor-pointer block"
               >
                 <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
@@ -262,7 +262,7 @@ export function DocumentUploadForm({
                 onClick={() => {
                   setFile(null);
                   const fileInput = document.getElementById(
-                    `file-upload-${submissionId}-${memberUserId}`
+                    `file-upload-${submissionId}-${memberMahasiswaId}`,
                   ) as HTMLInputElement;
                   if (fileInput) fileInput.value = "";
                 }}

@@ -29,7 +29,7 @@ export default function LecturerSelectionForm({
   isFromTeam = false,
 }: LecturerSelectionFormProps) {
   const [selectedLecturer, setSelectedLecturer] = useState<string>(
-    currentLecturer?.id || ""
+    currentLecturer?.id || "",
   );
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -67,9 +67,15 @@ export default function LecturerSelectionForm({
               Dosen Pembimbing Saat Ini:
             </Label>
             <div className="mt-2">
-              <p className="font-medium text-foreground">{currentLecturer.nama}</p>
-              <p className="text-sm text-muted-foreground">NIP: {currentLecturer.nip}</p>
-              <p className="text-sm text-muted-foreground">{currentLecturer.email}</p>
+              <p className="font-medium text-foreground">
+                {currentLecturer.nama}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                NIP: {currentLecturer.nip}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {currentLecturer.email}
+              </p>
             </div>
           </div>
         )}
@@ -77,7 +83,9 @@ export default function LecturerSelectionForm({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="dosen">
-              {currentLecturer ? "Ganti Dosen Pembimbing" : "Pilih Dosen Pembimbing"}
+              {currentLecturer
+                ? "Ganti Dosen Pembimbing"
+                : "Pilih Dosen Pembimbing"}
             </Label>
             <Select
               value={selectedLecturer}
@@ -105,7 +113,9 @@ export default function LecturerSelectionForm({
             disabled={disabled || !selectedLecturer}
             className="w-full"
           >
-            {currentLecturer ? "Ubah Dosen Pembimbing" : "Tetapkan Dosen Pembimbing"}
+            {currentLecturer
+              ? "Ubah Dosen Pembimbing"
+              : "Tetapkan Dosen Pembimbing"}
           </Button>
         </form>
       </CardContent>

@@ -52,10 +52,10 @@ export function BeritaAcaraForm({
   // State untuk dosen penguji
   const [dosenPenguji, setDosenPenguji] = useState<DosenPenguji[]>(
     initialData?.dosenPenguji || [
-      { id: 1, nama: "", nip: "", jabatan: "pembimbing" }
-    ]
+      { id: 1, nama: "", nip: "", jabatan: "pembimbing" },
+    ],
   );
-  
+
   // State untuk error dosen penguji
   const [dosenError, setDosenError] = useState<string>("");
 
@@ -83,14 +83,14 @@ export function BeritaAcaraForm({
   const validateDosenPenguji = () => {
     // Reset error
     setDosenError("");
-    
+
     // Cek apakah ada minimal 1 dosen pembimbing
-    const pembimbing = dosenPenguji.find(d => d.jabatan === "pembimbing");
+    const pembimbing = dosenPenguji.find((d) => d.jabatan === "pembimbing");
     if (!pembimbing) {
       setDosenError("Minimal harus ada 1 Dosen Pembimbing");
       return false;
     }
-    
+
     // Cek apakah semua dosen sudah diisi nama dan NIP
     for (const dosen of dosenPenguji) {
       if (!dosen.nama || dosen.nama.trim().length < 3) {
@@ -102,7 +102,7 @@ export function BeritaAcaraForm({
         return false;
       }
     }
-    
+
     return true;
   };
 
@@ -111,31 +111,38 @@ export function BeritaAcaraForm({
     if (!validateDosenPenguji()) {
       return;
     }
-    
+
     onSubmit({ ...data, dosenPenguji });
   };
 
   const handleAddDosen = () => {
-    const newId = Math.max(...dosenPenguji.map(d => d.id), 0) + 1;
-    setDosenPenguji([...dosenPenguji, { 
-      id: newId, 
-      nama: "", 
-      nip: "", 
-      jabatan: "penguji" 
-    }]);
+    const newId = Math.max(...dosenPenguji.map((d) => d.id), 0) + 1;
+    setDosenPenguji([
+      ...dosenPenguji,
+      {
+        id: newId,
+        nama: "",
+        nip: "",
+        jabatan: "penguji",
+      },
+    ]);
   };
 
   const handleRemoveDosen = (id: number) => {
     // Jangan hapus jika hanya ada 1 dosen (pembimbing wajib)
     if (dosenPenguji.length > 1) {
-      setDosenPenguji(dosenPenguji.filter(d => d.id !== id));
+      setDosenPenguji(dosenPenguji.filter((d) => d.id !== id));
     }
   };
 
-  const handleUpdateDosen = (id: number, field: keyof DosenPenguji, value: string) => {
-    setDosenPenguji(dosenPenguji.map(d => 
-      d.id === id ? { ...d, [field]: value } : d
-    ));
+  const handleUpdateDosen = (
+    id: number,
+    field: keyof DosenPenguji,
+    value: string,
+  ) => {
+    setDosenPenguji(
+      dosenPenguji.map((d) => (d.id === id ? { ...d, [field]: value } : d)),
+    );
     // Clear error saat user mulai mengisi
     if (dosenError) {
       setDosenError("");
@@ -188,19 +195,24 @@ export function BeritaAcaraForm({
                 Tambah Dosen Penguji
               </Button>
             </div>
-            
+
             {/* Error Message untuk Dosen */}
             {dosenError && (
               <div className="bg-red-50 border border-red-200 rounded-md p-3">
                 <p className="text-sm text-red-600 font-medium">{dosenError}</p>
               </div>
             )}
-            
+
             {dosenPenguji.map((dosen, index) => (
-              <div key={dosen.id} className="space-y-3 p-4 border rounded-md bg-background">
+              <div
+                key={dosen.id}
+                className="space-y-3 p-4 border rounded-md bg-background"
+              >
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">
-                    {index === 0 ? "Dosen Pembimbing" : `Dosen Penguji ${index}`}
+                    {index === 0
+                      ? "Dosen Pembimbing"
+                      : `Dosen Penguji ${index}`}
                   </Label>
                   {index > 0 && (
                     <Button
@@ -215,30 +227,40 @@ export function BeritaAcaraForm({
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor={`dosen-nama-${dosen.id}`} className="text-sm">
+                    <Label
+                      htmlFor={`dosen-nama-${dosen.id}`}
+                      className="text-sm"
+                    >
                       Nama Lengkap <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id={`dosen-nama-${dosen.id}`}
                       value={dosen.nama}
-                      onChange={(e) => handleUpdateDosen(dosen.id, "nama", e.target.value)}
+                      onChange={(e) =>
+                        handleUpdateDosen(dosen.id, "nama", e.target.value)
+                      }
                       placeholder="Masukkan nama lengkap dosen"
                       className="h-10"
                       required
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor={`dosen-nip-${dosen.id}`} className="text-sm">
+                    <Label
+                      htmlFor={`dosen-nip-${dosen.id}`}
+                      className="text-sm"
+                    >
                       NIP <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id={`dosen-nip-${dosen.id}`}
                       value={dosen.nip}
-                      onChange={(e) => handleUpdateDosen(dosen.id, "nip", e.target.value)}
+                      onChange={(e) =>
+                        handleUpdateDosen(dosen.id, "nip", e.target.value)
+                      }
                       placeholder="Masukkan NIP dosen"
                       className="h-10"
                       required
@@ -251,7 +273,10 @@ export function BeritaAcaraForm({
 
           {/* Tempat Pelaksanaan */}
           <div className="space-y-2">
-            <Label htmlFor="tempatPelaksanaan" className="text-base font-semibold">
+            <Label
+              htmlFor="tempatPelaksanaan"
+              className="text-base font-semibold"
+            >
               Tempat Pelaksanaan <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -278,7 +303,7 @@ export function BeritaAcaraForm({
               {...register("tanggalSidang")}
               className={`h-12 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:hover:opacity-80 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:saturate-100 [&::-webkit-calendar-picker-indicator]:invert-[.45] [&::-webkit-calendar-picker-indicator]:sepia-[1] [&::-webkit-calendar-picker-indicator]:hue-rotate-[90deg] ${errors.tanggalSidang ? "border-red-500" : ""}`}
               style={{
-                colorScheme: 'light'
+                colorScheme: "light",
               }}
             />
             {errors.tanggalSidang && (
@@ -300,7 +325,7 @@ export function BeritaAcaraForm({
                 {...register("waktuMulai")}
                 className={`h-12 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:hover:opacity-80 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:saturate-100 [&::-webkit-calendar-picker-indicator]:invert-[.3] [&::-webkit-calendar-picker-indicator]:sepia-[1] [&::-webkit-calendar-picker-indicator]:hue-rotate-[180deg] ${errors.waktuMulai ? "border-red-500" : ""}`}
                 style={{
-                  colorScheme: 'light'
+                  colorScheme: "light",
                 }}
               />
               {errors.waktuMulai && (
@@ -320,7 +345,7 @@ export function BeritaAcaraForm({
                 {...register("waktuSelesai")}
                 className={`h-12 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:hover:opacity-80 [&::-webkit-calendar-picker-indicator]:w-5 [&::-webkit-calendar-picker-indicator]:h-5 [&::-webkit-calendar-picker-indicator]:filter [&::-webkit-calendar-picker-indicator]:brightness-0 [&::-webkit-calendar-picker-indicator]:saturate-100 [&::-webkit-calendar-picker-indicator]:invert-[.3] [&::-webkit-calendar-picker-indicator]:sepia-[1] [&::-webkit-calendar-picker-indicator]:hue-rotate-[180deg] ${errors.waktuSelesai ? "border-red-500" : ""}`}
                 style={{
-                  colorScheme: 'light'
+                  colorScheme: "light",
                 }}
               />
               {errors.waktuSelesai && (

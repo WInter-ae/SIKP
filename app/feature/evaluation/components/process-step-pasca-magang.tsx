@@ -2,15 +2,15 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { cn } from "~/lib/utils";
-import { 
-  Eye, 
-  FileText, 
-  XCircle, 
-  CheckCircle2, 
+import {
+  Eye,
+  FileText,
+  XCircle,
+  CheckCircle2,
   Clock,
   AlertCircle,
   Upload as UploadIcon,
-  Award
+  Award,
 } from "lucide-react";
 
 interface ProcessStepPascaMagangProps {
@@ -110,14 +110,14 @@ export function ProcessStepPascaMagang({
       className={cn(
         "border-l-4 rounded-lg p-5 mb-4",
         statusStyles.bg,
-        statusStyles.border
+        statusStyles.border,
       )}
     >
       <div className="flex items-start">
         <div
           className={cn(
             "w-12 h-12 rounded-full flex items-center justify-center text-primary-foreground mr-4 flex-shrink-0",
-            statusStyles.iconBg
+            statusStyles.iconBg,
           )}
         >
           {statusStyles.iconComponent}
@@ -148,33 +148,41 @@ export function ProcessStepPascaMagang({
                 <Award className="h-5 w-5 text-primary" />
                 <h4 className="font-semibold">Rincian Nilai Kerja Praktik</h4>
               </div>
-              
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span className="text-sm">Pembimbing Lapangan</span>
-                    <span className={`font-bold text-lg ${getNilaiColor(nilaiData.nilaiPembimbingLapangan)}`}>
+                    <span
+                      className={`font-bold text-lg ${getNilaiColor(nilaiData.nilaiPembimbingLapangan)}`}
+                    >
                       {nilaiData.nilaiPembimbingLapangan || "-"}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span className="text-sm">Laporan KP</span>
-                    <span className={`font-bold text-lg ${getNilaiColor(nilaiData.nilaiLaporanKP)}`}>
+                    <span
+                      className={`font-bold text-lg ${getNilaiColor(nilaiData.nilaiLaporanKP)}`}
+                    >
                       {nilaiData.nilaiLaporanKP || "-"}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span className="text-sm">Presentasi</span>
-                    <span className={`font-bold text-lg ${getNilaiColor(nilaiData.nilaiPresentasi)}`}>
+                    <span
+                      className={`font-bold text-lg ${getNilaiColor(nilaiData.nilaiPresentasi)}`}
+                    >
                       {nilaiData.nilaiPresentasi || "-"}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
                     <span className="text-sm">Sidang</span>
-                    <span className={`font-bold text-lg ${getNilaiColor(nilaiData.nilaiSidang)}`}>
+                    <span
+                      className={`font-bold text-lg ${getNilaiColor(nilaiData.nilaiSidang)}`}
+                    >
                       {nilaiData.nilaiSidang || "-"}
                     </span>
                   </div>
@@ -184,7 +192,9 @@ export function ProcessStepPascaMagang({
                   <div className="flex justify-between items-center p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
                     <span className="font-semibold">Nilai Akhir</span>
                     <div className="text-right">
-                      <span className={`font-bold text-2xl ${getNilaiColor(nilaiData.nilaiAkhir)}`}>
+                      <span
+                        className={`font-bold text-2xl ${getNilaiColor(nilaiData.nilaiAkhir)}`}
+                      >
                         {nilaiData.nilaiAkhir?.toFixed(2) || "-"}
                       </span>
                       {nilaiData.nilaiHuruf && (
@@ -197,35 +207,40 @@ export function ProcessStepPascaMagang({
 
                   {nilaiData.tanggalPenilaian && (
                     <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Tanggal Penilaian</p>
-                      <p className="font-medium">{formatDateTime(nilaiData.tanggalPenilaian)}</p>
+                      <p className="text-sm text-muted-foreground mb-1">
+                        Tanggal Penilaian
+                      </p>
+                      <p className="font-medium">
+                        {formatDateTime(nilaiData.tanggalPenilaian)}
+                      </p>
                     </div>
                   )}
 
-                  {nilaiData.dosenPenguji && nilaiData.dosenPenguji.length > 0 && (
-                    <div className="p-3 bg-muted rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-2">Dosen Penguji</p>
-                      <div className="space-y-2">
-                        {nilaiData.dosenPenguji.map((dosen, index) => (
-                          <div key={index} className="text-sm">
-                            <p className="font-medium">{dosen.nama}</p>
-                            <p className="text-xs text-muted-foreground">NIP: {dosen.nip}</p>
-                          </div>
-                        ))}
+                  {nilaiData.dosenPenguji &&
+                    nilaiData.dosenPenguji.length > 0 && (
+                      <div className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Dosen Penguji
+                        </p>
+                        <div className="space-y-2">
+                          {nilaiData.dosenPenguji.map((dosen, index) => (
+                            <div key={index} className="text-sm">
+                              <p className="font-medium">{dosen.nama}</p>
+                              <p className="text-xs text-muted-foreground">
+                                NIP: {dosen.nip}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
                 </div>
               </div>
             </div>
           )}
 
           {onAction && actionText && (
-            <Button
-              onClick={onAction}
-              size="sm"
-              className="mt-3"
-            >
+            <Button onClick={onAction} size="sm" className="mt-3">
               {actionText}
             </Button>
           )}

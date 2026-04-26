@@ -192,7 +192,12 @@ export async function apiClient<T>(
     }
 
     // Runtime type validation via Zod (if schema is provided and request succeeded)
-    if (response.ok && schema && data && "data" in (data as Record<string, unknown>)) {
+    if (
+      response.ok &&
+      schema &&
+      data &&
+      "data" in (data as Record<string, unknown>)
+    ) {
       const payloadData = (data as ApiResponse<T>).data;
       if (payloadData !== null && payloadData !== undefined) {
         const validation = schema.safeParse(payloadData);
@@ -200,7 +205,8 @@ export async function apiClient<T>(
           console.error("❌ Zod Validation Error:", validation.error);
           return {
             success: false,
-            message: "Format data dari server tidak sesuai tipe yang diharapkan (Runtime Validation Failed)",
+            message:
+              "Format data dari server tidak sesuai tipe yang diharapkan (Runtime Validation Failed)",
             data: null,
           };
         }
@@ -265,7 +271,11 @@ export function createApiClient(baseUrl: string) {
      * @param params   - optional query string params
      * @param schema   - opsional Zod schema validasi response
      */
-    get<T>(endpoint: string, params?: Record<string, string>, schema?: z.ZodType<T>) {
+    get<T>(
+      endpoint: string,
+      params?: Record<string, string>,
+      schema?: z.ZodType<T>,
+    ) {
       const url = params
         ? `${endpoint}?${new URLSearchParams(params).toString()}`
         : endpoint;
@@ -286,7 +296,7 @@ export function createApiClient(baseUrl: string) {
           body: body !== undefined ? JSON.stringify(body) : undefined,
         },
         baseUrl,
-        schema
+        schema,
       );
     },
 
@@ -301,7 +311,7 @@ export function createApiClient(baseUrl: string) {
           body: body !== undefined ? JSON.stringify(body) : undefined,
         },
         baseUrl,
-        schema
+        schema,
       );
     },
 
@@ -316,7 +326,7 @@ export function createApiClient(baseUrl: string) {
           body: body !== undefined ? JSON.stringify(body) : undefined,
         },
         baseUrl,
-        schema
+        schema,
       );
     },
 
@@ -338,14 +348,18 @@ export function createApiClient(baseUrl: string) {
         endpoint,
         { method: "POST", body: formData },
         baseUrl,
-        schema
+        schema,
       );
     },
 
     /**
      * Custom fetch — untuk kasus yang membutuhkan opsi RequestInit penuh
      */
-    request<T>(endpoint: string, options: RequestInit = {}, schema?: z.ZodType<T>) {
+    request<T>(
+      endpoint: string,
+      options: RequestInit = {},
+      schema?: z.ZodType<T>,
+    ) {
       return apiClient<T>(endpoint, options, baseUrl, schema);
     },
   };

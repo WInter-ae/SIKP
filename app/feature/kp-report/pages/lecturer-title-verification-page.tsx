@@ -58,14 +58,14 @@ function LecturerTitleVerificationPage() {
     id: string,
     status: "disetujui" | "ditolak" | "revisi",
     catatan: string,
-    revisedTitle?: string
+    revisedTitle?: string,
   ) => {
     const action =
       status === "disetujui"
         ? "APPROVE"
         : status === "ditolak"
-        ? "REJECT"
-        : "REVISE";
+          ? "REJECT"
+          : "REVISE";
 
     verifyTitleSubmission(id, {
       action,
@@ -76,8 +76,7 @@ function LecturerTitleVerificationPage() {
         setNotification({
           title: "Gagal Verifikasi",
           description:
-            response.message ||
-            "Gagal mengirim verifikasi judul ke backend.",
+            response.message || "Gagal mengirim verifikasi judul ke backend.",
           variant: "destructive",
         });
         setTimeout(() => setNotification(null), 4000);
@@ -114,7 +113,7 @@ function LecturerTitleVerificationPage() {
             };
           }
           return p;
-        })
+        }),
       );
 
       const notificationMap = {
@@ -142,10 +141,10 @@ function LecturerTitleVerificationPage() {
 
   // Filter pengajuan berdasarkan status
   const pengajuanMenunggu = pengajuanList.filter(
-    (p) => p.status === "diajukan"
+    (p) => p.status === "diajukan",
   );
   const pengajuanDisetujui = pengajuanList.filter(
-    (p) => p.status === "disetujui"
+    (p) => p.status === "disetujui",
   );
   const pengajuanRevisi = pengajuanList.filter((p) => p.status === "revisi");
   const pengajuanDitolak = pengajuanList.filter((p) => p.status === "ditolak");
@@ -153,14 +152,14 @@ function LecturerTitleVerificationPage() {
   // Filter berdasarkan search query
   const filterBySearch = (list: PengajuanJudul[]) => {
     if (!searchQuery.trim()) return list;
-    
+
     const query = searchQuery.toLowerCase();
     return list.filter(
       (p) =>
         p.mahasiswa.nama.toLowerCase().includes(query) ||
         p.mahasiswa.nim.toLowerCase().includes(query) ||
         p.data.judulLaporan.toLowerCase().includes(query) ||
-        p.data.tempatMagang.toLowerCase().includes(query)
+        p.data.tempatMagang.toLowerCase().includes(query),
     );
   };
 
@@ -202,7 +201,10 @@ function LecturerTitleVerificationPage() {
 
         {/* Notification */}
         {notification && (
-          <Alert variant={notification.variant || "default"} className="border-l-4 border-l-primary">
+          <Alert
+            variant={notification.variant || "default"}
+            className="border-l-4 border-l-primary"
+          >
             <Info className="h-4 w-4" />
             <AlertDescription>
               <strong>{notification.title}</strong>
@@ -230,7 +232,8 @@ function LecturerTitleVerificationPage() {
                     Judul harus spesifik, tidak terlalu umum atau terlalu teknis
                   </li>
                   <li>
-                    Perhatikan penggunaan teknologi dan metodologi yang disebutkan
+                    Perhatikan penggunaan teknologi dan metodologi yang
+                    disebutkan
                   </li>
                   <li>
                     Berikan feedback konstruktif untuk membantu mahasiswa
@@ -259,8 +262,12 @@ function LecturerTitleVerificationPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Menunggu</p>
-                  <p className="text-xl sm:text-2xl font-bold">{pengajuanMenunggu.length}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+                    Menunggu
+                  </p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {pengajuanMenunggu.length}
+                  </p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-yellow-100 dark:bg-yellow-900">
                   <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-300" />
@@ -272,8 +279,12 @@ function LecturerTitleVerificationPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Disetujui</p>
-                  <p className="text-xl sm:text-2xl font-bold">{pengajuanDisetujui.length}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+                    Disetujui
+                  </p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {pengajuanDisetujui.length}
+                  </p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-green-100 dark:bg-green-900">
                   <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-300" />
@@ -285,8 +296,12 @@ function LecturerTitleVerificationPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Revisi</p>
-                  <p className="text-xl sm:text-2xl font-bold">{pengajuanRevisi.length}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+                    Revisi
+                  </p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {pengajuanRevisi.length}
+                  </p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-blue-100 dark:bg-blue-900">
                   <FileEdit className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-300" />
@@ -298,8 +313,12 @@ function LecturerTitleVerificationPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">Ditolak</p>
-                  <p className="text-xl sm:text-2xl font-bold">{pengajuanDitolak.length}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">
+                    Ditolak
+                  </p>
+                  <p className="text-xl sm:text-2xl font-bold">
+                    {pengajuanDitolak.length}
+                  </p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-red-100 dark:bg-red-900">
                   <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-300" />
@@ -310,9 +329,16 @@ function LecturerTitleVerificationPage() {
         </div>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-4"
+        >
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
-            <TabsTrigger value="menunggu" className="relative text-xs sm:text-sm">
+            <TabsTrigger
+              value="menunggu"
+              className="relative text-xs sm:text-sm"
+            >
               <span className="hidden sm:inline">Menunggu Verifikasi</span>
               <span className="sm:hidden">Menunggu</span>
               {pengajuanMenunggu.length > 0 && (
@@ -409,7 +435,10 @@ function LecturerTitleVerificationPage() {
                   Menampilkan {filteredDisetujui.length} pengajuan
                 </div>
                 {filteredDisetujui.map((pengajuan) => (
-                  <TitleSubmissionCard key={pengajuan.id} pengajuan={pengajuan} />
+                  <TitleSubmissionCard
+                    key={pengajuan.id}
+                    pengajuan={pengajuan}
+                  />
                 ))}
               </>
             )}
@@ -438,7 +467,10 @@ function LecturerTitleVerificationPage() {
                   Menampilkan {filteredRevisi.length} pengajuan
                 </div>
                 {filteredRevisi.map((pengajuan) => (
-                  <TitleSubmissionCard key={pengajuan.id} pengajuan={pengajuan} />
+                  <TitleSubmissionCard
+                    key={pengajuan.id}
+                    pengajuan={pengajuan}
+                  />
                 ))}
               </>
             )}
@@ -467,7 +499,10 @@ function LecturerTitleVerificationPage() {
                   Menampilkan {filteredDitolak.length} pengajuan
                 </div>
                 {filteredDitolak.map((pengajuan) => (
-                  <TitleSubmissionCard key={pengajuan.id} pengajuan={pengajuan} />
+                  <TitleSubmissionCard
+                    key={pengajuan.id}
+                    pengajuan={pengajuan}
+                  />
                 ))}
               </>
             )}

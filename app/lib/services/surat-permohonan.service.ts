@@ -76,10 +76,10 @@ export interface SuratPermohonanRequestItem {
  * Mencoba beberapa endpoint untuk kompatibilitas backend.
  */
 export async function requestSuratPermohonanApproval(
-  memberUserId: string,
+  memberMahasiswaId: string,
   mahasiswaEsignatureUrl?: string,
 ): Promise<ApiResponse<{ requestId: string }>> {
-  const bodyPayload: Record<string, string> = { memberUserId };
+  const bodyPayload: Record<string, string> = { memberMahasiswaId };
   if (mahasiswaEsignatureUrl) {
     bodyPayload.mahasiswaEsignatureUrl = mahasiswaEsignatureUrl;
     bodyPayload.mahasiswa_esignature_url = mahasiswaEsignatureUrl;
@@ -125,10 +125,10 @@ export async function requestSuratPermohonanApproval(
  */
 export async function reapplySuratPermohonanApproval(
   requestId: string,
-  memberUserId: string,
+  memberMahasiswaId: string,
   mahasiswaEsignatureUrl?: string,
 ): Promise<ApiResponse<{ requestId: string }>> {
-  const bodyPayload: Record<string, string> = { requestId, memberUserId };
+  const bodyPayload: Record<string, string> = { requestId, memberMahasiswaId };
   if (mahasiswaEsignatureUrl) {
     bodyPayload.mahasiswaEsignatureUrl = mahasiswaEsignatureUrl;
     bodyPayload.mahasiswa_esignature_url = mahasiswaEsignatureUrl;

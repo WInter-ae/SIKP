@@ -32,10 +32,10 @@ export function StudentGradingCard({
 
   // Check if student has been graded by checking localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const nilaiKey = `nilai-kp-${student.studentId}`;
       const savedNilai = localStorage.getItem(nilaiKey);
-      
+
       if (savedNilai) {
         try {
           const nilaiData = JSON.parse(savedNilai);
@@ -44,7 +44,7 @@ export function StudentGradingCard({
             setHasGraded(true);
           }
         } catch (e) {
-          console.error('Error parsing nilai data:', e);
+          console.error("Error parsing nilai data:", e);
         }
       }
     }
@@ -78,7 +78,7 @@ export function StudentGradingCard({
 
   const getRevisionBadge = () => {
     if (!revisionStatus) return null;
-    
+
     switch (revisionStatus) {
       case "sudah-direvisi":
         return (
@@ -138,8 +138,12 @@ export function StudentGradingCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg leading-tight dark:text-gray-100">{student.name}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{student.studentId}</p>
+                <h3 className="font-semibold text-lg leading-tight dark:text-gray-100">
+                  {student.name}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  {student.studentId}
+                </p>
               </div>
               <div className="flex flex-col gap-1.5 items-end flex-shrink-0">
                 {getStatusBadge()}
@@ -157,8 +161,12 @@ export function StudentGradingCard({
             <Building2 className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Perusahaan</p>
-            <p className="font-semibold text-gray-900 dark:text-gray-100">{student.company}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Perusahaan
+            </p>
+            <p className="font-semibold text-gray-900 dark:text-gray-100">
+              {student.company}
+            </p>
           </div>
         </div>
 
@@ -168,13 +176,18 @@ export function StudentGradingCard({
             <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Periode Magang</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Periode Magang
+            </p>
             <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
-              {new Date(student.internPeriod.start).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}{" "}
+              {new Date(student.internPeriod.start).toLocaleDateString(
+                "id-ID",
+                {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                },
+              )}{" "}
               -{" "}
               {new Date(student.internPeriod.end).toLocaleDateString("id-ID", {
                 day: "numeric",
@@ -191,8 +204,12 @@ export function StudentGradingCard({
             <User className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Pembimbing Lapangan</p>
-            <p className="font-semibold text-gray-900 dark:text-gray-100">{student.fieldSupervisor}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              Pembimbing Lapangan
+            </p>
+            <p className="font-semibold text-gray-900 dark:text-gray-100">
+              {student.fieldSupervisor}
+            </p>
           </div>
         </div>
 

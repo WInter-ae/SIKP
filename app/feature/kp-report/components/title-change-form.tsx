@@ -56,7 +56,8 @@ export default function TitleChangeForm({
           <Alert className="mb-4 border-l-4 border-red-500 bg-red-50">
             <XCircle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
-              Perubahan judul ditolak. Silakan ajukan kembali dengan alasan yang lebih jelas
+              Perubahan judul ditolak. Silakan ajukan kembali dengan alasan yang
+              lebih jelas
             </AlertDescription>
           </Alert>
         );
@@ -72,7 +73,7 @@ export default function TitleChangeForm({
       </CardHeader>
       <CardContent>
         {getStatusBadge()}
-        
+
         <Alert className="mb-4 border-l-4 border-orange-500 bg-orange-50">
           <AlertTriangle className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-800">
@@ -81,8 +82,12 @@ export default function TitleChangeForm({
         </Alert>
 
         <div className="mb-4 p-4 bg-muted rounded-lg">
-          <Label className="text-sm font-medium text-muted-foreground">Judul Saat Ini:</Label>
-          <p className="mt-1 text-foreground">{currentTitle || "Belum ada judul"}</p>
+          <Label className="text-sm font-medium text-muted-foreground">
+            Judul Saat Ini:
+          </Label>
+          <p className="mt-1 text-foreground">
+            {currentTitle || "Belum ada judul"}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,7 +122,12 @@ export default function TitleChangeForm({
 
           <Button
             type="submit"
-            disabled={disabled || changeStatus === "diajukan" || !judulBaru.trim() || !alasan.trim()}
+            disabled={
+              disabled ||
+              changeStatus === "diajukan" ||
+              !judulBaru.trim() ||
+              !alasan.trim()
+            }
             className="w-full"
           >
             Ajukan Perubahan Judul

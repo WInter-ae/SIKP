@@ -48,16 +48,21 @@ function AdminLogbookResetPage() {
   const [periodEndDate, setPeriodEndDate] = useState("");
 
   const todayISO = new Date().toISOString().slice(0, 10);
-  const isActivationReady = Boolean(activationDate) && activationDate <= todayISO;
+  const isActivationReady =
+    Boolean(activationDate) && activationDate <= todayISO;
   const isPeriodEnded = Boolean(periodEndDate) && periodEndDate <= todayISO;
 
   useEffect(() => {
-    const savedActivationDate = localStorage.getItem("admin_logbook_reset_activation_date");
+    const savedActivationDate = localStorage.getItem(
+      "admin_logbook_reset_activation_date",
+    );
     if (savedActivationDate) {
       setActivationDate(savedActivationDate);
     }
 
-    const savedPeriodEndDate = localStorage.getItem("admin_logbook_reset_period_end_date");
+    const savedPeriodEndDate = localStorage.getItem(
+      "admin_logbook_reset_period_end_date",
+    );
     if (savedPeriodEndDate) {
       setPeriodEndDate(savedPeriodEndDate);
     }
@@ -65,7 +70,10 @@ function AdminLogbookResetPage() {
 
   useEffect(() => {
     if (activationDate) {
-      localStorage.setItem("admin_logbook_reset_activation_date", activationDate);
+      localStorage.setItem(
+        "admin_logbook_reset_activation_date",
+        activationDate,
+      );
     } else {
       localStorage.removeItem("admin_logbook_reset_activation_date");
     }
@@ -73,7 +81,10 @@ function AdminLogbookResetPage() {
 
   useEffect(() => {
     if (periodEndDate) {
-      localStorage.setItem("admin_logbook_reset_period_end_date", periodEndDate);
+      localStorage.setItem(
+        "admin_logbook_reset_period_end_date",
+        periodEndDate,
+      );
     } else {
       localStorage.removeItem("admin_logbook_reset_period_end_date");
     }
@@ -84,7 +95,11 @@ function AdminLogbookResetPage() {
 
     try {
       const status =
-        confirmMode === "period-end" ? undefined : filter === "ALL" ? undefined : filter;
+        confirmMode === "period-end"
+          ? undefined
+          : filter === "ALL"
+            ? undefined
+            : filter;
       const response = await resetGlobalLogbook(status);
 
       if (!response.success) {
@@ -97,30 +112,42 @@ function AdminLogbookResetPage() {
       toast.success(`Reset logbook berhasil. Total terhapus: ${deletedCount}`);
       setConfirmOpen(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal mereset logbook.");
+      toast.error(
+        error instanceof Error ? error.message : "Gagal mereset logbook.",
+      );
     } finally {
       setIsSubmitting(false);
     }
   }
 
   const filterLabel =
-    filter === "ALL" ? "SEMUA STATUS" : filter === "PENDING" ? "PENDING" : filter === "APPROVED" ? "APPROVED" : "REJECTED";
+    filter === "ALL"
+      ? "SEMUA STATUS"
+      : filter === "PENDING"
+        ? "PENDING"
+        : filter === "APPROVED"
+          ? "APPROVED"
+          : "REJECTED";
   const confirmTargetLabel =
     confirmMode === "period-end" ? "SEMUA STATUS (AKHIR PERIODE)" : filterLabel;
 
   return (
     <div className="space-y-6 p-6">
       <div className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight">Reset Global Logbook</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Reset Global Logbook
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Fitur admin untuk membersihkan logbook secara massal berdasarkan status.
+          Fitur admin untuk membersihkan logbook secara massal berdasarkan
+          status.
         </p>
       </div>
 
       <Alert className="border-amber-500/40 bg-amber-50 dark:bg-amber-950/20">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
         <AlertDescription className="text-amber-800 dark:text-amber-300">
-          Tindakan ini bersifat destruktif dan tidak bisa dibatalkan. Pastikan Anda memilih filter dengan benar.
+          Tindakan ini bersifat destruktif dan tidak bisa dibatalkan. Pastikan
+          Anda memilih filter dengan benar.
         </AlertDescription>
       </Alert>
 
@@ -128,7 +155,8 @@ function AdminLogbookResetPage() {
         <CardHeader>
           <CardTitle>Tanggal Aktivasi Tombol Reset</CardTitle>
           <CardDescription>
-            Tombol reset hanya aktif saat tanggal hari ini mencapai tanggal aktivasi.
+            Tombol reset hanya aktif saat tanggal hari ini mencapai tanggal
+            aktivasi.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -165,7 +193,10 @@ function AdminLogbookResetPage() {
         <CardContent className="space-y-4">
           <div className="max-w-sm space-y-2">
             <p className="text-sm font-medium">Filter Status</p>
-            <Select value={filter} onValueChange={(value) => setFilter(value as FilterOption)}>
+            <Select
+              value={filter}
+              onValueChange={(value) => setFilter(value as FilterOption)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Pilih status logbook" />
               </SelectTrigger>
@@ -179,7 +210,8 @@ function AdminLogbookResetPage() {
           </div>
 
           <div className="rounded-md border bg-muted/20 p-3 text-sm">
-            Target reset saat ini: <span className="font-semibold">{filterLabel}</span>
+            Target reset saat ini:{" "}
+            <span className="font-semibold">{filterLabel}</span>
           </div>
 
           <Button
@@ -240,7 +272,9 @@ function AdminLogbookResetPage() {
         <Card>
           <CardHeader>
             <CardTitle>Hasil Reset Terakhir</CardTitle>
-            <CardDescription>Ringkasan respons endpoint reset logbook.</CardDescription>
+            <CardDescription>
+              Ringkasan respons endpoint reset logbook.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>
@@ -249,7 +283,9 @@ function AdminLogbookResetPage() {
             </p>
             <p>
               <span className="text-muted-foreground">Status Filter:</span>{" "}
-              <span className="font-semibold">{lastResult.statusFilter || "ALL"}</span>
+              <span className="font-semibold">
+                {lastResult.statusFilter || "ALL"}
+              </span>
             </p>
           </CardContent>
         </Card>
@@ -260,8 +296,9 @@ function AdminLogbookResetPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Konfirmasi Reset Logbook</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda akan menghapus data logbook dengan filter <strong>{confirmTargetLabel}</strong>.
-              Tindakan ini tidak dapat dibatalkan.
+              Anda akan menghapus data logbook dengan filter{" "}
+              <strong>{confirmTargetLabel}</strong>. Tindakan ini tidak dapat
+              dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

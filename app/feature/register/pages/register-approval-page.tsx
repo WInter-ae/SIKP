@@ -1,6 +1,6 @@
 // 1. External dependencies
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   CheckCircle,
   XCircle,
@@ -11,7 +11,7 @@ import {
   Filter,
   Building2,
   Phone,
-} from "lucide-react"
+} from "lucide-react";
 
 // 2. Components
 import {
@@ -20,8 +20,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card"
-import { Button } from "~/components/ui/button"
+} from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
 import {
   Table,
   TableBody,
@@ -29,9 +29,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "~/components/ui/table"
-import { Badge } from "~/components/ui/badge"
-import { Textarea } from "~/components/ui/textarea"
+} from "~/components/ui/table";
+import { Badge } from "~/components/ui/badge";
+import { Textarea } from "~/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,15 +41,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog"
+} from "~/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select"
-import { Input } from "~/components/ui/input"
+} from "~/components/ui/select";
+import { Input } from "~/components/ui/input";
 import {
   approveMentorEmailChangeRequest,
   approveMentorRegistrationRequest,
@@ -57,80 +57,84 @@ import {
   getMentorRegistrationRequests,
   rejectMentorEmailChangeRequest,
   rejectMentorRegistrationRequest,
-} from "../services/register-approval-api"
+} from "../services/register-approval-api";
 
 // Tipe data untuk pendaftaran dosen
 import type {
   PendingEmailChangeRequest,
   PendingRegistration,
-} from "../services/register-approval-api"
+} from "../services/register-approval-api";
 
 export default function RegisterApprovalPage() {
-  const [registrations, setRegistrations] = useState<PendingRegistration[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [registrations, setRegistrations] = useState<PendingRegistration[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [selectedRegistration, setSelectedRegistration] =
-    useState<PendingRegistration | null>(null)
-  const [dialogOpen, setDialogOpen] = useState(false)
+    useState<PendingRegistration | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogAction, setDialogAction] = useState<"approve" | "reject">(
-    "approve"
-  )
-  const [rejectReason, setRejectReason] = useState<string>("")
-  const [filterStatus, setFilterStatus] = useState<string>("all")
-  const [searchQuery, setSearchQuery] = useState<string>("")
-  const [emailChangeRequests, setEmailChangeRequests] = useState<PendingEmailChangeRequest[]>([])
+    "approve",
+  );
+  const [rejectReason, setRejectReason] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [emailChangeRequests, setEmailChangeRequests] = useState<
+    PendingEmailChangeRequest[]
+  >([]);
 
   useEffect(() => {
     const loadInitialData = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
 
       const [registrationResponse, emailChangeResponse] = await Promise.all([
         getMentorRegistrationRequests(),
         getMentorEmailChangeRequests(),
-      ])
+      ]);
 
       if (registrationResponse.success && registrationResponse.data) {
-        setRegistrations(registrationResponse.data)
+        setRegistrations(registrationResponse.data);
       } else {
-        setRegistrations([])
+        setRegistrations([]);
         toast.info(
           registrationResponse.message ||
-            "Endpoint pengajuan pembimbing belum tersedia."
-        )
+            "Endpoint pengajuan pembimbing belum tersedia.",
+        );
       }
 
       if (emailChangeResponse.success && emailChangeResponse.data) {
-        setEmailChangeRequests(emailChangeResponse.data)
+        setEmailChangeRequests(emailChangeResponse.data);
       } else {
-        setEmailChangeRequests([])
+        setEmailChangeRequests([]);
       }
 
-      setIsLoading(false)
-    }
+      setIsLoading(false);
+    };
 
-    loadInitialData()
-  }, [])
+    loadInitialData();
+  }, []);
 
   // Handler untuk membuka dialog konfirmasi
   const handleOpenDialog = (
     registration: PendingRegistration,
-    action: "approve" | "reject"
+    action: "approve" | "reject",
   ) => {
-    setSelectedRegistration(registration)
-    setDialogAction(action)
-    setRejectReason("")
-    setDialogOpen(true)
-  }
+    setSelectedRegistration(registration);
+    setDialogAction(action);
+    setRejectReason("");
+    setDialogOpen(true);
+  };
 
   // Handler untuk approve pendaftaran
   const handleApprove = async () => {
-    if (!selectedRegistration) return
+    if (!selectedRegistration) return;
 
     try {
-      const response = await approveMentorRegistrationRequest(selectedRegistration.id)
+      const response = await approveMentorRegistrationRequest(
+        selectedRegistration.id,
+      );
       if (!response.success) {
-        toast.error(response.message || "Gagal menyetujui pendaftaran")
-        return
+        toast.error(response.message || "Gagal menyetujui pendaftaran");
+        return;
       }
 
       // Update state
@@ -138,34 +142,37 @@ export default function RegisterApprovalPage() {
         registrations.map((reg) =>
           reg.id === selectedRegistration.id
             ? { ...reg, status: "approved" }
-            : reg
-        )
-      )
+            : reg,
+        ),
+      );
 
-      setDialogOpen(false)
-      setSelectedRegistration(null)
-      toast.success("Pendaftaran pembimbing disetujui")
+      setDialogOpen(false);
+      setSelectedRegistration(null);
+      toast.success("Pendaftaran pembimbing disetujui");
     } catch (error) {
-      console.error("Error approving registration:", error)
-      toast.error("Terjadi kesalahan saat menyetujui pendaftaran")
+      console.error("Error approving registration:", error);
+      toast.error("Terjadi kesalahan saat menyetujui pendaftaran");
     }
-  }
+  };
 
   // Handler untuk reject pendaftaran
   const handleReject = async () => {
-    if (!selectedRegistration) return
+    if (!selectedRegistration) return;
 
-    const reason = rejectReason.trim()
+    const reason = rejectReason.trim();
     if (!reason) {
-      toast.error("Alasan penolakan harus diisi")
-      return
+      toast.error("Alasan penolakan harus diisi");
+      return;
     }
 
     try {
-      const response = await rejectMentorRegistrationRequest(selectedRegistration.id, reason)
+      const response = await rejectMentorRegistrationRequest(
+        selectedRegistration.id,
+        reason,
+      );
       if (!response.success) {
-        toast.error(response.message || "Gagal menolak pendaftaran")
-        return
+        toast.error(response.message || "Gagal menolak pendaftaran");
+        return;
       }
 
       // Update state
@@ -173,46 +180,45 @@ export default function RegisterApprovalPage() {
         registrations.map((reg) =>
           reg.id === selectedRegistration.id
             ? { ...reg, status: "rejected" }
-            : reg
-        )
-      )
+            : reg,
+        ),
+      );
 
-      setDialogOpen(false)
-      setSelectedRegistration(null)
-      setRejectReason("")
-      toast.success("Pendaftaran pembimbing ditolak")
+      setDialogOpen(false);
+      setSelectedRegistration(null);
+      setRejectReason("");
+      toast.success("Pendaftaran pembimbing ditolak");
     } catch (error) {
-      console.error("Error rejecting registration:", error)
-      toast.error("Terjadi kesalahan saat menolak pendaftaran")
+      console.error("Error rejecting registration:", error);
+      toast.error("Terjadi kesalahan saat menolak pendaftaran");
     }
-  }
+  };
 
   // Format tanggal
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+    const date = new Date(dateString);
     return date.toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    })
-  }
+    });
+  };
 
   // Filter registrations berdasarkan status dan search query
   const filteredRegistrations = registrations.filter((reg) => {
-    const matchesStatus =
-      filterStatus === "all" || reg.status === filterStatus
+    const matchesStatus = filterStatus === "all" || reg.status === filterStatus;
     const matchesSearch =
       searchQuery === "" ||
       reg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       reg.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       reg.nip?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       reg.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      reg.studentName.toLowerCase().includes(searchQuery.toLowerCase())
+      reg.studentName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesStatus && matchesSearch
-  })
+    return matchesStatus && matchesSearch;
+  });
 
   // Hitung statistik
   const stats = {
@@ -220,32 +226,39 @@ export default function RegisterApprovalPage() {
     approved: registrations.filter((r) => r.status === "approved").length,
     rejected: registrations.filter((r) => r.status === "rejected").length,
     total: registrations.length,
-  }
+  };
 
   const emailRequestStats = {
     pending: emailChangeRequests.filter((r) => r.status === "pending").length,
     approved: emailChangeRequests.filter((r) => r.status === "approved").length,
     rejected: emailChangeRequests.filter((r) => r.status === "rejected").length,
     total: emailChangeRequests.length,
-  }
+  };
 
   const processEmailChangeRequest = (
     requestId: string,
-    action: "approve" | "reject"
+    action: "approve" | "reject",
   ) => {
     const run = async () => {
       if (action === "reject") {
-        const reason = window.prompt("Masukkan alasan penolakan perubahan email")
+        const reason = window.prompt(
+          "Masukkan alasan penolakan perubahan email",
+        );
         if (!reason || !reason.trim()) {
-          toast.error("Alasan penolakan harus diisi")
-          return
+          toast.error("Alasan penolakan harus diisi");
+          return;
         }
 
-        const response = await rejectMentorEmailChangeRequest(requestId, reason.trim())
+        const response = await rejectMentorEmailChangeRequest(
+          requestId,
+          reason.trim(),
+        );
 
         if (!response.success) {
-          toast.error(response.message || "Gagal memproses pengajuan perubahan email")
-          return
+          toast.error(
+            response.message || "Gagal memproses pengajuan perubahan email",
+          );
+          return;
         }
 
         setEmailChangeRequests((prev) =>
@@ -255,19 +268,21 @@ export default function RegisterApprovalPage() {
                   ...item,
                   status: "rejected",
                 }
-              : item
-          )
-        )
+              : item,
+          ),
+        );
 
-        toast.success("Pengajuan perubahan email ditolak.")
-        return
+        toast.success("Pengajuan perubahan email ditolak.");
+        return;
       }
 
-      const response = await approveMentorEmailChangeRequest(requestId)
+      const response = await approveMentorEmailChangeRequest(requestId);
 
       if (!response.success) {
-        toast.error(response.message || "Gagal memproses pengajuan perubahan email")
-        return
+        toast.error(
+          response.message || "Gagal memproses pengajuan perubahan email",
+        );
+        return;
       }
 
       setEmailChangeRequests((prev) =>
@@ -277,19 +292,19 @@ export default function RegisterApprovalPage() {
                 ...item,
                 status: action === "approve" ? "approved" : "rejected",
               }
-            : item
-        )
-      )
+            : item,
+        ),
+      );
 
       toast.success(
         action === "approve"
           ? "Pengajuan perubahan email disetujui."
-          : "Pengajuan perubahan email ditolak."
-      )
-    }
+          : "Pengajuan perubahan email ditolak.",
+      );
+    };
 
-    run()
-  }
+    run();
+  };
 
   if (isLoading) {
     return (
@@ -300,7 +315,7 @@ export default function RegisterApprovalPage() {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -369,7 +384,8 @@ export default function RegisterApprovalPage() {
         <CardHeader>
           <CardTitle>Daftar Pendaftaran</CardTitle>
           <CardDescription>
-            Tinjau dan proses pendaftaran pembimbing lapangan yang di-request mahasiswa
+            Tinjau dan proses pendaftaran pembimbing lapangan yang di-request
+            mahasiswa
           </CardDescription>
 
           {/* Filters */}
@@ -431,7 +447,9 @@ export default function RegisterApprovalPage() {
                     <TableRow key={registration.id}>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="font-medium">{registration.name}</span>
+                          <span className="font-medium">
+                            {registration.name}
+                          </span>
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Mail className="h-3 w-3" />
                             {registration.email}
@@ -445,7 +463,9 @@ export default function RegisterApprovalPage() {
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Building2 className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{registration.company}</span>
+                          <span className="text-sm">
+                            {registration.company}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -538,7 +558,8 @@ export default function RegisterApprovalPage() {
         <CardHeader>
           <CardTitle>Pengajuan Perubahan Email Mentor</CardTitle>
           <CardDescription>
-            Setujui atau tolak pengajuan perubahan email dari pembimbing lapangan.
+            Setujui atau tolak pengajuan perubahan email dari pembimbing
+            lapangan.
           </CardDescription>
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-1">
             <span>Total: {emailRequestStats.total}</span>
@@ -570,7 +591,9 @@ export default function RegisterApprovalPage() {
                 <TableBody>
                   {emailChangeRequests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell className="font-medium">{request.mentorName}</TableCell>
+                      <TableCell className="font-medium">
+                        {request.mentorName}
+                      </TableCell>
                       <TableCell>{request.currentEmail}</TableCell>
                       <TableCell>{request.requestedEmail}</TableCell>
                       <TableCell>{request.reason}</TableCell>
@@ -648,8 +671,9 @@ export default function RegisterApprovalPage() {
               {dialogAction === "approve" ? (
                 <>
                   Anda akan menyetujui pendaftaran{" "}
-                  <strong>{selectedRegistration?.name}</strong>. Pembimbing lapangan ini akan
-                  terkait ke mahasiswa pemohon setelah proses persetujuan selesai.
+                  <strong>{selectedRegistration?.name}</strong>. Pembimbing
+                  lapangan ini akan terkait ke mahasiswa pemohon setelah proses
+                  persetujuan selesai.
                 </>
               ) : (
                 <>
@@ -691,5 +715,5 @@ export default function RegisterApprovalPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

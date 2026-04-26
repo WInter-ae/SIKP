@@ -49,7 +49,7 @@ const getDefaultUser = (pathname: string): User => {
 export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
   const location = useLocation();
   const { user: contextUser } = useUser();
-  const { effectiveRoles, activeIdentity } = useIdentity();;
+  const { effectiveRoles, activeIdentity } = useIdentity();
 
   const defaultUser = React.useMemo(
     () => getDefaultUser(location.pathname),

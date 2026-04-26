@@ -14,6 +14,7 @@ Modul lengkap untuk pengelolaan penilaian mahasiswa Kerja Praktik (KP) oleh dose
 ## ✨ Fitur Utama
 
 ### 1. **Workflow Revisi Dokumen** ⭐ NEW
+
 - ✅ Review dan approve/reject dokumen mahasiswa
 - ✅ Opsi "Tidak Ada Revisi" untuk skip review
 - ✅ Progress tracking dengan visual indicator
@@ -21,12 +22,14 @@ Modul lengkap untuk pengelolaan penilaian mahasiswa Kerja Praktik (KP) oleh dose
 - ✅ Tab system: Menunggu / Disetujui / Ditolak
 
 ### 2. **Form Penilaian**
+
 - ✅ Penilaian berdasar 4 komponen dengan bobot
 - ✅ Real-time calculation nilai total
 - ✅ Catatan penilaian opsional
 - ✅ Lock mechanism sampai revisi disetujui ⭐ NEW
 
 ### 3. **Manajemen Mahasiswa**
+
 - ✅ Daftar mahasiswa bimbingan
 - ✅ Filter berdasar status penilaian dan revisi ⭐ NEW
 - ✅ Search by nama atau NIM
@@ -34,6 +37,7 @@ Modul lengkap untuk pengelolaan penilaian mahasiswa Kerja Praktik (KP) oleh dose
 - ✅ Badge status visual
 
 ### 4. **Detail dan History**
+
 - ✅ View detail penilaian lengkap
 - ✅ Edit penilaian yang sudah ada
 - ✅ History revisi dokumen
@@ -42,16 +46,19 @@ Modul lengkap untuk pengelolaan penilaian mahasiswa Kerja Praktik (KP) oleh dose
 ## 🔄 Workflow
 
 ### Opsi A: Tidak Ada Revisi (Langsung Nilai)
+
 ```
 Dosen Buka Page → Toggle "Tidak Ada Revisi" → Tab Penilaian Terbuka → Isi Form → Submit ✅
 ```
 
 ### Opsi B: Review Revisi Dulu
+
 ```
 Dosen Buka Page → Review Dokumen → Approve Semua ✅ → Tab Penilaian Terbuka → Isi Form → Submit ✅
 ```
 
 ### Opsi C: Ada Revisi yang Ditolak
+
 ```
 Dosen Buka Page → Review Dokumen → Reject ❌ → Mahasiswa Revisi → Upload Ulang → Dosen Approve ✅ → Penilaian Terbuka
 ```
@@ -91,6 +98,7 @@ app/feature/dosen-grading/
 ## 🧩 Komponen Utama
 
 ### 1. RevisionReviewSection ⭐ NEW
+
 Komponen untuk review dan approval revisi dokumen.
 
 ```typescript
@@ -103,6 +111,7 @@ Komponen untuk review dan approval revisi dokumen.
 ```
 
 **Features**:
+
 - Toggle "Tidak Ada Revisi Diperlukan"
 - Tab Menunggu/Disetujui/Ditolak
 - Approve/Reject per dokumen
@@ -110,9 +119,11 @@ Komponen untuk review dan approval revisi dokumen.
 - Dialog alasan penolakan
 
 ### 2. GiveGradePage ⭐ UPDATED
+
 Halaman utama untuk penilaian dengan revisi workflow.
 
 **Features**:
+
 - Tab Revisi dan Penilaian
 - Lock mechanism pada tab Penilaian
 - Auto-switch tab saat approved
@@ -120,18 +131,22 @@ Halaman utama untuk penilaian dengan revisi workflow.
 - Integration dengan GradingForm
 
 ### 3. GradingForm
+
 Form penilaian dengan 4 komponen berbobot.
 
 **Komponen**:
+
 1. Kesesuaian Laporan dengan Format (30%)
 2. Penguasaan Materi KP (30%)
 3. Analisis dan Perancangan (30%)
 4. Sikap dan Etika (10%)
 
 ### 4. StudentGradingCard ⭐ UPDATED
+
 Card mahasiswa dengan status badge.
 
 **Status Badges**:
+
 - 🟢 Sudah Dinilai / Sudah Direvisi
 - 🔵 Proses Revisi
 - 🟠 Belum Dinilai / Belum Direvisi
@@ -139,6 +154,7 @@ Card mahasiswa dengan status badge.
 ## 🚀 Cara Penggunaan
 
 ### Setup Routes
+
 ```typescript
 // routes/_sidebar.dosen.penilaian._index.tsx
 import DosenGradingListPage from "~/feature/dosen-grading/pages/dosen-grading-list-page";
@@ -156,6 +172,7 @@ export default function DosenPenilaianGiveGradeRoute() {
 ### Workflow untuk Dosen (End User)
 
 #### Scenario 1: Tidak Perlu Revisi
+
 1. Buka halaman penilaian mahasiswa
 2. **Aktifkan toggle** "Tidak Ada Revisi Diperlukan"
 3. Tab Penilaian otomatis terbuka
@@ -163,6 +180,7 @@ export default function DosenPenilaianGiveGradeRoute() {
 5. Klik "Simpan Penilaian" ✅
 
 #### Scenario 2: Review Revisi
+
 1. Buka halaman penilaian mahasiswa
 2. Tab **Revisi** aktif (default)
 3. Review dokumen (Laporan KP & Slide Presentasi):
@@ -209,21 +227,19 @@ Response: { success: boolean, grade: GradeData }
 const handleApproveRevision = async (revisionId: string) => {
   try {
     const response = await fetch(`/api/revisions/${revisionId}/approve`, {
-      method: 'POST'
+      method: "POST",
     });
-    
+
     if (response.ok) {
-      setRevisions(prev => 
-        prev.map(rev => 
-          rev.id === revisionId 
-            ? { ...rev, status: 'approved' } 
-            : rev
-        )
+      setRevisions((prev) =>
+        prev.map((rev) =>
+          rev.id === revisionId ? { ...rev, status: "approved" } : rev,
+        ),
       );
-      toast.success('Revisi berhasil disetujui');
+      toast.success("Revisi berhasil disetujui");
     }
   } catch (error) {
-    toast.error('Gagal menyetujui revisi');
+    toast.error("Gagal menyetujui revisi");
   }
 };
 ```
@@ -239,6 +255,7 @@ Untuk informasi lebih detail, lihat dokumentasi berikut:
 ## 🧪 Testing
 
 ### Test Scenarios
+
 - ✅ Toggle "no revision" membuka tab penilaian
 - ✅ Approve semua dokumen membuka tab penilaian
 - ✅ Reject dokumen keeps tab locked
@@ -247,24 +264,27 @@ Untuk informasi lebih detail, lihat dokumentasi berikut:
 - ✅ Badge status muncul di card list
 
 ### Mock Data
+
 File `data/mock-students.ts` menyediakan 4 mahasiswa dengan berbagai status:
 
-| Student | Status Nilai | Status Revisi |
-|---------|--------------|---------------|
-| std-001 | ✅ Graded | ✅ Sudah Direvisi |
-| std-002 | ✅ Graded | ✅ Sudah Direvisi |
-| std-003 | ⏳ Not Graded | 🔵 Proses |
+| Student | Status Nilai  | Status Revisi     |
+| ------- | ------------- | ----------------- |
+| std-001 | ✅ Graded     | ✅ Sudah Direvisi |
+| std-002 | ✅ Graded     | ✅ Sudah Direvisi |
+| std-003 | ⏳ Not Graded | 🔵 Proses         |
 | std-004 | ⏳ Not Graded | 🟠 Belum Direvisi |
 
 ## 🔐 Security & Permissions
 
 ### Role-Based Access
+
 ```typescript
 // Only dosen can access grading
-router.use('/dosen/penilaian', requireDosenRole);
+router.use("/dosen/penilaian", requireDosenRole);
 ```
 
 ### Data Validation
+
 - Reject reason minimal 10 karakter
 - Grade scores antara 0-100
 - All revisions must be approved before grading (unless no revision mode)
@@ -272,11 +292,13 @@ router.use('/dosen/penilaian', requireDosenRole);
 ## 🐛 Known Limitations
 
 ### Current
+
 - 📝 Mock data belum terintegrasi database
 - 📝 File preview belum diimplementasi
 - 📝 Email notifications belum ada
 
 ### Future Improvements
+
 - [ ] Real-time notifications
 - [ ] Bulk approve/reject
 - [ ] PDF preview in-app
@@ -287,6 +309,7 @@ router.use('/dosen/penilaian', requireDosenRole);
 ## 📞 Support
 
 Untuk pertanyaan atau issue terkait fitur ini, silakan hubungi:
+
 - 📧 Email: dev@sikp.ac.id
 - 💬 Slack: #sikp-dev
 - 📝 GitHub Issues: [Create Issue](https://github.com/sikp/issues/new)
@@ -294,6 +317,7 @@ Untuk pertanyaan atau issue terkait fitur ini, silakan hubungi:
 ## ✨ What's New in v2.0
 
 ### Revision Workflow System
+
 - ✅ Complete revision approval workflow
 - ✅ No revision mode for direct grading
 - ✅ Progress tracking and visual feedback
@@ -303,6 +327,7 @@ Untuk pertanyaan atau issue terkait fitur ini, silakan hubungi:
 - ✅ Status badges in list view
 
 ### UI/UX Improvements
+
 - ✅ Clear visual indicators
 - ✅ Better status alerts
 - ✅ Improved card layout

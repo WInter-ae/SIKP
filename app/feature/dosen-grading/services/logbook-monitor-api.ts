@@ -42,10 +42,16 @@ const DETAIL_ENDPOINT_BUILDERS = [
 ] as const;
 
 function asRecord(value: unknown): RawObject | null {
-  return typeof value === "object" && value !== null ? (value as RawObject) : null;
+  return typeof value === "object" && value !== null
+    ? (value as RawObject)
+    : null;
 }
 
-function getFirstString(record: RawObject, keys: string[], fallback = ""): string {
+function getFirstString(
+  record: RawObject,
+  keys: string[],
+  fallback = "",
+): string {
   for (const key of keys) {
     const value = record[key];
     if (typeof value === "string" && value.trim()) return value;
@@ -63,7 +69,11 @@ function normalizeStatus(value: string): "PENDING" | "APPROVED" | "REJECTED" {
 
 function shouldTryNextEndpoint(message: string): boolean {
   const lower = message.toLowerCase();
-  return lower.includes("404") || lower.includes("not found") || lower.includes("tidak ditemukan");
+  return (
+    lower.includes("404") ||
+    lower.includes("not found") ||
+    lower.includes("tidak ditemukan")
+  );
 }
 
 function getArrayPayload(data: unknown): RawObject[] {
@@ -94,17 +104,29 @@ function getDetailRouteKey(raw: RawObject, student: RawObject): string {
   );
 }
 
-function mapRawDetail(data: unknown, fallbackStudentId: string): DosenLogbookMonitorByStudentItem {
+function mapRawDetail(
+  data: unknown,
+  fallbackStudentId: string,
+): DosenLogbookMonitorByStudentItem {
   const wrapped = asRecord(data) || {};
-  const student = asRecord(wrapped.student) || asRecord(wrapped.mahasiswa) || {};
+  const student =
+    asRecord(wrapped.student) || asRecord(wrapped.mahasiswa) || {};
   const items = getArrayPayload(wrapped);
 
   return {
-    studentId: getFirstString(wrapped, ["studentId"], getFirstString(student, ["id", "studentId"], fallbackStudentId)),
+    studentId: getFirstString(
+      wrapped,
+      ["studentId"],
+      getFirstString(student, ["id", "studentId"], fallbackStudentId),
+    ),
     studentName: getFirstString(student, ["name", "nama", "studentName"], "-"),
     nim: getFirstString(student, ["nim", "studentNim"], "-"),
     email: getFirstString(student, ["email", "studentEmail"], "") || null,
-    company: getFirstString(wrapped, ["company", "companyName", "instansi"], "-"),
+    company: getFirstString(
+      wrapped,
+      ["company", "companyName", "instansi"],
+      "-",
+    ),
     mentorId: getFirstString(wrapped, ["mentorId"], "") || null,
     logbooks: items.map((item, index) => mapRawItem(item, index)),
   };
@@ -119,29 +141,52 @@ function mapRawItem(raw: RawObject, index: number): DosenLogbookMonitorItem {
   return {
     id: getFirstString(raw, ["id", "logbookId"], `logbook-${index}`),
     detailRouteKey,
-    studentId: getFirstString(student, ["id", "studentId", "userId"], getFirstString(raw, ["studentId", "userId"], "")) || undefined,
+    studentId:
+      getFirstString(
+        student,
+        ["id", "studentId", "userId"],
+        getFirstString(raw, ["studentId", "userId"], ""),
+      ) || undefined,
     studentName: getFirstString(student, ["name", "nama", "studentName"], "-"),
     nim: getFirstString(student, ["nim", "studentNim"], "-"),
-    company: getFirstString(raw, ["company", "companyName"], getFirstString(company, ["name", "nama"], "-")),
+    company: getFirstString(
+      raw,
+      ["company", "companyName"],
+      getFirstString(company, ["name", "nama"], "-"),
+    ),
     date: getFirstString(raw, ["date", "tanggal", "createdAt"], "-"),
     activity: getFirstString(raw, ["activity", "kegiatan", "description"], "-"),
-    status: normalizeStatus(getFirstString(raw, ["status", "logbookStatus"], "PENDING")),
+    status: normalizeStatus(
+      getFirstString(raw, ["status", "logbookStatus"], "PENDING"),
+    ),
     hours: Number.isFinite(Number(raw.hours)) ? Number(raw.hours) : undefined,
-    rejectionReason: getFirstString(raw, ["rejectionReason", "reason", "catatan"], "") || undefined,
-    mentorName: getFirstString(mentor, ["name", "nama", "mentorName"], getFirstString(raw, ["mentorName"], "")) || undefined,
+    rejectionReason:
+      getFirstString(raw, ["rejectionReason", "reason", "catatan"], "") ||
+      undefined,
+    mentorName:
+      getFirstString(
+        mentor,
+        ["name", "nama", "mentorName"],
+        getFirstString(raw, ["mentorName"], ""),
+      ) || undefined,
     mentorId: getFirstString(raw, ["mentorId"], "") || undefined,
-    studentEmail: getFirstString(student, ["email", "studentEmail"], "") || undefined,
+    studentEmail:
+      getFirstString(student, ["email", "studentEmail"], "") || undefined,
   };
 }
 
-export async function getDosenLogbookMonitorItems(): Promise<ApiResponse<DosenLogbookMonitorItem[]>> {
+export async function getDosenLogbookMonitorItems(): Promise<
+  ApiResponse<DosenLogbookMonitorItem[]>
+> {
   let lastMessage = "Endpoint monitoring logbook belum tersedia";
 
   for (const endpoint of LIST_ENDPOINTS) {
     const response = await apiClient<unknown>(endpoint);
 
     if (response.success) {
-      const items = getArrayPayload(response.data).map((item, index) => mapRawItem(item, index));
+      const items = getArrayPayload(response.data).map((item, index) =>
+        mapRawItem(item, index),
+      );
       return {
         success: true,
         message: response.message,

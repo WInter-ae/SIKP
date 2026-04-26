@@ -36,7 +36,7 @@ export function GradingForm({
   // Auto-save to localStorage when form data changes
   useEffect(() => {
     if (!id) return;
-    
+
     const timer = setTimeout(() => {
       localStorage.setItem(`grading-draft-${id}`, JSON.stringify(formData));
     }, 500); // Debounce 500ms

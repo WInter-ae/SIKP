@@ -17,24 +17,31 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
 /**
  * Field metadata untuk dynamic form generation
  */
-export type FieldType = "text" | "textarea" | "number" | "date" | "time" | "email" | "select";
+export type FieldType =
+  | "text"
+  | "textarea"
+  | "number"
+  | "date"
+  | "time"
+  | "email"
+  | "select";
 
 export interface TemplateField {
-  variable: string;           // Variable name di template: {{nama_mahasiswa}}
-  label: string;              // Label untuk form: "Nama Mahasiswa"
-  type: FieldType;            // Type input
-  required: boolean;          // Wajib diisi atau tidak
-  placeholder?: string;       // Placeholder text
-  defaultValue?: string;      // Default value
-  options?: string[];         // Options untuk select
+  variable: string; // Variable name di template: {{nama_mahasiswa}}
+  label: string; // Label untuk form: "Nama Mahasiswa"
+  type: FieldType; // Type input
+  required: boolean; // Wajib diisi atau tidak
+  placeholder?: string; // Placeholder text
+  defaultValue?: string; // Default value
+  options?: string[]; // Options untuk select
   validation?: {
     min?: number;
     max?: number;
     pattern?: string;
     message?: string;
   };
-  helpText?: string;          // Teks bantuan
-  order: number;              // Urutan tampil di form
+  helpText?: string; // Teks bantuan
+  order: number; // Urutan tampil di form
 }
 
 /**
@@ -47,8 +54,8 @@ export interface Template {
   fileExtension?: string;
   description?: string;
   content: string;
-  fields: TemplateField[];    // Field metadata untuk dynamic form
-  version: number;            // Version untuk tracking perubahan
+  fields: TemplateField[]; // Field metadata untuk dynamic form
+  version: number; // Version untuk tracking perubahan
   createdAt: string;
   updatedAt: string;
   isActive: boolean;

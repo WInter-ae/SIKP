@@ -46,7 +46,7 @@ export default function PenilaianKriteriaPage() {
 
   const totalWeight = useMemo(
     () => criteria.reduce((sum, c) => sum + (Number(c.weight) || 0), 0),
-    [criteria]
+    [criteria],
   );
   const isValid = totalWeight === 100;
   const weightDifference = 100 - totalWeight;
@@ -61,19 +61,19 @@ export default function PenilaianKriteriaPage() {
   function handleWeightChange(id: string, value: string) {
     const num = Math.max(0, Math.min(100, parseInt(value) || 0));
     setCriteria((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, weight: num } : c))
+      prev.map((c) => (c.id === id ? { ...c, weight: num } : c)),
     );
   }
 
   function handleDescriptionChange(id: string, value: string) {
     setCriteria((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, description: value } : c))
+      prev.map((c) => (c.id === id ? { ...c, description: value } : c)),
     );
   }
 
   function handleCategoryNameChange(id: string, value: string) {
     setCriteria((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, category: value } : c))
+      prev.map((c) => (c.id === id ? { ...c, category: value } : c)),
     );
   }
 
@@ -89,7 +89,9 @@ export default function PenilaianKriteriaPage() {
         maxScore: 100,
       },
     ]);
-    toast.success("Kategori baru ditambahkan. Silakan sesuaikan nama, bobot, dan deskripsi.");
+    toast.success(
+      "Kategori baru ditambahkan. Silakan sesuaikan nama, bobot, dan deskripsi.",
+    );
   }
 
   function handleRemoveCategory(id: string) {
@@ -139,7 +141,9 @@ export default function PenilaianKriteriaPage() {
             <div className="rounded-lg bg-primary/10 p-2.5">
               <Settings2 className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Kriteria Penilaian</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Kriteria Penilaian
+            </h1>
           </div>
           <p className="text-sm text-muted-foreground">
             Kelola bobot indikator penilaian untuk mahasiswa magang
@@ -170,11 +174,15 @@ export default function PenilaianKriteriaPage() {
             <div className="flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Total Bobot</p>
-                <p className={`text-2xl font-bold ${isValid ? "text-green-600" : "text-amber-600"}`}>
+                <p
+                  className={`text-2xl font-bold ${isValid ? "text-green-600" : "text-amber-600"}`}
+                >
                   {totalWeight}%
                 </p>
               </div>
-              <div className={`rounded-lg p-3 ${isValid ? "bg-green-500/10" : "bg-amber-500/10"}`}>
+              <div
+                className={`rounded-lg p-3 ${isValid ? "bg-green-500/10" : "bg-amber-500/10"}`}
+              >
                 {isValid ? (
                   <CheckCircle2 className="h-6 w-6 text-green-600" />
                 ) : (
@@ -195,10 +203,14 @@ export default function PenilaianKriteriaPage() {
                   variant={isValid ? "default" : "destructive"}
                   className="w-fit text-xs font-medium"
                 >
-                  {isValid ? "Siap Disimpan" : `Selisih ${Math.abs(weightDifference)}%`}
+                  {isValid
+                    ? "Siap Disimpan"
+                    : `Selisih ${Math.abs(weightDifference)}%`}
                 </Badge>
               </div>
-              <div className={`rounded-lg p-3 ${isValid ? "bg-green-500/10" : "bg-red-500/10"}`}>
+              <div
+                className={`rounded-lg p-3 ${isValid ? "bg-green-500/10" : "bg-red-500/10"}`}
+              >
                 {isValid ? (
                   <CheckCircle2 className="h-6 w-6 text-green-600" />
                 ) : (
@@ -308,9 +320,11 @@ export default function PenilaianKriteriaPage() {
               </div>
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-300 ${isValid && "bg-green-500"
-                    } ${!isValid && totalWeight > 100 && "bg-red-500"} ${!isValid && totalWeight < 100 && "bg-amber-500"
-                    }`}
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    isValid && "bg-green-500"
+                  } ${!isValid && totalWeight > 100 && "bg-red-500"} ${
+                    !isValid && totalWeight < 100 && "bg-amber-500"
+                  }`}
                   style={{ width: `${Math.min(totalWeight, 100)}%` }}
                 />
               </div>
@@ -342,8 +356,8 @@ export default function PenilaianKriteriaPage() {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Total bobot saat ini <strong>{totalWeight}%</strong>. Harus tepat{" "}
-            <strong>100%</strong> sebelum disimpan. Sesuaikan bobot kriteria untuk
-            menambah <strong>{weightDifference}%</strong>.
+            <strong>100%</strong> sebelum disimpan. Sesuaikan bobot kriteria
+            untuk menambah <strong>{weightDifference}%</strong>.
           </AlertDescription>
         </Alert>
       )}
@@ -382,9 +396,9 @@ export default function PenilaianKriteriaPage() {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription className="text-sm">
-          <strong>Catatan:</strong> Perubahan bobot/nama kategori hanya berlaku untuk penilaian
-          yang dilakukan setelah perubahan disimpan. Penilaian yang sudah ada tidak
-          terpengaruh kecuali dilakukan penilaian ulang.
+          <strong>Catatan:</strong> Perubahan bobot/nama kategori hanya berlaku
+          untuk penilaian yang dilakukan setelah perubahan disimpan. Penilaian
+          yang sudah ada tidak terpengaruh kecuali dilakukan penilaian ulang.
         </AlertDescription>
       </Alert>
     </div>

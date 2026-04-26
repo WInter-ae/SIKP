@@ -13,7 +13,11 @@ async function toDataUrlFromImageUrl(imageUrl: string): Promise<string> {
   // Only attach Authorization when server explicitly requires auth.
   let response = await fetch(imageUrl);
 
-  if (!response.ok && (response.status === 401 || response.status === 403) && token) {
+  if (
+    !response.ok &&
+    (response.status === 401 || response.status === 403) &&
+    token
+  ) {
     response = await fetch(imageUrl, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -280,9 +284,18 @@ export async function generateSuratPermohonanPdf(
   let hasRenderedMahasiswaSignature = false;
   if (entry.mahasiswaEsignatureUrl) {
     try {
-      const sigDataUrl = await toDataUrlFromImageUrl(entry.mahasiswaEsignatureUrl);
+      const sigDataUrl = await toDataUrlFromImageUrl(
+        entry.mahasiswaEsignatureUrl,
+      );
       const sigFormat = getImageFormatFromDataUrl(sigDataUrl);
-      pdf.addImage(sigDataUrl, sigFormat, rightColumnX - 5, signatureTitleY + 5, 55, 20);
+      pdf.addImage(
+        sigDataUrl,
+        sigFormat,
+        rightColumnX - 5,
+        signatureTitleY + 5,
+        55,
+        20,
+      );
       hasRenderedMahasiswaSignature = true;
     } catch (error) {
       console.warn("Gagal render tanda tangan mahasiswa pada preview surat", {
@@ -294,10 +307,13 @@ export async function generateSuratPermohonanPdf(
       hasRenderedMahasiswaSignature = false;
     }
   } else {
-    console.warn("URL tanda tangan mahasiswa tidak tersedia pada data request", {
-      requestId: entry.id,
-      nim: entry.nim,
-    });
+    console.warn(
+      "URL tanda tangan mahasiswa tidak tersedia pada data request",
+      {
+        requestId: entry.id,
+        nim: entry.nim,
+      },
+    );
   }
 
   if (!hasRenderedMahasiswaSignature) {

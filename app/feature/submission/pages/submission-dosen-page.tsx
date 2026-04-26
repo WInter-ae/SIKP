@@ -140,7 +140,9 @@ function pickFirstNonEmptyString(...values: unknown[]): string | undefined {
   return undefined;
 }
 
-function resolveSuratPengantarTujuan(item: DosenSuratPengantarRequestItem): string {
+function resolveSuratPengantarTujuan(
+  item: DosenSuratPengantarRequestItem,
+): string {
   return (
     pickFirstNonEmptyString(
       item.tujuanSurat,
@@ -431,8 +433,12 @@ function SubmissionDosenPage() {
         return;
       }
 
-      const dosenNama = profileResponse.success ? profileResponse.data?.nama : undefined;
-      const dosenNip = profileResponse.success ? profileResponse.data?.nip : undefined;
+      const dosenNama = profileResponse.success
+        ? profileResponse.data?.nama
+        : undefined;
+      const dosenNip = profileResponse.success
+        ? profileResponse.data?.nip
+        : undefined;
       const dosenJabatan = profileResponse.success
         ? profileResponse.data?.jabatan
         : undefined;
@@ -802,12 +808,20 @@ function SubmissionDosenPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="pl-6 whitespace-nowrap">Tanggal</TableHead>
+                    <TableHead className="pl-6 whitespace-nowrap">
+                      Tanggal
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">NIM</TableHead>
-                    <TableHead className="whitespace-nowrap">Nama Mahasiswa</TableHead>
-                    <TableHead className="whitespace-nowrap">Jenis Surat</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Nama Mahasiswa
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Jenis Surat
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">Aksi</TableHead>
+                    <TableHead className="pr-6 whitespace-nowrap">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

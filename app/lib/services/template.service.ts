@@ -73,7 +73,8 @@ function validateTemplateFile(
   if (!ALLOWED_FILE_TYPES.includes(baseFileType)) {
     return {
       valid: false,
-      message: "Tipe file tidak didukung. Gunakan .doc, .docx, .pdf, .html, atau .txt",
+      message:
+        "Tipe file tidak didukung. Gunakan .doc, .docx, .pdf, .html, atau .txt",
     };
   }
   return { valid: true };
@@ -103,26 +104,42 @@ export async function getAllTemplates(params?: {
 /**
  * Get active templates only (untuk mahasiswa).
  */
-export async function getActiveTemplates(): Promise<ApiResponse<TemplateResponse[]>> {
-  return sikpClient.get<TemplateResponse[]>(API_ENDPOINTS.TEMPLATE.GET_ALL + "/active");
+export async function getActiveTemplates(): Promise<
+  ApiResponse<TemplateResponse[]>
+> {
+  return sikpClient.get<TemplateResponse[]>(
+    API_ENDPOINTS.TEMPLATE.GET_ALL + "/active",
+  );
 }
 
 /**
  * Get template by ID.
  */
-export async function getTemplateById(templateId: string): Promise<ApiResponse<TemplateResponse>> {
+export async function getTemplateById(
+  templateId: string,
+): Promise<ApiResponse<TemplateResponse>> {
   return sikpClient.get<TemplateResponse>(`/api/templates/${templateId}`);
 }
 
 /**
  * Create new template (Admin only) — upload file via multipart POST.
  */
-export async function createTemplate(data: CreateTemplateRequest): Promise<ApiResponse<TemplateResponse>> {
+export async function createTemplate(
+  data: CreateTemplateRequest,
+): Promise<ApiResponse<TemplateResponse>> {
   const validation = validateTemplateFile(data.file);
-  if (!validation.valid) return { success: false, message: validation.message, data: null };
+  if (!validation.valid)
+    return { success: false, message: validation.message, data: null };
 
-  if (data.type === "Generate & Template" && (!data.fields || data.fields.length === 0)) {
-    return { success: false, message: 'Fields wajib diisi untuk tipe "Generate & Template"', data: null };
+  if (
+    data.type === "Generate & Template" &&
+    (!data.fields || data.fields.length === 0)
+  ) {
+    return {
+      success: false,
+      message: 'Fields wajib diisi untuk tipe "Generate & Template"',
+      data: null,
+    };
   }
 
   const formData = new FormData();
@@ -130,51 +147,75 @@ export async function createTemplate(data: CreateTemplateRequest): Promise<ApiRe
   formData.append("name", data.name);
   formData.append("type", data.type);
   if (data.description) formData.append("description", data.description);
-  if (data.fields && data.fields.length > 0) formData.append("fields", JSON.stringify(data.fields));
-  if (data.isActive !== undefined) formData.append("isActive", String(data.isActive));
+  if (data.fields && data.fields.length > 0)
+    formData.append("fields", JSON.stringify(data.fields));
+  if (data.isActive !== undefined)
+    formData.append("isActive", String(data.isActive));
 
-  return sikpClient.upload<TemplateResponse>(API_ENDPOINTS.TEMPLATE.GET_ALL, formData);
+  return sikpClient.upload<TemplateResponse>(
+    API_ENDPOINTS.TEMPLATE.GET_ALL,
+    formData,
+  );
 }
 
 /**
  * Update template (Admin only) — PUT + FormData melalui sikpClient.request.
  */
-export async function updateTemplate(templateId: string, data: UpdateTemplateRequest): Promise<ApiResponse<TemplateResponse>> {
+export async function updateTemplate(
+  templateId: string,
+  data: UpdateTemplateRequest,
+): Promise<ApiResponse<TemplateResponse>> {
   if (data.file) {
     const validation = validateTemplateFile(data.file);
-    if (!validation.valid) return { success: false, message: validation.message, data: null };
+    if (!validation.valid)
+      return { success: false, message: validation.message, data: null };
   }
 
-  if (data.type === "Generate & Template" && data.fields && data.fields.length === 0) {
-    return { success: false, message: 'Fields tidak boleh kosong untuk tipe "Generate & Template"', data: null };
+  if (
+    data.type === "Generate & Template" &&
+    data.fields &&
+    data.fields.length === 0
+  ) {
+    return {
+      success: false,
+      message: 'Fields tidak boleh kosong untuk tipe "Generate & Template"',
+      data: null,
+    };
   }
 
   const formData = new FormData();
   if (data.file) formData.append("file", data.file);
   if (data.name) formData.append("name", data.name);
   if (data.type) formData.append("type", data.type);
-  if (data.description !== undefined) formData.append("description", data.description);
-  if (data.fields !== undefined) formData.append("fields", JSON.stringify(data.fields));
-  if (data.isActive !== undefined) formData.append("isActive", String(data.isActive));
+  if (data.description !== undefined)
+    formData.append("description", data.description);
+  if (data.fields !== undefined)
+    formData.append("fields", JSON.stringify(data.fields));
+  if (data.isActive !== undefined)
+    formData.append("isActive", String(data.isActive));
 
   // PUT + FormData — gunakan request() karena upload() hanya POST
-  return sikpClient.request<TemplateResponse>(
-    `/api/templates/${templateId}`,
-    { method: "PUT", body: formData },
-  );
+  return sikpClient.request<TemplateResponse>(`/api/templates/${templateId}`, {
+    method: "PUT",
+    body: formData,
+  });
 }
 
 /**
  * Delete template (Admin only).
  */
-export async function deleteTemplate(templateId: string): Promise<ApiResponse<void>> {
+export async function deleteTemplate(
+  templateId: string,
+): Promise<ApiResponse<void>> {
   return sikpClient.del<void>(`/api/templates/${templateId}`);
 }
 
 /**
  * Toggle template active status (Admin only).
  */
-export async function toggleTemplateActive(templateId: string): Promise<ApiResponse<TemplateResponse>> {
+export async function toggleTemplateActive(
+  templateId: string,
+): Promise<ApiResponse<TemplateResponse>> {
   return sikpClient.request<TemplateResponse>(
     `/api/templates/${templateId}/toggle-active`,
     { method: "PATCH" },
@@ -192,14 +233,20 @@ export function getTemplateDownloadUrl(templateId: string): string {
  * Download template file — trigger browser download.
  * Menggunakan fetch langsung karena perlu streaming blob ke browser.
  */
-export async function downloadTemplate(templateId: string, fileName: string): Promise<void> {
+export async function downloadTemplate(
+  templateId: string,
+  fileName: string,
+): Promise<void> {
   const token = await getAuthToken();
 
-  const response = await fetch(`${API_BASE_URL}/api/templates/${templateId}/download`, {
-    method: "GET",
-    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    credentials: "include",
-  });
+  const response = await fetch(
+    `${API_BASE_URL}/api/templates/${templateId}/download`,
+    {
+      method: "GET",
+      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      credentials: "include",
+    },
+  );
 
   if (!response.ok) throw new Error("Gagal mendownload template");
 
@@ -217,7 +264,10 @@ export async function downloadTemplate(templateId: string, fileName: string): Pr
 /**
  * Validate template fields.
  */
-export function validateTemplateFields(fields: TemplateField[]): { isValid: boolean; errors: string[] } {
+export function validateTemplateFields(fields: TemplateField[]): {
+  isValid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   if (!Array.isArray(fields)) {
@@ -237,14 +287,18 @@ export function validateTemplateFields(fields: TemplateField[]): { isValid: bool
     if (!field.variable || field.variable.trim() === "") {
       errors.push(`Field ${index + 1}: Variable wajib diisi`);
     } else if (variables.has(field.variable)) {
-      errors.push(`Field ${index + 1}: Variable "${field.variable}" sudah digunakan`);
+      errors.push(
+        `Field ${index + 1}: Variable "${field.variable}" sudah digunakan`,
+      );
     } else {
       variables.add(field.variable);
     }
 
-    if (!field.label || field.label.trim() === "") errors.push(`Field ${index + 1}: Label wajib diisi`);
+    if (!field.label || field.label.trim() === "")
+      errors.push(`Field ${index + 1}: Label wajib diisi`);
     if (!field.type) errors.push(`Field ${index + 1}: Type wajib diisi`);
-    if (field.required === undefined || field.required === null) errors.push(`Field ${index + 1}: Required wajib diisi`);
+    if (field.required === undefined || field.required === null)
+      errors.push(`Field ${index + 1}: Required wajib diisi`);
 
     if (field.order === undefined || field.order === null) {
       errors.push(`Field ${index + 1}: Order wajib diisi`);
@@ -254,7 +308,10 @@ export function validateTemplateFields(fields: TemplateField[]): { isValid: bool
       orders.add(field.order);
     }
 
-    if (field.type === "select" && (!field.options || field.options.length === 0)) {
+    if (
+      field.type === "select" &&
+      (!field.options || field.options.length === 0)
+    ) {
       errors.push(`Field ${index + 1}: Options wajib diisi untuk tipe select`);
     }
   });

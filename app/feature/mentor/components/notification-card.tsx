@@ -1,6 +1,12 @@
 // External dependencies
 import { Link } from "react-router";
-import { CheckCircle, AlertCircle, Info, Clock, ChevronRight } from "lucide-react";
+import {
+  CheckCircle,
+  AlertCircle,
+  Info,
+  Clock,
+  ChevronRight,
+} from "lucide-react";
 
 // Components
 import {
@@ -50,9 +56,7 @@ function NotificationCard({ notification }: NotificationCardProps) {
         <div className="mt-1">{getIcon(notification.type)}</div>
         <div className="flex-1">
           <div className="flex justify-between items-start">
-            <CardTitle className="text-base">
-              {notification.title}
-            </CardTitle>
+            <CardTitle className="text-base">{notification.title}</CardTitle>
             {!notification.isRead && (
               <span className="px-2 py-1 text-xs rounded-full bg-primary text-primary-foreground">
                 Baru

@@ -84,7 +84,10 @@ export async function createSubmission(
 ): Promise<ApiResponse<Submission>> {
   const payload = data ? { teamId, ...data } : { teamId };
 
-  const response = await sikpClient.post<Submission>(API_ENDPOINTS.SUBMISSION.CREATE, payload);
+  const response = await sikpClient.post<Submission>(
+    API_ENDPOINTS.SUBMISSION.CREATE,
+    payload,
+  );
 
   // Toleransi validasi backend: retry dengan minimal payload jika validasi gagal
   if (!response.success && data) {
@@ -96,7 +99,9 @@ export async function createSubmission(
       message.includes("400");
 
     if (shouldRetryMinimal) {
-      return sikpClient.post<Submission>(API_ENDPOINTS.SUBMISSION.CREATE, { teamId });
+      return sikpClient.post<Submission>(API_ENDPOINTS.SUBMISSION.CREATE, {
+        teamId,
+      });
     }
   }
 
@@ -122,7 +127,7 @@ export async function uploadSubmissionDocument(
     | "KRS_SEMESTER_4"
     | "DAFTAR_KUMPULAN_NILAI"
     | "BUKTI_PEMBAYARAN_UKT",
-  memberUserId: string,
+  memberMahasiswaId: string,
   file: File,
   uploadedByUserId?: string,
 ): Promise<ApiResponse<SubmissionDocument>> {
@@ -143,7 +148,7 @@ export async function uploadSubmissionDocument(
   const formData = new FormData();
   formData.append("file", file);
   formData.append("documentType", documentType);
-  formData.append("memberUserId", memberUserId);
+  formData.append("memberMahasiswaId", memberMahasiswaId);
   if (uploadedByUserId) {
     formData.append("uploadedByUserId", uploadedByUserId);
   }

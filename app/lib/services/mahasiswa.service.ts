@@ -46,7 +46,9 @@ export interface ESignatureUploadResponse {
 export async function getMyMahasiswaProfile(): Promise<
   ApiResponse<MahasiswaProfile>
 > {
-  return sikpClient.get<MahasiswaProfile>(API_ENDPOINTS.MAHASISWA.GET_MY_PROFILE);
+  return sikpClient.get<MahasiswaProfile>(
+    API_ENDPOINTS.MAHASISWA.GET_MY_PROFILE,
+  );
 }
 
 /**
@@ -99,7 +101,8 @@ export async function uploadMahasiswaESignature(
     return {
       success: false,
       message:
-        manageUrlResponse.message || "Kelola e-signature hanya tersedia di SSO.",
+        manageUrlResponse.message ||
+        "Kelola e-signature hanya tersedia di SSO.",
       data: null,
     };
   }
@@ -120,7 +123,8 @@ export async function deleteMahasiswaESignature(): Promise<ApiResponse<null>> {
     return {
       success: false,
       message:
-        manageUrlResponse.message || "Kelola e-signature hanya tersedia di SSO.",
+        manageUrlResponse.message ||
+        "Kelola e-signature hanya tersedia di SSO.",
       data: null,
     };
   }

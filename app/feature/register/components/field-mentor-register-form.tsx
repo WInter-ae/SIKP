@@ -1,18 +1,18 @@
 // 1. External dependencies
-import { useState } from "react"
-import { Link, useNavigate } from "react-router"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Building2, Phone, Briefcase } from "lucide-react"
-import { toast } from "sonner"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Building2, Phone, Briefcase } from "lucide-react";
+import { toast } from "sonner";
 
 // 2. Internal utilities
-import { cn } from "~/lib/utils"
-import { registerFieldMentor } from "~/lib/auth-client"
+import { cn } from "~/lib/utils";
+import { registerFieldMentor } from "~/lib/auth-client";
 
 // 3. Components
-import { Button } from "~/components/ui/button"
+import { Button } from "~/components/ui/button";
 import {
   Field,
   FieldDescription,
@@ -20,8 +20,8 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "~/components/ui/field"
-import { Input } from "~/components/ui/input"
+} from "~/components/ui/field";
+import { Input } from "~/components/ui/input";
 
 // Schema validasi untuk form register pembimbing lapangan
 const fieldMentorRegisterSchema = z
@@ -60,26 +60,23 @@ const fieldMentorRegisterSchema = z
       .min(1, "Kata sandi wajib diisi")
       .min(8, "Kata sandi minimal 8 karakter")
       .max(100, "Kata sandi maksimal 100 karakter"),
-    confirmPassword: z
-      .string()
-      .min(1, "Konfirmasi kata sandi wajib diisi"),
+    confirmPassword: z.string().min(1, "Konfirmasi kata sandi wajib diisi"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Kata sandi tidak cocok",
     path: ["confirmPassword"],
-  })
+  });
 
-type FieldMentorRegisterFormData = z.infer<typeof fieldMentorRegisterSchema>
+type FieldMentorRegisterFormData = z.infer<typeof fieldMentorRegisterSchema>;
 
-interface FieldMentorRegisterFormProps
-  extends React.ComponentProps<"form"> {}
+interface FieldMentorRegisterFormProps extends React.ComponentProps<"form"> {}
 
 export function FieldMentorRegisterForm({
   className,
   ...props
 }: FieldMentorRegisterFormProps) {
-  const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<FieldMentorRegisterFormData>({
     resolver: zodResolver(fieldMentorRegisterSchema),
@@ -94,25 +91,25 @@ export function FieldMentorRegisterForm({
       confirmPassword: "",
     },
     mode: "onBlur",
-  })
+  });
 
   const onSubmit = async (data: FieldMentorRegisterFormData) => {
     try {
-      setError(null)
+      setError(null);
 
       const result = await registerFieldMentor({
         email: data.email,
         password: data.password,
         nama: data.name,
-        nip: data.nip || '',
-        instansi: data.company || '',
-        jabatan: data.position || '',
-        no_telepon: data.phone || '',
-      })
+        nip: data.nip || "",
+        instansi: data.company || "",
+        jabatan: data.position || "",
+        no_telepon: data.phone || "",
+      });
 
       if (!result.success) {
-        setError(result.message || "Registrasi gagal. Silakan coba lagi.")
-        return
+        setError(result.message || "Registrasi gagal. Silakan coba lagi.");
+        return;
       }
 
       // TODO: Submit additional mentor data to API
@@ -128,13 +125,13 @@ export function FieldMentorRegisterForm({
       //   })
       // })
 
-      toast.success("Registrasi berhasil! Menunggu persetujuan Dosen PA.")
-      navigate("/login")
+      toast.success("Registrasi berhasil! Menunggu persetujuan Dosen PA.");
+      navigate("/login");
     } catch (err) {
-      setError("Terjadi kesalahan. Silakan coba lagi.")
-      console.error("Register error:", err)
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+      console.error("Register error:", err);
     }
-  }
+  };
 
   return (
     <form
@@ -144,9 +141,7 @@ export function FieldMentorRegisterForm({
     >
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="text-2xl font-bold">
-            Registrasi Pembimbing Lapangan
-          </h1>
+          <h1 className="text-2xl font-bold">Registrasi Pembimbing Lapangan</h1>
           <p className="text-muted-foreground text-sm text-balance">
             Lengkapi data pembimbing lapangan untuk diajukan ke Dosen PA
           </p>
@@ -177,9 +172,7 @@ export function FieldMentorRegisterForm({
                 aria-invalid={fieldState.invalid}
                 autoComplete="name"
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -198,9 +191,7 @@ export function FieldMentorRegisterForm({
                 aria-invalid={fieldState.invalid}
                 autoComplete="email"
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -218,9 +209,7 @@ export function FieldMentorRegisterForm({
                 placeholder="198501012010011001"
                 aria-invalid={fieldState.invalid}
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -293,9 +282,7 @@ export function FieldMentorRegisterForm({
                   className="pl-10"
                 />
               </div>
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -350,17 +337,24 @@ export function FieldMentorRegisterForm({
           )}
         />
 
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={form.formState.isSubmitting}
+        >
           {form.formState.isSubmitting ? "Mendaftar..." : "Daftar"}
         </Button>
 
         <div className="text-center text-sm">
           Sudah punya akun?{" "}
-          <Link to="/login" className="font-medium underline underline-offset-4">
+          <Link
+            to="/login"
+            className="font-medium underline underline-offset-4"
+          >
             Masuk di sini
           </Link>
         </div>
       </FieldGroup>
     </form>
-  )
+  );
 }
