@@ -18,7 +18,7 @@ export interface ResponseLetterData {
   fileType: string | null;
   fileSize: number | null;
   fileUrl: string | null;
-  memberUserId: string | null;
+  memberMahasiswaId: string | null;
   letterStatus: "approved" | "rejected";
   submittedAt: string;
   verified: boolean;

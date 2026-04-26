@@ -40,7 +40,7 @@ export interface DocumentFile {
 }
 
 export interface SubmissionDocument {
-  userId: string;
+  mahasiswaId: string;
   id: string;
   submissionId: string;
   documentType:
@@ -51,8 +51,8 @@ export interface SubmissionDocument {
     | "DAFTAR_KUMPULAN_NILAI"
     | "BUKTI_PEMBAYARAN_UKT"
     | "SURAT_PENGANTAR"; // ✅ Auto-generated when admin approves
-  memberUserId: string;
-  uploadedByUserId: string;
+  memberMahasiswaId: string;
+  uploadedByMahasiswaId: string;
   originalName: string;
   fileName: string;
   fileType: string;

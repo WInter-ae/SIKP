@@ -127,7 +127,7 @@ export async function uploadSubmissionDocument(
     | "KRS_SEMESTER_4"
     | "DAFTAR_KUMPULAN_NILAI"
     | "BUKTI_PEMBAYARAN_UKT",
-  memberUserId: string,
+  memberMahasiswaId: string,
   file: File,
   uploadedByUserId?: string,
 ): Promise<ApiResponse<SubmissionDocument>> {
@@ -148,7 +148,7 @@ export async function uploadSubmissionDocument(
   const formData = new FormData();
   formData.append("file", file);
   formData.append("documentType", documentType);
-  formData.append("memberUserId", memberUserId);
+  formData.append("memberMahasiswaId", memberMahasiswaId);
   if (uploadedByUserId) {
     formData.append("uploadedByUserId", uploadedByUserId);
   }

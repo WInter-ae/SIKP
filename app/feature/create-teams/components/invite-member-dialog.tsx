@@ -177,7 +177,7 @@ export function InviteMemberDialog({
                         onClick={() => handleInvite(student)}
                         className="w-full text-left px-3 py-3 hover:bg-accent transition-colors flex items-center gap-3 border-b last:border-b-0"
                       >
-                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                           {student.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -200,7 +200,7 @@ export function InviteMemberDialog({
                         <Button
                           size="sm"
                           variant="secondary"
-                          className="flex-shrink-0"
+                          className="shrink-0"
                         >
                           Undang
                         </Button>

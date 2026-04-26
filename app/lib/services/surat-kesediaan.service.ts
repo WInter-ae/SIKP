@@ -65,9 +65,9 @@ export interface SuratKesediaanRequestItem {
  * Mencoba beberapa endpoint secara berurutan untuk kompatibilitas backend.
  */
 export async function requestSuratKesediaanApproval(
-  memberUserId: string,
+  memberMahasiswaId: string,
 ): Promise<ApiResponse<{ requestId: string }>> {
-  const body = JSON.stringify({ memberUserId });
+  const body = JSON.stringify({ memberMahasiswaId });
 
   const endpoints = [
     "/api/mahasiswa/surat-kesediaan/requests",
@@ -100,11 +100,11 @@ export async function requestSuratKesediaanApproval(
  */
 export async function reapplySuratKesediaanApproval(
   requestId: string,
-  memberUserId: string,
+  memberMahasiswaId: string,
 ): Promise<ApiResponse<{ requestId: string }>> {
   return sikpClient.put<{ requestId: string }>(
     `/api/mahasiswa/surat-kesediaan/requests/${requestId}/reapply`,
-    { memberUserId },
+    { memberMahasiswaId },
   );
 }
 

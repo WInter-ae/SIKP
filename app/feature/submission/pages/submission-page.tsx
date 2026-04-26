@@ -59,8 +59,11 @@ function normalizePlaceholderValue(value?: string | null): string {
   return value.trim().toLowerCase() === "belum diisi" ? "" : value;
 }
 
-function getRequestKey(memberUserId: string, documentType: string): string {
-  return `${memberUserId}:${documentType}`;
+function getRequestKey(
+  memberMahasiswaId: string,
+  documentType: string,
+): string {
+  return `${memberMahasiswaId}:${documentType}`;
 }
 
 type LetterRequestStatusLabel = "MENUNGGU" | "DISETUJUI" | "DITOLAK";
@@ -166,7 +169,7 @@ function SubmissionPage() {
       response.data.forEach((item) => {
         if (item.isAlreadySubmitted) {
           const requestKey = getRequestKey(
-            item.memberUserId,
+            item.memberMahasiswaId,
             item.documentType,
           );
           nextKeys.add(requestKey);
@@ -181,7 +184,10 @@ function SubmissionPage() {
       const nextRejectionReasons: Record<string, string> = {};
       const nextDosenNames: Record<string, string> = {};
       response.data.forEach((item) => {
-        const requestKey = getRequestKey(item.memberUserId, item.documentType);
+        const requestKey = getRequestKey(
+          item.memberMahasiswaId,
+          item.documentType,
+        );
         if (item.signedFileUrl) nextSignedUrls[requestKey] = item.signedFileUrl;
         if (item.latestRequestId)
           nextLatestRequestIds[requestKey] = item.latestRequestId;
@@ -449,7 +455,8 @@ function SubmissionPage() {
       // If exists, delete it before uploading new one
       const existingDoc = submissionDocuments.find(
         (doc) =>
-          doc.documentType === docInfo.type && doc.memberUserId === memberId,
+          doc.documentType === docInfo.type &&
+          doc.memberMahasiswaId === memberId,
       );
 
       if (
@@ -760,7 +767,7 @@ function SubmissionPage() {
         const uploaded = filteredSubmissionDocuments.some(
           (submittedDoc) =>
             submittedDoc.documentType === doc.type &&
-            submittedDoc.memberUserId === member.id,
+            submittedDoc.memberMahasiswaId === member.id,
         );
         if (!uploaded) {
           missingItems.push(`${doc.title} - ${member.name}`);
@@ -833,7 +840,7 @@ function SubmissionPage() {
                 variant="destructive"
                 className="w-full max-w-md items-start border-l-4 border-destructive bg-destructive/5 px-4 py-3"
               >
-                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 <AlertDescription className="text-sm text-destructive">
                   {loadError}
                 </AlertDescription>
@@ -955,7 +962,7 @@ function SubmissionPage() {
             <div className="flex flex-wrap items-start gap-3">
               <div
                 className={
-                  isCurrentUserLeader && !proposalDocument ? "flex-grow" : ""
+                  isCurrentUserLeader && !proposalDocument ? "grow" : ""
                 }
               >
                 {isCurrentUserLeader ? (
@@ -1066,7 +1073,7 @@ function SubmissionPage() {
                 document={document}
                 members={teamMembers}
                 documents={filteredSubmissionDocuments}
-                currentUserId={currentMemberId}
+                currentMahasiswaId={currentMemberId}
                 submittedRequestKeys={submittedRequestKeys}
                 submittedRequestStatusByKey={submittedRequestStatusByKey}
                 dosenNameByKey={dosenNameByKey}

@@ -11,7 +11,7 @@ import { z } from "zod";
 export type LetterRequestDocumentType = "SURAT_KESEDIAAN" | "FORM_PERMOHONAN";
 
 export interface LetterRequestStatusItem {
-  memberUserId: string;
+  memberMahasiswaId: string;
   documentType: LetterRequestDocumentType;
   isAlreadySubmitted: boolean;
   latestStatus: "MENUNGGU" | "DISETUJUI" | "DITOLAK" | null;
@@ -64,8 +64,8 @@ function getBool(item: RawItem, keys: string[]): boolean | null {
 }
 
 function normalizeStatusItem(item: RawItem): LetterRequestStatusItem | null {
-  const memberUserId = getString(item, [
-    "memberUserId",
+  const memberMahasiswaId = getString(item, [
+    "memberMahasiswaId",
     "member_user_id",
     "memberId",
     "member_id",
@@ -75,7 +75,7 @@ function normalizeStatusItem(item: RawItem): LetterRequestStatusItem | null {
   const documentType = normalizeDocumentType(
     getString(item, ["documentType", "document_type", "type", "letterType"]),
   );
-  if (!memberUserId || !documentType) return null;
+  if (!memberMahasiswaId || !documentType) return null;
 
   const latestStatus = normalizeLatestStatus(
     getString(item, ["latestStatus", "latest_status", "status"]),
@@ -135,7 +135,7 @@ function normalizeStatusItem(item: RawItem): LetterRequestStatusItem | null {
     ]) ?? dosenNameFromObject;
 
   return {
-    memberUserId,
+    memberMahasiswaId: memberMahasiswaId,
     documentType,
     isAlreadySubmitted:
       explicitSubmitted ??
