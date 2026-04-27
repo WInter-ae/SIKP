@@ -9,7 +9,7 @@ export const API_ENDPOINTS = {
     CREATE: "/api/submissions",
     GET_BY_TEAM: (teamId: string) => `/api/submissions/team/${teamId}`,
     GET_BY_ID: (id: string) => `/api/submissions/${id}`,
-    GET_ALL_ADMIN: "/api/submissions",
+    GET_ALL_ADMIN: "/api/admin/submissions",
     GET_ALL_DOSEN: "/api/submissions/dosen",
     UPDATE_STATUS: (id: string) => `/api/submissions/${id}/status`,
     UPDATE: (id: string) => `/api/submissions/${id}`,

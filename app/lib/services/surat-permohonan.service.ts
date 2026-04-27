@@ -11,11 +11,12 @@ import type { ApiResponse } from "~/lib/api-client";
 
 export interface SuratPermohonanRequestItem {
   id: string;
+  memberMahasiswaId?: string;
   submissionId?: string;
   tanggal: string;
-  nim: string;
-  namaMahasiswa: string;
-  programStudi: string;
+  nim: string | null;
+  namaMahasiswa: string | null;
+  programStudi: string | null;
   angkatan?: string;
   semester?: string;
   jumlahSks?: string;
@@ -24,36 +25,28 @@ export interface SuratPermohonanRequestItem {
   noHp?: string;
   jenisSurat?: string;
   status: "menunggu" | "disetujui" | "ditolak";
-  dosenNama: string;
-  dosenNip: string;
-  dosenJabatan?: string;
+  supervisor?: string | null;
+  teamMembers?: Array<{
+    id: string;
+    name: string;
+    nim?: string | null;
+    prodi?: string | null;
+    role: string;
+  }>;
+  dosenNama: string | null;
+  dosenNip: string | null;
+  dosenJabatan?: string | null;
   dosenEsignatureUrl?: string;
   dosen_esignature_url?: string;
-  supervisor?: string;
-  academicSupervisor?: string;
-  academic_supervisor?: string;
-  supervisorName?: string;
-  supervisor_name?: string;
-  teamMembers?: Array<{
-    id?: string;
-    userId?: string;
-    name?: string;
-    nim?: string;
-    prodi?: string;
-    role?: string;
-    user?: {
-      id?: string;
-      name?: string;
-      nim?: string;
-      prodi?: string;
-    };
-  }>;
   mahasiswaEsignatureUrl?: string;
   mahasiswa_esignature_url?: string;
+  mahasiswaEsignatureSnapshotAt?: string | null;
   signedFileUrl?: string;
   signed_file_url?: string;
   approvedAt?: string;
   approved_at?: string;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
   namaPerusahaan?: string;
   alamatPerusahaan?: string;
   teleponPerusahaan?: string;

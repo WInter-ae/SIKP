@@ -11,20 +11,21 @@ import type { ApiResponse } from "~/lib/api-client";
 
 export interface SuratKesediaanRequestItem {
   id: string;
+  memberMahasiswaId?: string;
   submissionId?: string;
   tanggal: string;
-  nim: string;
-  namaMahasiswa: string;
-  programStudi: string;
+  nim: string | null;
+  namaMahasiswa: string | null;
+  programStudi: string | null;
   angkatan?: string;
   semester?: string;
   email?: string;
   noHp?: string;
   jenisSurat?: string;
   status: "menunggu" | "disetujui" | "ditolak";
-  dosenNama: string;
-  dosenNip: string;
-  dosenJabatan?: string;
+  dosenNama: string | null;
+  dosenNip: string | null;
+  dosenJabatan?: string | null;
   dosenEsignatureUrl?: string;
   dosen_esignature_url?: string;
   supervisor?: string;
@@ -50,6 +51,8 @@ export interface SuratKesediaanRequestItem {
   signed_file_url?: string;
   approvedAt?: string;
   approved_at?: string;
+  rejectedAt?: string | null;
+  rejectionReason?: string | null;
   isAdminApproved?: boolean;
   adminVerificationStatus?: string;
   admin_status?: string;
