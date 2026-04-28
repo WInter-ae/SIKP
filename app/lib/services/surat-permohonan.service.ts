@@ -22,7 +22,6 @@ export interface SuratPermohonanRequestItem {
   jumlahSks?: string;
   tahunAjaran?: string;
   email?: string;
-  noHp?: string;
   jenisSurat?: string;
   status: "menunggu" | "disetujui" | "ditolak";
   supervisor?: string | null;

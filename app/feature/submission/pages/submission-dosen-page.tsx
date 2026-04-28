@@ -56,7 +56,6 @@ type MahasiswaDetail = {
   angkatan?: string;
   semester?: string;
   email?: string;
-  noHp?: string;
 };
 
 type TeamMemberCard = {
@@ -77,7 +76,6 @@ type SubmissionTeamInfo = {
     email?: string;
     angkatan?: string;
     semester?: string;
-    noHp?: string;
   };
 };
 
@@ -258,7 +256,6 @@ function mergeMahasiswaDetail(
     angkatan: current?.angkatan || next.angkatan,
     semester: current?.semester || next.semester,
     email: current?.email || next.email,
-    noHp: current?.noHp || next.noHp,
   };
 }
 
@@ -272,7 +269,6 @@ function addMahasiswaDetailIndex(
     email?: string;
     angkatan?: string;
     semester?: string;
-    noHp?: string;
   },
 ) {
   const detail: MahasiswaDetail = {
@@ -280,7 +276,6 @@ function addMahasiswaDetailIndex(
     angkatan: item.angkatan,
     semester: item.semester,
     email: item.email,
-    noHp: item.noHp,
   };
 
   const nimKey = normalizeLookupKey(item.nim);
@@ -309,7 +304,6 @@ function extractMahasiswaDetailFromSubmission(
   email?: string;
   angkatan?: string;
   semester?: string;
-  noHp?: string;
 } | null {
   if (!submission?.team?.members || submission.team.members.length === 0) {
     return null;
@@ -332,8 +326,6 @@ function extractMahasiswaDetailFromSubmission(
     email: leader.user.email || undefined,
     angkatan: leader.user.angkatan || undefined,
     semester: leader.user.semester || undefined,
-    noHp:
-      leader.user.noHp || leader.user.no_hp || leader.user.phone || undefined,
   };
 }
 
@@ -381,11 +373,6 @@ function extractTeamInfoFromSubmission(
           email: leaderRaw.user.email || undefined,
           angkatan: leaderRaw.user.angkatan || undefined,
           semester: leaderRaw.user.semester || undefined,
-          noHp:
-            leaderRaw.user.noHp ||
-            leaderRaw.user.no_hp ||
-            leaderRaw.user.phone ||
-            undefined,
         }
       : undefined,
   };
@@ -459,7 +446,6 @@ function SubmissionDosenPage() {
             email: item.email,
             angkatan: item.angkatan,
             semester: item.semester,
-            noHp: item.noHp,
           });
         });
       }
@@ -518,7 +504,6 @@ function SubmissionDosenPage() {
                   angkatan: detail.angkatan || undefined,
                   semester: detail.semester || undefined,
                   email: detail.email || undefined,
-                  noHp: detail.noHp || undefined,
                   jenisSurat: item.jenisSurat || "Surat Pengantar",
                   status: normalizeStatus(item.status || "menunggu"),
                   supervisor: teamInfo?.supervisor,

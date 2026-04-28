@@ -10,7 +10,6 @@ export interface MailEntry {
   angkatan?: string;
   semester?: string;
   email?: string;
-  noHp?: string;
   jenisSurat?: string;
   status: "menunggu" | "disetujui" | "ditolak";
   supervisor?: string;

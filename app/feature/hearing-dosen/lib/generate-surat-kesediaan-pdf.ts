@@ -7,6 +7,14 @@ function getImageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" {
   return "JPEG";
 }
 
+function toTitleCase(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter((token) => token.length > 0)
+    .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
+    .join(" ");
+}
+
 async function toDataUrlFromImageUrl(imageUrl: string): Promise<string> {
   const response = await fetch(imageUrl);
   if (!response.ok) {
@@ -61,7 +69,7 @@ export async function generateSuratKesediaanPdf(
   y += 12;
   writeField("Nama", entry.dosenNama);
   writeField("NIP", entry.dosenNip);
-  writeField("Jabatan", entry.dosenJabatan);
+  writeField("Jabatan", toTitleCase(entry.dosenJabatan));
 
   y += 6;
   const intro =

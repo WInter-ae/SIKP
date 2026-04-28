@@ -20,7 +20,6 @@ export interface SuratKesediaanRequestItem {
   angkatan?: string;
   semester?: string;
   email?: string;
-  noHp?: string;
   jenisSurat?: string;
   status: "menunggu" | "disetujui" | "ditolak";
   dosenNama: string | null;

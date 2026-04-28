@@ -19,7 +19,6 @@ export interface DosenSuratPengantarRequestItem {
   angkatan?: string;
   semester?: string;
   email?: string;
-  noHp?: string;
   tanggal?: string;
   status?: string;
   jenisSurat?: string;
@@ -78,7 +77,6 @@ export interface SubmissionDetailForVerifier {
         prodi?: string | null;
         angkatan?: string | null;
         semester?: string | null;
-        noHp?: string | null;
         no_hp?: string | null;
         phone?: string | null;
       };

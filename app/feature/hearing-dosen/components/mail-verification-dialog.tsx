@@ -120,7 +120,6 @@ function MainVerificationDosenDialog({
               { label: "Angkatan", value: entry.angkatan },
               { label: "Semester", value: entry.semester },
               { label: "Email", value: entry.email },
-              { label: "No. HP", value: entry.noHp },
               { label: "Tanggal Pengajuan", value: entry.tanggal },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center py-2 gap-4">
