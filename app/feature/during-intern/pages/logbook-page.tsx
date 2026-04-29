@@ -17,6 +17,8 @@ import {
   User,
   Building,
   File,
+  Camera,
+  ImageIcon,
 } from "lucide-react";
 import { id as localeId } from "date-fns/locale";
 
@@ -74,6 +76,7 @@ import {
   updateLogbookEntry,
   deleteLogbookEntry,
   submitLogbookForApproval,
+  uploadLogbookPhoto,
 } from "~/feature/during-intern/services/logbook-api";
 
 // Utility Functions
@@ -88,6 +91,7 @@ interface LogbookEntry {
   date: string;
   description: string;
   hours?: number;
+  photoUrl?: string | null;
   status?: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
   mentorSignature?: {
     status: "approved" | "revision" | "rejected";
@@ -121,6 +125,8 @@ function mapBackendLogbookEntry(entry: {
   description?: string;
   hours?: number;
   status?: string;
+  photoUrl?: string | null;
+  photo_url?: string | null;
   submittedAt?: string | null;
   submitted_at?: string | null;
   isSubmitted?: boolean;
@@ -176,6 +182,7 @@ function mapBackendLogbookEntry(entry: {
     date: entry.date,
     description: entry.description || entry.activity || "",
     hours: entry.hours,
+    photoUrl: entry.photoUrl || entry.photo_url || null,
     status: mappedStatus,
     mentorSignature: signatureStatus
       ? {
@@ -208,6 +215,12 @@ function LogbookPage() {
   ); // Track sumber periode
   const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadingPhotoForId, setUploadingPhotoForId] = useState<string | null>(null);
 
   // Edit mode state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -617,6 +630,60 @@ function LogbookPage() {
     setEditingId(null);
     setSelectedDate("");
     setDescription("");
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
+  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side validation: max 2MB, JPEG/PNG/WebP
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+    if (!ALLOWED.includes(file.type)) {
+      toast.error("Format foto tidak didukung. Gunakan JPEG, PNG, atau WebP.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ukuran foto maksimal 2MB.");
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleUploadPhotoForEntry = async (logbookId: string) => {
+    if (!photoFile) return;
+    try {
+      setIsUploadingPhoto(true);
+      setUploadingPhotoForId(logbookId);
+
+      const res = await uploadLogbookPhoto(logbookId, photoFile);
+      if (!res.success) {
+        throw new Error(res.message || "Gagal upload foto.");
+      }
+
+      // Update photoUrl on the entry in state
+      setLogbookEntries((prev) =>
+        prev.map((e) =>
+          e.id === logbookId
+            ? { ...e, photoUrl: res.data?.photoUrl ?? e.photoUrl }
+            : e,
+        ),
+      );
+
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      toast.success("Foto kegiatan berhasil diupload!");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Gagal upload foto kegiatan.",
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+      setUploadingPhotoForId(null);
+    }
   };
 
   const getWordCount = (text: string): number => {
@@ -1808,6 +1875,65 @@ function LogbookPage() {
                 </div>
               </div>
 
+              {/* Photo Upload Section (Opsional) */}
+              <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">
+                    Foto Kegiatan
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      (Opsional — Max 2MB, JPEG/PNG/WebP)
+                    </span>
+                  </Label>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start gap-3">
+                  <label
+                    htmlFor="foto-kegiatan"
+                    className="flex items-center gap-2 cursor-pointer px-3 py-2 text-sm border rounded-md bg-background hover:bg-muted transition-colors"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    {photoFile ? photoFile.name : "Pilih Foto..."}
+                    <input
+                      id="foto-kegiatan"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={handlePhotoFileChange}
+                      disabled={isSavingLogbook}
+                    />
+                  </label>
+
+                  {photoPreview && (
+                    <div className="flex items-start gap-2">
+                      <img
+                        src={photoPreview}
+                        alt="Preview foto kegiatan"
+                        className="h-20 w-20 object-cover rounded-md border"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(null);
+                        }}
+                        title="Hapus foto"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  💡 Foto dapat ditambahkan setelah logbook disimpan. Foto akan
+                  ditampilkan ke mentor dan dosen pembimbing (read-only).
+                </p>
+              </div>
+
               <div className="flex justify-end gap-2">
                 {editingId && (
                   <Button
@@ -1866,7 +1992,7 @@ function LogbookPage() {
 
               {/* Logbook Table */}
               {generatedDates.length > 0 && (
-                <div className="rounded-md border w-full">
+                <div className="rounded-md border w-full overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1878,6 +2004,9 @@ function LogbookPage() {
                         </TableHead>
                         <TableHead className="text-xs">
                           Deskripsi Kegiatan
+                        </TableHead>
+                        <TableHead className="w-24 text-center text-xs">
+                          Foto
                         </TableHead>
                         <TableHead className="w-32 text-center text-xs">
                           Paraf Pembimbing
@@ -1982,6 +2111,78 @@ function LogbookPage() {
                                   </span>
                                 )}
                               </div>
+                            </TableCell>
+                            {/* Foto Kegiatan Cell */}
+                            <TableCell className="text-center align-top">
+                              {entry?.photoUrl ? (
+                                <a
+                                  href={entry.photoUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Lihat foto kegiatan"
+                                >
+                                  <img
+                                    src={entry.photoUrl}
+                                    alt="Foto kegiatan"
+                                    className="h-14 w-14 object-cover rounded-md border mx-auto hover:scale-110 transition-transform"
+                                  />
+                                </a>
+                              ) : entry ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <label
+                                    htmlFor={`foto-entry-${entry.id}`}
+                                    className={`flex flex-col items-center gap-1 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors ${isUploadingPhoto && uploadingPhotoForId === entry.id ? "opacity-50 pointer-events-none" : ""}`}
+                                    title="Upload foto kegiatan"
+                                  >
+                                    <Camera className="h-5 w-5" />
+                                    <span>
+                                      {isUploadingPhoto &&
+                                      uploadingPhotoForId === entry.id
+                                        ? "Uploading..."
+                                        : "Upload foto"}
+                                    </span>
+                                    <input
+                                      id={`foto-entry-${entry.id}`}
+                                      type="file"
+                                      accept="image/jpeg,image/png,image/webp"
+                                      className="sr-only"
+                                      onChange={async (e) => {
+                                        handlePhotoFileChange(e);
+                                        // Auto-upload when file selected from row button
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+                                          if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
+                                          setPhotoFile(file);
+                                          // Trigger upload immediately
+                                          try {
+                                            setIsUploadingPhoto(true);
+                                            setUploadingPhotoForId(entry.id);
+                                            const res = await uploadLogbookPhoto(entry.id, file);
+                                            if (!res.success) throw new Error(res.message || "Gagal upload foto.");
+                                            setLogbookEntries((prev) =>
+                                              prev.map((en) =>
+                                                en.id === entry.id ? { ...en, photoUrl: res.data?.photoUrl ?? en.photoUrl } : en,
+                                              ),
+                                            );
+                                            setPhotoFile(null);
+                                            setPhotoPreview(null);
+                                            toast.success("Foto berhasil diupload!");
+                                          } catch (err) {
+                                            toast.error(err instanceof Error ? err.message : "Gagal upload foto.");
+                                          } finally {
+                                            setIsUploadingPhoto(false);
+                                            setUploadingPhotoForId(null);
+                                          }
+                                        }
+                                      }}
+                                      disabled={isUploadingPhoto}
+                                    />
+                                  </label>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
                             </TableCell>
                             <TableCell className="text-center">
                               <div className="flex flex-col items-center gap-1 break-words">

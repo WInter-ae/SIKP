@@ -33,12 +33,14 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 
 import { getCompleteInternshipData } from "~/feature/during-intern/services/student-api";
+import { requestMentor } from "../services";
 import type { FieldMentor, MentorRequest } from "../types";
 
 function FieldMentorPage() {
   const navigate = useNavigate();
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [isLoadingMentor, setIsLoadingMentor] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [mentorRequest, setMentorRequest] = useState<MentorRequest>({
     mentorName: "",
     mentorEmail: "",
@@ -106,37 +108,50 @@ function FieldMentorPage() {
     setMentorRequest((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmitRequest = (e: React.FormEvent) => {
+  const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
-    const newMentor: FieldMentor = {
-      id: Date.now().toString(),
-      code: `AUTO-${Date.now()}`,
-      name: mentorRequest.mentorName,
-      email: mentorRequest.mentorEmail,
-      company: mentorRequest.company,
-      position: mentorRequest.position,
-      phone: mentorRequest.mentorPhone,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      nip: "",
-    };
+    try {
+      const response = await requestMentor(mentorRequest);
 
-    setCurrentMentor(newMentor);
-    setShowRequestForm(false);
+      if (response.success) {
+        toast.success(
+          "Pengajuan mentor berhasil dikirim! Menunggu persetujuan dari Dosen PA.",
+        );
 
-    setMentorRequest({
-      mentorName: "",
-      mentorEmail: "",
-      mentorPhone: "",
-      company: "",
-      position: "",
-      address: "",
-    });
+        // Refresh data or set to pending state locally
+        setCurrentMentor({
+          id: "pending-" + Date.now(),
+          code: "PENDING",
+          name: mentorRequest.mentorName,
+          email: mentorRequest.mentorEmail,
+          company: mentorRequest.company,
+          position: mentorRequest.position,
+          phone: mentorRequest.mentorPhone,
+          status: "pending",
+          createdAt: new Date().toISOString(),
+          nip: "",
+        });
 
-    toast.success(
-      "Pengajuan mentor berhasil dikirim! Menunggu persetujuan dari Dosen PA.",
-    );
+        setShowRequestForm(false);
+        setMentorRequest({
+          mentorName: "",
+          mentorEmail: "",
+          mentorPhone: "",
+          company: "",
+          position: "",
+          address: "",
+        });
+      } else {
+        toast.error(response.message || "Gagal mengirim pengajuan mentor.");
+      }
+    } catch (error) {
+      console.error("Error submitting mentor request:", error);
+      toast.error("Terjadi kesalahan saat mengirim pengajuan.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getStatusBadge = (status: FieldMentor["status"]) => {
@@ -533,9 +548,9 @@ function FieldMentorPage() {
                 >
                   Batal
                 </Button>
-                <Button type="submit">
+                <Button type="submit" disabled={isSubmitting}>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Submit Request
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
                 </Button>
               </div>
             </form>

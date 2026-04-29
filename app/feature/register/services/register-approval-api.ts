@@ -1,4 +1,4 @@
-import { apiClient } from "~/lib/api-client";
+import { internshipClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 export interface PendingRegistration {
@@ -210,7 +210,7 @@ async function getFromEndpointList(
   let lastMessage = "Endpoint tidak tersedia";
 
   for (const endpoint of endpoints) {
-    const response = await apiClient<unknown>(endpoint);
+    const response = await internshipClient.get<unknown>(endpoint);
     if (response.success) {
       return {
         success: true,
@@ -238,10 +238,7 @@ async function performActionOnEndpointList(
   let lastMessage = "Endpoint tidak tersedia";
 
   for (const build of endpointBuilders) {
-    const response = await apiClient<null>(build(id), {
-      method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const response = await internshipClient.post<null>(build(id), body);
 
     if (response.success) {
       return {

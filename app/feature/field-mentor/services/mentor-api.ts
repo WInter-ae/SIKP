@@ -62,8 +62,10 @@ export interface LogbookEntry {
   description: string;
   mentorSignature?: string;
   mentorSignedAt?: string;
+  photoUrl?: string | null;
+  photo_url?: string | null;
   status: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
-  rejectionNote?: string;
+  rejectionReason?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -557,8 +559,24 @@ export async function updateAssessment(
 }
 
 /**
- * Save/Update mentor signature in profile (setup once)
- * PUT /api/mentor/signature
+ * Upload tanda tangan mentor ke profil
+ * POST /api/mentorship/profile/signature
+ * Field name: "file" (Max 2MB, JPEG/PNG)
+ */
+export async function uploadMentorSignature(
+  file: File,
+): Promise<ApiResponse<{ signatureUrl: string }>> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return internshipClient.upload<{ signatureUrl: string }>(
+    "/api/mentorship/profile/signature",
+    formData,
+  );
+}
+
+/**
+ * Redirect ke SSO untuk kelola tanda tangan (fallback UI helper)
+ * Tidak memanggil backend secara langsung.
  */
 export async function saveMentorSignature(): Promise<
   ApiResponse<MentorProfile>
@@ -583,7 +601,7 @@ export async function saveMentorSignature(): Promise<
 
 /**
  * Get mentor signature from profile
- * GET /api/mentor/signature
+ * GET /api/mentorship/signature
  */
 export async function getMentorSignature(): Promise<
   ApiResponse<{ signature?: string; signatureSetAt?: string }>
@@ -612,7 +630,7 @@ export async function getMentorSignature(): Promise<
 
 /**
  * Delete mentor signature from profile
- * DELETE /api/mentor/signature
+ * DELETE /api/mentorship/signature (via SSO redirect)
  */
 export async function deleteMentorSignature(): Promise<
   ApiResponse<{ success: boolean }>
@@ -634,3 +652,14 @@ export async function deleteMentorSignature(): Promise<
     data: null,
   };
 }
+
+/**
+ * Ajukan pembimbing lapangan baru (Mahasiswa side)
+ * POST /api/mentorship/requests
+ */
+export async function requestMentor(
+  data: MentorRequest,
+): Promise<ApiResponse<null>> {
+  return internshipClient.post<null>("/api/mentorship/requests", data);
+}
+

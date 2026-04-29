@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ArrowLeft, BookMarked, CalendarDays } from "lucide-react";
+import { ArrowLeft, BookMarked, CalendarDays, Camera } from "lucide-react";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
@@ -262,13 +262,14 @@ export default function DosenLogbookMonitorDetailPage() {
           <CardTitle>Riwayat Logbook</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Aktivitas</TableHead>
                   <TableHead>Jam</TableHead>
+                  <TableHead className="text-center">Foto</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Catatan Revisi</TableHead>
                   <TableHead>Mentor</TableHead>
@@ -278,7 +279,7 @@ export default function DosenLogbookMonitorDetailPage() {
                 {(detail?.logbooks || []).length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="h-20 text-center text-muted-foreground"
                     >
                       Tidak ada data logbook untuk mahasiswa ini.
@@ -297,6 +298,25 @@ export default function DosenLogbookMonitorDetailPage() {
                         {item.activity}
                       </TableCell>
                       <TableCell>{item.hours ?? "-"}</TableCell>
+                      {/* Foto Kegiatan — Read Only */}
+                      <TableCell className="text-center">
+                        {item.photoUrl || item.photo_url ? (
+                          <a
+                            href={item.photoUrl || item.photo_url!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Lihat foto kegiatan"
+                          >
+                            <img
+                              src={item.photoUrl || item.photo_url!}
+                              alt="Foto kegiatan"
+                              className="h-12 w-12 object-cover rounded-md border mx-auto hover:scale-110 transition-transform"
+                            />
+                          </a>
+                        ) : (
+                          <Camera className="h-4 w-4 text-muted-foreground/30 mx-auto" />
+                        )}
+                      </TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
                       <TableCell className="max-w-[320px] truncate">
                         {item.rejectionReason || "-"}

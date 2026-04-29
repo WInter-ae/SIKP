@@ -16,6 +16,8 @@ export interface DosenLogbookMonitorItem {
   mentorName?: string;
   mentorId?: string;
   studentEmail?: string;
+  photoUrl?: string | null;
+  photo_url?: string | null;
 }
 
 export interface DosenLogbookMonitorByStudentItem {

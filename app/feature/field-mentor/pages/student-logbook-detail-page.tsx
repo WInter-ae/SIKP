@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
@@ -44,6 +44,7 @@ type ViewLogbookEntry = {
   date: string;
   description: string;
   activity: string;
+  photoUrl?: string | null;
   status: "PENDING" | "APPROVED" | "REJECTED";
 };
 
@@ -134,10 +135,14 @@ function StudentLogbookDetailPage() {
         const studentUserId = studentRes.data?.userId || resolvedStudentId;
         let logbookRes = await getStudentLogbook(studentUserId);
 
-        let backendEntries: LogbookEntry[] =
-          logbookRes.success && logbookRes.data?.entries
-            ? logbookRes.data.entries
-            : [];
+        let backendEntries: LogbookEntry[] = [];
+        if (logbookRes.success && logbookRes.data) {
+          if (Array.isArray(logbookRes.data)) {
+            backendEntries = logbookRes.data;
+          } else if ((logbookRes.data as any).entries) {
+            backendEntries = (logbookRes.data as any).entries;
+          }
+        }
 
         const mentorVisibleEntries = backendEntries.filter(
           (
@@ -156,6 +161,7 @@ function StudentLogbookDetailPage() {
             date: coerceText(entry.date, ""),
             description: coerceText(entry.description || entry.activity, "-"),
             activity: coerceText(entry.activity || entry.description, "-"),
+            photoUrl: entry.photoUrl || entry.photo_url || null,
             status: entry.status,
           }))
           .sort(
@@ -435,11 +441,12 @@ function StudentLogbookDetailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg">
+          <div className="border rounded-lg overflow-x-auto">
             <Table className="table-fixed w-full">
               <colgroup>
                 <col className="w-28" />
                 <col />
+                <col className="w-24" />
                 <col className="w-36" />
                 <col className="w-40" />
               </colgroup>
@@ -450,6 +457,9 @@ function StudentLogbookDetailPage() {
                   </TableHead>
                   <TableHead className="text-left align-middle text-sm font-semibold">
                     Deskripsi Kegiatan
+                  </TableHead>
+                  <TableHead className="w-24 text-center text-sm font-semibold">
+                    Foto
                   </TableHead>
                   <TableHead className="w-36 text-sm font-semibold">
                     Status Paraf
@@ -463,7 +473,7 @@ function StudentLogbookDetailPage() {
                 {entries.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="text-center py-8 text-muted-foreground"
                     >
                       Belum ada logbook yang diajukan mahasiswa ini.
@@ -488,6 +498,25 @@ function StudentLogbookDetailPage() {
                               </p>
                             )}
                         </div>
+                      </TableCell>
+                      {/* Foto Kegiatan — Read Only */}
+                      <TableCell className="align-middle text-center py-4">
+                        {entry.photoUrl ? (
+                          <a
+                            href={entry.photoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Lihat foto kegiatan"
+                          >
+                            <img
+                              src={entry.photoUrl}
+                              alt="Foto kegiatan"
+                              className="h-14 w-14 object-cover rounded-md border mx-auto hover:scale-110 transition-transform"
+                            />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="align-middle py-4">
                         {getStatusBadge(entry.status)}

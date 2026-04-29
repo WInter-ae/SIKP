@@ -141,14 +141,14 @@ export async function submitLogbookForApproval(
 /**
  * Upload foto kegiatan logbook (Max 2MB, JPEG/PNG/WebP)
  * POST /api/logbooks/:id/photo
- * Field name: "photo" (sesuai middleware validateFileUpload backend)
+ * Field name: "file" (sesuai middleware validateFileUpload backend)
  */
 export async function uploadLogbookPhoto(
   id: string,
   file: File,
 ): Promise<ApiResponse<{ photoUrl: string }>> {
   const formData = new FormData();
-  formData.append("photo", file);
+  formData.append("file", file);
   return internshipClient.upload<{ photoUrl: string }>(
     `/api/logbooks/${id}/photo`,
     formData,

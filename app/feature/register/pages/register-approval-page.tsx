@@ -429,7 +429,7 @@ export default function RegisterApprovalPage() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -574,7 +574,7 @@ export default function RegisterApprovalPage() {
               Belum ada pengajuan perubahan email.
             </p>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
