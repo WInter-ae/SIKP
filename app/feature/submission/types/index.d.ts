@@ -40,7 +40,6 @@ export interface DocumentFile {
 }
 
 export interface SubmissionDocument {
-  mahasiswaId: string;
   id: string;
   submissionId: string;
   documentType:
@@ -133,6 +132,44 @@ export interface Submission {
   documents?: SubmissionDocument[];
   statusHistory?: StatusHistoryEntry[]; // ✅ Timeline semua perubahan status
   documentReviews?: Record<string, "approved" | "rejected">;
+
+  // ✅ Additional fields from backend response
+  adminVerificationStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  adminVerifiedAt?: string;
+  adminVerifiedByAdminId?: string;
+  adminRejectionReason?: string;
+  dosenVerificationStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  dosenVerifiedAt?: string;
+  dosenVerifiedByDosenId?: string;
+  dosenRejectionReason?: string;
+  finalSignedFileUrl?: string;
+  responseLetterStatus?: "pending" | "submitted" | "verified";
+  archivedAt?: string;
+  approvedByAdminId?: string;
+
+  // ✅ Nested relations
+  team?: {
+    id: string;
+    code: string;
+    leaderMahasiswaId: string;
+    dosenKpId?: string;
+    dosenKpName?: string;
+    academicSupervisor?: string;
+    status: "PENDING" | "FIXED";
+    members?: Array<{
+      id: string;
+      role: string;
+      status: string;
+      user?: {
+        id: string;
+        name: string | null;
+        email: string | null;
+        nim?: string | null;
+        prodi?: string | null;
+      };
+    }>;
+  };
+  wakilDekanSignature?: WakilDekanSignature;
 }
 
 export interface Application {
