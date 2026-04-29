@@ -664,7 +664,13 @@
             "url": {
               "raw": "{{baseUrl}}/api/admin/submissions/{{submissionId}}/approve",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "submissions", "{{submissionId}}", "approve"]
+              "path": [
+                "api",
+                "admin",
+                "submissions",
+                "{{submissionId}}",
+                "approve"
+              ]
             }
           }
         },
@@ -689,7 +695,13 @@
             "url": {
               "raw": "{{baseUrl}}/api/admin/submissions/{{submissionId}}/reject",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "submissions", "{{submissionId}}", "reject"]
+              "path": [
+                "api",
+                "admin",
+                "submissions",
+                "{{submissionId}}",
+                "reject"
+              ]
             }
           }
         },
@@ -714,7 +726,13 @@
             "url": {
               "raw": "{{baseUrl}}/api/admin/submissions/{{submissionId}}/generate-letter",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "submissions", "{{submissionId}}", "generate-letter"]
+              "path": [
+                "api",
+                "admin",
+                "submissions",
+                "{{submissionId}}",
+                "generate-letter"
+              ]
             }
           }
         },

@@ -67,13 +67,19 @@ async function resolveStudentUserId(studentAlias: string): Promise<string> {
     return studentAlias;
   }
 
-  const exactUser = menteesRes.data.find((mentee) => mentee.userId === studentAlias);
+  const exactUser = menteesRes.data.find(
+    (mentee) => mentee.userId === studentAlias,
+  );
   if (exactUser?.userId) return exactUser.userId;
 
-  const byInternshipId = menteesRes.data.find((mentee) => mentee.internshipId === studentAlias);
+  const byInternshipId = menteesRes.data.find(
+    (mentee) => mentee.internshipId === studentAlias,
+  );
   if (byInternshipId?.userId) return byInternshipId.userId;
 
-  const byLegacyId = menteesRes.data.find((mentee) => mentee.id === studentAlias);
+  const byLegacyId = menteesRes.data.find(
+    (mentee) => mentee.id === studentAlias,
+  );
   if (byLegacyId?.userId) return byLegacyId.userId;
 
   const byNim = menteesRes.data.find((mentee) => mentee.nim === studentAlias);
@@ -112,7 +118,9 @@ function MenteeDetailPage() {
         if (!isMounted) return;
 
         if (!menteeRes.success || !menteeRes.data) {
-          setErrorMessage(menteeRes.message || "Data mahasiswa tidak ditemukan.");
+          setErrorMessage(
+            menteeRes.message || "Data mahasiswa tidak ditemukan.",
+          );
           setMentee(null);
           setLogbookEntries([]);
           setAssessment(null);
@@ -125,17 +133,27 @@ function MenteeDetailPage() {
 
         setMentee(menteeRes.data);
 
-        let logbookEntries = logbookRes.success && logbookRes.data?.entries ? logbookRes.data.entries : [];
-        
+        let logbookEntries =
+          logbookRes.success && logbookRes.data?.entries
+            ? logbookRes.data.entries
+            : [];
+
         if (!logbookEntries || logbookEntries.length === 0) {
           console.log(`⚠️ No logbook for userId ${studentUserId}`);
         }
 
         setLogbookEntries(logbookEntries);
-        setAssessment(assessmentRes.success && assessmentRes.data ? assessmentRes.data : null);
+        setAssessment(
+          assessmentRes.success && assessmentRes.data
+            ? assessmentRes.data
+            : null,
+        );
       } catch (error) {
         if (!isMounted) return;
-        const message = error instanceof Error ? error.message : "Gagal memuat detail mahasiswa.";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat detail mahasiswa.";
         setErrorMessage(message);
         setMentee(null);
         setLogbookEntries([]);
@@ -176,7 +194,9 @@ function MenteeDetailPage() {
 
   const progressValue = useMemo(() => {
     if (!logbookEntries.length) return 0;
-    const approved = logbookEntries.filter((entry) => entry.status === "APPROVED").length;
+    const approved = logbookEntries.filter(
+      (entry) => entry.status === "APPROVED",
+    ).length;
     return Math.round((approved / logbookEntries.length) * 100);
   }, [logbookEntries]);
 
@@ -225,11 +245,19 @@ function MenteeDetailPage() {
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">{mentee.nama || mentee.name || "-"}</h1>
-            <p className="text-muted-foreground mt-1">Mahasiswa Magang - NIM: {mentee.nim}</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              {mentee.nama || mentee.name || "-"}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Mahasiswa Magang - NIM: {mentee.nim}
+            </p>
           </div>
           <Badge
-            variant={normalizeStatus(mentee.internshipStatus) === "Aktif" ? "default" : "secondary"}
+            variant={
+              normalizeStatus(mentee.internshipStatus) === "Aktif"
+                ? "default"
+                : "secondary"
+            }
             className="text-sm"
           >
             {normalizeStatus(mentee.internshipStatus)}
@@ -248,7 +276,9 @@ function MenteeDetailPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Rata-rata Nilai</CardDescription>
-            <CardTitle className="text-3xl">{averageScore.toFixed(1)}</CardTitle>
+            <CardTitle className="text-3xl">
+              {averageScore.toFixed(1)}
+            </CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -280,7 +310,9 @@ function MenteeDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Nama Lengkap</p>
-                  <p className="font-medium">{mentee.nama || mentee.name || "-"}</p>
+                  <p className="font-medium">
+                    {mentee.nama || mentee.name || "-"}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">NIM</p>
@@ -351,7 +383,9 @@ function MenteeDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Perusahaan</p>
-                  <p className="font-medium">{mentee.companyName || mentee.company || "-"}</p>
+                  <p className="font-medium">
+                    {mentee.companyName || mentee.company || "-"}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">
@@ -361,13 +395,17 @@ function MenteeDetailPage() {
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">Tanggal Mulai</p>
-                  <p className="font-medium">{formatDate(mentee.internshipStartDate)}</p>
+                  <p className="font-medium">
+                    {formatDate(mentee.internshipStartDate)}
+                  </p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm text-muted-foreground">
                     Tanggal Selesai
                   </p>
-                  <p className="font-medium">{formatDate(mentee.internshipEndDate)}</p>
+                  <p className="font-medium">
+                    {formatDate(mentee.internshipEndDate)}
+                  </p>
                 </div>
               </div>
 
@@ -417,44 +455,50 @@ function MenteeDetailPage() {
             <CardContent>
               <div className="space-y-4">
                 {activities.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Belum ada aktivitas logbook.</p>
-                ) : activities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className="flex items-start gap-4 p-4 border rounded-lg"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                      {activity.type === "logbook" ? (
-                        <BookOpen className="h-5 w-5 text-primary" />
-                      ) : (
-                        <FileText className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{activity.title}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(activity.date).toLocaleDateString("id-ID")}
-                      </p>
-                    </div>
-                    <Badge
-                      variant={
-                        activity.status === "approved" ? "default" : "secondary"
-                      }
+                  <p className="text-sm text-muted-foreground">
+                    Belum ada aktivitas logbook.
+                  </p>
+                ) : (
+                  activities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-start gap-4 p-4 border rounded-lg"
                     >
-                      {activity.status === "approved" ? (
-                        <>
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Disetujui
-                        </>
-                      ) : (
-                        <>
-                          <Clock className="h-3 w-3 mr-1" />
-                          Pending
-                        </>
-                      )}
-                    </Badge>
-                  </div>
-                ))}
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                        {activity.type === "logbook" ? (
+                          <BookOpen className="h-5 w-5 text-primary" />
+                        ) : (
+                          <FileText className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium">{activity.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(activity.date).toLocaleDateString("id-ID")}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          activity.status === "approved"
+                            ? "default"
+                            : "secondary"
+                        }
+                      >
+                        {activity.status === "approved" ? (
+                          <>
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Disetujui
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="h-3 w-3 mr-1" />
+                            Pending
+                          </>
+                        )}
+                      </Badge>
+                    </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -466,7 +510,8 @@ function MenteeDetailPage() {
             <CardHeader>
               <CardTitle>Riwayat Penilaian</CardTitle>
               <CardDescription>
-                Penilaian yang telah diberikan kepada {mentee.nama || mentee.name || "-"}
+                Penilaian yang telah diberikan kepada{" "}
+                {mentee.nama || mentee.name || "-"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -476,7 +521,9 @@ function MenteeDetailPage() {
                     <div>
                       <p className="font-medium">Penilaian Mentor</p>
                       <p className="text-sm text-muted-foreground">
-                        {formatDate(assessment.updatedAt || assessment.createdAt)}
+                        {formatDate(
+                          assessment.updatedAt || assessment.createdAt,
+                        )}
                       </p>
                     </div>
                     <div className="text-right">
@@ -488,7 +535,9 @@ function MenteeDetailPage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">Belum ada penilaian tersimpan.</p>
+                <p className="text-sm text-muted-foreground">
+                  Belum ada penilaian tersimpan.
+                </p>
               )}
 
               <Separator className="my-6" />

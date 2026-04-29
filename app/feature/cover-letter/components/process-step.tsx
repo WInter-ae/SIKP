@@ -2,7 +2,14 @@ import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 
-import { Eye, FileText, XCircle, RefreshCw, Check, Download } from "lucide-react";
+import {
+  Eye,
+  FileText,
+  XCircle,
+  RefreshCw,
+  Check,
+  Download,
+} from "lucide-react";
 
 import type { ProcessStepProps } from "../types";
 
@@ -63,20 +70,22 @@ function ProcessStep({
       className={cn(
         "border-l-4 rounded-lg p-5 mb-4",
         statusStyles.bg,
-        statusStyles.border
+        statusStyles.border,
       )}
     >
       <div className="flex items-start">
         <div
           className={cn(
             "w-12 h-12 rounded-full flex items-center justify-center text-primary-foreground mr-4 flex-shrink-0",
-            statusStyles.iconBg
+            statusStyles.iconBg,
           )}
         >
           {statusStyles.iconComponent}
         </div>
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
+          <h3 className="text-lg font-semibold text-foreground mb-1">
+            {title}
+          </h3>
           <p className="text-muted-foreground mb-3">{description}</p>
 
           {comment && (
@@ -95,9 +104,12 @@ function ProcessStep({
                   <FileText className="size-5" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold text-foreground">Surat Pengantar Kerja Praktik</div>
+                  <div className="font-semibold text-foreground">
+                    Surat Pengantar Kerja Praktik
+                  </div>
                   <div className="text-sm text-muted-foreground">
-                    Disetujui: {approvedDate || new Date().toLocaleDateString("id-ID")}
+                    Disetujui:{" "}
+                    {approvedDate || new Date().toLocaleDateString("id-ID")}
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     File: Surat_Pengantar_Kerja_Praktik.pdf
@@ -120,11 +132,7 @@ function ProcessStep({
           )}
 
           {onAction && actionText && (
-            <Button
-              onClick={onAction}
-              size="sm"
-              className="mt-3"
-            >
+            <Button onClick={onAction} size="sm" className="mt-3">
               {actionText}
             </Button>
           )}

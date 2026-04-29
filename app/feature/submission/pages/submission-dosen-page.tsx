@@ -39,8 +39,8 @@ import {
   type SubmissionDetailForVerifier,
   getDosenSuratPengantarRequests,
   rejectDosenSuratPengantarRequest,
-} from "~/lib/services/surat-pengantar-dosen-api";
-import { getMyProfile } from "~/lib/services/dosen-api";
+} from "~/lib/services/surat-pengantar-dosen.service";
+import { getMyProfile } from "~/lib/services/dosen.service";
 
 type AdminGateCandidate = {
   isAdminApproved?: unknown;
@@ -56,7 +56,6 @@ type MahasiswaDetail = {
   angkatan?: string;
   semester?: string;
   email?: string;
-  noHp?: string;
 };
 
 type TeamMemberCard = {
@@ -77,7 +76,6 @@ type SubmissionTeamInfo = {
     email?: string;
     angkatan?: string;
     semester?: string;
-    noHp?: string;
   };
 };
 
@@ -140,7 +138,9 @@ function pickFirstNonEmptyString(...values: unknown[]): string | undefined {
   return undefined;
 }
 
-function resolveSuratPengantarTujuan(item: DosenSuratPengantarRequestItem): string {
+function resolveSuratPengantarTujuan(
+  item: DosenSuratPengantarRequestItem,
+): string {
   return (
     pickFirstNonEmptyString(
       item.tujuanSurat,
@@ -256,7 +256,6 @@ function mergeMahasiswaDetail(
     angkatan: current?.angkatan || next.angkatan,
     semester: current?.semester || next.semester,
     email: current?.email || next.email,
-    noHp: current?.noHp || next.noHp,
   };
 }
 
@@ -270,7 +269,6 @@ function addMahasiswaDetailIndex(
     email?: string;
     angkatan?: string;
     semester?: string;
-    noHp?: string;
   },
 ) {
   const detail: MahasiswaDetail = {
@@ -278,7 +276,6 @@ function addMahasiswaDetailIndex(
     angkatan: item.angkatan,
     semester: item.semester,
     email: item.email,
-    noHp: item.noHp,
   };
 
   const nimKey = normalizeLookupKey(item.nim);
@@ -307,7 +304,6 @@ function extractMahasiswaDetailFromSubmission(
   email?: string;
   angkatan?: string;
   semester?: string;
-  noHp?: string;
 } | null {
   if (!submission?.team?.members || submission.team.members.length === 0) {
     return null;
@@ -330,8 +326,6 @@ function extractMahasiswaDetailFromSubmission(
     email: leader.user.email || undefined,
     angkatan: leader.user.angkatan || undefined,
     semester: leader.user.semester || undefined,
-    noHp:
-      leader.user.noHp || leader.user.no_hp || leader.user.phone || undefined,
   };
 }
 
@@ -379,11 +373,6 @@ function extractTeamInfoFromSubmission(
           email: leaderRaw.user.email || undefined,
           angkatan: leaderRaw.user.angkatan || undefined,
           semester: leaderRaw.user.semester || undefined,
-          noHp:
-            leaderRaw.user.noHp ||
-            leaderRaw.user.no_hp ||
-            leaderRaw.user.phone ||
-            undefined,
         }
       : undefined,
   };
@@ -425,14 +414,18 @@ function SubmissionDosenPage() {
       ]);
 
       if (!response.success) {
-        console.warn("⚠️ Gagal memuat surat pengantar:", response.message);
+        console.warn("âš ï¸ Gagal memuat surat pengantar:", response.message);
         toast.error("Gagal memuat data verifikasi surat.");
         setEntries([]);
         return;
       }
 
-      const dosenNama = profileResponse.success ? profileResponse.data?.nama : undefined;
-      const dosenNip = profileResponse.success ? profileResponse.data?.nip : undefined;
+      const dosenNama = profileResponse.success
+        ? profileResponse.data?.nama
+        : undefined;
+      const dosenNip = profileResponse.success
+        ? profileResponse.data?.nip
+        : undefined;
       const dosenJabatan = profileResponse.success
         ? profileResponse.data?.jabatan
         : undefined;
@@ -453,7 +446,6 @@ function SubmissionDosenPage() {
             email: item.email,
             angkatan: item.angkatan,
             semester: item.semester,
-            noHp: item.noHp,
           });
         });
       }
@@ -512,7 +504,6 @@ function SubmissionDosenPage() {
                   angkatan: detail.angkatan || undefined,
                   semester: detail.semester || undefined,
                   email: detail.email || undefined,
-                  noHp: detail.noHp || undefined,
                   jenisSurat: item.jenisSurat || "Surat Pengantar",
                   status: normalizeStatus(item.status || "menunggu"),
                   supervisor: teamInfo?.supervisor,
@@ -543,7 +534,7 @@ function SubmissionDosenPage() {
 
       setEntries(suratPengantarEntries);
     } catch (error) {
-      console.error("❌ Error loading surat verification data:", error);
+      console.error("âŒ Error loading surat verification data:", error);
       toast.error("Terjadi kesalahan saat memuat data verifikasi surat.");
     } finally {
       setIsLoading(false);
@@ -802,12 +793,20 @@ function SubmissionDosenPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="pl-6 whitespace-nowrap">Tanggal</TableHead>
+                    <TableHead className="pl-6 whitespace-nowrap">
+                      Tanggal
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">NIM</TableHead>
-                    <TableHead className="whitespace-nowrap">Nama Mahasiswa</TableHead>
-                    <TableHead className="whitespace-nowrap">Jenis Surat</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Nama Mahasiswa
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Jenis Surat
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">Aksi</TableHead>
+                    <TableHead className="pr-6 whitespace-nowrap">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

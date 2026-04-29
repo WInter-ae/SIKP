@@ -2,15 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { 
-  Download, 
-  FileText, 
-  CheckCircle, 
+import {
+  Download,
+  FileText,
+  CheckCircle,
   Calendar,
   Clock,
   MapPin,
   XCircle,
-  Printer
+  Printer,
 } from "lucide-react";
 import type { BeritaAcara } from "../types";
 import { downloadBeritaAcaraHTML } from "../utils/berita-acara-template";
@@ -25,14 +25,14 @@ interface BeritaAcaraDownloadProps {
   isPreview?: boolean;
 }
 
-export function BeritaAcaraDownload({ 
-  beritaAcara, 
+export function BeritaAcaraDownload({
+  beritaAcara,
   mahasiswa = {
     nama: "Budi Santoso",
     nim: "12345001",
-    programStudi: "Teknik Informatika"
+    programStudi: "Teknik Informatika",
   },
-  isPreview = false
+  isPreview = false,
 }: BeritaAcaraDownloadProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -49,7 +49,9 @@ export function BeritaAcaraDownload({
       downloadBeritaAcaraHTML(beritaAcara, mahasiswa);
     } else if (format === "docx") {
       try {
-        const { generateBeritaAcaraDOCX } = await import("../utils/generate-berita-acara");
+        const { generateBeritaAcaraDOCX } = await import(
+          "../utils/generate-berita-acara"
+        );
         await generateBeritaAcaraDOCX(beritaAcara, mahasiswa);
       } catch (error) {
         console.error("Error generating DOCX:", error);
@@ -71,7 +73,8 @@ export function BeritaAcaraDownload({
           <AlertDescription className="text-green-800">
             <p className="font-semibold">Berita Acara Telah Disetujui</p>
             <p className="text-sm mt-1">
-              Berita acara sidang Anda telah ditandatangani oleh dosen pembimbing dan siap diunduh.
+              Berita acara sidang Anda telah ditandatangani oleh dosen
+              pembimbing dan siap diunduh.
             </p>
           </AlertDescription>
         </Alert>
@@ -83,15 +86,20 @@ export function BeritaAcaraDownload({
           <AlertDescription className="text-red-800">
             <p className="font-semibold">Pengajuan Sidang Ditolak</p>
             <p className="text-sm mt-1">
-              Pengajuan sidang Anda ditolak oleh dosen pembimbing. Silakan perbaiki dan ajukan kembali.
+              Pengajuan sidang Anda ditolak oleh dosen pembimbing. Silakan
+              perbaiki dan ajukan kembali.
             </p>
           </AlertDescription>
         </Alert>
       )}
 
       {/* Single Document Card */}
-      <Card className={`shadow-lg border-2 ${(isApproved || isPreviewApproved) ? 'border-green-200' : isRejected ? 'border-red-200' : 'border-gray-200'}`}>
-        <CardHeader className={`${(isApproved || isPreviewApproved) ? 'bg-green-50' : isRejected ? 'bg-red-50' : 'bg-gray-50'}`}>
+      <Card
+        className={`shadow-lg border-2 ${isApproved || isPreviewApproved ? "border-green-200" : isRejected ? "border-red-200" : "border-gray-200"}`}
+      >
+        <CardHeader
+          className={`${isApproved || isPreviewApproved ? "bg-green-50" : isRejected ? "bg-red-50" : "bg-gray-50"}`}
+        >
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-xl flex items-center gap-2">
@@ -103,15 +111,9 @@ export function BeritaAcaraDownload({
               </p>
             </div>
             {isApproved && (
-              <Badge className="bg-green-600">
-                Ditandatangani
-              </Badge>
+              <Badge className="bg-green-600">Ditandatangani</Badge>
             )}
-            {isRejected && (
-              <Badge variant="destructive">
-                Ditolak
-              </Badge>
-            )}
+            {isRejected && <Badge variant="destructive">Ditolak</Badge>}
           </div>
         </CardHeader>
 
@@ -120,7 +122,9 @@ export function BeritaAcaraDownload({
           <div>
             <div className="flex items-start gap-2 mb-2">
               <FileText className="h-4 w-4 text-muted-foreground mt-1" />
-              <span className="text-sm text-muted-foreground">Judul Laporan</span>
+              <span className="text-sm text-muted-foreground">
+                Judul Laporan
+              </span>
             </div>
             <p className="font-semibold">{beritaAcara.judulLaporan}</p>
           </div>
@@ -128,7 +132,9 @@ export function BeritaAcaraDownload({
           <div>
             <div className="flex items-start gap-2 mb-2">
               <MapPin className="h-4 w-4 text-muted-foreground mt-1" />
-              <span className="text-sm text-muted-foreground">Tempat Pelaksanaan</span>
+              <span className="text-sm text-muted-foreground">
+                Tempat Pelaksanaan
+              </span>
             </div>
             <p className="font-medium">{beritaAcara.tempatPelaksanaan}</p>
           </div>
@@ -136,15 +142,21 @@ export function BeritaAcaraDownload({
           <div>
             <div className="flex items-start gap-2 mb-2">
               <Calendar className="h-4 w-4 text-muted-foreground mt-1" />
-              <span className="text-sm text-muted-foreground">Tanggal Sidang</span>
+              <span className="text-sm text-muted-foreground">
+                Tanggal Sidang
+              </span>
             </div>
-            <p className="font-medium">{formatDate(beritaAcara.tanggalSidang)}</p>
+            <p className="font-medium">
+              {formatDate(beritaAcara.tanggalSidang)}
+            </p>
           </div>
 
           <div>
             <div className="flex items-start gap-2 mb-2">
               <Clock className="h-4 w-4 text-muted-foreground mt-1" />
-              <span className="text-sm text-muted-foreground">Waktu Pelaksanaan</span>
+              <span className="text-sm text-muted-foreground">
+                Waktu Pelaksanaan
+              </span>
             </div>
             <p className="font-medium">
               {beritaAcara.waktuMulai} - {beritaAcara.waktuSelesai}
@@ -157,9 +169,13 @@ export function BeritaAcaraDownload({
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex gap-2 mb-2">
                   <XCircle className="h-5 w-5 text-red-600 flex-shrink-0" />
-                  <p className="font-semibold text-red-900">Alasan Penolakan:</p>
+                  <p className="font-semibold text-red-900">
+                    Alasan Penolakan:
+                  </p>
                 </div>
-                <p className="text-sm text-red-800 ml-7">{beritaAcara.catatanDosen}</p>
+                <p className="text-sm text-red-800 ml-7">
+                  {beritaAcara.catatanDosen}
+                </p>
               </div>
             </div>
           )}
@@ -187,7 +203,8 @@ export function BeritaAcaraDownload({
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground text-center mt-3">
-                  Dokumen ini telah ditandatangani secara digital dan memiliki kekuatan hukum yang sah
+                  Dokumen ini telah ditandatangani secara digital dan memiliki
+                  kekuatan hukum yang sah
                 </p>
               </div>
 
@@ -198,9 +215,15 @@ export function BeritaAcaraDownload({
                   <div className="space-y-2 text-sm">
                     <p className="font-semibold">Catatan Penting:</p>
                     <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                      <li>Simpan dokumen ini sebagai bukti pelaksanaan sidang</li>
-                      <li>Dokumen dapat diunduh kapan saja melalui menu Arsip</li>
-                      <li>Jika ada pertanyaan, hubungi dosen pembimbing Anda</li>
+                      <li>
+                        Simpan dokumen ini sebagai bukti pelaksanaan sidang
+                      </li>
+                      <li>
+                        Dokumen dapat diunduh kapan saja melalui menu Arsip
+                      </li>
+                      <li>
+                        Jika ada pertanyaan, hubungi dosen pembimbing Anda
+                      </li>
                       <li>Dokumen ini diperlukan untuk proses wisuda</li>
                     </ul>
                   </div>
@@ -217,8 +240,13 @@ export function BeritaAcaraDownload({
                 <div className="space-y-2 text-sm">
                   <p className="font-semibold">Yang Harus Dilakukan:</p>
                   <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                    <li>Baca dan pahami catatan penolakan dari dosen pembimbing</li>
-                    <li>Perbaiki data pengajuan sesuai dengan feedback yang diberikan</li>
+                    <li>
+                      Baca dan pahami catatan penolakan dari dosen pembimbing
+                    </li>
+                    <li>
+                      Perbaiki data pengajuan sesuai dengan feedback yang
+                      diberikan
+                    </li>
                     <li>Pastikan semua informasi sudah benar dan lengkap</li>
                     <li>Ajukan kembali setelah melakukan perbaikan</li>
                   </ul>
@@ -232,6 +260,12 @@ export function BeritaAcaraDownload({
   );
 }
 
-function Label({ children, className }: { children: React.ReactNode; className?: string }) {
+function Label({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return <label className={className}>{children}</label>;
 }

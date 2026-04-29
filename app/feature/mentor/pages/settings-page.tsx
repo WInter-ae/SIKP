@@ -193,7 +193,10 @@ function SettingsPage() {
               id="emailNotifications"
               checked={settings.emailNotifications}
               onCheckedChange={(checked) =>
-                setSettings((prev) => ({ ...prev, emailNotifications: checked }))
+                setSettings((prev) => ({
+                  ...prev,
+                  emailNotifications: checked,
+                }))
               }
             />
           </div>

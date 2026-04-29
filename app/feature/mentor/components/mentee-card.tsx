@@ -48,7 +48,9 @@ function MenteeCard({ mentee }: MenteeCardProps) {
             <CardTitle className="text-lg">{mentee.name}</CardTitle>
             <CardDescription>NIM: {mentee.nim}</CardDescription>
           </div>
-          <span className={`px-3 py-1 text-sm rounded-full ${getStatusClasses(mentee.status)}`}>
+          <span
+            className={`px-3 py-1 text-sm rounded-full ${getStatusClasses(mentee.status)}`}
+          >
             {mentee.status}
           </span>
         </div>

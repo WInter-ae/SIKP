@@ -1,6 +1,8 @@
+import { useIdentity } from "~/contexts/identity-context";
+import { useAuth } from "~/contexts/auth-context";
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
-import { useUser } from "~/contexts/user-context";
+
 import { type EffectivePermission, type EffectiveRole } from "~/lib/sso-types";
 
 /**
@@ -17,14 +19,13 @@ export function ProtectedRoute({
   requiredPermissions?: EffectivePermission[];
 }) {
   const navigate = useNavigate();
+  const { isLoading, isAuthenticated } = useAuth();
   const {
-    isLoading,
-    isAuthenticated,
     effectiveRoles,
     effectivePermissions,
     activeIdentity,
     availableIdentities,
-  } = useUser();
+  } = useIdentity();
 
   const hasRoleAccess =
     !requiredRoles ||

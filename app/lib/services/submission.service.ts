@@ -1,57 +1,75 @@
 /**
- * Submission Service
- * Wrapper untuk Submission API endpoints
+ * Submission Service (wrapper simpel)
+ * Wrapper untuk Submission API endpoints — gunakan submission-api.service.ts
+ * untuk fungsi yang lebih lengkap (dengan logika bisnis tambahan).
  */
 
-import { post, get, patch, uploadFile } from "~/lib/api-client";
+import { sikpClient } from "~/lib/api-client";
 import type {
   Submission,
   SubmissionDocument,
   GeneratedLetter,
   DocumentType,
 } from "~/lib/types";
+import { API_ENDPOINTS } from "~/lib/constants/endpoints";
+import { z } from "zod";
+import {
+  SubmissionSchema,
+  SubmissionDocumentSchema,
+} from "~/lib/schemas/api-schemas";
 
-/**
- * Create a new submission
- */
+/** Create a new submission. */
 export async function createSubmission(teamId: string) {
-  return post<Submission>("/api/submissions", { teamId });
+  return sikpClient.post<Submission>(
+    API_ENDPOINTS.SUBMISSION.CREATE,
+    { teamId },
+    SubmissionSchema,
+  );
 }
 
-/**
- * Get user's submissions
- */
+/** Get user's submissions. */
 export async function getMySubmissions() {
-  return get<Submission[]>("/api/submissions/my-submissions");
+  return sikpClient.get<Submission[]>(
+    API_ENDPOINTS.SUBMISSION.GET_MY,
+    undefined,
+    z.array(SubmissionSchema),
+  );
 }
 
-/**
- * Get submission detail
- */
+/** Get submission detail. */
 export async function getSubmissionDetail(submissionId: string) {
-  return get<Submission>(`/api/submissions/${submissionId}`);
+  return sikpClient.get<Submission>(
+    API_ENDPOINTS.SUBMISSION.UPDATE(submissionId),
+    undefined,
+    SubmissionSchema,
+  );
 }
 
-/**
- * Update submission
- */
+/** Update submission. */
 export async function updateSubmission(
   submissionId: string,
   data: Partial<Submission>,
 ) {
-  return patch<Submission>(`/api/submissions/${submissionId}`, data);
+  return sikpClient.request<Submission>(
+    API_ENDPOINTS.SUBMISSION.UPDATE(submissionId),
+    {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    },
+    SubmissionSchema,
+  );
 }
 
-/**
- * Submit submission for review
- */
+/** Submit submission for review. */
 export async function submitForReview(submissionId: string) {
-  return post<Submission>(`/api/submissions/${submissionId}/submit`);
+  return sikpClient.post<Submission>(
+    `${API_ENDPOINTS.SUBMISSION.UPDATE(submissionId)}/submit`,
+    undefined,
+    SubmissionSchema,
+  );
 }
 
-/**
- * Upload submission document
- */
+/** Upload submission document. */
 export async function uploadDocument(
   submissionId: string,
   file: File,
@@ -60,75 +78,80 @@ export async function uploadDocument(
   const formData = new FormData();
   formData.append("file", file);
   formData.append("documentType", documentType);
-
-  return uploadFile<SubmissionDocument>(
-    `/api/submissions/${submissionId}/documents`,
+  return sikpClient.upload<SubmissionDocument>(
+    `${API_ENDPOINTS.SUBMISSION.UPDATE(submissionId)}/documents`,
     formData,
+    SubmissionDocumentSchema,
   );
 }
 
-/**
- * Get submission documents
- */
+/** Get submission documents. */
 export async function getSubmissionDocuments(submissionId: string) {
-  return get<SubmissionDocument[]>(
-    `/api/submissions/${submissionId}/documents`,
+  return sikpClient.get<SubmissionDocument[]>(
+    `${API_ENDPOINTS.SUBMISSION.UPDATE(submissionId)}/documents`,
+    undefined,
+    z.array(SubmissionDocumentSchema),
   );
 }
 
-/**
- * (Admin) Get all submissions
- */
-export async function getAllSubmissions() {
-  return get<Submission[]>("/api/admin/submissions");
+/** Get submission status options. */
+export async function getSubmissionStatusOptions() {
+  return sikpClient.get<{ id: string; label: string }[]>(
+    "/api/submissions/status-options",
+  );
 }
 
-/**
- * (Admin) Get submissions by status
- */
-export async function getSubmissionsByStatus(status: string) {
-  return get<Submission[]>(`/api/admin/submissions/status/${status}`);
+// ==================== ADMIN ENDPOINTS ====================
+
+/** Get all submissions (Admin). */
+export async function getAllSubmissions(status?: string) {
+  const url = status
+    ? `/api/admin/submissions/status/${status}`
+    : API_ENDPOINTS.SUBMISSION.GET_ALL_ADMIN;
+  return sikpClient.get<Submission[]>(
+    url,
+    undefined,
+    z.array(SubmissionSchema),
+  );
 }
 
-/**
- * (Admin) Get submission detail
- */
+/** Get submission detail (Admin). */
 export async function getAdminSubmissionDetail(submissionId: string) {
-  return get<
-    Submission & { documents: SubmissionDocument[]; letters: GeneratedLetter[] }
-  >(`/api/admin/submissions/${submissionId}`);
+  return sikpClient.get<Submission>(
+    `${API_ENDPOINTS.SUBMISSION.GET_ALL_ADMIN}/${submissionId}`,
+    undefined,
+    SubmissionSchema,
+  );
 }
 
-/**
- * (Admin) Approve submission
- */
+/** Approve submission. */
 export async function approveSubmission(
   submissionId: string,
   autoGenerateLetter = false,
 ) {
-  return post<Submission>(`/api/admin/submissions/${submissionId}/approve`, {
-    autoGenerateLetter,
-  });
+  return sikpClient.post<Submission>(
+    `${API_ENDPOINTS.SUBMISSION.GET_ALL_ADMIN}/${submissionId}/approve`,
+    { autoGenerateLetter },
+    SubmissionSchema,
+  );
 }
 
-/**
- * (Admin) Reject submission
- */
+/** Reject submission. */
 export async function rejectSubmission(submissionId: string, reason: string) {
-  return post<Submission>(`/api/admin/submissions/${submissionId}/reject`, {
-    reason,
-  });
+  return sikpClient.post<Submission>(
+    `${API_ENDPOINTS.SUBMISSION.GET_ALL_ADMIN}/${submissionId}/reject`,
+    { reason },
+    SubmissionSchema,
+  );
 }
 
-/**
- * (Admin) Generate letter
- */
-export async function generateLetter(
+/** Generate letter for approved submission. */
+export async function generateSubmissionLetter(
   submissionId: string,
   format: "pdf" | "docx" = "pdf",
 ) {
-  return post<GeneratedLetter>(
-    `/api/admin/submissions/${submissionId}/generate-letter`,
+  return sikpClient.post<GeneratedLetter>(
+    `${API_ENDPOINTS.SUBMISSION.GET_ALL_ADMIN}/${submissionId}/generate-letter`,
     { format },
   );
 }

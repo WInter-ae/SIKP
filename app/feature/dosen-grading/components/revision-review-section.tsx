@@ -5,14 +5,14 @@ import { Badge } from "~/components/ui/badge";
 import { Textarea } from "~/components/ui/textarea";
 import { Label } from "~/components/ui/label";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { 
-  FileText, 
-  CheckCircle, 
-  XCircle, 
+import {
+  FileText,
+  CheckCircle,
+  XCircle,
   AlertCircle,
   Download,
   Eye,
-  Send
+  Send,
 } from "lucide-react";
 
 interface RevisionReviewSectionProps {
@@ -59,19 +59,19 @@ export function RevisionReviewSection({
   useEffect(() => {
     if (typeof window !== "undefined" && !isInitialized) {
       const savedLaporan = localStorage.getItem("laporan-kp");
-      
+
       if (savedLaporan) {
         const laporanData = JSON.parse(savedLaporan);
-        
+
         // Check if mahasiswa has uploaded a file
         if (laporanData.fileName && laporanData.status !== "belum_upload") {
           setHasLaporan(true);
-          
+
           // Convert to revision format
-          const fileSize = laporanData.fileSize 
+          const fileSize = laporanData.fileSize
             ? `${(laporanData.fileSize / (1024 * 1024)).toFixed(2)} MB`
             : "0 MB";
-          
+
           setLaporan({
             fileName: laporanData.fileName || "Laporan_KP.pdf",
             fileSize: fileSize,
@@ -79,20 +79,24 @@ export function RevisionReviewSection({
             version: 1,
             revisionHistory: [],
           });
-          
+
           // Check if dosen already made decision
-          const savedDecision = localStorage.getItem(`revision-decision-${studentId}`);
+          const savedDecision = localStorage.getItem(
+            `revision-decision-${studentId}`,
+          );
           if (savedDecision) {
             setDecision(savedDecision as RevisionDecision);
-            
+
             // If decision is no-revision, immediately notify parent
             if (savedDecision === "no-revision") {
               onAllRevisionsApproved(true);
             }
           }
-          
+
           // Load revision message if exists
-          const savedRevisionMsg = localStorage.getItem(`revision-message-${studentId}`);
+          const savedRevisionMsg = localStorage.getItem(
+            `revision-message-${studentId}`,
+          );
           if (savedRevisionMsg) {
             setRevisionMessage(savedRevisionMsg);
           }
@@ -104,7 +108,7 @@ export function RevisionReviewSection({
         // No laporan data at all
         setHasLaporan(false);
       }
-      
+
       setIsInitialized(true);
     }
   }, [studentId, onAllRevisionsApproved, isInitialized]);
@@ -136,12 +140,16 @@ export function RevisionReviewSection({
   };
 
   const handleDecideNoRevision = () => {
-    if (confirm("Apakah Anda yakin dokumen sudah sempurna dan tidak memerlukan revisi?")) {
+    if (
+      confirm(
+        "Apakah Anda yakin dokumen sudah sempurna dan tidak memerlukan revisi?",
+      )
+    ) {
       setDecision("no-revision");
-      
+
       // Save decision to localStorage
       localStorage.setItem(`revision-decision-${studentId}`, "no-revision");
-      
+
       // Update laporan status in mahasiswa's data
       const savedLaporan = localStorage.getItem("laporan-kp");
       if (savedLaporan) {
@@ -150,7 +158,7 @@ export function RevisionReviewSection({
         laporanData.reviewedAt = new Date().toISOString();
         laporanData.reviewedBy = "Dosen Pembimbing";
         localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
-        
+
         // Update revision history - mark latest as approved
         const savedHistory = localStorage.getItem("revision-history-kp");
         if (savedHistory) {
@@ -162,9 +170,12 @@ export function RevisionReviewSection({
               ...historyData[latestIndex],
               status: "disetujui",
               reviewedAt: new Date().toISOString(),
-              reviewedBy: "Dosen Pembimbing"
+              reviewedBy: "Dosen Pembimbing",
             };
-            localStorage.setItem("revision-history-kp", JSON.stringify(historyData));
+            localStorage.setItem(
+              "revision-history-kp",
+              JSON.stringify(historyData),
+            );
           }
         }
       }
@@ -178,12 +189,12 @@ export function RevisionReviewSection({
     }
 
     setIsSubmitting(true);
-    
+
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
+
     // Add to history and reset
-    setLaporan(prev => ({
+    setLaporan((prev) => ({
       ...prev,
       revisionHistory: [
         ...prev.revisionHistory,
@@ -192,15 +203,15 @@ export function RevisionReviewSection({
           message: revisionMessage,
           submittedAt: new Date().toISOString(),
           status: "pending",
-        }
+        },
       ],
       revisionMessage: revisionMessage,
     }));
-    
+
     // Save decision and message to localStorage
     localStorage.setItem(`revision-decision-${studentId}`, "needs-revision");
     localStorage.setItem(`revision-message-${studentId}`, revisionMessage);
-    
+
     // Update laporan status in mahasiswa's data
     const savedLaporan = localStorage.getItem("laporan-kp");
     if (savedLaporan) {
@@ -210,7 +221,7 @@ export function RevisionReviewSection({
       laporanData.reviewedAt = new Date().toISOString();
       laporanData.reviewedBy = "Dosen Pembimbing";
       localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
-      
+
       // Update revision history - add revision info to latest version
       const savedHistory = localStorage.getItem("revision-history-kp");
       if (savedHistory) {
@@ -223,27 +234,34 @@ export function RevisionReviewSection({
             status: "perlu_revisi",
             revisionMessage: revisionMessage,
             reviewedAt: new Date().toISOString(),
-            reviewedBy: "Dosen Pembimbing"
+            reviewedBy: "Dosen Pembimbing",
           };
-          localStorage.setItem("revision-history-kp", JSON.stringify(historyData));
+          localStorage.setItem(
+            "revision-history-kp",
+            JSON.stringify(historyData),
+          );
         }
       }
     }
-    
+
     alert("Pesan revisi berhasil dikirim ke mahasiswa");
     setRevisionMessage("");
     setIsSubmitting(false);
   };
 
   const handleResetDecision = () => {
-    if (confirm("Apakah Anda yakin ingin mereset keputusan revisi? Mahasiswa perlu upload ulang.")) {
+    if (
+      confirm(
+        "Apakah Anda yakin ingin mereset keputusan revisi? Mahasiswa perlu upload ulang.",
+      )
+    ) {
       setDecision("undecided");
       setRevisionMessage("");
-      
+
       // Clear localStorage
       localStorage.removeItem(`revision-decision-${studentId}`);
       localStorage.removeItem(`revision-message-${studentId}`);
-      
+
       // Reset laporan status in mahasiswa's data
       const savedLaporan = localStorage.getItem("laporan-kp");
       if (savedLaporan) {
@@ -254,7 +272,7 @@ export function RevisionReviewSection({
         delete laporanData.reviewedBy;
         localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
       }
-      
+
       // Clear revision history
       localStorage.removeItem("revision-history-kp");
     }
@@ -269,7 +287,8 @@ export function RevisionReviewSection({
           <AlertDescription className="text-orange-800">
             <strong>Belum Ada Laporan</strong>
             <p className="mt-1">
-              Mahasiswa belum mengupload Laporan Kerja Praktik. Halaman revisi akan aktif setelah mahasiswa mengupload laporan.
+              Mahasiswa belum mengupload Laporan Kerja Praktik. Halaman revisi
+              akan aktif setelah mahasiswa mengupload laporan.
             </p>
           </AlertDescription>
         </Alert>
@@ -283,8 +302,8 @@ export function RevisionReviewSection({
             <AlertDescription className="text-blue-800">
               <strong>Tidak Ada Revisi Diperlukan</strong>
               <p className="mt-1">
-                Jika dokumen mahasiswa sudah sempurna dan tidak memerlukan revisi, 
-                aktifkan opsi ini untuk langsung memberikan penilaian.
+                Jika dokumen mahasiswa sudah sempurna dan tidak memerlukan
+                revisi, aktifkan opsi ini untuk langsung memberikan penilaian.
               </p>
             </AlertDescription>
           </Alert>
@@ -295,7 +314,8 @@ export function RevisionReviewSection({
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-gray-600">
-                Mahasiswa telah mengirimkan laporan Kerja Praktik. Silakan tentukan apakah dokumen memerlukan revisi atau tidak.
+                Mahasiswa telah mengirimkan laporan Kerja Praktik. Silakan
+                tentukan apakah dokumen memerlukan revisi atau tidak.
               </p>
 
               {/* Laporan Info */}
@@ -308,7 +328,9 @@ export function RevisionReviewSection({
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="outline">Laporan KP</Badge>
-                        <Badge variant="secondary">Versi {laporan.version}</Badge>
+                        <Badge variant="secondary">
+                          Versi {laporan.version}
+                        </Badge>
                       </div>
                       <h4 className="font-semibold text-gray-900 mb-1">
                         {laporan.fileName}
@@ -337,11 +359,16 @@ export function RevisionReviewSection({
               {laporan.revisionHistory.length > 0 && (
                 <Card className="bg-gray-50">
                   <CardHeader className="pb-3">
-                    <h4 className="font-medium text-sm text-gray-700">Riwayat Revisi</h4>
+                    <h4 className="font-medium text-sm text-gray-700">
+                      Riwayat Revisi
+                    </h4>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {laporan.revisionHistory.map((history, index) => (
-                      <div key={index} className="bg-white rounded-lg p-3 text-sm">
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg p-3 text-sm"
+                      >
                         <div className="flex items-center gap-2 mb-1">
                           <Badge variant="outline" className="text-xs">
                             Versi {history.version}
@@ -395,8 +422,9 @@ export function RevisionReviewSection({
             <AlertDescription className="text-orange-800">
               <strong>Dokumen Memerlukan Revisi</strong>
               <p className="mt-1">
-                Review dokumen dan berikan pesan revisi yang jelas kepada mahasiswa. 
-                Mahasiswa akan memperbaiki dan mengirim ulang dokumen.
+                Review dokumen dan berikan pesan revisi yang jelas kepada
+                mahasiswa. Mahasiswa akan memperbaiki dan mengirim ulang
+                dokumen.
               </p>
             </AlertDescription>
           </Alert>
@@ -420,10 +448,15 @@ export function RevisionReviewSection({
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="outline" className="border-orange-600 text-orange-700">
+                        <Badge
+                          variant="outline"
+                          className="border-orange-600 text-orange-700"
+                        >
                           Laporan KP
                         </Badge>
-                        <Badge variant="secondary">Versi {laporan.version}</Badge>
+                        <Badge variant="secondary">
+                          Versi {laporan.version}
+                        </Badge>
                       </div>
                       <h4 className="font-semibold text-gray-900 mb-1">
                         {laporan.fileName}
@@ -450,7 +483,10 @@ export function RevisionReviewSection({
 
               {/* Revision Message Form */}
               <div className="space-y-3">
-                <Label htmlFor="revision-message" className="text-base font-semibold">
+                <Label
+                  htmlFor="revision-message"
+                  className="text-base font-semibold"
+                >
                   Pesan Revisi <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
@@ -461,7 +497,8 @@ export function RevisionReviewSection({
                   className="min-h-[150px]"
                 />
                 <p className="text-sm text-gray-600">
-                  💡 Berikan instruksi yang jelas dan spesifik agar mahasiswa dapat memperbaiki dengan tepat.
+                  💡 Berikan instruksi yang jelas dan spesifik agar mahasiswa
+                  dapat memperbaiki dengan tepat.
                 </p>
               </div>
 
@@ -479,11 +516,16 @@ export function RevisionReviewSection({
               {laporan.revisionHistory.length > 0 && (
                 <Card className="bg-gray-50 mt-4">
                   <CardHeader className="pb-3">
-                    <h4 className="font-medium text-sm text-gray-700">Riwayat Revisi Sebelumnya</h4>
+                    <h4 className="font-medium text-sm text-gray-700">
+                      Riwayat Revisi Sebelumnya
+                    </h4>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {laporan.revisionHistory.map((history, index) => (
-                      <div key={index} className="bg-white rounded-lg p-3 text-sm">
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg p-3 text-sm"
+                      >
                         <div className="flex items-center gap-2 mb-1">
                           <Badge variant="outline" className="text-xs">
                             Versi {history.version}
@@ -511,7 +553,8 @@ export function RevisionReviewSection({
             <AlertDescription className="text-green-800">
               <strong>Dokumen Disetujui</strong>
               <p className="mt-1">
-                Dokumen tidak memerlukan revisi. Anda dapat melanjutkan ke tab Penilaian untuk memberikan nilai.
+                Dokumen tidak memerlukan revisi. Anda dapat melanjutkan ke tab
+                Penilaian untuk memberikan nilai.
               </p>
             </AlertDescription>
           </Alert>

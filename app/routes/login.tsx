@@ -1,7 +1,7 @@
-import { GalleryVerticalEnd } from "lucide-react"
-import { Link } from "react-router"
+import { GalleryVerticalEnd } from "lucide-react";
+import { Link } from "react-router";
 
-import { LoginForm } from "~/feature/login/components/login-form"
+import { LoginForm } from "~/feature/login/components/login-form";
 
 export default function LoginPage() {
   return (
@@ -29,5 +29,5 @@ export default function LoginPage() {
         />
       </div>
     </div>
-  )
+  );
 }

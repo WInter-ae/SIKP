@@ -75,7 +75,9 @@ export function InternReportCard({ report, onClick }: InternReportCardProps) {
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
               {report.student.name}
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{report.student.studentId}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {report.student.studentId}
+            </p>
           </div>
         </div>
 
@@ -117,7 +119,9 @@ export function InternReportCard({ report, onClick }: InternReportCardProps) {
         </div>
 
         {/* Abstract */}
-        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{report.abstract}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+          {report.abstract}
+        </p>
 
         {/* Stats */}
         <div className="flex items-center justify-between pt-2 border-t dark:border-gray-700">

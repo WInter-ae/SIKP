@@ -1,7 +1,9 @@
 # Fitur Pengujian Sidang Kerja Praktik
 
 ## 📋 Deskripsi
+
 Fitur untuk mahasiswa mengajukan berita acara sidang Kerja Praktik, dengan alur:
+
 1. Input data berita acara
 2. Ajukan ke dosen pembimbing/penguji
 3. Generate surat berita acara setelah disetujui
@@ -23,6 +25,7 @@ hearing/
 ## 🎯 Fitur
 
 ### Mahasiswa:
+
 - ✅ Input data berita acara (judul, tempat, tanggal, waktu)
 - ✅ Simpan sebagai draft
 - ✅ Ajukan ke dosen
@@ -31,12 +34,14 @@ hearing/
 - ✅ Generate surat jika disetujui
 
 ### Status Berita Acara:
+
 - **Draft**: Masih dalam proses pengeditan
 - **Submitted**: Sudah diajukan, menunggu persetujuan dosen
 - **Approved**: Disetujui, dapat generate surat
 - **Rejected**: Ditolak, perlu perbaikan
 
 ## 🔧 Teknologi
+
 - React Hook Form + Zod untuk form validation
 - Lucide React untuk icons
 - shadcn/ui components (Card, Button, Input, dll)
@@ -45,11 +50,13 @@ hearing/
 ## 🚀 Penggunaan
 
 ### Akses Halaman
+
 ```
 URL: /mahasiswa/kp/pengujian-sidang
 ```
 
 ### Component Usage
+
 ```tsx
 import { BeritaAcaraForm, BeritaAcaraStatus } from "~/feature/hearing";
 
@@ -71,6 +78,7 @@ import { BeritaAcaraForm, BeritaAcaraStatus } from "~/feature/hearing";
 ```
 
 ## 📝 Todo / Pengembangan Selanjutnya
+
 - [ ] Integrasi dengan backend API
 - [ ] Generate PDF surat berita acara
 - [ ] Upload dokumen pendukung
@@ -80,7 +88,9 @@ import { BeritaAcaraForm, BeritaAcaraStatus } from "~/feature/hearing";
 - [ ] Export data ke berbagai format
 
 ## 🧪 Testing
+
 Halaman dilengkapi dengan testing controls untuk development:
+
 - Set status ke Submitted
 - Set status ke Approved (dengan nilai)
 - Set status ke Rejected (dengan catatan)

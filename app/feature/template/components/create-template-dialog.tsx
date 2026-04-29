@@ -25,7 +25,7 @@ import type { TemplateType, TemplateField } from "../types/template.types";
 import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { autoGenerateFields } from "../services/template.service";
-import { createTemplate } from "~/lib/services/template-api";
+import { createTemplate } from "~/lib/services/template.service";
 
 interface CreateTemplateDialogProps {
   open: boolean;
@@ -88,7 +88,10 @@ export function CreateTemplateDialog({
         onSuccess();
       } else {
         // Check for specific error messages
-        if (response.message?.includes("Forbidden") || response.message?.includes("admin")) {
+        if (
+          response.message?.includes("Forbidden") ||
+          response.message?.includes("admin")
+        ) {
           toast.error("Hanya admin yang dapat membuat template");
         } else {
           toast.error(response.message || "Gagal membuat template");
@@ -190,17 +193,14 @@ export function CreateTemplateDialog({
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
           >
             Batal
           </Button>
-          <Button 
-            onClick={handleSubmit}
-            disabled={isLoading}
-          >
+          <Button onClick={handleSubmit} disabled={isLoading}>
             {isLoading ? "Menyimpan..." : "Simpan Template"}
           </Button>
         </DialogFooter>

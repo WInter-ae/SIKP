@@ -48,7 +48,7 @@ export function ApproveLogbookButton({
     setIsSubmitting(true);
     try {
       const response = await approveLogbook(logbookId);
-      
+
       if (response.success) {
         toast.success("Logbook berhasil disetujui dengan paraf Anda!");
         setIsOpen(false);
@@ -59,13 +59,19 @@ export function ApproveLogbookButton({
       }
     } catch (error: any) {
       // Check if error is about missing signature
-      if (error?.message?.includes("signature") || error?.message?.includes("tanda tangan")) {
-        toast.error("Silakan setup tanda tangan di profil Anda terlebih dahulu", {
-          action: {
-            label: "Ke Profil",
-            onClick: () => window.location.href = "/mentor/profile",
+      if (
+        error?.message?.includes("signature") ||
+        error?.message?.includes("tanda tangan")
+      ) {
+        toast.error(
+          "Silakan setup tanda tangan di profil Anda terlebih dahulu",
+          {
+            action: {
+              label: "Ke Profil",
+              onClick: () => (window.location.href = "/mentor/profile"),
+            },
           },
-        });
+        );
       } else {
         toast.error("Terjadi kesalahan saat menyetujui logbook");
       }
@@ -85,7 +91,7 @@ export function ApproveLogbookButton({
     setIsSubmitting(true);
     try {
       const response = await approveLogbook(logbookId);
-      
+
       if (response.success) {
         toast.success("Logbook berhasil disetujui!");
         onSuccess?.();
@@ -93,13 +99,19 @@ export function ApproveLogbookButton({
         toast.error(response.message || "Gagal menyetujui logbook");
       }
     } catch (error: any) {
-      if (error?.message?.includes("signature") || error?.message?.includes("tanda tangan")) {
-        toast.error("Silakan setup tanda tangan di profil Anda terlebih dahulu", {
-          action: {
-            label: "Ke Profil",
-            onClick: () => window.location.href = "/mentor/profile",
+      if (
+        error?.message?.includes("signature") ||
+        error?.message?.includes("tanda tangan")
+      ) {
+        toast.error(
+          "Silakan setup tanda tangan di profil Anda terlebih dahulu",
+          {
+            action: {
+              label: "Ke Profil",
+              onClick: () => (window.location.href = "/mentor/profile"),
+            },
           },
-        });
+        );
       } else {
         toast.error("Terjadi kesalahan saat menyetujui logbook");
       }
@@ -129,7 +141,8 @@ export function ApproveLogbookButton({
         <DialogHeader>
           <DialogTitle>Paraf Logbook</DialogTitle>
           <DialogDescription>
-            Berikan paraf untuk menyetujui logbook ini. Tanda tangan Anda akan otomatis ditambahkan.
+            Berikan paraf untuk menyetujui logbook ini. Tanda tangan Anda akan
+            otomatis ditambahkan.
           </DialogDescription>
         </DialogHeader>
 
@@ -168,7 +181,8 @@ export function ApproveLogbookButton({
           {/* Notes (Optional) */}
           <div className="space-y-2">
             <Label htmlFor="notes">
-              Catatan <span className="text-muted-foreground text-xs">(opsional)</span>
+              Catatan{" "}
+              <span className="text-muted-foreground text-xs">(opsional)</span>
             </Label>
             <Textarea
               id="notes"
@@ -240,7 +254,7 @@ export function BulkApproveButton({
       // Import approveAllLogbooks when needed
       const { approveAllLogbooks } = await import("../services/mentor-api");
       const response = await approveAllLogbooks(studentId);
-      
+
       if (response.success) {
         toast.success(`${pendingCount} logbook berhasil disetujui!`);
         setIsOpen(false);
@@ -250,13 +264,19 @@ export function BulkApproveButton({
         toast.error(response.message || "Gagal menyetujui logbook");
       }
     } catch (error: any) {
-      if (error?.message?.includes("signature") || error?.message?.includes("tanda tangan")) {
-        toast.error("Silakan setup tanda tangan di profil Anda terlebih dahulu", {
-          action: {
-            label: "Ke Profil",
-            onClick: () => window.location.href = "/mentor/profile",
+      if (
+        error?.message?.includes("signature") ||
+        error?.message?.includes("tanda tangan")
+      ) {
+        toast.error(
+          "Silakan setup tanda tangan di profil Anda terlebih dahulu",
+          {
+            action: {
+              label: "Ke Profil",
+              onClick: () => (window.location.href = "/mentor/profile"),
+            },
           },
-        });
+        );
       } else {
         toast.error("Terjadi kesalahan saat menyetujui logbook");
       }
@@ -289,14 +309,16 @@ export function BulkApproveButton({
           {/* Warning */}
           <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
             <p className="text-sm text-yellow-900">
-              ⚠️ Semua logbook yang berstatus PENDING akan disetujui dan diberi paraf
+              ⚠️ Semua logbook yang berstatus PENDING akan disetujui dan diberi
+              paraf
             </p>
           </div>
 
           {/* Notes (Optional) */}
           <div className="space-y-2">
             <Label htmlFor="bulk-notes">
-              Catatan <span className="text-muted-foreground text-xs">(opsional)</span>
+              Catatan{" "}
+              <span className="text-muted-foreground text-xs">(opsional)</span>
             </Label>
             <Textarea
               id="bulk-notes"
@@ -310,7 +332,8 @@ export function BulkApproveButton({
           {/* Info */}
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-sm text-blue-900">
-              ✓ Tanda tangan digital Anda akan otomatis ditambahkan ke semua logbook
+              ✓ Tanda tangan digital Anda akan otomatis ditambahkan ke semua
+              logbook
             </p>
           </div>
         </div>

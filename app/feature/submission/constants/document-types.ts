@@ -1,9 +1,9 @@
 /**
  * Document Type Constants
- * 
+ *
  * PENTING: SURAT_PENGANTAR adalah dokumen yang di-generate otomatis oleh sistem
  * setelah approval. Dokumen ini TIDAK boleh muncul di form upload atau review accordion.
- * 
+ *
  * Hanya 6 dokumen di bawah ini yang boleh di-upload oleh mahasiswa.
  */
 
@@ -40,7 +40,10 @@ export const STANDARD_DOCUMENT_TITLES = [
  */
 export function isSuratPengantarDocument(text: string): boolean {
   if (!text) return false;
-  const normalized = text.trim().toLowerCase().replace(/[_\s-]/g, "");
+  const normalized = text
+    .trim()
+    .toLowerCase()
+    .replace(/[_\s-]/g, "");
   return (
     normalized === "suratpengantar" ||
     normalized === "suratpengantarkerjapraktik" ||

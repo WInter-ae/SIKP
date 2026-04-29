@@ -13,7 +13,11 @@ import { getMentees, type MenteeData } from "~/feature/field-mentor/services";
 import type { Mentee } from "../types";
 
 function mapBackendMentee(mentee: MenteeData): Mentee | null {
-  const status = (mentee.internshipStatus || mentee.status || "-").toUpperCase();
+  const status = (
+    mentee.internshipStatus ||
+    mentee.status ||
+    "-"
+  ).toUpperCase();
 
   if (!mentee.userId) return null;
 
@@ -62,7 +66,9 @@ function MenteePage() {
 
         if (!response.success || !response.data) {
           setMenteeList([]);
-          setErrorMessage(response.message || "Gagal memuat data mahasiswa magang.");
+          setErrorMessage(
+            response.message || "Gagal memuat data mahasiswa magang.",
+          );
           return;
         }
 
@@ -74,7 +80,10 @@ function MenteePage() {
       } catch (error) {
         if (!isMounted) return;
 
-        const message = error instanceof Error ? error.message : "Gagal memuat data mahasiswa magang.";
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat data mahasiswa magang.";
         setErrorMessage(message);
         setMenteeList([]);
         toast.error(message);
@@ -94,7 +103,7 @@ function MenteePage() {
 
   const totalProgress = useMemo(
     () => menteeList.reduce((sum, mentee) => sum + (mentee.progress ?? 0), 0),
-    [menteeList]
+    [menteeList],
   );
   const averageProgress =
     menteeList.length > 0 ? totalProgress / menteeList.length : 0;
@@ -114,12 +123,18 @@ function MenteePage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <StatsCard title="Total Mahasiswa" value={isLoading ? "..." : menteeList.length} />
+        <StatsCard
+          title="Total Mahasiswa"
+          value={isLoading ? "..." : menteeList.length}
+        />
         <StatsCard
           title="Rata-rata Progress"
           value={isLoading ? "..." : `${averageProgress.toFixed(1)}%`}
         />
-        <StatsCard title="Status Aktif" value={isLoading ? "..." : activeCount} />
+        <StatsCard
+          title="Status Aktif"
+          value={isLoading ? "..." : activeCount}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 mb-8">
@@ -128,7 +143,9 @@ function MenteePage() {
             Memuat data mahasiswa magang dari backend...
           </div>
         ) : menteeList.length > 0 ? (
-          menteeList.map((mentee) => <MenteeCard key={mentee.id} mentee={mentee} />)
+          menteeList.map((mentee) => (
+            <MenteeCard key={mentee.id} mentee={mentee} />
+          ))
         ) : (
           <div className="rounded-xl border bg-card p-6 text-muted-foreground">
             Belum ada mahasiswa magang yang terhubung ke akun mentor ini.

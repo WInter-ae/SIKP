@@ -2,6 +2,7 @@
 
 export interface MailEntry {
   id: string;
+  memberMahasiswaId?: string;
   tanggal: string;
   nim: string;
   namaMahasiswa: string;
@@ -9,7 +10,6 @@ export interface MailEntry {
   angkatan?: string;
   semester?: string;
   email?: string;
-  noHp?: string;
   jenisSurat?: string;
   status: "menunggu" | "disetujui" | "ditolak";
   supervisor?: string;
@@ -33,9 +33,12 @@ export interface MailEntry {
   mahasiswaEsignatureUrl?: string;
   signedFileUrl?: string;
   approvedAt?: string;
+  rejectedAt?: string;
+  rejectionReason?: string;
   // Fields khusus Surat Permohonan
   jumlahSks?: string;
   tahunAjaran?: string;
+  mahasiswaEsignatureSnapshotAt?: string;
   teleponPerusahaan?: string;
   jenisProdukUsaha?: string;
   divisi?: string;

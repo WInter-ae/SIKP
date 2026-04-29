@@ -40,10 +40,10 @@ export function DynamicFormFromTemplate({
   const sortedFields = [...fields].sort((a, b) => a.order - b.order);
 
   const handleChange = (variable: string, value: string) => {
-    setFormData(prev => ({ ...prev, [variable]: value }));
+    setFormData((prev) => ({ ...prev, [variable]: value }));
     // Clear error when user types
     if (errors[variable]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[variable];
         return newErrors;
@@ -54,7 +54,7 @@ export function DynamicFormFromTemplate({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    fields.forEach(field => {
+    fields.forEach((field) => {
       const value = formData[field.variable]?.trim() || "";
 
       // Required validation
@@ -64,7 +64,10 @@ export function DynamicFormFromTemplate({
 
       // Type-specific validation
       if (value) {
-        if (field.type === "email" && !value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+        if (
+          field.type === "email" &&
+          !value.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+        ) {
           newErrors[field.variable] = "Format email tidak valid";
         }
 
@@ -75,15 +78,21 @@ export function DynamicFormFromTemplate({
         // Custom validation
         if (field.validation) {
           if (field.validation.min && value.length < field.validation.min) {
-            newErrors[field.variable] = field.validation.message || 
+            newErrors[field.variable] =
+              field.validation.message ||
               `Minimal ${field.validation.min} karakter`;
           }
           if (field.validation.max && value.length > field.validation.max) {
-            newErrors[field.variable] = field.validation.message || 
+            newErrors[field.variable] =
+              field.validation.message ||
               `Maksimal ${field.validation.max} karakter`;
           }
-          if (field.validation.pattern && !new RegExp(field.validation.pattern).test(value)) {
-            newErrors[field.variable] = field.validation.message || "Format tidak valid";
+          if (
+            field.validation.pattern &&
+            !new RegExp(field.validation.pattern).test(value)
+          ) {
+            newErrors[field.variable] =
+              field.validation.message || "Format tidak valid";
           }
         }
       }
@@ -95,7 +104,7 @@ export function DynamicFormFromTemplate({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error("Mohon perbaiki kesalahan pada form");
       return;
@@ -108,20 +117,16 @@ export function DynamicFormFromTemplate({
     const commonProps = {
       id: field.variable,
       value: formData[field.variable] || field.defaultValue || "",
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => 
-        handleChange(field.variable, e.target.value),
+      onChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+      ) => handleChange(field.variable, e.target.value),
       placeholder: field.placeholder,
       className: errors[field.variable] ? "border-destructive" : "",
     };
 
     switch (field.type) {
       case "textarea":
-        return (
-          <Textarea
-            {...commonProps}
-            rows={4}
-          />
-        );
+        return <Textarea {...commonProps} rows={4} />;
 
       case "select":
         return (
@@ -129,7 +134,9 @@ export function DynamicFormFromTemplate({
             value={formData[field.variable] || field.defaultValue || ""}
             onValueChange={(value) => handleChange(field.variable, value)}
           >
-            <SelectTrigger className={errors[field.variable] ? "border-destructive" : ""}>
+            <SelectTrigger
+              className={errors[field.variable] ? "border-destructive" : ""}
+            >
               <SelectValue placeholder={field.placeholder || "Pilih..."} />
             </SelectTrigger>
             <SelectContent>
@@ -143,36 +150,16 @@ export function DynamicFormFromTemplate({
         );
 
       case "date":
-        return (
-          <Input
-            {...commonProps}
-            type="date"
-          />
-        );
+        return <Input {...commonProps} type="date" />;
 
       case "number":
-        return (
-          <Input
-            {...commonProps}
-            type="number"
-          />
-        );
+        return <Input {...commonProps} type="number" />;
 
       case "email":
-        return (
-          <Input
-            {...commonProps}
-            type="email"
-          />
-        );
+        return <Input {...commonProps} type="email" />;
 
       default:
-        return (
-          <Input
-            {...commonProps}
-            type="text"
-          />
-        );
+        return <Input {...commonProps} type="text" />;
     }
   };
 
@@ -181,7 +168,8 @@ export function DynamicFormFromTemplate({
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <p className="text-muted-foreground">
-            Template belum dikonfigurasi. Hubungi admin untuk konfigurasi template.
+            Template belum dikonfigurasi. Hubungi admin untuk konfigurasi
+            template.
           </p>
         </CardContent>
       </Card>
@@ -199,14 +187,20 @@ export function DynamicFormFromTemplate({
             <div className="space-y-2">
               <Label htmlFor={field.variable}>
                 {field.label}
-                {field.required && <span className="text-destructive ml-1">*</span>}
+                {field.required && (
+                  <span className="text-destructive ml-1">*</span>
+                )}
               </Label>
               {renderField(field)}
               {field.helpText && (
-                <p className="text-xs text-muted-foreground">{field.helpText}</p>
+                <p className="text-xs text-muted-foreground">
+                  {field.helpText}
+                </p>
               )}
               {errors[field.variable] && (
-                <p className="text-xs text-destructive">{errors[field.variable]}</p>
+                <p className="text-xs text-destructive">
+                  {errors[field.variable]}
+                </p>
               )}
             </div>
           </div>

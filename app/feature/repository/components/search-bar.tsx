@@ -7,7 +7,11 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-function SearchBar({ value, onChange, placeholder = "Cari laporan KP..." }: SearchBarProps) {
+function SearchBar({
+  value,
+  onChange,
+  placeholder = "Cari laporan KP...",
+}: SearchBarProps) {
   return (
     <div className="relative">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5" />

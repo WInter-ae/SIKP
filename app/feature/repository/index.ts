@@ -8,7 +8,4 @@ export { InternReportList } from "./components/report-list";
 
 export { MOCK_REPORTS } from "./data/mock-reports";
 
-export type {
-  Report,
-  FilterOptions,
-} from "./types";
+export type { Report, FilterOptions } from "./types";

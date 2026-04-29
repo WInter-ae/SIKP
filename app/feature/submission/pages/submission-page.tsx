@@ -39,18 +39,19 @@ import {
   updateSubmission,
   submitSubmission,
   deleteSubmissionDocument,
-} from "~/lib/services/submission-api";
-import { getSubmissionLetterRequestStatuses } from "~/lib/services/letter-request-status-api";
+} from "~/lib/services/submission-api.service";
+import { getSubmissionLetterRequestStatuses } from "~/lib/services/letter-request-status.service";
 import {
   reapplySuratKesediaanApproval,
   requestSuratKesediaanApproval,
-} from "~/lib/services/surat-kesediaan-api";
+} from "~/lib/services/surat-kesediaan.service";
 import {
   reapplySuratPermohonanApproval,
   requestSuratPermohonanApproval,
-} from "~/lib/services/surat-permohonan-api";
-import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa-api";
+} from "~/lib/services/surat-permohonan.service";
+import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa.service";
 import { useUser } from "~/contexts/user-context";
+import { useAuth } from "~/contexts/auth-context";
 import { AlertCircle, ArrowLeft, ArrowRight, Info } from "lucide-react";
 
 function normalizePlaceholderValue(value?: string | null): string {
@@ -58,8 +59,11 @@ function normalizePlaceholderValue(value?: string | null): string {
   return value.trim().toLowerCase() === "belum diisi" ? "" : value;
 }
 
-function getRequestKey(memberUserId: string, documentType: string): string {
-  return `${memberUserId}:${documentType}`;
+function getRequestKey(
+  memberMahasiswaId: string,
+  documentType: string,
+): string {
+  return `${memberMahasiswaId}:${documentType}`;
 }
 
 type LetterRequestStatusLabel = "MENUNGGU" | "DISETUJUI" | "DITOLAK";
@@ -67,7 +71,8 @@ type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
 
 function SubmissionPage() {
   const navigate = useNavigate();
-  const { user, isLoading: isUserLoading, isAuthenticated } = useUser();
+  const { user } = useUser();
+  const { isLoading: isUserLoading, isAuthenticated } = useAuth();
 
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -164,7 +169,7 @@ function SubmissionPage() {
       response.data.forEach((item) => {
         if (item.isAlreadySubmitted) {
           const requestKey = getRequestKey(
-            item.memberUserId,
+            item.memberMahasiswaId,
             item.documentType,
           );
           nextKeys.add(requestKey);
@@ -179,7 +184,10 @@ function SubmissionPage() {
       const nextRejectionReasons: Record<string, string> = {};
       const nextDosenNames: Record<string, string> = {};
       response.data.forEach((item) => {
-        const requestKey = getRequestKey(item.memberUserId, item.documentType);
+        const requestKey = getRequestKey(
+          item.memberMahasiswaId,
+          item.documentType,
+        );
         if (item.signedFileUrl) nextSignedUrls[requestKey] = item.signedFileUrl;
         if (item.latestRequestId)
           nextLatestRequestIds[requestKey] = item.latestRequestId;
@@ -272,7 +280,7 @@ function SubmissionPage() {
 
           // Tentukan apakah user adalah ketua
           const currentUserMember = mappedMembers.find(
-            (m) => m.id === user?.id,
+            (m) => m.id === user?.id || (user?.nim && m.nim === user?.nim),
           );
           setIsCurrentUserLeader(currentUserMember?.role === "Ketua");
 
@@ -349,29 +357,33 @@ function SubmissionPage() {
         return;
       }
 
+      // ✅ NEW: Delete old proposal from backend if exists (both REJECTED and PENDING)
+      const oldProposal = submissionDocuments.find(
+        (doc) =>
+          doc.documentType === "PROPOSAL_KETUA" &&
+          (doc.status === "REJECTED" || doc.status === "PENDING"),
+      );
+
+      if (oldProposal) {
+        console.log(
+          `🗑️ Deleting old proposal (${oldProposal.id}) before reupload...`,
+        );
+        const deleteResponse = await deleteSubmissionDocument(oldProposal.id);
+        if (!deleteResponse.success) {
+          console.warn("⚠️ Failed to delete old proposal, but continuing...");
+        }
+      }
+
       const response = await uploadSubmissionDocument(
         currentSubmission.id,
         "PROPOSAL_KETUA",
-        user.id,
+        currentMemberId || user.id,
         file,
-        user.id,
+        currentMemberId,
       );
 
       if (response.success && response.data) {
         const docToAdd = response.data;
-
-        // ✅ NEW: Delete old REJECTED proposal from backend if exists
-        const oldRejectedProposal = submissionDocuments.find(
-          (doc) =>
-            doc.documentType === "PROPOSAL_KETUA" && doc.status === "REJECTED",
-        );
-
-        if (oldRejectedProposal) {
-          console.log(
-            `🗑️ Deleting old REJECTED proposal (${oldRejectedProposal.id})...`,
-          );
-          await deleteSubmissionDocument(oldRejectedProposal.id);
-        }
 
         setSubmissionDocuments((prev) => {
           // Hapus proposal lama jika ada
@@ -439,16 +451,20 @@ function SubmissionPage() {
         return;
       }
 
-      // ✅ NEW: Check if document already exists with REJECTED status
+      // ✅ NEW: Check if document already exists with REJECTED or PENDING status
       // If exists, delete it before uploading new one
       const existingDoc = submissionDocuments.find(
         (doc) =>
-          doc.documentType === docInfo.type && doc.memberUserId === memberId,
+          doc.documentType === docInfo.type &&
+          doc.memberMahasiswaId === memberId,
       );
 
-      if (existingDoc && existingDoc.status === "REJECTED") {
+      if (
+        existingDoc &&
+        (existingDoc.status === "REJECTED" || existingDoc.status === "PENDING")
+      ) {
         console.log(
-          `🗑️ Deleting old REJECTED document (${existingDoc.id}) before reupload...`,
+          `🗑️ Deleting old document (${existingDoc.id}) before reupload...`,
         );
         const deleteResponse = await deleteSubmissionDocument(existingDoc.id);
 
@@ -458,8 +474,8 @@ function SubmissionPage() {
           );
           // Continue anyway - backend might handle this automatically
         } else {
-          console.log("✅ Old REJECTED document deleted successfully");
-          toast.success("Dokumen lama yang ditolak berhasil dihapus");
+          console.log("✅ Old document deleted successfully");
+          toast.success("Dokumen lama berhasil dihapus sebelum diganti");
         }
       }
 
@@ -468,7 +484,7 @@ function SubmissionPage() {
         docInfo.type,
         memberId,
         file,
-        user?.id,
+        currentMemberId,
       );
 
       if (response.success && response.data) {
@@ -751,7 +767,7 @@ function SubmissionPage() {
         const uploaded = filteredSubmissionDocuments.some(
           (submittedDoc) =>
             submittedDoc.documentType === doc.type &&
-            submittedDoc.memberUserId === member.id,
+            submittedDoc.memberMahasiswaId === member.id,
         );
         if (!uploaded) {
           missingItems.push(`${doc.title} - ${member.name}`);
@@ -791,6 +807,11 @@ function SubmissionPage() {
     };
   };
 
+  const currentMember = teamMembers.find(
+    (m) => m.id === user?.id || (user?.nim && m.nim === user?.nim),
+  );
+  const currentMemberId = currentMember?.id;
+
   if (isUserLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -819,7 +840,7 @@ function SubmissionPage() {
                 variant="destructive"
                 className="w-full max-w-md items-start border-l-4 border-destructive bg-destructive/5 px-4 py-3"
               >
-                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-destructive" />
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
                 <AlertDescription className="text-sm text-destructive">
                   {loadError}
                 </AlertDescription>
@@ -941,7 +962,7 @@ function SubmissionPage() {
             <div className="flex flex-wrap items-start gap-3">
               <div
                 className={
-                  isCurrentUserLeader && !proposalDocument ? "flex-grow" : ""
+                  isCurrentUserLeader && !proposalDocument ? "grow" : ""
                 }
               >
                 {isCurrentUserLeader ? (
@@ -1052,7 +1073,7 @@ function SubmissionPage() {
                 document={document}
                 members={teamMembers}
                 documents={filteredSubmissionDocuments}
-                currentUserId={user?.id}
+                currentMahasiswaId={currentMemberId}
                 submittedRequestKeys={submittedRequestKeys}
                 submittedRequestStatusByKey={submittedRequestStatusByKey}
                 dosenNameByKey={dosenNameByKey}

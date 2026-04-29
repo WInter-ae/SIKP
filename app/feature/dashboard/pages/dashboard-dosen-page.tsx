@@ -40,7 +40,9 @@ export default function DashboardDosenPage({ data }: DashboardDosenPageProps) {
   return (
     <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard Dosen</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+          Dashboard Dosen
+        </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
           Ringkasan bimbingan KP dan verifikasi surat mahasiswa
         </p>

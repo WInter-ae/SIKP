@@ -36,7 +36,7 @@ export function TeamCodeDialog({
 
   const handleShare = async () => {
     const shareText = `Bergabunglah dengan tim KP saya!\n\nKode Tim: ${teamCode}\n\nGunakan kode ini untuk bergabung di Sistem Informasi Kerja Praktik.`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -58,7 +58,9 @@ export function TeamCodeDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl">🎉 Tim Berhasil Dibuat!</DialogTitle>
+          <DialogTitle className="text-2xl">
+            🎉 Tim Berhasil Dibuat!
+          </DialogTitle>
           <DialogDescription>
             Tim Anda telah berhasil dibuat. Gunakan kode tim di bawah ini untuk
             mengundang anggota lain bergabung.

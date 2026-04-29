@@ -10,9 +10,9 @@ interface BackButtonProps {
   label?: string;
 }
 
-function BackButton({ 
-  to = "/mentor", 
-  label = "Kembali ke Dashboard" 
+function BackButton({
+  to = "/mentor",
+  label = "Kembali ke Dashboard",
 }: BackButtonProps) {
   return (
     <div className="flex justify-start">

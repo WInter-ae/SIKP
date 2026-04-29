@@ -1,11 +1,16 @@
 /**
  * Template API Service
- * 
+ *
  * Service untuk berkomunikasi dengan backend API untuk template management.
  * Saat ini menggunakan data mock, namun dapat dengan mudah diganti dengan actual API calls.
  */
 
-import type { Template, CreateTemplateData, UpdateTemplateData, TemplateField } from "../types/template.types";
+import type {
+  Template,
+  CreateTemplateData,
+  UpdateTemplateData,
+  TemplateField,
+} from "../types/template.types";
 
 // Base URL untuk API (sesuaikan dengan backend Anda)
 const API_BASE_URL = "/api/templates";
@@ -18,14 +23,15 @@ export async function getTemplates(): Promise<Template[]> {
   // const response = await fetch(API_BASE_URL);
   // if (!response.ok) throw new Error("Failed to fetch templates");
   // return response.json();
-  
+
   // Mock data untuk development
   return [
     {
       id: "1",
       name: "Berita Acara Sidang KP 2025",
       type: "berita-acara",
-      description: "Template berita acara untuk sidang kerja praktek tahun 2025",
+      description:
+        "Template berita acara untuk sidang kerja praktek tahun 2025",
       content: `<!DOCTYPE html>
 <html>
 <head>
@@ -50,12 +56,49 @@ export async function getTemplates(): Promise<Template[]> {
 </html>`,
       fileExtension: "html",
       fields: [
-        { variable: "tanggal", label: "Tanggal Sidang", type: "date", required: true, order: 0 },
-        { variable: "nama_mahasiswa", label: "Nama Mahasiswa", type: "text", required: true, order: 1 },
-        { variable: "nim", label: "NIM", type: "text", required: true, order: 2 },
-        { variable: "judul", label: "Judul KP", type: "textarea", required: true, order: 3 },
-        { variable: "nama_penguji", label: "Nama Penguji", type: "text", required: true, order: 4 },
-        { variable: "nilai", label: "Nilai", type: "select", required: true, order: 5, options: ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "E"] },
+        {
+          variable: "tanggal",
+          label: "Tanggal Sidang",
+          type: "date",
+          required: true,
+          order: 0,
+        },
+        {
+          variable: "nama_mahasiswa",
+          label: "Nama Mahasiswa",
+          type: "text",
+          required: true,
+          order: 1,
+        },
+        {
+          variable: "nim",
+          label: "NIM",
+          type: "text",
+          required: true,
+          order: 2,
+        },
+        {
+          variable: "judul",
+          label: "Judul KP",
+          type: "textarea",
+          required: true,
+          order: 3,
+        },
+        {
+          variable: "nama_penguji",
+          label: "Nama Penguji",
+          type: "text",
+          required: true,
+          order: 4,
+        },
+        {
+          variable: "nilai",
+          label: "Nilai",
+          type: "select",
+          required: true,
+          order: 5,
+          options: ["A", "A-", "B+", "B", "B-", "C+", "C", "D", "E"],
+        },
       ],
       version: 1,
       createdAt: "2025-01-15T10:00:00Z",
@@ -105,11 +148,42 @@ export async function getTemplates(): Promise<Template[]> {
 </html>`,
       fileExtension: "html",
       fields: [
-        { variable: "nama_mahasiswa", label: "Nama Mahasiswa", type: "text", required: true, order: 0 },
-        { variable: "nim", label: "NIM", type: "text", required: true, order: 1 },
-        { variable: "judul", label: "Judul KP", type: "textarea", required: true, order: 2 },
-        { variable: "nama_pembimbing", label: "Nama Pembimbing", type: "text", required: true, order: 3 },
-        { variable: "nilai", label: "Nilai Akhir", type: "number", required: true, order: 4, validation: { min: 0, max: 100 } },
+        {
+          variable: "nama_mahasiswa",
+          label: "Nama Mahasiswa",
+          type: "text",
+          required: true,
+          order: 0,
+        },
+        {
+          variable: "nim",
+          label: "NIM",
+          type: "text",
+          required: true,
+          order: 1,
+        },
+        {
+          variable: "judul",
+          label: "Judul KP",
+          type: "textarea",
+          required: true,
+          order: 2,
+        },
+        {
+          variable: "nama_pembimbing",
+          label: "Nama Pembimbing",
+          type: "text",
+          required: true,
+          order: 3,
+        },
+        {
+          variable: "nilai",
+          label: "Nilai Akhir",
+          type: "number",
+          required: true,
+          order: 4,
+          validation: { min: 0, max: 100 },
+        },
       ],
       version: 1,
       createdAt: "2025-01-16T09:00:00Z",
@@ -127,15 +201,17 @@ export async function getTemplateById(id: string): Promise<Template | null> {
   // const response = await fetch(`${API_BASE_URL}/${id}`);
   // if (!response.ok) return null;
   // return response.json();
-  
+
   const templates = await getTemplates();
-  return templates.find(t => t.id === id) || null;
+  return templates.find((t) => t.id === id) || null;
 }
 
 /**
  * Create new template
  */
-export async function createTemplate(data: CreateTemplateData): Promise<Template> {
+export async function createTemplate(
+  data: CreateTemplateData,
+): Promise<Template> {
   // TODO: Replace with actual API call
   // const response = await fetch(API_BASE_URL, {
   //   method: "POST",
@@ -144,7 +220,7 @@ export async function createTemplate(data: CreateTemplateData): Promise<Template
   // });
   // if (!response.ok) throw new Error("Failed to create template");
   // return response.json();
-  
+
   // Mock implementation
   const newTemplate: Template = {
     id: Date.now().toString(),
@@ -160,7 +236,10 @@ export async function createTemplate(data: CreateTemplateData): Promise<Template
 /**
  * Update template
  */
-export async function updateTemplate(id: string, data: UpdateTemplateData): Promise<Template> {
+export async function updateTemplate(
+  id: string,
+  data: UpdateTemplateData,
+): Promise<Template> {
   // TODO: Replace with actual API call
   // const response = await fetch(`${API_BASE_URL}/${id}`, {
   //   method: "PATCH",
@@ -169,11 +248,11 @@ export async function updateTemplate(id: string, data: UpdateTemplateData): Prom
   // });
   // if (!response.ok) throw new Error("Failed to update template");
   // return response.json();
-  
+
   // Mock implementation
   const template = await getTemplateById(id);
   if (!template) throw new Error("Template not found");
-  
+
   return {
     ...template,
     ...data,
@@ -190,7 +269,7 @@ export async function deleteTemplate(id: string): Promise<void> {
   //   method: "DELETE",
   // });
   // if (!response.ok) throw new Error("Failed to delete template");
-  
+
   // Mock implementation
   console.log(`Template ${id} deleted`);
 }
@@ -202,7 +281,7 @@ export async function toggleTemplateActive(id: string): Promise<Template> {
   // TODO: Replace with actual API call
   const template = await getTemplateById(id);
   if (!template) throw new Error("Template not found");
-  
+
   return updateTemplate(id, { isActive: !template.isActive });
 }
 
@@ -225,15 +304,18 @@ export function downloadTemplate(template: Template): void {
  * Render template with data
  * Replace placeholder variables like {{variable}} with actual values
  */
-export function renderTemplate(template: Template, data: Record<string, string>): string {
+export function renderTemplate(
+  template: Template,
+  data: Record<string, string>,
+): string {
   let content = template.content;
-  
+
   // Replace all {{variable}} placeholders with actual data
   Object.entries(data).forEach(([key, value]) => {
     const regex = new RegExp(`{{${key}}}`, "g");
     content = content.replace(regex, value);
   });
-  
+
   return content;
 }
 
@@ -245,13 +327,13 @@ export function extractTemplateVariables(content: string): string[] {
   const regex = /{{(\w+)}}/g;
   const variables: string[] = [];
   let match;
-  
+
   while ((match = regex.exec(content)) !== null) {
     if (!variables.includes(match[1])) {
       variables.push(match[1]);
     }
   }
-  
+
   return variables;
 }
 
@@ -261,17 +343,20 @@ export function extractTemplateVariables(content: string): string[] {
  */
 export function autoGenerateFields(content: string): TemplateField[] {
   const variables = extractTemplateVariables(content);
-  
+
   return variables.map((variable, index) => {
     const label = formatVariableName(variable);
-    
+
     // Smart type detection
     let type: TemplateField["type"] = "text";
     if (variable.includes("email")) type = "email";
-    else if (variable.includes("tanggal") || variable.includes("date")) type = "date";
-    else if (variable.includes("nilai") || variable.includes("score")) type = "number";
-    else if (variable.includes("deskripsi") || variable.includes("keterangan")) type = "textarea";
-    
+    else if (variable.includes("tanggal") || variable.includes("date"))
+      type = "date";
+    else if (variable.includes("nilai") || variable.includes("score"))
+      type = "number";
+    else if (variable.includes("deskripsi") || variable.includes("keterangan"))
+      type = "textarea";
+
     return {
       variable,
       label,
@@ -289,7 +374,7 @@ export function autoGenerateFields(content: string): TemplateField[] {
 function formatVariableName(variable: string): string {
   return variable
     .split("_")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
 }
 
@@ -297,17 +382,24 @@ function formatVariableName(variable: string): string {
  * Validate fields against template content
  * Memastikan semua variables di template sudah memiliki field configuration
  */
-export function validateTemplateFields(content: string, fields: TemplateField[]): {
+export function validateTemplateFields(
+  content: string,
+  fields: TemplateField[],
+): {
   isValid: boolean;
   missingVariables: string[];
   unusedFields: string[];
 } {
   const templateVariables = extractTemplateVariables(content);
-  const configuredVariables = fields.map(f => f.variable);
-  
-  const missingVariables = templateVariables.filter(v => !configuredVariables.includes(v));
-  const unusedFields = configuredVariables.filter(v => !templateVariables.includes(v));
-  
+  const configuredVariables = fields.map((f) => f.variable);
+
+  const missingVariables = templateVariables.filter(
+    (v) => !configuredVariables.includes(v),
+  );
+  const unusedFields = configuredVariables.filter(
+    (v) => !templateVariables.includes(v),
+  );
+
   return {
     isValid: missingVariables.length === 0,
     missingVariables,
@@ -319,8 +411,8 @@ export function validateTemplateFields(content: string, fields: TemplateField[])
  * Create new version of template (untuk versioning system)
  */
 export function createTemplateVersion(
-  originalTemplate: Template, 
-  updates: Partial<CreateTemplateData>
+  originalTemplate: Template,
+  updates: Partial<CreateTemplateData>,
 ): Template {
   return {
     ...originalTemplate,
@@ -339,17 +431,16 @@ export function createTemplateVersion(
 export function migrateFormData(
   oldData: Record<string, string>,
   oldFields: TemplateField[],
-  newFields: TemplateField[]
+  newFields: TemplateField[],
 ): Record<string, string> {
   const migratedData: Record<string, string> = {};
-  
-  newFields.forEach(newField => {
+
+  newFields.forEach((newField) => {
     // Cari matching field dari old fields
-    const oldField = oldFields.find(f => 
-      f.variable === newField.variable || 
-      f.label === newField.label
+    const oldField = oldFields.find(
+      (f) => f.variable === newField.variable || f.label === newField.label,
     );
-    
+
     if (oldField && oldData[oldField.variable]) {
       // Copy data dari old field
       migratedData[newField.variable] = oldData[oldField.variable];
@@ -358,6 +449,6 @@ export function migrateFormData(
       migratedData[newField.variable] = newField.defaultValue || "";
     }
   });
-  
+
   return migratedData;
 }

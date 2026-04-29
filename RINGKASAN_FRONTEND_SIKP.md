@@ -47,7 +47,7 @@ Frontend memakai flow SSO penuh:
 - Key kompatibilitas lama:
   - `auth_token`
   - `user_data`
-  masih dikelola untuk kompatibilitas transisi, tetapi bukan sumber auth utama.
+    masih dikelola untuk kompatibilitas transisi, tetapi bukan sumber auth utama.
 
 ## 3.2 User Context dan Session Snapshot
 
@@ -147,6 +147,7 @@ Prioritas konfigurasi base URL di client:
   - `410`: diperlakukan sebagai sinyal legacy cutover, **tanpa forced logout**, untuk menghindari loop login/logout saat modul lama masih memanggil endpoint lama.
 
 Catatan penting:
+
 - perilaku `410` ini sengaja dibuat lebih lunak dibanding `401`,
 - tujuannya agar session SSO yang valid tidak ikut dianggap rusak hanya karena ada modul frontend yang belum selesai migrasi endpoint.
 
@@ -191,6 +192,7 @@ Khusus `GET /api/auth/me`, frontend sekarang mengharapkan user/identity payload 
 - `/detail-referensi/:id`
 
 Catatan:
+
 - `/register` dan `/pembimbing-lapangan` kini lebih berperan sebagai halaman informasi/compatibility, bukan jalur registrasi lokal aktif.
 
 ## 6.2 Protected Shell
@@ -253,6 +255,7 @@ Dampak aktualnya:
 - sebagian fitur domain lama dapat gagal walaupun user sudah login dan session SSO valid.
 
 Artinya:
+
 - **fondasi auth sudah selesai dan stabil**,
 - tetapi **harmonisasi endpoint domain belum sepenuhnya selesai**.
 
@@ -273,6 +276,7 @@ Modul besar yang masih ada di struktur `app/feature` antara lain:
 - repository
 
 Catatan penting:
+
 - keberadaan modul UI tidak otomatis berarti seluruh service API-nya sudah sepenuhnya selaras dengan backend pasca cutover,
 - sebagian modul sudah berjalan baik di jalur SSO baru,
 - sebagian lain masih butuh migrasi endpoint domain.

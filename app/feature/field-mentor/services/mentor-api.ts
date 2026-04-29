@@ -3,12 +3,12 @@
  * Handles all mentor (pembimbing lapangan) related API calls
  */
 
-import { ipost, iget, iput, get } from "~/lib/api-client";
+import { internshipClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 import {
   getActiveProfileSignature,
   getSignatureManageUrl,
-} from "~/lib/services/signature-api";
+} from "~/lib/services/signature.service";
 
 // ==================== TYPES ====================
 
@@ -321,7 +321,7 @@ function normalizeAssessmentPayload(payload: unknown): AssessmentData | null {
  * GET /api/mentor/profile
  */
 export async function getMentorProfile(): Promise<ApiResponse<MentorProfile>> {
-  return iget<MentorProfile>("/api/mentorship/profile");
+  return internshipClient.get<MentorProfile>("/api/mentorship/profile");
 }
 
 /**
@@ -333,7 +333,7 @@ export async function updateMentorProfile(
     Omit<MentorProfile, "id" | "userId" | "createdAt" | "updatedAt">
   >,
 ): Promise<ApiResponse<MentorProfile>> {
-  return iput<MentorProfile>("/api/mentorship/profile", data);
+  return internshipClient.put<MentorProfile>("/api/mentorship/profile", data);
 }
 
 /**
@@ -341,7 +341,7 @@ export async function updateMentorProfile(
  * GET /api/mentor/mentees
  */
 export async function getMentees(): Promise<ApiResponse<MenteeData[]>> {
-  return iget<MenteeData[]>("/api/mentorship/mentees");
+  return internshipClient.get<MenteeData[]>("/api/mentorship/mentees");
 }
 
 /**
@@ -351,7 +351,7 @@ export async function getMentees(): Promise<ApiResponse<MenteeData[]>> {
 export async function getMenteeDetail(
   studentId: string,
 ): Promise<ApiResponse<MenteeData>> {
-  return iget<MenteeData>(`/api/mentorship/mentees/${studentId}`);
+  return internshipClient.get<MenteeData>(`/api/mentorship/mentees/${studentId}`);
 }
 
 /**
@@ -361,7 +361,7 @@ export async function getMenteeDetail(
 export async function getStudentLogbook(
   studentId: string,
 ): Promise<ApiResponse<LogbookEntry[]>> {
-  return iget<LogbookEntry[]>(`/api/mentorship/mentees/${studentId}/logbooks`);
+  return internshipClient.get<LogbookEntry[]>(`/api/mentorship/mentees/${studentId}/logbooks`);
 }
 
 /**
@@ -372,7 +372,7 @@ export async function getStudentLogbook(
 export async function approveLogbook(
   logbookId: string,
 ): Promise<ApiResponse<LogbookEntry>> {
-  return ipost<LogbookEntry>(`/api/mentorship/logbooks/${logbookId}/approve`, {});
+  return internshipClient.post<LogbookEntry>(`/api/mentorship/logbooks/${logbookId}/approve`, {});
 }
 
 /**
@@ -383,7 +383,7 @@ export async function rejectLogbook(
   logbookId: string,
   rejectionReason: string,
 ): Promise<ApiResponse<LogbookEntry>> {
-  return ipost<LogbookEntry>(`/api/mentorship/logbooks/${logbookId}/reject`, {
+  return internshipClient.post<LogbookEntry>(`/api/mentorship/logbooks/${logbookId}/reject`, {
     rejectionReason,
   });
 }
@@ -396,8 +396,8 @@ export async function rejectLogbook(
 export async function approveAllLogbooks(
   studentId: string,
 ): Promise<ApiResponse<{ message: string; internshipId: string }>> {
-  return ipost<{ message: string; internshipId: string }>(
-    `/api/mentor/logbook/${studentId}/approve-all`,
+  return internshipClient.post<{ message: string; internshipId: string }>(
+    `/api/mentorship/mentees/${studentId}/approve-all`,
     {},
   );
 }
@@ -439,7 +439,7 @@ export async function submitAssessment(data: {
     attitudeEthics: data.sikapEtika,
   };
 
-  const response = await ipost<unknown>("/api/mentorship/assessments", payload);
+  const response = await internshipClient.post<unknown>("/api/mentorship/assessments", payload);
 
   if (!response.success) {
     return response as ApiResponse<AssessmentData>;
@@ -467,7 +467,7 @@ export async function getStudentAssessment(
   let lastMessage = "Gagal mengambil data penilaian mahasiswa.";
 
   for (const endpoint of endpoints) {
-    const response = await iget<unknown>(endpoint);
+    const response = await internshipClient.get<unknown>(endpoint);
 
     if (!response.success) {
       lastMessage = response.message || lastMessage;
@@ -539,7 +539,7 @@ export async function updateAssessment(
       : {}),
   };
 
-  const response = await iput<unknown>(
+  const response = await internshipClient.put<unknown>(
     `/api/mentorship/assessments/${assessmentId}`,
     payload,
   );

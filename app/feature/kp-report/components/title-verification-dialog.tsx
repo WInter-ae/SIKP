@@ -12,12 +12,7 @@ import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import {
-  CheckCircle,
-  XCircle,
-  FileEdit,
-  AlertCircle,
-} from "lucide-react";
+import { CheckCircle, XCircle, FileEdit, AlertCircle } from "lucide-react";
 import type { PengajuanJudul } from "../types/title";
 
 interface TitleVerificationDialogProps {
@@ -27,7 +22,7 @@ interface TitleVerificationDialogProps {
   onSubmit: (
     status: "disetujui" | "ditolak" | "revisi",
     catatan: string,
-    revisedTitle?: string
+    revisedTitle?: string,
   ) => void;
 }
 
@@ -152,8 +147,13 @@ function TitleVerificationDialog({
             <div>
               <Label className="text-sm font-medium">Periode</Label>
               <p className="text-sm mt-1">
-                {new Date(pengajuan.data.periode.mulai).toLocaleDateString("id-ID")} -{" "}
-                {new Date(pengajuan.data.periode.selesai).toLocaleDateString("id-ID")}
+                {new Date(pengajuan.data.periode.mulai).toLocaleDateString(
+                  "id-ID",
+                )}{" "}
+                -{" "}
+                {new Date(pengajuan.data.periode.selesai).toLocaleDateString(
+                  "id-ID",
+                )}
               </p>
             </div>
           </div>
@@ -249,8 +249,7 @@ function TitleVerificationDialog({
           {/* Catatan */}
           <div className="space-y-2">
             <Label htmlFor="catatan" className="text-base font-semibold">
-              Catatan Verifikasi{" "}
-              <span className="text-red-500">*</span>
+              Catatan Verifikasi <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="catatan"
@@ -258,10 +257,10 @@ function TitleVerificationDialog({
                 selectedStatus === "disetujui"
                   ? "Berikan apresiasi dan saran untuk pengembangan laporan..."
                   : selectedStatus === "revisi"
-                  ? "Jelaskan bagian mana yang perlu diperbaiki dan bagaimana seharusnya..."
-                  : selectedStatus === "ditolak"
-                  ? "Jelaskan alasan penolakan dan arahan untuk judul yang baru..."
-                  : "Pilih status verifikasi terlebih dahulu..."
+                    ? "Jelaskan bagian mana yang perlu diperbaiki dan bagaimana seharusnya..."
+                    : selectedStatus === "ditolak"
+                      ? "Jelaskan alasan penolakan dan arahan untuk judul yang baru..."
+                      : "Pilih status verifikasi terlebih dahulu..."
               }
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}

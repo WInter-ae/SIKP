@@ -46,12 +46,12 @@ export function VerifikasiDialog({
     }
 
     setIsSubmitting(true);
-    
+
     // Simulasi delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     onSubmit(catatan, nilai ? parseFloat(nilai) : undefined);
-    
+
     // Reset form
     setCatatan("");
     setNilai("");
@@ -69,10 +69,12 @@ export function VerifikasiDialog({
       <AlertDialogContent className="max-w-2xl">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl">
-            {type === "approved" ? "✅ Setujui Pengajuan Sidang" : "❌ Tolak Pengajuan Sidang"}
+            {type === "approved"
+              ? "✅ Setujui Pengajuan Sidang"
+              : "❌ Tolak Pengajuan Sidang"}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-base">
-            {type === "approved" 
+            {type === "approved"
               ? "Anda akan menyetujui pengajuan sidang dari mahasiswa berikut:"
               : "Anda akan menolak pengajuan sidang dari mahasiswa berikut:"}
           </AlertDialogDescription>
@@ -82,7 +84,9 @@ export function VerifikasiDialog({
           {/* Info Mahasiswa */}
           <div className="bg-muted p-4 rounded-lg">
             <p className="font-semibold text-base">{mahasiswa.nama}</p>
-            <p className="text-sm text-muted-foreground">NIM: {mahasiswa.nim}</p>
+            <p className="text-sm text-muted-foreground">
+              NIM: {mahasiswa.nim}
+            </p>
           </div>
 
           {/* Input Nilai (hanya untuk approve) */}
@@ -111,7 +115,8 @@ export function VerifikasiDialog({
           {/* Input Catatan */}
           <div className="space-y-2">
             <Label htmlFor="catatan" className="text-base font-semibold">
-              Catatan {type === "approved" ? "Penilaian" : "Penolakan"} <span className="text-red-500">*</span>
+              Catatan {type === "approved" ? "Penilaian" : "Penolakan"}{" "}
+              <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="catatan"
@@ -150,8 +155,10 @@ export function VerifikasiDialog({
                 <span className="animate-spin mr-2">⏳</span>
                 Memproses...
               </>
+            ) : type === "approved" ? (
+              "Setujui"
             ) : (
-              type === "approved" ? "Setujui" : "Tolak"
+              "Tolak"
             )}
           </Button>
         </AlertDialogFooter>

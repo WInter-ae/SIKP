@@ -37,15 +37,15 @@ export default function DosenGradingListPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedLaporan = localStorage.getItem("laporan-kp");
-      
+
       if (savedLaporan) {
         const laporanData = JSON.parse(savedLaporan);
-        
+
         // Only show students who have uploaded laporan
         if (laporanData.fileName && laporanData.status !== "belum_upload") {
           // Filter students to only show those who uploaded
           const studentsWithLaporan = MOCK_STUDENTS_FOR_GRADING.filter(
-            (s) => s.student.id === "std-001" // Match with uploaded laporan's student
+            (s) => s.student.id === "std-001", // Match with uploaded laporan's student
           );
           setStudents(studentsWithLaporan);
         } else {
@@ -272,7 +272,7 @@ export default function DosenGradingListPage() {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
             Daftar Mahasiswa Bimbingan
           </h2>
-          
+
           {students.length === 0 ? (
             <Card className="p-12 dark:bg-gray-800 dark:border-gray-700">
               <div className="text-center">
@@ -281,7 +281,8 @@ export default function DosenGradingListPage() {
                   Belum Ada Mahasiswa yang Upload Laporan
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Daftar mahasiswa akan muncul setelah mereka mengupload Laporan Kerja Praktik di halaman Pasca Magang.
+                  Daftar mahasiswa akan muncul setelah mereka mengupload Laporan
+                  Kerja Praktik di halaman Pasca Magang.
                 </p>
               </div>
             </Card>
@@ -293,7 +294,8 @@ export default function DosenGradingListPage() {
                   Tidak Ada Hasil Pencarian
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Tidak ada mahasiswa yang sesuai dengan filter atau pencarian Anda.
+                  Tidak ada mahasiswa yang sesuai dengan filter atau pencarian
+                  Anda.
                 </p>
               </div>
             </Card>
@@ -320,7 +322,9 @@ export default function DosenGradingListPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
                       disabled={currentPage === 1}
                       className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                     >

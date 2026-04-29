@@ -82,12 +82,19 @@ function extractScoresFromMap(row: Record<string, unknown>) {
     kehadiran: readByAliases(["kehadiran", "attendance", "hadir", "disiplin"]),
     kerjasama: readByAliases(["kerjasama", "cooperation", "teamwork"]),
     sikapEtika: readByAliases(["sikap", "etika", "attitude", "ethics"]),
-    prestasiKerja: readByAliases(["prestasi", "workachievement", "kinerja", "hasilkerja"]),
+    prestasiKerja: readByAliases([
+      "prestasi",
+      "workachievement",
+      "kinerja",
+      "hasilkerja",
+    ]),
     kreatifitas: readByAliases(["kreatif", "kreativ", "creativ", "inovasi"]),
   };
 }
 
-function extractScoresFromCategoryList(payload: unknown): Partial<StudentAssessmentData> | null {
+function extractScoresFromCategoryList(
+  payload: unknown,
+): Partial<StudentAssessmentData> | null {
   if (!Array.isArray(payload)) return null;
 
   const scores: Partial<StudentAssessmentData> = {};
@@ -95,16 +102,43 @@ function extractScoresFromCategoryList(payload: unknown): Partial<StudentAssessm
   payload.forEach((item) => {
     if (!item || typeof item !== "object") return;
     const row = item as Record<string, unknown>;
-    const categoryRaw = String(row.category || row.label || row.name || row.kriteria || "");
+    const categoryRaw = String(
+      row.category || row.label || row.name || row.kriteria || "",
+    );
     const category = normalizeKey(categoryRaw);
-    const score = parseScoreValue(row.score ?? row.nilai ?? row.value ?? row.point);
+    const score = parseScoreValue(
+      row.score ?? row.nilai ?? row.value ?? row.point,
+    );
     if (score === null) return;
 
-    if (category.includes("kehadiran") || category.includes("attendance")) scores.kehadiran = score;
-    else if (category.includes("kerjasama") || category.includes("cooperation") || category.includes("teamwork")) scores.kerjasama = score;
-    else if (category.includes("sikap") || category.includes("etika") || category.includes("attitude") || category.includes("ethics")) scores.sikapEtika = score;
-    else if (category.includes("prestasi") || category.includes("workachievement") || category.includes("kinerja")) scores.prestasiKerja = score;
-    else if (category.includes("kreatif") || category.includes("kreativ") || category.includes("creativ") || category.includes("inovasi")) scores.kreatifitas = score;
+    if (category.includes("kehadiran") || category.includes("attendance"))
+      scores.kehadiran = score;
+    else if (
+      category.includes("kerjasama") ||
+      category.includes("cooperation") ||
+      category.includes("teamwork")
+    )
+      scores.kerjasama = score;
+    else if (
+      category.includes("sikap") ||
+      category.includes("etika") ||
+      category.includes("attitude") ||
+      category.includes("ethics")
+    )
+      scores.sikapEtika = score;
+    else if (
+      category.includes("prestasi") ||
+      category.includes("workachievement") ||
+      category.includes("kinerja")
+    )
+      scores.prestasiKerja = score;
+    else if (
+      category.includes("kreatif") ||
+      category.includes("kreativ") ||
+      category.includes("creativ") ||
+      category.includes("inovasi")
+    )
+      scores.kreatifitas = score;
   });
 
   const hasAny =
@@ -118,8 +152,13 @@ function extractScoresFromCategoryList(payload: unknown): Partial<StudentAssessm
 }
 
 function scoreFromComponents(
-  components: Array<{ categoryId?: string; categoryKey?: string; label?: string; score?: number }> | null,
-  aliases: string[]
+  components: Array<{
+    categoryId?: string;
+    categoryKey?: string;
+    label?: string;
+    score?: number;
+  }> | null,
+  aliases: string[],
 ): number | null {
   if (!components || components.length === 0) return null;
 
@@ -141,7 +180,9 @@ function scoreFromComponents(
   return null;
 }
 
-function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | null {
+function normalizeAssessmentPayload(
+  payload: unknown,
+): StudentAssessmentData | null {
   if (Array.isArray(payload)) {
     for (const item of payload) {
       const parsed = normalizeAssessmentPayload(item);
@@ -156,25 +197,43 @@ function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | n
 
   const rawComponents = Array.isArray(row.components)
     ? (row.components as Record<string, unknown>[])
-    : Array.isArray((row.data as Record<string, unknown> | undefined)?.components)
-      ? ((row.data as Record<string, unknown>).components as Record<string, unknown>[])
+    : Array.isArray(
+          (row.data as Record<string, unknown> | undefined)?.components,
+        )
+      ? ((row.data as Record<string, unknown>).components as Record<
+          string,
+          unknown
+        >[])
       : null;
 
   const parsedComponents = rawComponents
     ? rawComponents.map((component) => ({
         id: typeof component.id === "string" ? component.id : undefined,
-        categoryId: String(component.categoryId || component.category_id || component.categoryKey || ""),
-        categoryKey: typeof component.categoryKey === "string" ? component.categoryKey : undefined,
-        label: typeof component.label === "string" ? component.label : undefined,
+        categoryId: String(
+          component.categoryId ||
+            component.category_id ||
+            component.categoryKey ||
+            "",
+        ),
+        categoryKey:
+          typeof component.categoryKey === "string"
+            ? component.categoryKey
+            : undefined,
+        label:
+          typeof component.label === "string" ? component.label : undefined,
         weight: Number(component.weight ?? 0),
         maxScore: Number(component.maxScore ?? component.max_score ?? 100),
         score: Number(component.score ?? 0),
-        weightedScore: Number(component.weightedScore ?? component.weighted_score ?? 0),
+        weightedScore: Number(
+          component.weightedScore ?? component.weighted_score ?? 0,
+        ),
         sortOrder: Number(component.sortOrder ?? component.sort_order ?? 0),
       }))
-      : null;
+    : null;
 
-  const directId = String(row.id || row.assessmentId || row.assessment_id || "");
+  const directId = String(
+    row.id || row.assessmentId || row.assessment_id || "",
+  );
   const extracted = extractScoresFromMap(row);
   const fromList =
     extractScoresFromCategoryList(row.details) ||
@@ -191,7 +250,7 @@ function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | n
       extracted.kehadiran ??
       fromList?.kehadiran ??
       scoreFromComponents(parsedComponents, ["kehadiran", "attendance"]) ??
-      0
+      0,
   );
   const kerjasama = Number(
     row.kerjasama ??
@@ -199,8 +258,12 @@ function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | n
       row.nilaiKerjasama ??
       extracted.kerjasama ??
       fromList?.kerjasama ??
-      scoreFromComponents(parsedComponents, ["kerjasama", "cooperation", "teamwork"]) ??
-      0
+      scoreFromComponents(parsedComponents, [
+        "kerjasama",
+        "cooperation",
+        "teamwork",
+      ]) ??
+      0,
   );
   const sikapEtika = Number(
     row.sikapEtika ??
@@ -218,8 +281,13 @@ function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | n
       row.nilai_sikap_etika ??
       extracted.sikapEtika ??
       fromList?.sikapEtika ??
-      scoreFromComponents(parsedComponents, ["sikap", "etika", "attitude", "ethics"]) ??
-      0
+      scoreFromComponents(parsedComponents, [
+        "sikap",
+        "etika",
+        "attitude",
+        "ethics",
+      ]) ??
+      0,
   );
   const prestasiKerja = Number(
     row.prestasiKerja ??
@@ -228,8 +296,12 @@ function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | n
       row.nilaiPrestasiKerja ??
       extracted.prestasiKerja ??
       fromList?.prestasiKerja ??
-      scoreFromComponents(parsedComponents, ["prestasi", "workachievement", "kinerja"]) ??
-      0
+      scoreFromComponents(parsedComponents, [
+        "prestasi",
+        "workachievement",
+        "kinerja",
+      ]) ??
+      0,
   );
   const kreatifitas = Number(
     row.kreatifitas ??
@@ -238,18 +310,28 @@ function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | n
       row.nilaiKreatifitas ??
       extracted.kreatifitas ??
       fromList?.kreatifitas ??
-      scoreFromComponents(parsedComponents, ["kreatif", "kreativ", "creativ", "inovasi"]) ??
-      0
+      scoreFromComponents(parsedComponents, [
+        "kreatif",
+        "kreativ",
+        "creativ",
+        "inovasi",
+      ]) ??
+      0,
   );
 
-  const hasScores = Boolean(kehadiran || kerjasama || sikapEtika || prestasiKerja || kreatifitas);
+  const hasScores = Boolean(
+    kehadiran || kerjasama || sikapEtika || prestasiKerja || kreatifitas,
+  );
 
   if (directId || hasScores) {
     return {
       id: directId || "assessment",
-      studentId: String(row.studentId || row.studentUserId || row.student_id || ""),
+      studentId: String(
+        row.studentId || row.studentUserId || row.student_id || "",
+      ),
       mentorId: String(row.mentorId || row.mentor_id || ""),
-      internshipId: typeof row.internshipId === "string" ? row.internshipId : undefined,
+      internshipId:
+        typeof row.internshipId === "string" ? row.internshipId : undefined,
       kehadiran,
       kerjasama,
       sikapEtika,
@@ -299,7 +381,7 @@ function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | n
       internshipCandidate.assessment,
       internshipCandidate.penilaian,
       internshipCandidate.nilai,
-      internshipCandidate.scoring
+      internshipCandidate.scoring,
     );
   }
 
@@ -318,15 +400,19 @@ function normalizeAssessmentPayload(payload: unknown): StudentAssessmentData | n
 }
 
 function isDedicatedAssessmentEndpoint(endpoint: string): boolean {
-  return endpoint.includes("/mahasiswa/assessment") || endpoint.includes("/mahasiswa/penilaian");
+  return (
+    endpoint.includes("/mahasiswa/assessment") ||
+    endpoint.includes("/mahasiswa/penilaian")
+  );
 }
 
 /**
  * Get assessment for currently logged-in mahasiswa.
  * Backend contract: dedicated endpoint may return success=true with data=null when no assessment exists.
  */
-export async function getMyAssessment(): Promise<ApiResponse<StudentAssessmentData | null>> {
-
+export async function getMyAssessment(): Promise<
+  ApiResponse<StudentAssessmentData | null>
+> {
   let lastMessage = "Data penilaian belum tersedia.";
 
   for (const endpoint of ASSESSMENT_ENDPOINTS) {

@@ -1,5 +1,5 @@
-import RegisterApprovalPage from "~/feature/register/pages/register-approval-page"
+import RegisterApprovalPage from "~/feature/register/pages/register-approval-page";
 
 export default function Page() {
-  return <RegisterApprovalPage />
+  return <RegisterApprovalPage />;
 }

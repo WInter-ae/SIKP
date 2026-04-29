@@ -2,14 +2,14 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
-import { 
-  FileCheck, 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  FileCheck,
+  CheckCircle,
+  AlertCircle,
   Calendar,
   User,
   FileText,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -52,7 +52,8 @@ export default function ApprovalForm({
           <Alert className="border-l-4 border-yellow-500 bg-yellow-50">
             <AlertCircle className="h-4 w-4 text-yellow-600" />
             <AlertDescription className="text-yellow-800">
-              Judul laporan KP harus disetujui oleh dosen pembimbing sebelum dapat mengajukan pengesahan
+              Judul laporan KP harus disetujui oleh dosen pembimbing sebelum
+              dapat mengajukan pengesahan
             </AlertDescription>
           </Alert>
         )}
@@ -61,7 +62,8 @@ export default function ApprovalForm({
           <Alert className="border-l-4 border-green-500 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
-              Judul laporan KP telah disetujui. Anda dapat mengajukan surat pengesahan.
+              Judul laporan KP telah disetujui. Anda dapat mengajukan surat
+              pengesahan.
             </AlertDescription>
           </Alert>
         )}
@@ -99,9 +101,7 @@ export default function ApprovalForm({
                   </Badge>
                 )}
                 {titleStatus === "ditolak" && (
-                  <Badge variant="destructive">
-                    Ditolak
-                  </Badge>
+                  <Badge variant="destructive">Ditolak</Badge>
                 )}
               </div>
             </div>
@@ -151,7 +151,8 @@ export default function ApprovalForm({
             <li className="flex items-start gap-2">
               <span className="mt-1">•</span>
               <span>
-                Pastikan judul laporan sudah final dan disetujui oleh dosen pembimbing
+                Pastikan judul laporan sudah final dan disetujui oleh dosen
+                pembimbing
               </span>
             </li>
             <li className="flex items-start gap-2">

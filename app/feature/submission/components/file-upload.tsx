@@ -6,7 +6,11 @@ import { cn } from "~/lib/utils";
 import type { FileUploadProps } from "../types";
 import { Upload } from "lucide-react";
 
-function FileUpload({ label, onFileChange, disabled }: FileUploadProps & { disabled?: boolean }) {
+function FileUpload({
+  label,
+  onFileChange,
+  disabled,
+}: FileUploadProps & { disabled?: boolean }) {
   const [fileName, setFileName] = useState<string>("");
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
@@ -55,8 +59,8 @@ function FileUpload({ label, onFileChange, disabled }: FileUploadProps & { disab
           disabled
             ? "border-border bg-muted cursor-not-allowed opacity-50"
             : isDragging
-            ? "border-primary bg-primary/5"
-            : "border-border hover:border-primary/50"
+              ? "border-primary bg-primary/5"
+              : "border-border hover:border-primary/50",
         )}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -69,12 +73,17 @@ function FileUpload({ label, onFileChange, disabled }: FileUploadProps & { disab
           onChange={handleFileChange}
           disabled={disabled}
         />
-        <label htmlFor="file-upload" className={cn("cursor-pointer", disabled && "cursor-not-allowed")}>
+        <label
+          htmlFor="file-upload"
+          className={cn("cursor-pointer", disabled && "cursor-not-allowed")}
+        >
           <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
           <p className="text-muted-foreground">
-            {disabled 
-              ? "File tidak dapat diubah setelah pengajuan" 
-              : fileName ? fileName : "Klik untuk upload atau drag and drop file"}
+            {disabled
+              ? "File tidak dapat diubah setelah pengajuan"
+              : fileName
+                ? fileName
+                : "Klik untuk upload atau drag and drop file"}
           </p>
         </label>
       </div>

@@ -71,13 +71,19 @@ async function resolveStudentUserId(studentAlias: string): Promise<string> {
     return studentAlias;
   }
 
-  const exactUser = menteesRes.data.find((mentee) => mentee.userId === studentAlias);
+  const exactUser = menteesRes.data.find(
+    (mentee) => mentee.userId === studentAlias,
+  );
   if (exactUser?.userId) return exactUser.userId;
 
-  const byInternshipId = menteesRes.data.find((mentee) => mentee.internshipId === studentAlias);
+  const byInternshipId = menteesRes.data.find(
+    (mentee) => mentee.internshipId === studentAlias,
+  );
   if (byInternshipId?.userId) return byInternshipId.userId;
 
-  const byLegacyId = menteesRes.data.find((mentee) => mentee.id === studentAlias);
+  const byLegacyId = menteesRes.data.find(
+    (mentee) => mentee.id === studentAlias,
+  );
   if (byLegacyId?.userId) return byLegacyId.userId;
 
   const byNim = menteesRes.data.find((mentee) => mentee.nim === studentAlias);
@@ -110,7 +116,7 @@ function StudentLogbookDetailPage() {
 
       try {
         const resolvedStudentId = await resolveStudentUserId(studentId);
-        
+
         let studentRes = await getMenteeDetail(resolvedStudentId);
 
         if (!isMounted) return;
@@ -123,31 +129,37 @@ function StudentLogbookDetailPage() {
         }
 
         setStudent(studentRes.data);
-        
+
         // Backend expects userId for GET /api/mentor/logbook/:studentId
         const studentUserId = studentRes.data?.userId || resolvedStudentId;
         let logbookRes = await getStudentLogbook(studentUserId);
-        
+
         let backendEntries: LogbookEntry[] =
           logbookRes.success && logbookRes.data?.entries
             ? logbookRes.data.entries
             : [];
 
         const mentorVisibleEntries = backendEntries.filter(
-          (entry): entry is LogbookEntry & { status: "PENDING" | "APPROVED" | "REJECTED" } =>
-            entry.status !== "DRAFT"
+          (
+            entry,
+          ): entry is LogbookEntry & {
+            status: "PENDING" | "APPROVED" | "REJECTED";
+          } => entry.status !== "DRAFT",
         );
 
         const mapped = mentorVisibleEntries
           .map((entry) => ({
-            id: coerceText(entry.id, `${entry.date || "logbook"}-${entry.activity || entry.description || "entry"}`),
+            id: coerceText(
+              entry.id,
+              `${entry.date || "logbook"}-${entry.activity || entry.description || "entry"}`,
+            ),
             date: coerceText(entry.date, ""),
             description: coerceText(entry.description || entry.activity, "-"),
             activity: coerceText(entry.activity || entry.description, "-"),
             status: entry.status,
           }))
-          .sort((a, b) =>
-            new Date(b.date).getTime() - new Date(a.date).getTime()
+          .sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
           );
 
         setEntries(mapped);
@@ -176,8 +188,12 @@ function StudentLogbookDetailPage() {
   }, [studentId]);
 
   const totalEntries = entries.length;
-  const approvedEntries = entries.filter((entry) => entry.status === "APPROVED").length;
-  const pendingEntries = entries.filter((entry) => entry.status === "PENDING").length;
+  const approvedEntries = entries.filter(
+    (entry) => entry.status === "APPROVED",
+  ).length;
+  const pendingEntries = entries.filter(
+    (entry) => entry.status === "PENDING",
+  ).length;
 
   async function handleSignLogbook(logbookId: string) {
     try {
@@ -189,20 +205,22 @@ function StudentLogbookDetailPage() {
 
       setEntries((prev) =>
         prev.map((entry) =>
-          entry.id === logbookId ? { ...entry, status: "APPROVED" } : entry
-        )
+          entry.id === logbookId ? { ...entry, status: "APPROVED" } : entry,
+        ),
       );
       toast.success("Logbook berhasil disetujui.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal menyetujui logbook.");
+      toast.error(
+        error instanceof Error ? error.message : "Gagal menyetujui logbook.",
+      );
     }
   }
 
   function handleRejectLogbook(logbookId: string) {
     setEntries((prev) =>
       prev.map((entry) =>
-        entry.id === logbookId ? { ...entry, status: "REJECTED" } : entry
-      )
+        entry.id === logbookId ? { ...entry, status: "REJECTED" } : entry,
+      ),
     );
   }
 
@@ -224,19 +242,23 @@ function StudentLogbookDetailPage() {
 
       setEntries((prev) =>
         prev.map((entry) =>
-          entry.status === "PENDING" ? { ...entry, status: "APPROVED" } : entry
-        )
+          entry.status === "PENDING" ? { ...entry, status: "APPROVED" } : entry,
+        ),
       );
       toast.success("Semua logbook pending berhasil disetujui.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal paraf semua logbook.");
+      toast.error(
+        error instanceof Error ? error.message : "Gagal paraf semua logbook.",
+      );
     } finally {
       setIsApprovingAll(false);
     }
   }
 
   function handleExportLogbook() {
-    toast.info("Fitur export logbook akan diaktifkan setelah endpoint tersedia.");
+    toast.info(
+      "Fitur export logbook akan diaktifkan setelah endpoint tersedia.",
+    );
   }
 
   function getStatusBadge(status: ViewLogbookEntry["status"]) {
@@ -277,7 +299,9 @@ function StudentLogbookDetailPage() {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <Alert variant="destructive">
-          <AlertDescription>{errorMessage || "Mahasiswa tidak ditemukan"}</AlertDescription>
+          <AlertDescription>
+            {errorMessage || "Mahasiswa tidak ditemukan"}
+          </AlertDescription>
         </Alert>
         <Button asChild className="mt-4">
           <Link to="/mentor/logbook">
@@ -301,13 +325,19 @@ function StudentLogbookDetailPage() {
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Detail Logbook Mahasiswa</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">
+              Detail Logbook Mahasiswa
+            </h1>
             <p className="text-muted-foreground mt-1">
-              Menampilkan aktivitas logbook mahasiswa secara real-time dari backend
+              Menampilkan aktivitas logbook mahasiswa secara real-time dari
+              backend
             </p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleSignAllLogbooks} disabled={pendingEntries === 0 || isApprovingAll}>
+            <Button
+              onClick={handleSignAllLogbooks}
+              disabled={pendingEntries === 0 || isApprovingAll}
+            >
               <CheckCircle className="mr-2 h-4 w-4" />
               {isApprovingAll ? "Memproses..." : "Paraf Semua"}
             </Button>
@@ -330,7 +360,9 @@ function StudentLogbookDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
-              <p className="font-medium">{student.nama || student.name || "-"}</p>
+              <p className="font-medium">
+                {student.nama || student.name || "-"}
+              </p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">NIM</p>
@@ -342,7 +374,9 @@ function StudentLogbookDetailPage() {
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Perusahaan</p>
-              <p className="font-medium">{student.companyName || student.company || "-"}</p>
+              <p className="font-medium">
+                {student.companyName || student.company || "-"}
+              </p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Bidang</p>
@@ -366,13 +400,17 @@ function StudentLogbookDetailPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Disetujui</CardDescription>
-            <CardTitle className="text-3xl text-green-600">{approvedEntries}</CardTitle>
+            <CardTitle className="text-3xl text-green-600">
+              {approvedEntries}
+            </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Menunggu Paraf</CardDescription>
-            <CardTitle className="text-3xl text-yellow-600">{pendingEntries}</CardTitle>
+            <CardTitle className="text-3xl text-yellow-600">
+              {pendingEntries}
+            </CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -392,7 +430,9 @@ function StudentLogbookDetailPage() {
             <Calendar className="h-5 w-5" />
             Daftar Logbook
           </CardTitle>
-          <CardDescription>Semua entri logbook mahasiswa dari endpoint backend</CardDescription>
+          <CardDescription>
+            Semua entri logbook mahasiswa dari endpoint backend
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="border rounded-lg">
@@ -405,40 +445,60 @@ function StudentLogbookDetailPage() {
               </colgroup>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-28 text-left align-middle text-sm font-semibold">Tanggal</TableHead>
-                  <TableHead className="text-left align-middle text-sm font-semibold">Deskripsi Kegiatan</TableHead>
-                  <TableHead className="w-36 text-sm font-semibold">Status Paraf</TableHead>
-                  <TableHead className="w-40 text-sm font-semibold">Aksi</TableHead>
+                  <TableHead className="w-28 text-left align-middle text-sm font-semibold">
+                    Tanggal
+                  </TableHead>
+                  <TableHead className="text-left align-middle text-sm font-semibold">
+                    Deskripsi Kegiatan
+                  </TableHead>
+                  <TableHead className="w-36 text-sm font-semibold">
+                    Status Paraf
+                  </TableHead>
+                  <TableHead className="w-40 text-sm font-semibold">
+                    Aksi
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {entries.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    <TableCell
+                      colSpan={4}
+                      className="text-center py-8 text-muted-foreground"
+                    >
                       Belum ada logbook yang diajukan mahasiswa ini.
                     </TableCell>
                   </TableRow>
                 ) : (
                   entries.map((entry) => (
                     <TableRow key={entry.id} className="align-top">
-                      <TableCell className="align-middle text-left text-xs sm:text-sm border-r py-4 pr-3 whitespace-nowrap">{formatDate(entry.date)}</TableCell>
+                      <TableCell className="align-middle text-left text-xs sm:text-sm border-r py-4 pr-3 whitespace-nowrap">
+                        {formatDate(entry.date)}
+                      </TableCell>
                       <TableCell className="align-middle text-left py-4 min-w-0">
                         <div className="min-h-16 min-w-0 break-words flex flex-col justify-center gap-2">
                           <p className="font-medium text-sm leading-5 whitespace-normal break-words min-w-0">
                             {entry.description}
                           </p>
-                          {entry.activity && entry.activity.trim() !== entry.description.trim() && (
-                            <p className="text-sm leading-5 text-muted-foreground whitespace-pre-line break-words min-w-0">
-                              {entry.activity}
-                            </p>
-                          )}
+                          {entry.activity &&
+                            entry.activity.trim() !==
+                              entry.description.trim() && (
+                              <p className="text-sm leading-5 text-muted-foreground whitespace-pre-line break-words min-w-0">
+                                {entry.activity}
+                              </p>
+                            )}
                         </div>
                       </TableCell>
-                      <TableCell className="align-middle py-4">{getStatusBadge(entry.status)}</TableCell>
+                      <TableCell className="align-middle py-4">
+                        {getStatusBadge(entry.status)}
+                      </TableCell>
                       <TableCell className="align-middle py-4">
                         {entry.status === "PENDING" ? (
                           <div className="flex flex-wrap items-center gap-2 min-w-0">
-                            <Button size="sm" onClick={() => handleSignLogbook(entry.id)}>
+                            <Button
+                              size="sm"
+                              onClick={() => handleSignLogbook(entry.id)}
+                            >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Paraf
                             </Button>
@@ -452,7 +512,9 @@ function StudentLogbookDetailPage() {
                             />
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Selesai</span>
+                          <span className="text-xs text-muted-foreground">
+                            Selesai
+                          </span>
                         )}
                       </TableCell>
                     </TableRow>

@@ -10,7 +10,7 @@ import {
   getDosenDashboard,
   getMyProfile,
   getWakdekDashboard,
-} from "~/lib/services/dosen-api";
+} from "~/lib/services/dosen.service";
 
 export default function DosenDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardDosenData | null>(

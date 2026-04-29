@@ -1,6 +1,6 @@
 /**
  * Generate Logbook DOCX Button Component
- * 
+ *
  * Button untuk generate DOCX logbook dengan:
  * - Data mahasiswa dari database
  * - Logbook entries yang sudah approved
@@ -26,10 +26,10 @@ import {
 } from "~/components/ui/select";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { FileDown, Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { 
-  generateLogbookDocx, 
+import {
+  generateLogbookDocx,
   validateLogbookGeneration,
-  getLogbookPreview 
+  getLogbookPreview,
 } from "../services/logbook-generation-api";
 import { toast } from "sonner";
 
@@ -65,7 +65,7 @@ export function GenerateLogbookButton({
     try {
       // Validate if can generate
       const validationResponse = await validateLogbookGeneration();
-      
+
       if (validationResponse.success && validationResponse.data) {
         setValidationResult(validationResponse.data);
 
@@ -73,14 +73,15 @@ export function GenerateLogbookButton({
         if (validationResponse.data.canGenerate) {
           const previewResponse = await getLogbookPreview();
           if (previewResponse.success && previewResponse.data) {
-            const weeks = previewResponse.data.weeks.map(w => w.weekNumber);
+            const weeks = previewResponse.data.weeks.map((w) => w.weekNumber);
             const totalEntries = previewResponse.data.weeks.reduce(
-              (sum, w) => sum + w.entries.length, 
-              0
+              (sum, w) => sum + w.entries.length,
+              0,
             );
             const approvedEntries = previewResponse.data.weeks.reduce(
-              (sum, w) => sum + w.entries.filter(e => e.status === "APPROVED").length,
-              0
+              (sum, w) =>
+                sum + w.entries.filter((e) => e.status === "APPROVED").length,
+              0,
             );
 
             setPreviewData({
@@ -111,9 +112,10 @@ export function GenerateLogbookButton({
     setIsGenerating(true);
 
     try {
-      const request = selectedWeek !== "all" 
-        ? { weekNumber: parseInt(selectedWeek) } 
-        : undefined;
+      const request =
+        selectedWeek !== "all"
+          ? { weekNumber: parseInt(selectedWeek) }
+          : undefined;
 
       const response = await generateLogbookDocx(request);
 
@@ -122,12 +124,12 @@ export function GenerateLogbookButton({
           description: `File: ${response.data.fileName}`,
           action: {
             label: "Download",
-            onClick: () => window.open(response.data!.docxUrl, '_blank'),
+            onClick: () => window.open(response.data!.docxUrl, "_blank"),
           },
         });
 
         // Auto-download
-        window.open(response.data.docxUrl, '_blank');
+        window.open(response.data.docxUrl, "_blank");
         setIsOpen(false);
       } else {
         toast.error(response.message || "Gagal generate logbook");
@@ -173,8 +175,9 @@ export function GenerateLogbookButton({
                   <div className="space-y-1">
                     <p className="font-medium">Logbook siap digenerate</p>
                     <p className="text-sm text-gray-600">
-                      {previewData?.approvedEntries} dari {previewData?.totalEntries} entri 
-                      sudah disetujui pembimbing lapangan
+                      {previewData?.approvedEntries} dari{" "}
+                      {previewData?.totalEntries} entri sudah disetujui
+                      pembimbing lapangan
                     </p>
                   </div>
                 </AlertDescription>
@@ -220,7 +223,8 @@ export function GenerateLogbookButton({
               <AlertDescription>
                 <p className="font-medium">Logbook belum bisa digenerate</p>
                 <p className="text-sm mt-1">
-                  {validationResult?.reason || "Belum ada logbook yang disetujui"}
+                  {validationResult?.reason ||
+                    "Belum ada logbook yang disetujui"}
                 </p>
               </AlertDescription>
             </Alert>

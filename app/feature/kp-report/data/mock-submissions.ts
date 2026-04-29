@@ -25,7 +25,14 @@ export const mockPengajuanList: PengajuanJudul[] = [
         "Proyek ini bertujuan untuk membangun sistem informasi manajemen perpustakaan yang modern dan user-friendly. Sistem akan memiliki fitur peminjaman buku, pengembalian, katalog online, dan laporan statistik. Menggunakan React untuk frontend dan Node.js dengan Express untuk backend API.",
       metodologi:
         "Pengembangan menggunakan metode Agile dengan sprint 2 minggu. Teknologi: React, TypeScript, Node.js, PostgreSQL, dan Docker untuk deployment.",
-      teknologi: ["React", "TypeScript", "Node.js", "Express", "PostgreSQL", "Docker"],
+      teknologi: [
+        "React",
+        "TypeScript",
+        "Node.js",
+        "Express",
+        "PostgreSQL",
+        "Docker",
+      ],
     },
     status: "diajukan",
     tanggalPengajuan: "2024-11-20T09:30:00",

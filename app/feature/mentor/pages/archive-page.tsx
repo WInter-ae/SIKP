@@ -2,14 +2,31 @@ import { useEffect, useMemo, useState } from "react";
 import { Archive, FileText, Eye, Download, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Input } from "~/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
-import { getMentees, getStudentAssessment, getStudentLogbook, type MenteeData } from "~/feature/field-mentor/services";
+import {
+  getMentees,
+  getStudentAssessment,
+  getStudentLogbook,
+  type MenteeData,
+} from "~/feature/field-mentor/services";
 
 import type { ArchivedDocument } from "../types";
 
@@ -31,7 +48,7 @@ function semesterFromDate(dateString?: string) {
 function buildArchiveItems(
   mentees: MenteeData[],
   logbookCounts: Record<string, number>,
-  hasAssessment: Record<string, boolean>
+  hasAssessment: Record<string, boolean>,
 ): ArchivedDocument[] {
   const rows: ArchivedDocument[] = [];
 
@@ -39,8 +56,13 @@ function buildArchiveItems(
     if (!mentee.userId) return;
 
     const studentName = mentee.nama || mentee.name || "Mahasiswa";
-    const semester = semesterFromDate(mentee.internshipEndDate || mentee.internshipStartDate);
-    const archiveDate = mentee.internshipEndDate || mentee.internshipStartDate || new Date().toISOString();
+    const semester = semesterFromDate(
+      mentee.internshipEndDate || mentee.internshipStartDate,
+    );
+    const archiveDate =
+      mentee.internshipEndDate ||
+      mentee.internshipStartDate ||
+      new Date().toISOString();
 
     if (hasAssessment[mentee.userId]) {
       rows.push({
@@ -77,7 +99,9 @@ function buildArchiveItems(
     });
   });
 
-  return rows.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  return rows.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  );
 }
 
 function ArchivePage() {
@@ -105,7 +129,9 @@ function ArchivePage() {
           return;
         }
 
-        const validMentees = menteesRes.data.filter((mentee) => Boolean(mentee.userId));
+        const validMentees = menteesRes.data.filter((mentee) =>
+          Boolean(mentee.userId),
+        );
 
         const tuples = await Promise.all(
           validMentees.map(async (mentee) => {
@@ -115,14 +141,19 @@ function ArchivePage() {
                 getStudentAssessment(mentee.userId),
               ]);
 
-              const logbookCount = logbookRes.success && logbookRes.data?.entries ? logbookRes.data.entries.length : 0;
-              const assessmentExists = Boolean(assessmentRes.success && assessmentRes.data);
+              const logbookCount =
+                logbookRes.success && logbookRes.data?.entries
+                  ? logbookRes.data.entries.length
+                  : 0;
+              const assessmentExists = Boolean(
+                assessmentRes.success && assessmentRes.data,
+              );
 
               return [mentee.userId, logbookCount, assessmentExists] as const;
             } catch {
               return [mentee.userId, 0, false] as const;
             }
-          })
+          }),
         );
 
         if (!isMounted) return;
@@ -135,11 +166,15 @@ function ArchivePage() {
           hasAssessment[studentId] = assessment;
         });
 
-        setDocuments(buildArchiveItems(validMentees, logbookCounts, hasAssessment));
+        setDocuments(
+          buildArchiveItems(validMentees, logbookCounts, hasAssessment),
+        );
       } catch (error) {
         if (!isMounted) return;
         setDocuments([]);
-        toast.error(error instanceof Error ? error.message : "Gagal memuat arsip mentor.");
+        toast.error(
+          error instanceof Error ? error.message : "Gagal memuat arsip mentor.",
+        );
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -155,8 +190,11 @@ function ArchivePage() {
   }, []);
 
   const semesters = useMemo(
-    () => Array.from(new Set(documents.map((doc) => doc.semester))).filter((semester) => semester !== "-"),
-    [documents]
+    () =>
+      Array.from(new Set(documents.map((doc) => doc.semester))).filter(
+        (semester) => semester !== "-",
+      ),
+    [documents],
   );
 
   const filteredDocuments = useMemo(
@@ -166,12 +204,13 @@ function ArchivePage() {
           doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           doc.mentee.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesType = filterType === "all" || doc.type === filterType;
-        const matchesSemester = filterSemester === "all" || doc.semester === filterSemester;
+        const matchesSemester =
+          filterSemester === "all" || doc.semester === filterSemester;
         const matchesTab = activeTab === "all" || doc.type === activeTab;
 
         return matchesSearch && matchesType && matchesSemester && matchesTab;
       }),
-    [activeTab, documents, filterSemester, filterType, searchQuery]
+    [activeTab, documents, filterSemester, filterType, searchQuery],
   );
 
   function getDocumentColor(type: string) {
@@ -198,11 +237,15 @@ function ArchivePage() {
       return;
     }
 
-    toast.info("Dokumen ringkasan dapat diakses dari halaman detail mahasiswa.");
+    toast.info(
+      "Dokumen ringkasan dapat diakses dari halaman detail mahasiswa.",
+    );
   }
 
   function handleDownload(doc: ArchivedDocument) {
-    toast.info(`Unduh dokumen ${doc.title} akan diaktifkan setelah endpoint export tersedia.`);
+    toast.info(
+      `Unduh dokumen ${doc.title} akan diaktifkan setelah endpoint export tersedia.`,
+    );
   }
 
   const totalPenilaian = documents.filter((d) => d.type === "penilaian").length;
@@ -222,25 +265,33 @@ function ArchivePage() {
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Total Arsip</CardDescription>
-            <CardTitle className="text-3xl">{isLoading ? "..." : documents.length}</CardTitle>
+            <CardTitle className="text-3xl">
+              {isLoading ? "..." : documents.length}
+            </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Penilaian</CardDescription>
-            <CardTitle className="text-3xl">{isLoading ? "..." : totalPenilaian}</CardTitle>
+            <CardTitle className="text-3xl">
+              {isLoading ? "..." : totalPenilaian}
+            </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Logbook</CardDescription>
-            <CardTitle className="text-3xl">{isLoading ? "..." : totalLogbook}</CardTitle>
+            <CardTitle className="text-3xl">
+              {isLoading ? "..." : totalLogbook}
+            </CardTitle>
           </CardHeader>
         </Card>
         <Card>
           <CardHeader className="pb-3">
             <CardDescription>Laporan</CardDescription>
-            <CardTitle className="text-3xl">{isLoading ? "..." : totalLaporan}</CardTitle>
+            <CardTitle className="text-3xl">
+              {isLoading ? "..." : totalLaporan}
+            </CardTitle>
           </CardHeader>
         </Card>
       </div>
@@ -302,20 +353,29 @@ function ArchivePage() {
         <TabsContent value={activeTab} className="mt-6">
           {isLoading ? (
             <Card>
-              <CardContent className="py-8 text-muted-foreground">Memuat arsip dari backend...</CardContent>
+              <CardContent className="py-8 text-muted-foreground">
+                Memuat arsip dari backend...
+              </CardContent>
             </Card>
           ) : filteredDocuments.length > 0 ? (
             <div className="grid grid-cols-1 gap-4">
               {filteredDocuments.map((doc) => (
-                <Card key={doc.id} className="hover:shadow-md transition-shadow">
+                <Card
+                  key={doc.id}
+                  className="hover:shadow-md transition-shadow"
+                >
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex items-start gap-4 flex-1">
-                        <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${getDocumentColor(doc.type)}`}>
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-lg ${getDocumentColor(doc.type)}`}
+                        >
                           <FileText className="h-5 w-5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold mb-1 truncate">{doc.title}</h3>
+                          <h3 className="font-semibold mb-1 truncate">
+                            {doc.title}
+                          </h3>
                           <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <FileText className="h-3 w-3" />
@@ -334,7 +394,11 @@ function ArchivePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button size="sm" variant="outline" onClick={() => handleView(doc)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleView(doc)}
+                        >
                           <Eye className="h-4 w-4 mr-2" />
                           Lihat
                         </Button>
@@ -352,8 +416,12 @@ function ArchivePage() {
             <Card>
               <CardContent className="py-12 text-center">
                 <Archive className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-lg font-medium mb-2">Tidak ada dokumen ditemukan</p>
-                <p className="text-muted-foreground">Coba ubah filter atau kata kunci pencarian</p>
+                <p className="text-lg font-medium mb-2">
+                  Tidak ada dokumen ditemukan
+                </p>
+                <p className="text-muted-foreground">
+                  Coba ubah filter atau kata kunci pencarian
+                </p>
               </CardContent>
             </Card>
           )}

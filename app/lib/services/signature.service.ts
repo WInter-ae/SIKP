@@ -1,4 +1,16 @@
-import { apiClient, type ApiResponse } from "~/lib/api-client";
+/**
+ * Signature Service
+ *
+ * Menangani profile signature — read dari backend SIKP,
+ * write/delete hanya bisa dilakukan via SSO (getSignatureManageUrl).
+ */
+
+import { sikpClient } from "~/lib/api-client";
+import type { ApiResponse } from "~/lib/api-client";
+import { API_ENDPOINTS } from "~/lib/constants/endpoints";
+import { z } from "zod";
+
+// ==================== TYPES ====================
 
 export interface SignatureAsset {
   id: string;
@@ -7,24 +19,9 @@ export interface SignatureAsset {
   isActive?: boolean;
 }
 
-interface SignaturePayload {
-  id?: unknown;
-  signatureImage?: unknown;
-  signatureUrl?: unknown;
-  url?: unknown;
-  uploadedAt?: unknown;
-  createdAt?: unknown;
-  isActive?: unknown;
-}
+// Types digantikan validasi Zod
 
-interface SignatureListPayload {
-  signatures?: unknown;
-  items?: unknown;
-}
-
-interface SignatureManageUrlPayload {
-  manageUrl?: unknown;
-}
+// ==================== NORMALIZERS ====================
 
 function pickString(...values: unknown[]): string | null {
   for (const value of values) {
@@ -32,16 +29,14 @@ function pickString(...values: unknown[]): string | null {
       return value;
     }
   }
-
   return null;
 }
 
 function normalizeSignaturePayload(payload: unknown): SignatureAsset | null {
-  if (!payload || typeof payload !== "object") {
-    return null;
-  }
+  const result = z.record(z.string(), z.unknown()).safeParse(payload);
+  if (!result.success) return null;
 
-  const data = payload as SignaturePayload;
+  const data = result.data;
   const id = pickString(data.id);
   const signatureImage = pickString(
     data.signatureImage,
@@ -49,9 +44,7 @@ function normalizeSignaturePayload(payload: unknown): SignatureAsset | null {
     data.url,
   );
 
-  if (!id || !signatureImage) {
-    return null;
-  }
+  if (!id || !signatureImage) return null;
 
   return {
     id,
@@ -62,11 +55,10 @@ function normalizeSignaturePayload(payload: unknown): SignatureAsset | null {
 }
 
 function normalizeSignatureList(payload: unknown): SignatureAsset[] {
-  if (!payload || typeof payload !== "object") {
-    return [];
-  }
+  const result = z.record(z.string(), z.unknown()).safeParse(payload);
+  if (!result.success) return [];
 
-  const listPayload = payload as SignatureListPayload;
+  const listPayload = result.data;
   const rawItems = Array.isArray(listPayload.signatures)
     ? listPayload.signatures
     : Array.isArray(listPayload.items)
@@ -78,18 +70,21 @@ function normalizeSignatureList(payload: unknown): SignatureAsset[] {
     .filter((item): item is SignatureAsset => Boolean(item));
 }
 
+// ==================== API FUNCTIONS ====================
+
+/**
+ * Ambil URL kelola signature di SSO.
+ */
 export async function getSignatureManageUrl(): Promise<ApiResponse<string>> {
-  const response = await apiClient<SignatureManageUrlPayload>(
-    "/api/profile/signature/manage-url",
-    {
-      method: "GET",
-    },
+  const response = await sikpClient.get<Record<string, unknown>>(
+    API_ENDPOINTS.SIGNATURE.MANAGE_URL || "/api/profile/signature/manage-url",
   );
 
   if (!response.success || !response.data) {
     return {
       success: false,
-      message: response.message || "Gagal mengambil URL kelola signature di SSO.",
+      message:
+        response.message || "Gagal mengambil URL kelola signature di SSO.",
       data: null,
     };
   }
@@ -110,22 +105,13 @@ export async function getSignatureManageUrl(): Promise<ApiResponse<string>> {
   };
 }
 
-function writeDisabledResponse(message?: string): ApiResponse<null> {
-  return {
-    success: false,
-    message:
-      message ||
-      "Kelola signature hanya tersedia di SSO. Gunakan URL kelola signature.",
-    data: null,
-  };
-}
-
+/**
+ * Ambil signature aktif dari profil.
+ */
 export async function getActiveProfileSignature(): Promise<
   ApiResponse<SignatureAsset | null>
 > {
-  const response = await apiClient<unknown>("/api/profile/signature", {
-    method: "GET",
-  });
+  const response = await sikpClient.get<unknown>("/api/profile/signature");
 
   if (!response.success) {
     return {
@@ -155,8 +141,17 @@ export async function getActiveProfileSignature(): Promise<
   };
 }
 
-// Deprecated compatibility helpers. Keep compile compatibility for legacy callers,
-// but enforce SSO-only signature management.
+function writeDisabledResponse(message?: string): ApiResponse<null> {
+  return {
+    success: false,
+    message:
+      message ||
+      "Kelola signature hanya tersedia di SSO. Gunakan URL kelola signature.",
+    data: null,
+  };
+}
+
+// Deprecated compatibility helpers — signature write harus via SSO.
 export async function uploadProfileSignature(
   _signatureFile: File,
 ): Promise<ApiResponse<SignatureAsset>> {
@@ -197,6 +192,9 @@ export async function deleteActiveProfileSignature(): Promise<
   return writeDisabledResponse(manage.message);
 }
 
+/**
+ * Helper: Convert Data URL (dari canvas) ke File.
+ */
 export async function dataUrlToFile(
   dataUrl: string,
   filename = `signature-${Date.now()}.png`,
@@ -205,6 +203,3 @@ export async function dataUrlToFile(
   const blob = await response.blob();
   return new File([blob], filename, { type: blob.type || "image/png" });
 }
-
-// Signature write operations are intentionally removed from SIKP.
-// Management must happen in SSO via getSignatureManageUrl().

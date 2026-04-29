@@ -3,25 +3,35 @@ import { getAuthToken } from "~/lib/auth-client";
 
 import type { MailEntry } from "../../hearing-dosen/types/dosen";
 
-function getImageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" {
-  return dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";
-}
+type SignatureRenderSource = {
+  source: string;
+  format: "SVG" | "PNG" | "JPEG";
+};
 
-async function toDataUrlFromImageUrl(imageUrl: string): Promise<string> {
+async function toSignatureRenderSource(
+  imageUrl: string,
+): Promise<SignatureRenderSource> {
   const token = getAuthToken();
   // Try plain GET first to avoid CORS preflight on storage URLs.
   // Only attach Authorization when server explicitly requires auth.
   let response = await fetch(imageUrl);
 
-  if (!response.ok && (response.status === 401 || response.status === 403) && token) {
+  if (
+    !response.ok &&
+    (response.status === 401 || response.status === 403) &&
+    token
+  ) {
     response = await fetch(imageUrl, {
       headers: { Authorization: `Bearer ${token}` },
     });
   }
 
   if (!response.ok) throw new Error("Gagal memuat gambar tanda tangan");
+
   const blob = await response.blob();
-  return new Promise((resolve, reject) => {
+  const contentType = (blob.type || "").split(";")[0].trim().toLowerCase();
+
+  const dataUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => {
       if (typeof reader.result === "string") resolve(reader.result);
@@ -31,6 +41,34 @@ async function toDataUrlFromImageUrl(imageUrl: string): Promise<string> {
       reject(new Error("Gagal membaca gambar tanda tangan"));
     reader.readAsDataURL(blob);
   });
+
+  if (contentType === "image/svg+xml") {
+    // Convert SVG to PNG via canvas so jsPDF can render it
+    const pngDataUrl = await new Promise<string>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width || 300;
+        canvas.height = img.height || 150;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Failed to get canvas context"));
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL("image/png"));
+      };
+      img.onerror = () => reject(new Error("Failed to load SVG for conversion"));
+      img.src = dataUrl;
+    });
+
+    return {
+      source: pngDataUrl,
+      format: "PNG",
+    };
+  }
+
+  return {
+    source: dataUrl,
+    format: dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG",
+  };
 }
 
 /** Format "26 / Mei / 2025" */
@@ -95,6 +133,21 @@ function calculateLamaKP(startStr?: string, endStr?: string): string {
 function getCurrentTahunAjaran(): string {
   const yr = new Date().getFullYear();
   return `${yr}/${yr + 1}`;
+}
+
+function resolveMahasiswaSignature(entry: MailEntry): string | undefined {
+  const entryRecord = entry as unknown as Record<string, unknown>;
+  const candidate =
+    entry.mahasiswaEsignatureUrl ||
+    entryRecord.mahasiswa_esignature_url ||
+    entryRecord.mahasiswaESignatureUrl ||
+    entryRecord.mahasiswaSignatureUrl ||
+    entryRecord.mahasiswa_signature_url ||
+    entryRecord.mahasiswaEsignature;
+
+  return typeof candidate === "string" && candidate.trim().length > 0
+    ? candidate
+    : undefined;
 }
 
 export async function generateSuratPermohonanPdf(
@@ -254,11 +307,12 @@ export async function generateSuratPermohonanPdf(
   let hasRenderedSignature = false;
   if (entry.status === "disetujui" && entry.dosenEsignatureUrl) {
     try {
-      const sigDataUrl = await toDataUrlFromImageUrl(entry.dosenEsignatureUrl);
-      const sigFormat = getImageFormatFromDataUrl(sigDataUrl);
+      const signatureAsset = await toSignatureRenderSource(
+        entry.dosenEsignatureUrl,
+      );
       pdf.addImage(
-        sigDataUrl,
-        sigFormat,
+        signatureAsset.source,
+        signatureAsset.format,
         leftMargin,
         signatureTitleY + 5,
         55,
@@ -278,26 +332,38 @@ export async function generateSuratPermohonanPdf(
 
   // Tanda tangan digital mahasiswa (kanan)
   let hasRenderedMahasiswaSignature = false;
-  if (entry.mahasiswaEsignatureUrl) {
+  const mahasiswaSignatureUrl = resolveMahasiswaSignature(entry);
+  if (mahasiswaSignatureUrl) {
     try {
-      const sigDataUrl = await toDataUrlFromImageUrl(entry.mahasiswaEsignatureUrl);
-      const sigFormat = getImageFormatFromDataUrl(sigDataUrl);
-      pdf.addImage(sigDataUrl, sigFormat, rightColumnX - 5, signatureTitleY + 5, 55, 20);
+      const signatureAsset = await toSignatureRenderSource(
+        mahasiswaSignatureUrl,
+      );
+      pdf.addImage(
+        signatureAsset.source,
+        signatureAsset.format,
+        rightColumnX - 5,
+        signatureTitleY + 5,
+        55,
+        20,
+      );
       hasRenderedMahasiswaSignature = true;
     } catch (error) {
       console.warn("Gagal render tanda tangan mahasiswa pada preview surat", {
         requestId: entry.id,
         nim: entry.nim,
-        mahasiswaEsignatureUrl: entry.mahasiswaEsignatureUrl,
+        mahasiswaEsignatureUrl: mahasiswaSignatureUrl,
         error,
       });
       hasRenderedMahasiswaSignature = false;
     }
   } else {
-    console.warn("URL tanda tangan mahasiswa tidak tersedia pada data request", {
-      requestId: entry.id,
-      nim: entry.nim,
-    });
+    console.warn(
+      "URL tanda tangan mahasiswa tidak tersedia pada data request",
+      {
+        requestId: entry.id,
+        nim: entry.nim,
+      },
+    );
   }
 
   if (!hasRenderedMahasiswaSignature) {

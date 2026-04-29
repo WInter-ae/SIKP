@@ -23,6 +23,7 @@ evaluation/
 ## 🎯 Fitur
 
 ### Halaman Daftar Penilaian (`/admin/penilaian`)
+
 - **Dashboard Statistik**: 4 metric cards menampilkan Total Students, Passed Students, Average Score, Highest Score
 - **Grid Mahasiswa**: Menampilkan student cards dalam grid layout responsive
 - **Student Card**: Setiap card menampilkan:
@@ -36,6 +37,7 @@ evaluation/
   - Breakdown nilai (Pembimbing Lapangan + Dosen Pembimbing)
 
 ### Halaman Detail Penilaian (`/admin/penilaian/:id`)
+
 - **Header Mahasiswa**: Info lengkap mahasiswa dengan avatar, badge grade & status
 - **Penilaian Pembimbing Lapangan**:
   - Keterampilan Teknis (Pemahaman Teknologi, Problem Solving, Kualitas Hasil Kerja)
@@ -63,19 +65,25 @@ File `mock-evaluations.ts` berisi 2 evaluasi mahasiswa:
 ## 🎨 Komponen
 
 ### StudentCard
+
 Props: `student`, `summary`, `onClick`
+
 - Menampilkan card mahasiswa dengan ringkasan nilai
 - Badge untuk grade dan status
 - Progress untuk breakdown nilai
 
 ### StudentList
+
 Props: `evaluations`, `onStudentClick`
+
 - Grid responsive (1 col mobile, 2 cols tablet, 3 cols desktop)
 - Loading state dengan skeleton
 - Empty state ketika tidak ada data
 
 ### GradeSection
+
 Props: `title`, `grades`, `totalScore`, `maxScore`
+
 - Menampilkan kategori penilaian dengan komponen-komponennya
 - Progress bar untuk setiap komponen
 - Total score untuk setiap kategori
@@ -83,6 +91,7 @@ Props: `title`, `grades`, `totalScore`, `maxScore`
 ## 🛣️ Routes
 
 Routes yang dibuat:
+
 - `_sidebar.admin.penilaian.tsx` - Layout wrapper
 - `_sidebar.admin.penilaian._index.tsx` - Halaman daftar
 - `_sidebar.admin.penilaian.$id.tsx` - Halaman detail
@@ -92,6 +101,7 @@ Routes yang dibuat:
 ### Install Dependencies
 
 Package yang diperlukan:
+
 ```bash
 bun add @radix-ui/react-progress
 ```
@@ -171,6 +181,7 @@ interface StudentEvaluation {
 ## 🚀 Cara Menggunakan
 
 1. Install dependency yang diperlukan:
+
    ```bash
    bun add @radix-ui/react-progress
    ```

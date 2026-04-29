@@ -49,9 +49,7 @@ function FilterSection({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Year */}
           <div>
-            <Label className="text-sm font-medium mb-1 block">
-              Tahun
-            </Label>
+            <Label className="text-sm font-medium mb-1 block">Tahun</Label>
             <Select
               value={filters.year?.toString() || "all"}
               onValueChange={(value) =>
@@ -77,9 +75,7 @@ function FilterSection({
 
           {/* Semester */}
           <div>
-            <Label className="text-sm font-medium mb-1 block">
-              Periode
-            </Label>
+            <Label className="text-sm font-medium mb-1 block">Periode</Label>
             <Select
               value={filters.semester || "Semua"}
               onValueChange={(value) =>
@@ -104,9 +100,7 @@ function FilterSection({
 
           {/* Category */}
           <div>
-            <Label className="text-sm font-medium mb-1 block">
-              Kategori
-            </Label>
+            <Label className="text-sm font-medium mb-1 block">Kategori</Label>
             <Select
               value={filters.category || "Semua"}
               onValueChange={(value) =>
@@ -132,9 +126,7 @@ function FilterSection({
 
           {/* Status */}
           <div>
-            <Label className="text-sm font-medium mb-1 block">
-              Status
-            </Label>
+            <Label className="text-sm font-medium mb-1 block">Status</Label>
             <Select
               value={filters.status || "Semua"}
               onValueChange={(value) =>
@@ -159,9 +151,7 @@ function FilterSection({
 
           {/* Sort By */}
           <div>
-            <label className="text-sm font-medium mb-1 block">
-              Urutkan
-            </label>
+            <label className="text-sm font-medium mb-1 block">Urutkan</label>
             <Select
               value={filters.sortBy || "newest"}
               onValueChange={(value) =>

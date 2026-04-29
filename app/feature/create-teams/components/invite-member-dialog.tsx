@@ -38,7 +38,9 @@ export function InviteMemberDialog({
   currentMemberIds,
 }: InviteMemberDialogProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<MahasiswaSearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<MahasiswaSearchResult[]>(
+    [],
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -76,11 +78,11 @@ export function InviteMemberDialog({
 
     try {
       const result = await searchMahasiswa(searchQuery);
-      
+
       if (result.success && result.data) {
         // Filter out current members
         const filteredResults = result.data.filter(
-          (student) => !currentMemberIds.includes(student.id)
+          (student) => !currentMemberIds.includes(student.id),
         );
         setSearchResults(filteredResults);
         setShowResults(true);
@@ -153,7 +155,9 @@ export function InviteMemberDialog({
               <Card className="absolute z-50 w-full mt-1 shadow-lg border border-red-200 bg-red-50">
                 <div className="p-4 text-sm text-red-700">
                   <p>❌ {searchError}</p>
-                  <p className="text-xs mt-1">Pastikan koneksi internet stabil dan coba lagi</p>
+                  <p className="text-xs mt-1">
+                    Pastikan koneksi internet stabil dan coba lagi
+                  </p>
                 </div>
               </Card>
             )}
@@ -173,7 +177,7 @@ export function InviteMemberDialog({
                         onClick={() => handleInvite(student)}
                         className="w-full text-left px-3 py-3 hover:bg-accent transition-colors flex items-center gap-3 border-b last:border-b-0"
                       >
-                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                           {student.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -196,7 +200,7 @@ export function InviteMemberDialog({
                         <Button
                           size="sm"
                           variant="secondary"
-                          className="flex-shrink-0"
+                          className="shrink-0"
                         >
                           Undang
                         </Button>
@@ -216,7 +220,9 @@ export function InviteMemberDialog({
                 <Card className="absolute z-50 w-full mt-1 shadow-lg border">
                   <div className="p-4 text-center text-sm text-muted-foreground">
                     <p>Tidak ada mahasiswa ditemukan</p>
-                    <p className="text-xs mt-1">Coba kata kunci lain atau periksa NIM/Nama</p>
+                    <p className="text-xs mt-1">
+                      Coba kata kunci lain atau periksa NIM/Nama
+                    </p>
                   </div>
                 </Card>
               )}

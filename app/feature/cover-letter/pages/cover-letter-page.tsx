@@ -13,7 +13,7 @@ import {
 import { useSubmissionStatus } from "~/feature/cover-letter/hooks/use-submission-status";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { resetSubmissionToDraft } from "~/lib/services/submission-api";
+import { resetSubmissionToDraft } from "~/lib/services/submission-api.service";
 
 /**
  * Cover Letter Page - Display submission status timeline

@@ -1,18 +1,27 @@
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "~/components/ui/card";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Alert, AlertDescription } from "~/components/ui/alert";
-import { CheckCircle2, XCircle, Clock, AlertCircle, FileText } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Clock,
+  AlertCircle,
+  FileText,
+} from "lucide-react";
 
 interface TitleSubmissionFormProps {
   currentTitle?: string;
   titleStatus?: "draft" | "diajukan" | "disetujui" | "ditolak" | "revisi";
-  onSubmit: (data: {
-    judulLaporan: string;
-    deskripsi: string;
-  }) => void;
+  onSubmit: (data: { judulLaporan: string; deskripsi: string }) => void;
   disabled?: boolean;
   catatanDosen?: string;
 }
@@ -61,7 +70,8 @@ function TitleSubmissionForm({
             <AlertDescription className="text-green-800">
               <strong>Judul Disetujui</strong>
               <br />
-              Judul telah disetujui dosen pembimbing. Anda dapat melanjutkan ke tahap berikutnya.
+              Judul telah disetujui dosen pembimbing. Anda dapat melanjutkan ke
+              tahap berikutnya.
               {catatanDosen && (
                 <div className="mt-2 p-2 bg-green-100 rounded">
                   <p className="text-sm font-medium">Catatan Dosen:</p>
@@ -121,7 +131,9 @@ function TitleSubmissionForm({
 
   const isFormDisabled = disabled || titleStatus === "disetujui";
   const canSubmit =
-    titleStatus === "draft" || titleStatus === "ditolak" || titleStatus === "revisi";
+    titleStatus === "draft" ||
+    titleStatus === "ditolak" ||
+    titleStatus === "revisi";
 
   return (
     <Card>
@@ -131,7 +143,8 @@ function TitleSubmissionForm({
           Pengajuan Judul Laporan KP
         </CardTitle>
         <CardDescription>
-          Lengkapi formulir pengajuan judul laporan dengan detail yang jelas dan spesifik
+          Lengkapi formulir pengajuan judul laporan dengan detail yang jelas dan
+          spesifik
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -139,7 +152,8 @@ function TitleSubmissionForm({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="judulLaporan" className="text-base font-semibold">
-              Judul Laporan (Bahasa Indonesia) <span className="text-red-500">*</span>
+              Judul Laporan (Bahasa Indonesia){" "}
+              <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="judulLaporan"
@@ -151,7 +165,8 @@ function TitleSubmissionForm({
               required
             />
             <p className="text-sm text-muted-foreground">
-              Judul harus jelas, spesifik, dan menggambarkan kegiatan KP yang dilakukan
+              Judul harus jelas, spesifik, dan menggambarkan kegiatan KP yang
+              dilakukan
             </p>
           </div>
 
@@ -169,13 +184,19 @@ function TitleSubmissionForm({
               required
             />
             <p className="text-sm text-muted-foreground">
-              Minimal 100 karakter. Jelaskan latar belakang, tujuan, dan output dari pekerjaan KP
+              Minimal 100 karakter. Jelaskan latar belakang, tujuan, dan output
+              dari pekerjaan KP
             </p>
           </div>
 
           {canSubmit && (
             <div className="flex justify-end">
-              <Button type="submit" disabled={isFormDisabled || !judulLaporan.trim() || !deskripsi.trim()}>
+              <Button
+                type="submit"
+                disabled={
+                  isFormDisabled || !judulLaporan.trim() || !deskripsi.trim()
+                }
+              >
                 Ajukan Judul
               </Button>
             </div>

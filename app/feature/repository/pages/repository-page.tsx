@@ -63,15 +63,13 @@ export default function RepositoryPage() {
       case "newest":
         result.sort(
           (a, b) =>
-            new Date(b.uploadDate).getTime() -
-            new Date(a.uploadDate).getTime(),
+            new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime(),
         );
         break;
       case "oldest":
         result.sort(
           (a, b) =>
-            new Date(a.uploadDate).getTime() -
-            new Date(b.uploadDate).getTime(),
+            new Date(a.uploadDate).getTime() - new Date(b.uploadDate).getTime(),
         );
         break;
       case "popular":
@@ -97,12 +95,8 @@ export default function RepositoryPage() {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <Card className="p-6">
-          <h1 className="text-3xl font-bold mb-2">
-            Repositori Laporan KP
-          </h1>
-          <p>
-            Temukan dan pelajari laporan Kerja Praktik dari mahasiswa
-          </p>
+          <h1 className="text-3xl font-bold mb-2">Repositori Laporan KP</h1>
+          <p>Temukan dan pelajari laporan Kerja Praktik dari mahasiswa</p>
         </Card>
 
         {/* Search */}
@@ -123,13 +117,15 @@ export default function RepositoryPage() {
           <p className="text-sm">
             Menampilkan{" "}
             <span className="font-semibold">{filteredReports.length}</span> dari{" "}
-            <span className="font-semibold">{MOCK_REPORTS.length}</span>{" "}
-            laporan
+            <span className="font-semibold">{MOCK_REPORTS.length}</span> laporan
           </p>
         </div>
 
         {/* Reports List */}
-        <InternReportList reports={filteredReports} onReportClick={handleReportClick} />
+        <InternReportList
+          reports={filteredReports}
+          onReportClick={handleReportClick}
+        />
       </div>
     </div>
   );

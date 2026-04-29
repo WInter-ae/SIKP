@@ -1,10 +1,11 @@
-import { apiClient } from "~/lib/api-client";
+import { API_ENDPOINTS } from "~/lib/constants/endpoints";
+/**
+ * Surat Pengantar Dosen Service
+ * Menangani pengajuan dan persetujuan surat pengantar oleh dosen/wakdek.
+ */
 
-interface ApiResponse<T> {
-  success: boolean;
-  message?: string;
-  data: T | null;
-}
+import { sikpClient } from "~/lib/api-client";
+import type { ApiResponse } from "~/lib/api-client";
 
 export interface DosenSuratPengantarRequestItem {
   id: string;
@@ -18,7 +19,6 @@ export interface DosenSuratPengantarRequestItem {
   angkatan?: string;
   semester?: string;
   email?: string;
-  noHp?: string;
   tanggal?: string;
   status?: string;
   jenisSurat?: string;
@@ -55,19 +55,13 @@ export interface SubmissionDetailForVerifier {
   academic_supervisor?: string | null;
   supervisorName?: string | null;
   supervisor_name?: string | null;
-  supervisor?: {
-    name?: string | null;
-    fullName?: string | null;
-  } | null;
+  supervisor?: { name?: string | null; fullName?: string | null } | null;
   team?: {
     academicSupervisor?: string | null;
     academic_supervisor?: string | null;
     supervisorName?: string | null;
     supervisor_name?: string | null;
-    supervisor?: {
-      name?: string | null;
-      fullName?: string | null;
-    } | null;
+    supervisor?: { name?: string | null; fullName?: string | null } | null;
     members?: Array<{
       role?: string;
       status?: string;
@@ -83,7 +77,6 @@ export interface SubmissionDetailForVerifier {
         prodi?: string | null;
         angkatan?: string | null;
         semester?: string | null;
-        noHp?: string | null;
         no_hp?: string | null;
         phone?: string | null;
       };
@@ -94,20 +87,9 @@ export interface SubmissionDetailForVerifier {
 export async function getDosenSuratPengantarRequests(): Promise<
   ApiResponse<DosenSuratPengantarRequestItem[]>
 > {
-  try {
-    return await apiClient<DosenSuratPengantarRequestItem[]>(
-      "/api/dosen/surat-pengantar/requests",
-    );
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Gagal memuat pengajuan surat pengantar",
-      data: null,
-    };
-  }
+  return sikpClient.get<DosenSuratPengantarRequestItem[]>(
+    API_ENDPOINTS.SURAT_PENGANTAR_DOSEN.DOSEN_GET_REQUESTS,
+  );
 }
 
 export async function approveDosenSuratPengantarRequest(
@@ -125,23 +107,9 @@ export async function approveDosenSuratPengantarRequest(
     final_signed_file_url?: string;
   }>
 > {
-  try {
-    return await apiClient(
-      `/api/dosen/surat-pengantar/requests/${requestId}/approve`,
-      {
-        method: "PUT",
-      },
-    );
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Gagal menyetujui surat pengantar",
-      data: null,
-    };
-  }
+  return sikpClient.put(
+    `/api/dosen/surat-pengantar/requests/${requestId}/approve`,
+  );
 }
 
 export async function rejectDosenSuratPengantarRequest(
@@ -156,41 +124,16 @@ export async function rejectDosenSuratPengantarRequest(
     rejectionReason?: string;
   }>
 > {
-  try {
-    return await apiClient(
-      `/api/dosen/surat-pengantar/requests/${requestId}/reject`,
-      {
-        method: "PUT",
-        body: JSON.stringify({ rejection_reason: reason }),
-      },
-    );
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Gagal menolak surat pengantar",
-      data: null,
-    };
-  }
+  return sikpClient.put(
+    `/api/dosen/surat-pengantar/requests/${requestId}/reject`,
+    { rejection_reason: reason },
+  );
 }
 
 export async function getSubmissionDetailForVerifier(
   submissionId: string,
 ): Promise<ApiResponse<SubmissionDetailForVerifier>> {
-  try {
-    return await apiClient<SubmissionDetailForVerifier>(
-      `/api/submissions/${submissionId}`,
-    );
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Gagal memuat detail submission",
-      data: null,
-    };
-  }
+  return sikpClient.get<SubmissionDetailForVerifier>(
+    `/api/submissions/${submissionId}`,
+  );
 }

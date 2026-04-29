@@ -1,6 +1,6 @@
 /**
  * EXAMPLE: Implementasi Dynamic Form di Halaman Mahasiswa
- * 
+ *
  * Contoh bagaimana mahasiswa mengisi form yang otomatis menyesuaikan
  * dengan perubahan template yang dilakukan admin
  */
@@ -8,10 +8,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { DynamicFormFromTemplate } from "~/feature/template/components/dynamic-form-from-template";
-import { getTemplates, renderTemplate } from "~/feature/template/services/template.service";
+import {
+  getTemplates,
+  renderTemplate,
+} from "~/feature/template/services/template.service";
 import type { Template } from "~/feature/template/types/template.types";
 import { toast } from "sonner";
 import { FileText, Download } from "lucide-react";
@@ -22,7 +31,9 @@ import { FileText, Download } from "lucide-react";
  */
 export function MahasiswaBeritaAcaraPage() {
   const [template, setTemplate] = useState<Template | null>(null);
-  const [generatedDocument, setGeneratedDocument] = useState<string | null>(null);
+  const [generatedDocument, setGeneratedDocument] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,14 +45,14 @@ export function MahasiswaBeritaAcaraPage() {
       const templates = await getTemplates();
       // Get active Berita Acara template
       const beritaAcaraTemplate = templates.find(
-        t => t.type === "berita-acara" && t.isActive
+        (t) => t.type === "berita-acara" && t.isActive,
       );
-      
+
       if (!beritaAcaraTemplate) {
         toast.error("Template Berita Acara belum tersedia");
         return;
       }
-      
+
       setTemplate(beritaAcaraTemplate);
     } catch (error) {
       toast.error("Gagal memuat template");
@@ -56,25 +67,25 @@ export function MahasiswaBeritaAcaraPage() {
     // Render template dengan data dari form
     const document = renderTemplate(template, formData);
     setGeneratedDocument(document);
-    
+
     toast.success("Berita Acara berhasil digenerate!");
   };
 
   const handleDownload = () => {
     if (!generatedDocument || !template) return;
 
-    const blob = new Blob([generatedDocument], { 
-      type: template.fileExtension === "html" ? "text/html" : "text/plain" 
+    const blob = new Blob([generatedDocument], {
+      type: template.fileExtension === "html" ? "text/html" : "text/plain",
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `Berita_Acara_${new Date().toISOString().split('T')[0]}.${template.fileExtension}`;
+    a.download = `Berita_Acara_${new Date().toISOString().split("T")[0]}.${template.fileExtension}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     toast.success("Dokumen berhasil didownload");
   };
 
@@ -96,8 +107,12 @@ export function MahasiswaBeritaAcaraPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-2">Template Berita Acara belum tersedia</p>
-            <p className="text-sm text-muted-foreground">Hubungi admin untuk mengaktifkan template</p>
+            <p className="text-muted-foreground mb-2">
+              Template Berita Acara belum tersedia
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Hubungi admin untuk mengaktifkan template
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -107,7 +122,9 @@ export function MahasiswaBeritaAcaraPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Generate Berita Acara</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Generate Berita Acara
+        </h1>
         <p className="text-muted-foreground">
           Isi form di bawah untuk generate Berita Acara sidang KP
         </p>
@@ -119,7 +136,8 @@ export function MahasiswaBeritaAcaraPage() {
           <CardHeader>
             <CardTitle>Isi Data</CardTitle>
             <CardDescription>
-              Form ini otomatis menyesuaikan dengan template yang dikonfigurasi admin
+              Form ini otomatis menyesuaikan dengan template yang dikonfigurasi
+              admin
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -138,7 +156,9 @@ export function MahasiswaBeritaAcaraPage() {
               <div>
                 <CardTitle>Preview Dokumen</CardTitle>
                 <CardDescription>
-                  {generatedDocument ? "Dokumen siap didownload" : "Isi form untuk melihat preview"}
+                  {generatedDocument
+                    ? "Dokumen siap didownload"
+                    : "Isi form untuk melihat preview"}
                 </CardDescription>
               </div>
               {generatedDocument && (
@@ -153,9 +173,13 @@ export function MahasiswaBeritaAcaraPage() {
             {generatedDocument ? (
               <div className="border rounded-lg p-4 bg-white max-h-[600px] overflow-auto">
                 {template.fileExtension === "html" ? (
-                  <div dangerouslySetInnerHTML={{ __html: generatedDocument }} />
+                  <div
+                    dangerouslySetInnerHTML={{ __html: generatedDocument }}
+                  />
                 ) : (
-                  <pre className="text-sm whitespace-pre-wrap">{generatedDocument}</pre>
+                  <pre className="text-sm whitespace-pre-wrap">
+                    {generatedDocument}
+                  </pre>
                 )}
               </div>
             ) : (
@@ -189,7 +213,9 @@ export function MahasiswaBeritaAcaraPage() {
             </div>
             <div>
               <dt className="text-muted-foreground">Format</dt>
-              <dd className="font-medium uppercase">{template.fileExtension}</dd>
+              <dd className="font-medium uppercase">
+                {template.fileExtension}
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">Terakhir Diupdate</dt>
@@ -206,25 +232,25 @@ export function MahasiswaBeritaAcaraPage() {
 
 /**
  * KEUNTUNGAN SISTEM INI:
- * 
+ *
  * 1. ADMIN mengubah template dan field configuration
  *    - Edit template content di Monaco Editor
  *    - Tambah/ubah/hapus variable (misalnya tambah {{email}})
  *    - Konfigurasi field metadata (label, type, required, dll)
  *    - Save template
- * 
+ *
  * 2. FORM MAHASISWA OTOMATIS UPDATE
  *    - Tidak perlu deploy ulang
  *    - Tidak perlu edit code
  *    - Form langsung muncul field baru
  *    - Validasi otomatis sesuai configuration
- * 
+ *
  * 3. KONSISTEN DI SEMUA HALAMAN
  *    - Berita Acara
  *    - Form Nilai
  *    - Surat Pengantar
  *    - dll
- * 
+ *
  * 4. VERSIONING SUPPORT
  *    - Dokumen lama tetap bisa di-regenerate dengan template lama
  *    - History perubahan template

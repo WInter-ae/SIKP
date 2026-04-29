@@ -1,13 +1,19 @@
 /**
  * Example: Word & PDF Template Usage
- * 
+ *
  * Contoh penggunaan template Word dan generate PDF
  */
 
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -51,14 +57,16 @@ export function UploadWordTemplateExample() {
     try {
       // Convert to base64 (untuk simpan di database)
       const base64 = await wordFileToBase64(uploadedFile);
-      
+
       // Extract variables
       const vars = extractWordVariables(base64);
       setVariables(vars);
-      
+
       setPreview(base64.substring(0, 200) + "..."); // Show preview
-      
-      toast.success(`File uploaded: ${uploadedFile.name} (${getReadableFileSize(uploadedFile.size)})`);
+
+      toast.success(
+        `File uploaded: ${uploadedFile.name} (${getReadableFileSize(uploadedFile.size)})`,
+      );
     } catch (error) {
       toast.error("Gagal membaca file Word");
     }
@@ -90,7 +98,9 @@ export function UploadWordTemplateExample() {
               <div className="flex items-center gap-2 mb-2">
                 <FileText className="h-4 w-4" />
                 <span className="font-medium">{file.name}</span>
-                <Badge variant="secondary">{getReadableFileSize(file.size)}</Badge>
+                <Badge variant="secondary">
+                  {getReadableFileSize(file.size)}
+                </Badge>
               </div>
               <p className="text-sm text-muted-foreground">
                 Format: DOCX | Variables detected: {variables.length}
@@ -108,7 +118,8 @@ export function UploadWordTemplateExample() {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Configure field metadata untuk setiap variable ini di tab "Field Configuration"
+                  Configure field metadata untuk setiap variable ini di tab
+                  "Field Configuration"
                 </p>
               </div>
             )}
@@ -139,10 +150,28 @@ export function GenerateWordDocumentExample() {
     content: "base64_word_content_here", // In real app, this is base64 of .docx
     fileExtension: "docx",
     fields: [
-      { variable: "nama_mahasiswa", label: "Nama", type: "text", required: true, order: 0 },
+      {
+        variable: "nama_mahasiswa",
+        label: "Nama",
+        type: "text",
+        required: true,
+        order: 0,
+      },
       { variable: "nim", label: "NIM", type: "text", required: true, order: 1 },
-      { variable: "tanggal", label: "Tanggal", type: "date", required: true, order: 2 },
-      { variable: "judul", label: "Judul", type: "textarea", required: true, order: 3 },
+      {
+        variable: "tanggal",
+        label: "Tanggal",
+        type: "date",
+        required: true,
+        order: 2,
+      },
+      {
+        variable: "judul",
+        label: "Judul",
+        type: "textarea",
+        required: true,
+        order: 3,
+      },
     ],
     version: 1,
     createdAt: new Date().toISOString(),
@@ -155,10 +184,10 @@ export function GenerateWordDocumentExample() {
     try {
       // Generate Word document
       const wordBlob = await generateWordDocument(mockTemplate, formData);
-      
+
       // Download
       downloadBlob(wordBlob, `Berita_Acara_${formData.nim}.docx`);
-      
+
       toast.success("Dokumen Word berhasil digenerate!");
     } catch (error) {
       toast.error("Gagal generate dokumen Word");
@@ -181,7 +210,9 @@ export function GenerateWordDocumentExample() {
             <Label>Nama Mahasiswa</Label>
             <Input
               value={formData.nama_mahasiswa}
-              onChange={(e) => setFormData({ ...formData, nama_mahasiswa: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, nama_mahasiswa: e.target.value })
+              }
               placeholder="John Doe"
             />
           </div>
@@ -189,7 +220,9 @@ export function GenerateWordDocumentExample() {
             <Label>NIM</Label>
             <Input
               value={formData.nim}
-              onChange={(e) => setFormData({ ...formData, nim: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, nim: e.target.value })
+              }
               placeholder="12345678"
             />
           </div>
@@ -198,14 +231,18 @@ export function GenerateWordDocumentExample() {
             <Input
               type="date"
               value={formData.tanggal}
-              onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, tanggal: e.target.value })
+              }
             />
           </div>
           <div className="space-y-2 col-span-2">
             <Label>Judul KP</Label>
             <Input
               value={formData.judul}
-              onChange={(e) => setFormData({ ...formData, judul: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, judul: e.target.value })
+              }
               placeholder="Judul Kerja Praktek"
             />
           </div>
@@ -287,9 +324,7 @@ export function GeneratePDFExample() {
     <Card>
       <CardHeader>
         <CardTitle>Generate PDF from HTML</CardTitle>
-        <CardDescription>
-          Convert HTML template ke PDF
-        </CardDescription>
+        <CardDescription>Convert HTML template ke PDF</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
@@ -302,11 +337,20 @@ export function GeneratePDFExample() {
         </div>
 
         <div className="flex gap-2">
-          <Button onClick={handleGeneratePDF} disabled={loading} className="flex-1">
+          <Button
+            onClick={handleGeneratePDF}
+            disabled={loading}
+            className="flex-1"
+          >
             <FileDown className="h-4 w-4 mr-2" />
             Generate PDF (Single Page)
           </Button>
-          <Button onClick={handleGenerateMultiPagePDF} disabled={loading} variant="outline" className="flex-1">
+          <Button
+            onClick={handleGenerateMultiPagePDF}
+            disabled={loading}
+            variant="outline"
+            className="flex-1"
+          >
             <FileDown className="h-4 w-4 mr-2" />
             Generate PDF (Multi Page)
           </Button>
@@ -321,17 +365,23 @@ export function GeneratePDFExample() {
  */
 export function WordPDFExamplesPage() {
   const [activeTab, setActiveTab] = useState("upload");
-  
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Word & PDF Templates</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Word & PDF Templates
+        </h1>
         <p className="text-muted-foreground">
           Contoh penggunaan Word template dan PDF generation
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-4"
+      >
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="upload">
             <Upload className="h-4 w-4 mr-2" />
@@ -369,15 +419,17 @@ export function WordPDFExamplesPage() {
           <div>
             <h4 className="font-semibold mb-2">📄 Word Template Format:</h4>
             <p className="text-muted-foreground">
-              Gunakan <code className="bg-muted px-1 py-0.5 rounded">{`{variable}`}</code> untuk placeholder.
-              Contoh: <code className="bg-muted px-1 py-0.5 rounded">{`{nama_mahasiswa}`}</code>
+              Gunakan{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">{`{variable}`}</code>{" "}
+              untuk placeholder. Contoh:{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">{`{nama_mahasiswa}`}</code>
             </p>
           </div>
           <div>
             <h4 className="font-semibold mb-2">📊 PDF Generation:</h4>
             <p className="text-muted-foreground">
-              PDF digenerate dari HTML. Gunakan inline CSS untuk styling yang konsisten.
-              Support single page dan multi-page.
+              PDF digenerate dari HTML. Gunakan inline CSS untuk styling yang
+              konsisten. Support single page dan multi-page.
             </p>
           </div>
           <div>

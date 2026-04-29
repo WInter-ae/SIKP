@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import type { ResponseLetter } from "~/feature/response-letter/types";
-import { getMyResponseLetter } from "~/lib/services/response-letter-api";
+import { getMyResponseLetter } from "~/lib/services/response-letter.service";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
-import { getSubmissionByTeamId } from "~/lib/services/submission-api";
+import { getSubmissionByTeamId } from "~/lib/services/submission-api.service";
 
 /**
  * Result of the useResponseLetterStatus hook
@@ -63,7 +63,7 @@ export function useResponseLetterStatus(): UseResponseLetterStatusResult {
         !teamsResponse.data ||
         teamsResponse.data.length === 0
       ) {
-        console.log("📭 User is not part of any team");
+        console.log("ðŸ“­ User is not part of any team");
         setResponseLetter(null);
         setIsLeader(false);
         setHasTeam(false);
@@ -80,7 +80,7 @@ export function useResponseLetterStatus(): UseResponseLetterStatusResult {
       );
 
       if (!fixedTeam) {
-        console.log("📭 User has no FIXED team yet");
+        console.log("ðŸ“­ User has no FIXED team yet");
         setResponseLetter(null);
         setIsLeader(false);
         setHasTeam(false);
@@ -138,15 +138,15 @@ export function useResponseLetterStatus(): UseResponseLetterStatusResult {
         setResponseLetter(response.data);
         setIsLeader(response.data.isLeader ?? teamIsLeader);
         setCanManageResponseLetter(true);
-        console.log("✅ Loaded response letter status:", response.data);
+        console.log("âœ… Loaded response letter status:", response.data);
       } else {
-        console.log("📭 No response letter found for this team");
+        console.log("ðŸ“­ No response letter found for this team");
         setResponseLetter(null);
         setIsLeader(teamIsLeader);
         setCanManageResponseLetter(true);
       }
     } catch (err) {
-      console.error("❌ Error loading response letter:", err);
+      console.error("âŒ Error loading response letter:", err);
       const errorMessage =
         err instanceof Error ? err.message : "Gagal memuat data";
       setError(errorMessage);

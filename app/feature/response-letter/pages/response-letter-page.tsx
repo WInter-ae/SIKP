@@ -15,9 +15,9 @@ import {
 import FileUpload from "../components/file-upload";
 import StatusDropdown from "../components/status-dropdown";
 import { AnnouncementDialog } from "../components/announcement-dialog";
-import { submitResponseLetter } from "~/lib/services/response-letter-api";
+import { submitResponseLetter } from "~/lib/services/response-letter.service";
 import { getMyTeams } from "~/feature/create-teams/services/team-api";
-import { getSubmissionByTeamId } from "~/lib/services/submission-api";
+import { getSubmissionByTeamId } from "~/lib/services/submission-api.service";
 import { useResponseLetterStatus } from "../hooks/use-response-letter-status";
 import { get, post } from "~/lib/api-client";
 import {

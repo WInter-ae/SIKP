@@ -19,11 +19,7 @@ import {
   useSidebar,
 } from "~/components/ui/sidebar";
 
-export function NavMain({
-  items,
-}: {
-  items: NavItem[];
-}) {
+export function NavMain({ items }: { items: NavItem[] }) {
   const { pathname } = useLocation();
   const { isMobile, setOpenMobile } = useSidebar();
 
@@ -84,7 +80,9 @@ export function NavMain({
               </SidebarMenuSubButton>
             </CollapsibleTrigger>
             <CollapsibleContent>
-              <SidebarMenuSub>{renderSubItems(subItem.items ?? [], depth + 1)}</SidebarMenuSub>
+              <SidebarMenuSub>
+                {renderSubItems(subItem.items ?? [], depth + 1)}
+              </SidebarMenuSub>
             </CollapsibleContent>
           </Collapsible>
         </SidebarMenuSubItem>
@@ -142,7 +140,9 @@ export function NavMain({
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
-                  <SidebarMenuSub>{renderSubItems(item.items ?? [])}</SidebarMenuSub>
+                  <SidebarMenuSub>
+                    {renderSubItems(item.items ?? [])}
+                  </SidebarMenuSub>
                 </CollapsibleContent>
               </SidebarMenuItem>
             </Collapsible>

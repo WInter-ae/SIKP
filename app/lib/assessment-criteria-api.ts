@@ -71,9 +71,11 @@ export const DEFAULT_CRITERIA: AssessmentCriterion[] = [
 // ==================== HELPERS ====================
 
 export function extractKriteria(raw: any): AssessmentCriterion[] {
-  if (Array.isArray(raw?.data) && raw.data[0]?.kriteria) return raw.data[0].kriteria as AssessmentCriterion[];
+  if (Array.isArray(raw?.data) && raw.data[0]?.kriteria)
+    return raw.data[0].kriteria as AssessmentCriterion[];
   if (raw?.data?.kriteria) return raw.data.kriteria as AssessmentCriterion[];
-  if (Array.isArray(raw?.kriteria)) return raw.kriteria as AssessmentCriterion[];
+  if (Array.isArray(raw?.kriteria))
+    return raw.kriteria as AssessmentCriterion[];
   return [];
 }
 
@@ -104,35 +106,40 @@ export async function getAssessmentCriteria(): Promise<AssessmentCriterion[]> {
     // Final contract supports: { data: { kriteria: [...] } } and wrapper variants.
     const list = extractKriteria(json);
     if (json.success && Array.isArray(list) && list.length > 0) {
-      return list.map((c: {
-        id: string;
-        categoryId?: string;
-        category?: string;
-        categoryKey?: string;
-        label?: string;
-        description?: string;
-        weight: number;
-        maxScore: number;
-        sortOrder?: number;
-        isActive?: boolean;
-      }) => ({
-        id: c.id,
-        categoryId: c.categoryId || c.id,
-        category: c.label || c.category || c.categoryKey || "Kategori",
-        categoryKey: c.categoryKey || c.category,
-        label: c.label,
-        weight: c.weight,
-        description: c.description || "-",
-        maxScore: c.maxScore,
-        sortOrder: c.sortOrder,
-        isActive: typeof c.isActive === "boolean" ? c.isActive : true,
-      })) as AssessmentCriterion[];
+      return list.map(
+        (c: {
+          id: string;
+          categoryId?: string;
+          category?: string;
+          categoryKey?: string;
+          label?: string;
+          description?: string;
+          weight: number;
+          maxScore: number;
+          sortOrder?: number;
+          isActive?: boolean;
+        }) => ({
+          id: c.id,
+          categoryId: c.categoryId || c.id,
+          category: c.label || c.category || c.categoryKey || "Kategori",
+          categoryKey: c.categoryKey || c.category,
+          label: c.label,
+          weight: c.weight,
+          description: c.description || "-",
+          maxScore: c.maxScore,
+          sortOrder: c.sortOrder,
+          isActive: typeof c.isActive === "boolean" ? c.isActive : true,
+        }),
+      ) as AssessmentCriterion[];
     }
 
     console.warn("[AssessmentCriteria] API response invalid, using defaults");
     return DEFAULT_CRITERIA;
   } catch (error) {
-    console.warn("[AssessmentCriteria] API tidak tersedia, menggunakan default:", error);
+    console.warn(
+      "[AssessmentCriteria] API tidak tersedia, menggunakan default:",
+      error,
+    );
     return DEFAULT_CRITERIA;
   }
 }
@@ -144,7 +151,7 @@ export async function getAssessmentCriteria(): Promise<AssessmentCriterion[]> {
  * @param criteria - Array kriteria dengan bobot baru (total weight harus = 100)
  */
 export async function updateAssessmentCriteria(
-  criteria: AssessmentCriterion[]
+  criteria: AssessmentCriterion[],
 ): Promise<{ success: boolean; message: string }> {
   const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
   if (totalWeight !== 100) {
@@ -164,20 +171,22 @@ export async function updateAssessmentCriteria(
         body: JSON.stringify({
           kriteria: criteria.map((c) => ({
             categoryId: c.categoryId || c.id,
-            category: c.categoryKey || c.category.toLowerCase().replace(/ /g, "_"),
+            category:
+              c.categoryKey || c.category.toLowerCase().replace(/ /g, "_"),
             label: c.category,
             weight: c.weight,
             maxScore: c.maxScore,
           })),
         }),
-      }
+      },
     );
 
     const data = await response.json();
 
     return {
       success: response.ok && data.success,
-      message: data.message || (response.ok ? "Berhasil disimpan" : "Gagal menyimpan"),
+      message:
+        data.message || (response.ok ? "Berhasil disimpan" : "Gagal menyimpan"),
     };
   } catch (error) {
     return {

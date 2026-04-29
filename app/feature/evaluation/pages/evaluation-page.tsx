@@ -58,7 +58,11 @@ export default function EvaluationPage() {
       } catch (error) {
         if (!isMounted) return;
         setEvaluations([]);
-        toast.error(error instanceof Error ? error.message : "Gagal memuat data penilaian admin.");
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Gagal memuat data penilaian admin.",
+        );
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -89,8 +93,7 @@ export default function EvaluationPage() {
 
       // Status filter
       const matchesStatus =
-        statusFilter === "all" ||
-        evaluation.summary.status === statusFilter;
+        statusFilter === "all" || evaluation.summary.status === statusFilter;
 
       // Grade filter
       const matchesGrade =
@@ -119,7 +122,8 @@ export default function EvaluationPage() {
   ).length;
   const averageScore =
     totalStudents > 0
-      ? evaluations.reduce((acc, e) => acc + e.summary.finalScore, 0) / totalStudents
+      ? evaluations.reduce((acc, e) => acc + e.summary.finalScore, 0) /
+        totalStudents
       : 0;
   const highestScore =
     totalStudents > 0
@@ -281,7 +285,9 @@ export default function EvaluationPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                   className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
                 >

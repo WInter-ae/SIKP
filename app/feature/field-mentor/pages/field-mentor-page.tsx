@@ -76,7 +76,10 @@ function FieldMentorPage() {
           status: internshipStatus === "AKTIF" ? "approved" : "registered",
           createdAt: response.data.internship.createdAt,
           registeredAt: response.data.internship.updatedAt,
-          approvedAt: internshipStatus === "AKTIF" ? response.data.internship.updatedAt : undefined,
+          approvedAt:
+            internshipStatus === "AKTIF"
+              ? response.data.internship.updatedAt
+              : undefined,
           photo: undefined,
           nip: "",
         });
@@ -97,7 +100,7 @@ function FieldMentorPage() {
   }, []);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setMentorRequest((prev) => ({ ...prev, [name]: value }));
@@ -131,28 +134,39 @@ function FieldMentorPage() {
       address: "",
     });
 
-    toast.success("Pengajuan mentor berhasil dikirim! Menunggu persetujuan dari Dosen PA.");
+    toast.success(
+      "Pengajuan mentor berhasil dikirim! Menunggu persetujuan dari Dosen PA.",
+    );
   };
 
   const getStatusBadge = (status: FieldMentor["status"]) => {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="secondary" className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+          <Badge
+            variant="secondary"
+            className="bg-amber-100 text-amber-800 hover:bg-amber-100"
+          >
             <Clock className="mr-1 h-3 w-3" />
             Menunggu Persetujuan Dosen PA
           </Badge>
         );
       case "registered":
         return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+          <Badge
+            variant="secondary"
+            className="bg-blue-100 text-blue-800 hover:bg-blue-100"
+          >
             <Info className="mr-1 h-3 w-3" />
             Email Aktivasi Terkirim
           </Badge>
         );
       case "approved":
         return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100">
+          <Badge
+            variant="secondary"
+            className="bg-green-100 text-green-800 hover:bg-green-100"
+          >
             <CheckCircle className="mr-1 h-3 w-3" />
             Disetujui - Aktif
           </Badge>
@@ -200,13 +214,23 @@ function FieldMentorPage() {
         <AlertTitle>Informasi Mentor Lapangan</AlertTitle>
         <AlertDescription className="mt-2">
           <p className="mb-2">
-            Halaman ini digunakan untuk mengajukan mentor lapangan Anda kepada Dosen PA.
+            Halaman ini digunakan untuk mengajukan mentor lapangan Anda kepada
+            Dosen PA.
           </p>
           <ul className="list-disc list-inside space-y-1 text-sm">
             <li>Isi data mentor lapangan dengan lengkap dan akurat</li>
-            <li>Setelah submit, pengajuan akan dikirim ke Dosen PA untuk persetujuan</li>
-            <li>Mentor akan menerima email aktivasi dari sistem saat pengajuan disetujui</li>
-            <li>Mentor dapat langsung login dan mulai bekerja tanpa perlu kode registrasi</li>
+            <li>
+              Setelah submit, pengajuan akan dikirim ke Dosen PA untuk
+              persetujuan
+            </li>
+            <li>
+              Mentor akan menerima email aktivasi dari sistem saat pengajuan
+              disetujui
+            </li>
+            <li>
+              Mentor dapat langsung login dan mulai bekerja tanpa perlu kode
+              registrasi
+            </li>
           </ul>
         </AlertDescription>
       </Alert>
@@ -228,7 +252,10 @@ function FieldMentorPage() {
               {/* Profile Photo */}
               <div className="flex flex-col items-center">
                 <Avatar className="h-32 w-32">
-                  <AvatarImage src={currentMentor.photo} alt={currentMentor.name} />
+                  <AvatarImage
+                    src={currentMentor.photo}
+                    alt={currentMentor.name}
+                  />
                   <AvatarFallback className="text-2xl bg-primary/10">
                     {currentMentor.photo ? (
                       <User className="h-12 w-12 text-muted-foreground" />
@@ -247,14 +274,18 @@ function FieldMentorPage() {
               {/* Mentor Data */}
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-sm">Nama Mentor</Label>
+                  <Label className="text-muted-foreground text-sm">
+                    Nama Mentor
+                  </Label>
                   <p className="font-medium flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
                     {currentMentor.name}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-sm">NIP/NIK</Label>
+                  <Label className="text-muted-foreground text-sm">
+                    NIP/NIK
+                  </Label>
                   {currentMentor.nip ? (
                     <p className="font-medium">{currentMentor.nip}</p>
                   ) : (
@@ -271,28 +302,36 @@ function FieldMentorPage() {
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-sm">No. Telepon</Label>
+                  <Label className="text-muted-foreground text-sm">
+                    No. Telepon
+                  </Label>
                   <p className="font-medium flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     {currentMentor.phone}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-sm">Perusahaan</Label>
+                  <Label className="text-muted-foreground text-sm">
+                    Perusahaan
+                  </Label>
                   <p className="font-medium flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
                     {currentMentor.company}
                   </p>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-muted-foreground text-sm">Jabatan</Label>
+                  <Label className="text-muted-foreground text-sm">
+                    Jabatan
+                  </Label>
                   <p className="font-medium flex items-center gap-2">
                     <Briefcase className="h-4 w-4 text-muted-foreground" />
                     {currentMentor.position}
                   </p>
                 </div>
                 <div className="md:col-span-2 space-y-1">
-                  <Label className="text-muted-foreground text-sm">Status</Label>
+                  <Label className="text-muted-foreground text-sm">
+                    Status
+                  </Label>
                   <div>{getStatusBadge(currentMentor.status)}</div>
                 </div>
               </div>
@@ -305,10 +344,13 @@ function FieldMentorPage() {
                   <div className="flex items-start gap-3">
                     <Clock className="h-5 w-5 text-amber-600 mt-0.5" />
                     <div>
-                      <p className="font-medium text-amber-900 dark:text-amber-200">Menunggu Persetujuan Dosen PA</p>
+                      <p className="font-medium text-amber-900 dark:text-amber-200">
+                        Menunggu Persetujuan Dosen PA
+                      </p>
                       <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
-                        Pengajuan sedang ditinjau oleh Dosen PA. Anda akan menerima notifikasi setelah ada keputusan. 
-                        Mentor akan mendapat email aktivasi jika pengajuan disetujui.
+                        Pengajuan sedang ditinjau oleh Dosen PA. Anda akan
+                        menerima notifikasi setelah ada keputusan. Mentor akan
+                        mendapat email aktivasi jika pengajuan disetujui.
                       </p>
                     </div>
                   </div>
@@ -327,9 +369,12 @@ function FieldMentorPage() {
               <UserPlus className="h-10 w-10 text-muted-foreground" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-semibold">Belum Ada Mentor Terdaftar</h3>
+              <h3 className="text-lg font-semibold">
+                Belum Ada Mentor Terdaftar
+              </h3>
               <p className="text-muted-foreground">
-                Anda belum memiliki mentor lapangan terdaftar. Klik tombol di bawah untuk mendaftarkan mentor.
+                Anda belum memiliki mentor lapangan terdaftar. Klik tombol di
+                bawah untuk mendaftarkan mentor.
               </p>
             </div>
             <Button size="lg" onClick={() => setShowRequestForm(true)}>
@@ -349,7 +394,8 @@ function FieldMentorPage() {
             <div className="space-y-2">
               <h3 className="text-lg font-semibold">Memuat Data Mentor</h3>
               <p className="text-muted-foreground">
-                Kami sedang mengambil data mentor yang sudah terkait dengan internship Anda.
+                Kami sedang mengambil data mentor yang sudah terkait dengan
+                internship Anda.
               </p>
             </div>
           </CardContent>
@@ -460,7 +506,8 @@ function FieldMentorPage() {
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <Label htmlFor="address">
-                    Alamat Perusahaan <span className="text-destructive">*</span>
+                    Alamat Perusahaan{" "}
+                    <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -523,7 +570,8 @@ function FieldMentorPage() {
               <div>
                 <p className="font-medium">Pengajuan Dikirim ke Dosen PA</p>
                 <p className="text-sm text-muted-foreground">
-                  Data mentor Anda dikirimkan untuk ditinjau oleh Dosen Pembimbing Akademik
+                  Data mentor Anda dikirimkan untuk ditinjau oleh Dosen
+                  Pembimbing Akademik
                 </p>
               </div>
             </li>
@@ -534,7 +582,8 @@ function FieldMentorPage() {
               <div>
                 <p className="font-medium">Dosen PA Melakukan Review</p>
                 <p className="text-sm text-muted-foreground">
-                  Dosen PA memeriksa kelengkapan dan keabsahan data mentor yang diajukan
+                  Dosen PA memeriksa kelengkapan dan keabsahan data mentor yang
+                  diajukan
                 </p>
               </div>
             </li>
@@ -556,7 +605,8 @@ function FieldMentorPage() {
               <div>
                 <p className="font-medium">Mentor Menerima Email Aktivasi</p>
                 <p className="text-sm text-muted-foreground">
-                  Jika disetujui, mentor akan menerima email undangan dan dapat mulai login
+                  Jika disetujui, mentor akan menerima email undangan dan dapat
+                  mulai login
                 </p>
               </div>
             </li>
@@ -567,7 +617,8 @@ function FieldMentorPage() {
               <div>
                 <p className="font-medium">Mentor Sudah Aktif</p>
                 <p className="text-sm text-muted-foreground">
-                  Mentor dapat login ke sistem dan mulai membimbing Anda di perusahaan
+                  Mentor dapat login ke sistem dan mulai membimbing Anda di
+                  perusahaan
                 </p>
               </div>
             </li>
@@ -575,7 +626,8 @@ function FieldMentorPage() {
           <Alert className="mt-6 border-blue-200 bg-blue-50 dark:bg-blue-950">
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
-              Mentor tidak perlu kode registrasi. Sistem otomatis mengirim email aktivasi saat persetujuan Dosen PA selesai.
+              Mentor tidak perlu kode registrasi. Sistem otomatis mengirim email
+              aktivasi saat persetujuan Dosen PA selesai.
             </AlertDescription>
           </Alert>
         </CardContent>

@@ -62,7 +62,7 @@ export function FileUploadDialog({
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
     if (selectedFile.size > MAX_FILE_SIZE) {
       alert(
-        `Ukuran file terlalu besar. Maksimal 10 MB, file Anda ${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`
+        `Ukuran file terlalu besar. Maksimal 10 MB, file Anda ${(selectedFile.size / (1024 * 1024)).toFixed(2)} MB`,
       );
       return;
     }

@@ -1,19 +1,19 @@
 // 1. External dependencies
-import { useState } from "react"
-import { Link, useNavigate } from "react-router"
-import { useForm, Controller } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
-import { Github } from "lucide-react"
-import { toast } from "sonner"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Github } from "lucide-react";
+import { toast } from "sonner";
 
 // 2. Internal utilities
-import { cn } from "~/lib/utils"
-import { registerMahasiswa } from "~/lib/auth-client"
-import { useUser } from "~/contexts/user-context"
+import { cn } from "~/lib/utils";
+import { registerMahasiswa } from "~/lib/auth-client";
+import { useUser } from "~/contexts/user-context";
 
 // 3. Components
-import { Button } from "~/components/ui/button"
+import { Button } from "~/components/ui/button";
 import {
   Field,
   FieldDescription,
@@ -21,8 +21,8 @@ import {
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "~/components/ui/field"
-import { Input } from "~/components/ui/input"
+} from "~/components/ui/field";
+import { Input } from "~/components/ui/input";
 
 // Schema validasi untuk form register
 const registerSchema = z
@@ -51,24 +51,22 @@ const registerSchema = z
       .min(1, "Kata sandi wajib diisi")
       .min(8, "Kata sandi minimal 8 karakter")
       .max(100, "Kata sandi maksimal 100 karakter"),
-    confirmPassword: z
-      .string()
-      .min(1, "Konfirmasi kata sandi wajib diisi"),
+    confirmPassword: z.string().min(1, "Konfirmasi kata sandi wajib diisi"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Kata sandi tidak cocok",
     path: ["confirmPassword"],
-  })
+  });
 
-type RegisterFormData = z.infer<typeof registerSchema>
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 export function RegisterForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const navigate = useNavigate()
-  const { setUser } = useUser()
-  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const { setUser } = useUser();
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -81,11 +79,11 @@ export function RegisterForm({
       confirmPassword: "",
     },
     mode: "onBlur",
-  })
+  });
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      setError(null)
+      setError(null);
 
       // Call backend API untuk registrasi mahasiswa
       const result = await registerMahasiswa({
@@ -94,28 +92,28 @@ export function RegisterForm({
         email: data.email,
         prodi: data.prodi,
         password: data.password,
-      })
+      });
 
       if (!result.success) {
-        setError(result.error || "Registrasi gagal. Silakan coba lagi.")
-        return
+        setError(result.error || "Registrasi gagal. Silakan coba lagi.");
+        return;
       }
 
       // Update user context
       if (result.user) {
-        setUser(result.user)
+        setUser(result.user);
       }
 
       // Tampilkan notifikasi sukses
-      toast.success("Registrasi berhasil! Selamat datang di SIKP.")
+      toast.success("Registrasi berhasil! Selamat datang di SIKP.");
 
       // Redirect ke halaman mahasiswa
-      navigate("/mahasiswa")
+      navigate("/mahasiswa");
     } catch (err) {
-      setError("Terjadi kesalahan. Silakan coba lagi.")
-      console.error("Register error:", err)
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+      console.error("Register error:", err);
     }
-  }
+  };
 
   return (
     <form
@@ -154,9 +152,7 @@ export function RegisterForm({
                 aria-invalid={fieldState.invalid}
                 autoComplete="name"
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -175,9 +171,7 @@ export function RegisterForm({
                 aria-invalid={fieldState.invalid}
                 autoComplete="off"
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -222,9 +216,7 @@ export function RegisterForm({
                 aria-invalid={fieldState.invalid}
                 autoComplete="off"
               />
-              {fieldState.invalid && (
-                <FieldError errors={[fieldState.error]} />
-              )}
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
@@ -296,5 +288,5 @@ export function RegisterForm({
         </Field>
       </FieldGroup>
     </form>
-  )
+  );
 }

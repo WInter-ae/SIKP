@@ -37,14 +37,14 @@ import {
   approveDosenSuratKesediaanRequest,
   getDosenSuratKesediaanRequests,
   rejectDosenSuratKesediaanRequest,
-} from "~/lib/services/surat-kesediaan-api";
+} from "~/lib/services/surat-kesediaan.service";
 import {
   approveBulkDosenSuratPermohonanRequests,
   approveDosenSuratPermohonanRequest,
   getDosenSuratPermohonanRequests,
   rejectDosenSuratPermohonanRequest,
-} from "~/lib/services/surat-permohonan-api";
-import { getMyProfile } from "~/lib/services/dosen-api";
+} from "~/lib/services/surat-permohonan.service";
+import { getMyProfile } from "~/lib/services/dosen.service";
 
 interface StatCardProps {
   title: string;
@@ -100,6 +100,17 @@ function pickFirstNonEmptyString(...values: unknown[]): string | undefined {
     if (typeof value === "string" && value.trim().length > 0) return value;
   }
   return undefined;
+}
+
+function toText(value: unknown, fallback = "-"): string {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : fallback;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+  return fallback;
 }
 
 type RawTeamMember = {
@@ -162,36 +173,6 @@ function normalizeTeamMembers(
   return mapped.length > 0 ? mapped : undefined;
 }
 
-function resolveSupervisorName(
-  item: Record<string, unknown>,
-): string | undefined {
-  const team =
-    item.team && typeof item.team === "object"
-      ? (item.team as Record<string, unknown>)
-      : undefined;
-
-  const nestedSupervisor =
-    team?.supervisor && typeof team.supervisor === "object"
-      ? (team.supervisor as Record<string, unknown>)
-      : item.supervisor && typeof item.supervisor === "object"
-        ? (item.supervisor as Record<string, unknown>)
-        : undefined;
-
-  return pickFirstNonEmptyString(
-    item.supervisor,
-    item.academicSupervisor,
-    item.academic_supervisor,
-    item.supervisorName,
-    item.supervisor_name,
-    team?.academicSupervisor,
-    team?.academic_supervisor,
-    team?.supervisorName,
-    team?.supervisor_name,
-    nestedSupervisor?.name,
-    nestedSupervisor?.fullName,
-  );
-}
-
 function resolveMahasiswaSignatureUrl(
   item: Record<string, unknown>,
 ): string | undefined {
@@ -237,13 +218,13 @@ function MailVerificationDosenPage() {
 
       if (!kesediaanResponse.success) {
         console.warn(
-          "⚠️ Gagal memuat surat kesediaan:",
+          "âš ï¸ Gagal memuat surat kesediaan:",
           kesediaanResponse.message,
         );
       }
       if (!permohonanResponse.success) {
         console.warn(
-          "⚠️ Gagal memuat surat permohonan:",
+          "âš ï¸ Gagal memuat surat permohonan:",
           permohonanResponse.message,
         );
       }
@@ -254,89 +235,102 @@ function MailVerificationDosenPage() {
         return;
       }
 
-      const kesediaanEntries =
-        kesediaanResponse.success && kesediaanResponse.data
-          ? kesediaanResponse.data.map((item) => ({
-              id: item.id,
-              tanggal: item.tanggal,
-              nim: item.nim,
-              namaMahasiswa: item.namaMahasiswa,
-              programStudi: item.programStudi,
-              angkatan: item.angkatan,
-              semester: item.semester,
-              email: item.email,
-              noHp: item.noHp,
-              jenisSurat: item.jenisSurat || "Surat Kesediaan",
-              status: normalizeStatus(item.status),
-              dosenNama: item.dosenNama,
-              dosenNip: item.dosenNip,
-              dosenJabatan: item.dosenJabatan || "-",
-              dosenEsignatureUrl:
-                item.dosenEsignatureUrl ||
-                item.dosen_esignature_url ||
-                dosenEsignatureUrl,
-              supervisor: resolveSupervisorName(
-                item as unknown as Record<string, unknown>,
-              ),
-              teamMembers: normalizeTeamMembers(item.teamMembers),
-              mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
-                item as unknown as Record<string, unknown>,
-              ),
-              signedFileUrl: resolveAssetUrl(
-                item.signedFileUrl || item.signed_file_url,
-              ),
-              approvedAt: item.approvedAt || item.approved_at,
-            }))
-          : [];
+      const mapKesediaanEntry = async (
+        item: NonNullable<typeof kesediaanResponse.data>[number],
+      ) => {
+        return {
+          id: item.id,
+          tanggal: toText(item.tanggal),
+          memberMahasiswaId: item.memberMahasiswaId,
+          nim: toText(item.nim),
+          namaMahasiswa: toText(item.namaMahasiswa),
+          programStudi: toText(item.programStudi),
+          angkatan: item.angkatan ? toText(item.angkatan) : undefined,
+          semester: item.semester ? toText(item.semester) : undefined,
+          email: item.email ? toText(item.email) : undefined,
+          jenisSurat: item.jenisSurat || "Surat Kesediaan",
+          status: normalizeStatus(item.status),
+          supervisor: item.supervisor ? toText(item.supervisor) : undefined,
+          teamMembers: normalizeTeamMembers(item.teamMembers),
+          dosenNama: toText(item.dosenNama),
+          dosenNip: toText(item.dosenNip),
+          dosenJabatan: item.dosenJabatan ? toText(item.dosenJabatan) : "-",
+          dosenEsignatureUrl:
+            item.dosenEsignatureUrl ||
+            item.dosen_esignature_url ||
+            dosenEsignatureUrl,
+          mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
+            item as unknown as Record<string, unknown>,
+          ),
+          signedFileUrl: resolveAssetUrl(
+            item.signedFileUrl || item.signed_file_url,
+          ),
+          approvedAt: item.approvedAt || item.approved_at,
+        };
+      };
 
-      const permohonanEntries =
-        permohonanResponse.success && permohonanResponse.data
-          ? permohonanResponse.data.map((item) => ({
-              id: item.id,
-              tanggal: item.tanggal,
-              nim: item.nim,
-              namaMahasiswa: item.namaMahasiswa,
-              programStudi: item.programStudi,
-              angkatan: item.angkatan,
-              semester: item.semester,
-              email: item.email,
-              noHp: item.noHp,
-              jenisSurat: "Surat Permohonan",
-              status: normalizeStatus(item.status),
-              dosenNama: item.dosenNama,
-              dosenNip: item.dosenNip,
-              dosenJabatan: item.dosenJabatan || "-",
-              dosenEsignatureUrl:
-                item.dosenEsignatureUrl ||
-                item.dosen_esignature_url ||
-                dosenEsignatureUrl,
-              supervisor: resolveSupervisorName(
-                item as unknown as Record<string, unknown>,
-              ),
-              teamMembers: normalizeTeamMembers(item.teamMembers),
-              mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
-                item as unknown as Record<string, unknown>,
-              ),
-              signedFileUrl: resolveAssetUrl(
-                item.signedFileUrl || item.signed_file_url,
-              ),
-              approvedAt: item.approvedAt || item.approved_at,
-              // Fields permohonan
-              namaPerusahaan: item.namaPerusahaan,
-              alamatPerusahaan: item.alamatPerusahaan,
-              teleponPerusahaan: item.teleponPerusahaan,
-              jenisProdukUsaha: item.jenisProdukUsaha,
-              divisi: item.divisi,
-              tanggalMulai: item.tanggalMulai,
-              tanggalSelesai: item.tanggalSelesai,
-              jumlahSks: item.jumlahSks,
-              tahunAjaran: item.tahunAjaran,
-            }))
+      const mapPermohonanEntry = async (
+        item: NonNullable<typeof permohonanResponse.data>[number],
+      ) => {
+        return {
+          id: item.id,
+          tanggal: toText(item.tanggal),
+          memberMahasiswaId: item.memberMahasiswaId,
+          nim: toText(item.nim),
+          namaMahasiswa: toText(item.namaMahasiswa),
+          programStudi: toText(item.programStudi),
+          angkatan: item.angkatan ? toText(item.angkatan) : undefined,
+          semester: item.semester ? toText(item.semester) : undefined,
+          email: item.email ? toText(item.email) : undefined,
+          jenisSurat: "Surat Permohonan",
+          status: normalizeStatus(item.status),
+          supervisor: item.supervisor ? toText(item.supervisor) : undefined,
+          teamMembers: normalizeTeamMembers(item.teamMembers),
+          dosenNama: toText(item.dosenNama),
+          dosenNip: toText(item.dosenNip),
+          dosenJabatan: item.dosenJabatan ? toText(item.dosenJabatan) : "-",
+          dosenEsignatureUrl:
+            item.dosenEsignatureUrl ||
+            item.dosen_esignature_url ||
+            dosenEsignatureUrl,
+          mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
+            item as unknown as Record<string, unknown>,
+          ),
+          signedFileUrl: resolveAssetUrl(
+            item.signedFileUrl || item.signed_file_url,
+          ),
+          approvedAt: item.approvedAt || item.approved_at,
+          namaPerusahaan: item.namaPerusahaan,
+          alamatPerusahaan: item.alamatPerusahaan,
+          teleponPerusahaan: item.teleponPerusahaan,
+          jenisProdukUsaha: item.jenisProdukUsaha,
+          divisi: item.divisi,
+          tanggalMulai: item.tanggalMulai,
+          tanggalSelesai: item.tanggalSelesai,
+          jumlahSks: item.jumlahSks,
+          tahunAjaran: item.tahunAjaran,
+        };
+      };
+
+      const kesediaanData =
+        kesediaanResponse.success && kesediaanResponse.data
+          ? kesediaanResponse.data
           : [];
+      const kesediaanEntries = await Promise.all(
+        kesediaanData.map(mapKesediaanEntry),
+      );
+
+      const permohonanData =
+        permohonanResponse.success && permohonanResponse.data
+          ? permohonanResponse.data
+          : [];
+      const permohonanEntries = await Promise.all(
+        permohonanData.map(mapPermohonanEntry),
+      );
 
       setEntries([...kesediaanEntries, ...permohonanEntries]);
     } catch (error) {
-      console.error("❌ Error loading surat verification data:", error);
+      console.error("âŒ Error loading surat verification data:", error);
       toast.error("Terjadi kesalahan saat memuat data verifikasi surat.");
     } finally {
       setIsLoading(false);
@@ -637,7 +631,7 @@ function MailVerificationDosenPage() {
 
         <Card>
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
-            <div className="flex-1 min-w-[250px] relative">
+            <div className="relative flex-1 min-w-62.5">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
@@ -648,7 +642,7 @@ function MailVerificationDosenPage() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-50">
                 <SelectValue placeholder="Pilih Status" />
               </SelectTrigger>
               <SelectContent>
@@ -714,10 +708,16 @@ function MailVerificationDosenPage() {
                     </TableHead>
                     <TableHead className="whitespace-nowrap">Tanggal</TableHead>
                     <TableHead className="whitespace-nowrap">NIM</TableHead>
-                    <TableHead className="whitespace-nowrap">Nama Mahasiswa</TableHead>
-                    <TableHead className="whitespace-nowrap">Jenis Surat</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Nama Mahasiswa
+                    </TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Jenis Surat
+                    </TableHead>
                     <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">Aksi</TableHead>
+                    <TableHead className="pr-6 whitespace-nowrap">
+                      Aksi
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

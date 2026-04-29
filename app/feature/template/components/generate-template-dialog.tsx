@@ -151,22 +151,26 @@ export function GenerateTemplateDialog({
           </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh] p-4">
-            <div className="space-y-4">
+          <div className="space-y-4">
             {template?.fields
-                .sort((a, b) => a.order - b.order)
-                .map((field) => (
+              .sort((a, b) => a.order - b.order)
+              .map((field) => (
                 <div key={field.variable} className="space-y-2">
-                    <Label htmlFor={field.variable}>
+                  <Label htmlFor={field.variable}>
                     {field.label}
-                    {field.required && <span className="text-destructive">*</span>}
-                    </Label>
-                    {renderField(field)}
-                    {field.helpText && (
-                    <p className="text-xs text-muted-foreground">{field.helpText}</p>
+                    {field.required && (
+                      <span className="text-destructive">*</span>
                     )}
+                  </Label>
+                  {renderField(field)}
+                  {field.helpText && (
+                    <p className="text-xs text-muted-foreground">
+                      {field.helpText}
+                    </p>
+                  )}
                 </div>
-                ))}
-            </div>
+              ))}
+          </div>
         </ScrollArea>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

@@ -18,7 +18,7 @@ import { PengajuanCard } from "../components/pengajuan-card";
 import {
   getActiveProfileSignature,
   getSignatureManageUrl,
-} from "~/lib/services/signature-api";
+} from "~/lib/services/signature.service";
 
 // Mock data pengajuan dari mahasiswa
 const mockPengajuanList: PengajuanSidang[] = [
@@ -102,30 +102,30 @@ export default function VerifikasiSidangDosenPage() {
       // Load pengajuan dari localStorage (dari mahasiswa)
       if (typeof window !== "undefined") {
         const savedPengajuan = localStorage.getItem("pengajuan-sidang-list");
-        console.log("📥 DOSEN: Loading pengajuan list from localStorage");
+        console.log("ðŸ“¥ DOSEN: Loading pengajuan list from localStorage");
 
         if (savedPengajuan) {
           try {
             const pengajuanFromStorage = JSON.parse(savedPengajuan);
             console.log(
-              "📋 DOSEN: Found",
+              "ðŸ“‹ DOSEN: Found",
               pengajuanFromStorage.length,
               "pengajuan(s)",
             );
             console.log(
-              "📋 DOSEN: Pengajuan IDs:",
+              "ðŸ“‹ DOSEN: Pengajuan IDs:",
               pengajuanFromStorage.map(
                 (p: { id?: string }) => p.id || "unknown",
               ),
             );
             setPengajuanList(pengajuanFromStorage);
           } catch (error) {
-            console.error("❌ DOSEN: Error parsing pengajuan list:", error);
+            console.error("âŒ DOSEN: Error parsing pengajuan list:", error);
             setPengajuanList(mockPengajuanList);
           }
         } else {
           console.log(
-            "⚠️ DOSEN: No pengajuan in localStorage, using mock data",
+            "âš ï¸ DOSEN: No pengajuan in localStorage, using mock data",
           );
           setPengajuanList(mockPengajuanList);
         }
@@ -157,7 +157,7 @@ export default function VerifikasiSidangDosenPage() {
     catatan: string,
     nilai?: number,
   ) => {
-    console.log("🔵 DOSEN: handleVerifikasi called", {
+    console.log("ðŸ”µ DOSEN: handleVerifikasi called", {
       id,
       status,
       hasSig: !!signatureImage,
@@ -167,7 +167,7 @@ export default function VerifikasiSidangDosenPage() {
     if (status === "approved") {
       if (!signatureImage) {
         setNotification({
-          title: "⚠️ E-Signature Dikelola di SSO",
+          title: "âš ï¸ E-Signature Dikelola di SSO",
           description: signatureManageUrl
             ? `Silakan kelola e-signature di SSO terlebih dahulu: ${signatureManageUrl}`
             : "Silakan kelola e-signature di SSO terlebih dahulu sebelum menyetujui pengajuan.",
@@ -195,22 +195,22 @@ export default function VerifikasiSidangDosenPage() {
     catatan: string,
     nilai?: number,
   ) => {
-    console.log("🟢 DOSEN: processApprovalWithSignature started", {
+    console.log("ðŸŸ¢ DOSEN: processApprovalWithSignature started", {
       id,
       catatan,
       nilai,
     });
 
-    console.log("🔍 DOSEN: Finding pengajuan with id:", id);
+    console.log("ðŸ” DOSEN: Finding pengajuan with id:", id);
     const pengajuan = pengajuanList.find((p) => p.id === id);
 
     if (!pengajuan) {
-      console.error("❌ DOSEN: Pengajuan not found!");
+      console.error("âŒ DOSEN: Pengajuan not found!");
       return;
     }
 
     console.log(
-      "✅ DOSEN: Jadwal sidang approved for:",
+      "âœ… DOSEN: Jadwal sidang approved for:",
       pengajuan.mahasiswa.nama,
     );
 
@@ -245,8 +245,8 @@ export default function VerifikasiSidangDosenPage() {
       tanggalApproval: new Date().toISOString(),
     };
 
-    console.log("💾 DOSEN: Saving jadwal approval to localStorage");
-    console.log("📋 DOSEN: Jadwal Data:", {
+    console.log("ðŸ’¾ DOSEN: Saving jadwal approval to localStorage");
+    console.log("ðŸ“‹ DOSEN: Jadwal Data:", {
       id: jadwalApproved.id,
       status: jadwalApproved.status,
       tanggalSidang: jadwalApproved.tanggalSidang,
@@ -262,12 +262,12 @@ export default function VerifikasiSidangDosenPage() {
     // Verify save
     const verified = localStorage.getItem("berita-acara-draft");
     console.log(
-      "✔️ DOSEN: Verified localStorage save:",
+      "âœ”ï¸ DOSEN: Verified localStorage save:",
       verified === jsonString,
     );
 
     // Trigger storage event manually untuk same-tab update
-    console.log("📢 DOSEN: Dispatching storage event...");
+    console.log("ðŸ“¢ DOSEN: Dispatching storage event...");
     window.dispatchEvent(
       new StorageEvent("storage", {
         key: "berita-acara-draft",
@@ -278,12 +278,12 @@ export default function VerifikasiSidangDosenPage() {
     );
 
     console.log(
-      "✅ DOSEN: Jadwal sidang approved and event dispatched successfully!",
+      "âœ… DOSEN: Jadwal sidang approved and event dispatched successfully!",
     );
 
     // Show success notification
     setNotification({
-      title: "✅ Jadwal Sidang Disetujui",
+      title: "âœ… Jadwal Sidang Disetujui",
       description: `Jadwal sidang telah disetujui. Mahasiswa akan menerima notifikasi.`,
     });
 
@@ -291,18 +291,18 @@ export default function VerifikasiSidangDosenPage() {
   };
 
   const processRejection = (id: string, catatan: string) => {
-    console.log("🔴 DOSEN: processRejection started", { id, catatan });
+    console.log("ðŸ”´ DOSEN: processRejection started", { id, catatan });
 
-    console.log("🔍 DOSEN: Finding pengajuan with id:", id);
+    console.log("ðŸ” DOSEN: Finding pengajuan with id:", id);
     const pengajuan = pengajuanList.find((p) => p.id === id);
 
     if (!pengajuan) {
-      console.error("❌ DOSEN: Pengajuan not found!");
+      console.error("âŒ DOSEN: Pengajuan not found!");
       return;
     }
 
     console.log(
-      "❌ DOSEN: Jadwal sidang rejected for:",
+      "âŒ DOSEN: Jadwal sidang rejected for:",
       pengajuan.mahasiswa.nama,
     );
 
@@ -334,8 +334,8 @@ export default function VerifikasiSidangDosenPage() {
       tanggalVerifikasi: new Date().toISOString(),
     };
 
-    console.log("💾 DOSEN: Saving rejection to localStorage");
-    console.log("📋 DOSEN: Rejection Data:", {
+    console.log("ðŸ’¾ DOSEN: Saving rejection to localStorage");
+    console.log("ðŸ“‹ DOSEN: Rejection Data:", {
       id: jadwalRejected.id,
       status: jadwalRejected.status,
       catatan: jadwalRejected.catatanDosen,
@@ -348,12 +348,12 @@ export default function VerifikasiSidangDosenPage() {
     // Verify save
     const verified = localStorage.getItem("berita-acara-draft");
     console.log(
-      "✔️ DOSEN: Verified localStorage save:",
+      "âœ”ï¸ DOSEN: Verified localStorage save:",
       verified === jsonString,
     );
 
     // Trigger storage event
-    console.log("📢 DOSEN: Dispatching storage event for rejection...");
+    console.log("ðŸ“¢ DOSEN: Dispatching storage event for rejection...");
     window.dispatchEvent(
       new StorageEvent("storage", {
         key: "berita-acara-draft",
@@ -363,10 +363,10 @@ export default function VerifikasiSidangDosenPage() {
       }),
     );
 
-    console.log("✅ DOSEN: Rejection saved and event dispatched!");
+    console.log("âœ… DOSEN: Rejection saved and event dispatched!");
 
     setNotification({
-      title: "❌ Pengajuan Ditolak",
+      title: "âŒ Pengajuan Ditolak",
       description: `Pengajuan sidang ditolak. Mahasiswa diminta untuk melakukan perbaikan.`,
     });
 

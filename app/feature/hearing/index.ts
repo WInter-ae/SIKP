@@ -10,4 +10,9 @@ export { default as PengujianSidangPage } from "./pages/pengujian-sidang-page";
 export { useBeritaAcara } from "./hooks/use-berita-acara";
 
 // Types
-export type { BeritaAcara, DosenPenguji, DataSidang, SuratBeritaAcara } from "./types";
+export type {
+  BeritaAcara,
+  DosenPenguji,
+  DataSidang,
+  SuratBeritaAcara,
+} from "./types";

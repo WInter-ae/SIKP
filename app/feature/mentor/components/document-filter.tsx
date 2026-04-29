@@ -71,7 +71,10 @@ function DocumentFilter({
               <Calendar className="h-4 w-4" />
               Semester
             </label>
-            <Select value={filterSemester} onValueChange={onFilterSemesterChange}>
+            <Select
+              value={filterSemester}
+              onValueChange={onFilterSemesterChange}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Semua semester" />
               </SelectTrigger>
