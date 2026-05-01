@@ -113,9 +113,9 @@ function SubmissionPage() {
   const [rejectionReasonByKey, setRejectionReasonByKey] = useState<
     Record<string, string>
   >({});
-  const [dosenNameByKey, setDosenNameByKey] = useState<Record<string, string>>(
-    {},
-  );
+  const [dosenKpNameByKey, setDosenKpNameByKey] = useState<
+    Record<string, string>
+  >({});
   const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>("idle");
   const [autoSaveError, setAutoSaveError] = useState<string | null>(null);
   const [isProposalReuploadConfirmOpen, setIsProposalReuploadConfirmOpen] =
@@ -182,7 +182,7 @@ function SubmissionPage() {
       const nextSignedUrls: Record<string, string> = {};
       const nextLatestRequestIds: Record<string, string> = {};
       const nextRejectionReasons: Record<string, string> = {};
-      const nextDosenNames: Record<string, string> = {};
+      const nextDosenKpNames: Record<string, string> = {};
       response.data.forEach((item) => {
         const requestKey = getRequestKey(
           item.memberMahasiswaId,
@@ -193,12 +193,12 @@ function SubmissionPage() {
           nextLatestRequestIds[requestKey] = item.latestRequestId;
         if (item.rejectionReason)
           nextRejectionReasons[requestKey] = item.rejectionReason;
-        if (item.dosenName) nextDosenNames[requestKey] = item.dosenName;
+        if (item.dosenName) nextDosenKpNames[requestKey] = item.dosenName;
       });
       setSignedUrlByKey(nextSignedUrls);
       setLatestRequestIdByKey(nextLatestRequestIds);
       setRejectionReasonByKey(nextRejectionReasons);
-      setDosenNameByKey(nextDosenNames);
+      setDosenKpNameByKey(nextDosenKpNames);
     } catch (error) {
       console.error("❌ Error loading letter request statuses:", error);
     }
@@ -325,7 +325,7 @@ function SubmissionPage() {
             setSignedUrlByKey({});
             setLatestRequestIdByKey({});
             setRejectionReasonByKey({});
-            setDosenNameByKey({});
+            setDosenKpNameByKey({});
           }
         } else {
           setLoadError(response.message || "Gagal memuat data tim");
@@ -814,7 +814,7 @@ function SubmissionPage() {
 
   if (isUserLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <p className="text-muted-foreground">Memuat data tim...</p>
       </div>
     );
@@ -834,7 +834,7 @@ function SubmissionPage() {
         </div>
 
         <Card className="mb-8">
-          <CardContent className="flex min-h-[220px] items-center justify-center p-6">
+          <CardContent className="flex min-h-55 items-center justify-center p-6">
             <div className="flex flex-col items-center gap-4">
               <Alert
                 variant="destructive"
@@ -1076,7 +1076,7 @@ function SubmissionPage() {
                 currentMahasiswaId={currentMemberId}
                 submittedRequestKeys={submittedRequestKeys}
                 submittedRequestStatusByKey={submittedRequestStatusByKey}
-                dosenNameByKey={dosenNameByKey}
+                dosenKpNameByKey={dosenKpNameByKey}
                 onUpload={handleDocumentUpload}
                 onSubmitRequest={handleAjukanSurat}
                 disabled={isSubmissionSubmitted}

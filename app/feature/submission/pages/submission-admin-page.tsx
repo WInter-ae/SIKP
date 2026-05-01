@@ -205,9 +205,12 @@ function SubmissionAdminPage() {
         return false;
       }
 
+      const leaderName = leader.name || "";
+      const leaderNim = leader.nim || "";
+      const normalizedSearch = searchTerm.toLowerCase();
       const matchesSearch =
-        leader.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (leader.nim?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+        leaderName.toLowerCase().includes(normalizedSearch) ||
+        leaderNim.toLowerCase().includes(normalizedSearch);
       const matchesStatus =
         statusFilter === "all" || app.status === statusFilter;
 
@@ -419,7 +422,7 @@ function SubmissionAdminPage() {
         {/* Filter and Search */}
         <Card>
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
-            <div className="flex-1 min-w-[250px] relative">
+            <div className="flex-1 min-w-62.5 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
@@ -430,7 +433,7 @@ function SubmissionAdminPage() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-45">
                 <SelectValue placeholder="Pilih Status" />
               </SelectTrigger>
               <SelectContent>

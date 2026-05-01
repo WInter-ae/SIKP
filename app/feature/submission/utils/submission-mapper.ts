@@ -29,17 +29,6 @@ function mapSubmissionDocumentToDocumentFile(
 ): DocumentFile {
   const title = DOCUMENT_TYPE_MAPPING[doc.documentType] || doc.documentType;
 
-  // Debug: Log jika documentType tidak ada di mapping
-  if (!DOCUMENT_TYPE_MAPPING[doc.documentType]) {
-    console.warn("⚠️ Unknown documentType:", {
-      documentType: doc.documentType,
-      docId: doc.id,
-      fileName: doc.fileName,
-      fallbackTitle: title,
-      availableTypes: Object.keys(DOCUMENT_TYPE_MAPPING),
-    });
-  }
-
   return {
     id: doc.id,
     title,
@@ -72,22 +61,69 @@ function normalizePlaceholderValue(value?: string | null): string {
   return value.trim().toLowerCase() === "belum diisi" ? "" : value;
 }
 
-function buildUploaderIdentityMap(documents: SubmissionDocument[] = []) {
-  const map = new Map<string, { name: string; nim?: string; prodi?: string }>();
+function pickFirstNonEmptyString(...values: unknown[]): string {
+  for (const value of values) {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        return trimmed;
+      }
+    }
+  }
+  return "";
+}
 
-  documents.forEach((doc) => {
-    const uploader = doc.uploadedByUser;
-    if (!uploader?.id) return;
+function isLikelyIdentifier(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value,
+  );
+}
 
-    const existing = map.get(uploader.id);
-    map.set(uploader.id, {
-      name: uploader.name || existing?.name || "Unknown",
-      nim: uploader.nim || existing?.nim,
-      prodi: uploader.prodi || existing?.prodi,
-    });
-  });
+function toRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : null;
+}
 
-  return map;
+function getPersonIdentity(value: unknown) {
+  const person = toRecord(value);
+  return {
+    name: pickFirstNonEmptyString(
+      person?.name,
+      person?.nama,
+      person?.fullName,
+      person?.full_name,
+    ),
+    nim: pickFirstNonEmptyString(
+      person?.nim,
+      person?.studentNim,
+      person?.student_nim,
+    ),
+    prodi: pickFirstNonEmptyString(
+      person?.prodi,
+      person?.programStudi,
+      person?.program_studi,
+    ),
+    email: pickFirstNonEmptyString(person?.email),
+  };
+}
+
+function extractIdentityFromOriginalName(originalName?: string | null) {
+  const value = pickFirstNonEmptyString(originalName);
+  if (!value) return { name: "", nim: "" };
+
+  const namePart = value
+    .replace(/\.[^.]+$/, "")
+    .split("_")[0]
+    .replace(/[-]+/g, " ")
+    .trim();
+
+  const nimMatch = value.match(/(?:_|-)(\d{3,})(?:\.[^.]+)?$/);
+
+  return {
+    name: namePart,
+    nim: nimMatch?.[1] || "",
+  };
 }
 
 /**
@@ -96,15 +132,32 @@ function buildUploaderIdentityMap(documents: SubmissionDocument[] = []) {
 interface TeamMemberFromBackend {
   user?: {
     id: string;
-    name: string;
-    nim: string;
+    name: string | null;
+    nim?: string | null;
     email?: string;
-    prodi?: string;
+    prodi?: string | null;
+  };
+  mahasiswa?: {
+    id?: string;
+    name?: string | null;
+    nama?: string | null;
+    fullName?: string | null;
+    full_name?: string | null;
+    nim?: string | null;
+    studentNim?: string | null;
+    student_nim?: string | null;
+    email?: string | null;
+    prodi?: string | null;
   };
   id?: string;
   userId?: string;
   name?: string;
+  nama?: string;
+  fullName?: string;
+  full_name?: string;
   nim?: string;
+  studentNim?: string;
+  student_nim?: string;
   prodi?: string;
   role: "KETUA" | "ANGGOTA";
   status?: string;
@@ -113,255 +166,79 @@ interface TeamMemberFromBackend {
 /**
  * Interface untuk Team dari backend
  */
-interface TeamFromBackend {
-  id: string;
-  name: string;
-  code: string;
-  status: string;
-  members: TeamMemberFromBackend[];
-  academicSupervisor?: string;
-  academic_supervisor?: string;
-  supervisorName?: string;
-  supervisor_name?: string;
-  supervisor?: {
-    name?: string;
-    fullName?: string;
-  };
-}
+type TeamFromBackend = Omit<NonNullable<Submission["team"]>, "members"> & {
+  members?: TeamMemberFromBackend[];
+  academicSupervisor?: string | null;
+  dosenKpName?: string | null;
+  dosen_kp_name?: string | null;
+  dosen_name?: string | null;
+  mahasiswa?: unknown;
+};
 
 /**
  * Interface untuk Submission dengan relasi Team dari backend
  */
-export interface SubmissionWithTeam extends Submission {
+export interface SubmissionWithTeam
+  extends Omit<Submission, "team" | "wakilDekanSignature"> {
   team?: TeamFromBackend;
-  wakilDekanSignature?: {
-    id?: string;
-    name?: string;
-    nama?: string;
-    nip?: string;
-    position?: string;
-    jabatan?: string;
-    fakultas?: string;
-    prodi?: string;
-    esignatureUrl?: string;
-    esignature_url?: string;
-    signatureUrl?: string;
-    signature_url?: string;
-    esignatureKey?: string;
-    esignature_key?: string;
-    esignatureUploadedAt?: string;
-    esignature_uploaded_at?: string;
-  };
-  wakildekanSignature?: {
-    id?: string;
-    name?: string;
-    nama?: string;
-    nip?: string;
-    position?: string;
-    jabatan?: string;
-    fakultas?: string;
-    prodi?: string;
-    esignatureUrl?: string;
-    esignature_url?: string;
-    signatureUrl?: string;
-    signature_url?: string;
-    esignatureKey?: string;
-    esignature_key?: string;
-    esignatureUploadedAt?: string;
-    esignature_uploaded_at?: string;
-  };
+  wakilDekanSignature?: WakilDekanSignature | null;
 }
-
-function getStringValue(...values: unknown[]): string | undefined {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim();
-    }
-  }
-  return undefined;
-}
-
-function resolveLetterNumber(
-  submission: SubmissionWithTeam,
-): string | undefined {
-  const submissionWithStage = submission as SubmissionWithTeam & {
-    workflow_stage?: string;
-  };
-
-  const currentStage = getStringValue(
-    submission.workflowStage,
-    submissionWithStage.workflow_stage,
-    submission.status,
-  )?.toUpperCase();
-  const canUseLetterNumber =
-    currentStage === "PENDING_DOSEN_VERIFICATION" ||
-    currentStage === "COMPLETED" ||
-    currentStage === "APPROVED";
-
-  if (!canUseLetterNumber) {
-    return undefined;
-  }
-
-  const root = submission as SubmissionWithTeam & {
-    letterNumber?: string;
-    letter_number?: string;
-  };
-
-  const direct = getStringValue(root.letterNumber, root.letter_number);
-  if (direct) return direct;
-
-  const history = Array.isArray(submission.statusHistory)
-    ? submission.statusHistory
-    : [];
-
-  for (let i = history.length - 1; i >= 0; i -= 1) {
-    const entry = history[i] as unknown as Record<string, unknown>;
-    const number = getStringValue(
-      entry.letterNumber,
-      entry.letter_number,
-      entry.nomorSurat,
-      entry.nomor_surat,
-    );
-
-    if (!number) continue;
-
-    const actor = getStringValue(entry.actor)?.toUpperCase();
-    const stage = getStringValue(
-      entry.workflowStage,
-      entry.workflow_stage,
-      entry.status,
-    )?.toUpperCase();
-    const isAdminStage =
-      stage === "APPROVED" ||
-      stage === "PENDING_DOSEN_VERIFICATION" ||
-      stage === "COMPLETED";
-
-    if (actor === "ADMIN" && isAdminStage) {
-      return number;
-    }
-  }
-
-  return undefined;
-}
-
-function resolveWakilDekanSignature(
-  submission: SubmissionWithTeam,
-): WakilDekanSignature | undefined {
-  const submissionData = submission as SubmissionWithTeam & {
-    wakil_dekan_signature?: SubmissionWithTeam["wakilDekanSignature"];
-    viceDeanSignature?: SubmissionWithTeam["wakilDekanSignature"];
-    signerProfile?: SubmissionWithTeam["wakilDekanSignature"];
-    wakilDekanName?: string;
-    wakil_dekan_name?: string;
-    wakilDekanNip?: string;
-    wakil_dekan_nip?: string;
-    wakilDekanPosition?: string;
-    wakil_dekan_position?: string;
-    wakilDekanJabatan?: string;
-    wakil_dekan_jabatan?: string;
-    wakilDekanFakultas?: string;
-    wakil_dekan_fakultas?: string;
-    wakilDekanProdi?: string;
-    wakil_dekan_prodi?: string;
-    esignatureUrl?: string;
-    esignature_url?: string;
-    signatureUrl?: string;
-    signature_url?: string;
-    esignatureKey?: string;
-    esignature_key?: string;
-    esignatureUploadedAt?: string;
-    esignature_uploaded_at?: string;
-  };
-
-  const nestedRaw =
-    submissionData.wakilDekanSignature ||
-    submissionData.wakildekanSignature ||
-    submissionData.wakil_dekan_signature ||
-    submissionData.viceDeanSignature ||
-    submissionData.signerProfile;
-
-  const rootRaw = {
-    id: submissionData.id,
-    name: submissionData.wakilDekanName || submissionData.wakil_dekan_name,
-    nip: submissionData.wakilDekanNip || submissionData.wakil_dekan_nip,
-    position:
-      submissionData.wakilDekanPosition ||
-      submissionData.wakil_dekan_position ||
-      submissionData.wakilDekanJabatan ||
-      submissionData.wakil_dekan_jabatan,
-    fakultas:
-      submissionData.wakilDekanFakultas || submissionData.wakil_dekan_fakultas,
-    prodi: submissionData.wakilDekanProdi || submissionData.wakil_dekan_prodi,
-    esignatureUrl: submissionData.esignatureUrl,
-    esignature_url: submissionData.esignature_url,
-    signatureUrl: submissionData.signatureUrl,
-    signature_url: submissionData.signature_url,
-    esignatureKey: submissionData.esignatureKey,
-    esignature_key: submissionData.esignature_key,
-    esignatureUploadedAt: submissionData.esignatureUploadedAt,
-    esignature_uploaded_at: submissionData.esignature_uploaded_at,
-  };
-
-  const raw = nestedRaw || rootRaw;
-
-  if (!raw) return undefined;
-
-  const name = getStringValue(
-    raw.name,
-    (raw as { nama?: string }).nama,
-    "Wakil Dekan Bidang Akademik",
-  );
-  const nip = getStringValue(raw.nip, "-");
-  const position = getStringValue(
-    raw.position,
-    (raw as { jabatan?: string }).jabatan,
-    "Wakil Dekan Bidang Akademik",
-  );
-  const esignatureUrl = getStringValue(
-    raw.esignatureUrl,
-    raw.esignature_url,
-    raw.signatureUrl,
-    raw.signature_url,
-  );
-
-  if (!name && !nip && !position && !esignatureUrl) {
-    return undefined;
-  }
-
-  return {
-    id: getStringValue(raw.id, submission.id) || submission.id,
-    name: name || "Wakil Dekan Bidang Akademik",
-    nip: nip || "-",
-    position: position || "Wakil Dekan Bidang Akademik",
-    fakultas: getStringValue(raw.fakultas),
-    prodi: getStringValue(raw.prodi),
-    esignatureUrl,
-    esignatureKey: getStringValue(raw.esignatureKey, raw.esignature_key),
-    esignatureUploadedAt: getStringValue(
-      raw.esignatureUploadedAt,
-      raw.esignature_uploaded_at,
-    ),
-  };
-}
-
 function resolveAcademicSupervisorName(submission: SubmissionWithTeam): string {
   const team = submission.team;
-  const candidates = [
-    team?.academicSupervisor,
-    team?.academic_supervisor,
-    team?.supervisorName,
-    team?.supervisor_name,
-    team?.supervisor?.name,
-    team?.supervisor?.fullName,
-  ];
+  if (!team) return "-";
 
-  for (const candidate of candidates) {
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      return candidate;
-    }
+  const candidate = pickFirstNonEmptyString(
+    team.dosenKpName,
+    team.dosen_kp_name,
+    team.dosen_name,
+    team.academicSupervisor,
+  );
+
+  if (candidate && !isLikelyIdentifier(candidate)) {
+    return candidate;
   }
 
   return "-";
+}
+
+function resolveMemberIdentity(
+  member: TeamMemberFromBackend,
+  documents: SubmissionDocument[],
+) {
+  const userIdentity = getPersonIdentity(member.user);
+  const mahasiswaIdentity = getPersonIdentity(member.mahasiswa);
+  const flatIdentity = getPersonIdentity(member);
+
+  const uploadedDoc = documents.find(
+    (doc) => doc.uploadedByMahasiswaId === member.user?.id,
+  );
+  const docIdentity = extractIdentityFromOriginalName(
+    uploadedDoc?.originalName,
+  );
+
+  const name = pickFirstNonEmptyString(
+    userIdentity.name,
+    mahasiswaIdentity.name,
+    flatIdentity.name,
+    docIdentity.name,
+  );
+  const nim = pickFirstNonEmptyString(
+    userIdentity.nim,
+    mahasiswaIdentity.nim,
+    flatIdentity.nim,
+    docIdentity.nim,
+  );
+  const prodi = pickFirstNonEmptyString(
+    userIdentity.prodi,
+    mahasiswaIdentity.prodi,
+    flatIdentity.prodi,
+  );
+
+  return {
+    name: name || "Mahasiswa",
+    nim: nim || "-",
+    prodi: prodi || "-",
+  };
 }
 
 /**
@@ -373,90 +250,23 @@ function resolveAcademicSupervisorName(submission: SubmissionWithTeam): string {
 export function mapSubmissionToApplication(
   submission: SubmissionWithTeam,
 ): Application | null {
-  const submissionData = submission as SubmissionWithTeam & {
-    company_phone?: string;
-    company_business_type?: string;
-    workflow_stage?: string;
-    signedFileUrl?: string;
-    signed_file_url?: string;
-    finalSignedFileUrl?: string;
-    final_signed_file_url?: string;
-  };
-
-  if (!submission.team) {
-    console.warn(
-      "⚠️ Submission missing team data, using fallback mapping:",
-      submission.id,
-    );
-  }
-
-  // Debug: Log team structure
-  if (submission.team) {
-    console.log("🔍 Team structure:", {
-      teamId: submission.team.id,
-      membersCount: submission.team.members?.length || 0,
-      members: submission.team.members?.map((m) => ({
-        userId: m.user?.id,
-        userName: m.user?.name,
-        userObject: m.user ? "✅ Present" : "❌ Missing",
-        role: m.role,
-        status: m.status,
-        fullMember: m,
-      })),
-    });
-  }
-
   // Filter hanya accepted members, dengan fallback untuk members tanpa status
   const acceptedMembers = (submission.team?.members || []).filter((m) => {
     // Jika status tidak ada, anggap sebagai ACCEPTED (fallback)
     return !m.status || m.status === "ACCEPTED";
   });
-  const uploaderIdentityByUserId = buildUploaderIdentityMap(
-    submission.documents || [],
-  );
-
   const fallbackMembers: Member[] = [];
   if (acceptedMembers.length === 0) {
-    const uploaderMap = new Map<
-      string,
-      { name: string; nim?: string; prodi?: string }
-    >();
-    (submission.documents || []).forEach((doc) => {
-      if (doc.uploadedByUser?.id) {
-        uploaderMap.set(doc.uploadedByUser.id, {
-          name: doc.uploadedByUser.name || "Unknown",
-          nim: doc.uploadedByUser.nim,
-          prodi: doc.uploadedByUser.prodi,
-        });
-      }
+    const uploadedDocs = submission.documents || [];
+    const firstDocIdentity = extractIdentityFromOriginalName(
+      uploadedDocs[0]?.originalName,
+    );
+    fallbackMembers.push({
+      id: `fallback-${submission.id}`,
+      name: firstDocIdentity.name || "Mahasiswa",
+      nim: firstDocIdentity.nim || "-",
+      role: "Ketua",
     });
-
-    if (uploaderMap.size > 0) {
-      const uploaderEntries = Array.from(uploaderMap.entries());
-      uploaderEntries.forEach(([id, identity], index) => {
-        fallbackMembers.push({
-          id,
-          name: identity.name,
-          nim: identity.nim || "-",
-          prodi: identity.prodi,
-          role: index === 0 ? "Ketua" : "Anggota",
-        });
-      });
-    } else {
-      fallbackMembers.push({
-        id: `fallback-${submission.id}`,
-        name: "Data tim sudah dibubarkan",
-        nim: "-",
-        role: "Ketua",
-      });
-    }
-  }
-
-  if (acceptedMembers.length > 0) {
-    console.log("✅ Found accepted members:", acceptedMembers.length);
-    console.log("🔍 Member structure sample:", acceptedMembers[0]);
-  } else {
-    console.warn("⚠️ Using fallback members for submission:", submission.id);
   }
 
   // Map members ke format yang dibutuhkan
@@ -464,35 +274,21 @@ export function mapSubmissionToApplication(
   const members: Member[] =
     acceptedMembers.length > 0
       ? acceptedMembers.map((m) => {
+          const identity = resolveMemberIdentity(m, submission.documents || []);
           if (m.user) {
             return {
               id: m.user.id,
-              name: m.user.name,
-              nim: m.user.nim,
-              prodi:
-                m.user.prodi || uploaderIdentityByUserId.get(m.user.id)?.prodi,
+              name: identity.name,
+              nim: identity.nim,
+              prodi: identity.prodi !== "-" ? identity.prodi : undefined,
               role: m.role === "KETUA" ? "Ketua" : "Anggota",
             };
           }
-
-          console.warn(
-            "⚠️ Member user nested object missing, using flat structure:",
-            {
-              memberId: m.id,
-              userId: m.userId,
-              name: m.name,
-              nim: m.nim,
-              prodi: m.prodi,
-            },
-          );
-
           return {
             id: m.userId || m.id || "",
-            name: m.name || "Unknown",
-            nim:
-              m.nim || uploaderIdentityByUserId.get(m.userId || "")?.nim || "",
-            prodi:
-              m.prodi || uploaderIdentityByUserId.get(m.userId || "")?.prodi,
+            name: identity.name,
+            nim: identity.nim,
+            prodi: identity.prodi !== "-" ? identity.prodi : undefined,
             role: m.role === "KETUA" ? "Ketua" : "Anggota",
           };
         })
@@ -511,75 +307,20 @@ export function mapSubmissionToApplication(
     // SURAT_PENGANTAR is auto-generated and should not appear in review modal
     .filter((doc) => !isSuratPengantarDocument(doc.documentType))
     .map((doc) => {
-      // ✅ Backend sekarang mengirimkan uploadedByUser object dengan name
-      let uploaderName = "Unknown";
-
-      // Prioritas 1: Gunakan uploadedByUser.name dari backend (NEW!)
-      if (doc.uploadedByUser && doc.uploadedByUser.name) {
-        uploaderName = doc.uploadedByUser.name;
-      }
-      // Fallback 1: Cari dari team members jika uploadedByUser tidak ada
-      else if (doc.uploadedByMahasiswaId) {
-        const uploader = acceptedMembers.find((m) => {
-          const userId = m.user?.id || m.userId;
-          return userId === doc.uploadedByMahasiswaId;
-        });
-        uploaderName = uploader?.user?.name || uploader?.name || "Unknown";
-      }
-      // Fallback 2: Gunakan string uploadedBy jika ada
-      else {
-        const docWithUploadedBy = doc as SubmissionDocument & {
-          uploadedBy?: string;
-        };
-        if (typeof docWithUploadedBy.uploadedBy === "string") {
-          uploaderName = docWithUploadedBy.uploadedBy;
-        }
-      }
-
-      console.log("📄 Mapping document:", {
-        docId: doc.id,
-        documentType: doc.documentType,
-        hasUploadedByUser: !!doc.uploadedByUser,
-        uploadedByUserName: doc.uploadedByUser?.name,
-        uploadedByUserId: doc.uploadedByMahasiswaId,
-        resolvedUploaderName: uploaderName,
-        fileName: doc.fileName,
-        fileUrl: doc.fileUrl,
-      });
+      const uploaderId = doc.uploadedByMahasiswaId;
+      const uploaderFromMembers = members.find((m) => m.id === uploaderId);
+      const uploaderName =
+        doc.uploadedByUser?.name ||
+        uploaderFromMembers?.name ||
+        extractIdentityFromOriginalName(doc.originalName).name ||
+        "Mahasiswa";
 
       return mapSubmissionDocumentToDocumentFile(doc, uploaderName);
     })
-    .filter((doc) => {
-      // Filter out documents dengan title undefined
-      if (doc.title === "undefined" || !doc.title) {
-        console.warn(
-          "⚠️ Filtering out document with undefined/empty title:",
-          doc,
-        );
-        return false;
-      }
-      return true;
-    });
-
-  console.log("📄 Documents mapping summary:", {
-    submissionId: submission.id,
-    totalDocumentsFromBackend: submission.documents?.length || 0,
-    totalDocumentsAfterMapping: documents.length,
-    documents: documents.map((d) => ({
-      id: d.id,
-      title: d.title,
-      uploadedBy: d.uploadedBy,
-      url: d.url,
-    })),
-  });
+    .filter((doc) => doc.title && doc.title !== "undefined");
 
   // Map status based on workflow stage (status final-only is controlled by dosen/wakil dekan)
-  const rawWorkflowStage = getStringValue(
-    submission.workflowStage,
-    submissionData.workflow_stage,
-    submission.status,
-  )?.toUpperCase();
-
+  const rawWorkflowStage = submission.workflowStage?.toUpperCase();
   const workflowStage: Application["workflowStage"] =
     rawWorkflowStage === "PENDING_DOSEN_VERIFICATION" ||
     rawWorkflowStage === "COMPLETED" ||
@@ -606,14 +347,9 @@ export function mapSubmissionToApplication(
       : "Menunggu Review";
 
   const supervisor = resolveAcademicSupervisorName(submission);
-  const wakilDekanSignature = resolveWakilDekanSignature(submission);
-  const letterNumber = resolveLetterNumber(submission);
-  const signedFileUrl = getStringValue(
-    submissionData.finalSignedFileUrl,
-    submissionData.final_signed_file_url,
-    submissionData.signedFileUrl,
-    submissionData.signed_file_url,
-  );
+  const wakilDekanSignature = submission.wakilDekanSignature || undefined;
+  const letterNumber = submission.letterNumber || undefined;
+  const signedFileUrl = submission.finalSignedFileUrl || undefined;
 
   return {
     id: parseInt(submission.id, 10) || Math.floor(Math.random() * 10000),
@@ -638,12 +374,10 @@ export function mapSubmissionToApplication(
       tujuanSurat: normalizePlaceholderValue(submission.letterPurpose),
       namaTempat: normalizePlaceholderValue(submission.companyName),
       alamatTempat: normalizePlaceholderValue(submission.companyAddress),
-      teleponPerusahaan:
-        normalizePlaceholderValue(submission.companyPhone) ||
-        normalizePlaceholderValue(submissionData.company_phone),
-      jenisProdukUsaha:
-        normalizePlaceholderValue(submission.companyBusinessType) ||
-        normalizePlaceholderValue(submissionData.company_business_type),
+      teleponPerusahaan: normalizePlaceholderValue(submission.companyPhone),
+      jenisProdukUsaha: normalizePlaceholderValue(
+        submission.companyBusinessType,
+      ),
       divisi: normalizePlaceholderValue(submission.division),
       tanggalMulai: formatDate(submission.startDate),
       tanggalSelesai: formatDate(submission.endDate),
@@ -652,9 +386,10 @@ export function mapSubmissionToApplication(
     wakilDekanSignature,
     letterNumber,
     signedFileUrl,
-    rejectionComment: submission.rejectionReason,
-    statusHistory: submission.statusHistory, // ✅ Pass status history for re-submission detection
-    documentReviews: submission.documentReviews, // ✅ Load from backend (requires backend setup)
+    rejectionComment:
+      submission.adminRejectionReason || submission.rejectionReason,
+    statusHistory: submission.statusHistory,
+    documentReviews: submission.documentReviews,
   };
 }
 

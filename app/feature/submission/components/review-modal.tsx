@@ -139,10 +139,11 @@ function ReviewModal({
         titleEmpty: !doc.title,
       });
 
-      if (!groups[doc.title]) {
-        groups[doc.title] = [];
+      const normalizedTitle = doc.title || "Dokumen Lainnya";
+      if (!groups[normalizedTitle]) {
+        groups[normalizedTitle] = [];
       }
-      groups[doc.title].push(doc);
+      groups[normalizedTitle].push(doc);
     });
 
     console.log("📂 Final grouped documents:", {
@@ -414,6 +415,7 @@ function ReviewModal({
     const status = docReviews[doc.id];
     const displayStatus = getDisplayStatus(doc);
     const isEditable = isAdminReviewStage;
+    const uploadedByLabel = doc.uploadedBy || "Mahasiswa";
     return (
       <div
         key={doc.id}
@@ -432,7 +434,7 @@ function ReviewModal({
           </div>
           <div>
             <p className="text-sm font-medium text-foreground">
-              {doc.uploadedBy}
+              {uploadedByLabel}
             </p>
             <p className="text-xs text-muted-foreground">{doc.uploadDate}</p>
             {displayStatus && (
@@ -455,7 +457,7 @@ function ReviewModal({
                 }}
                 className={`font-medium transition-all duration-200 transform active:translate-y-1 active:shadow-sm ${
                   status === "approved"
-                    ? "bg-gradient-to-b from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl hover:from-green-400 hover:to-green-500 active:shadow-none"
+                    ? "bg-linear-to-b from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl hover:from-green-400 hover:to-green-500 active:shadow-none"
                     : "border border-green-200 text-green-600 hover:border-green-400 hover:bg-green-50 shadow-md hover:shadow-lg active:shadow-none"
                 }`}
               >
@@ -471,7 +473,7 @@ function ReviewModal({
                 }}
                 className={`font-medium transition-all duration-200 transform active:translate-y-1 active:shadow-sm ${
                   status === "rejected"
-                    ? "bg-gradient-to-b from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl hover:from-red-400 hover:to-red-500 active:shadow-none"
+                    ? "bg-linear-to-b from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl hover:from-red-400 hover:to-red-500 active:shadow-none"
                     : "border border-red-200 text-red-600 hover:border-red-400 hover:bg-red-50 shadow-md hover:shadow-lg active:shadow-none"
                 }`}
                 title="Tolak Dokumen"
@@ -510,7 +512,7 @@ function ReviewModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="text-2xl">
             Verifikasi Pengajuan Surat Pengantar KP
           </DialogTitle>
@@ -793,7 +795,7 @@ function ReviewModal({
               <CardContent className="space-y-4">
                 <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-green-600 text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-green-600 text-white rounded-lg flex items-center justify-center shrink-0">
                       <Check className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
@@ -834,7 +836,7 @@ function ReviewModal({
               <CardContent className="space-y-4">
                 <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/30">
                   <div className="flex gap-3">
-                    <div className="w-10 h-10 bg-destructive text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-destructive text-white rounded-lg flex items-center justify-center shrink-0">
                       <AlertCircle className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
@@ -852,7 +854,7 @@ function ReviewModal({
           )}
         </div>
 
-        <div className="flex-shrink-0 border-t border-border pt-4">
+        <div className="shrink-0 border-t border-border pt-4">
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
             <Button variant="outline" onClick={handleClose}>
               {application.status === "approved" ||
