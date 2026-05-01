@@ -396,6 +396,56 @@ function getMahasiswaDetail(
   return {};
 }
 
+function isWakilDekanJabatan(jabatanStruktural?: string[]): boolean {
+  return Boolean(
+    Array.isArray(jabatanStruktural) &&
+      jabatanStruktural.some((jabatan) => {
+        const normalized = jabatan.toLowerCase();
+        return normalized.includes("wakil") && normalized.includes("dekan");
+      }),
+  );
+}
+
+function extractTeamInfoFromRequestItem(
+  item: DosenSuratPengantarRequestItem,
+): SubmissionTeamInfo | null {
+  if (!item.team_members || item.team_members.length === 0) {
+    return null;
+  }
+
+  const mappedMembers: TeamMemberCard[] = item.team_members
+    .map((member) => ({
+      id: member.id,
+      name: member.name,
+      nim: member.nim || undefined,
+      prodi: member.prodi || undefined,
+      role: member.role === "KETUA" ? "Ketua" : "Anggota",
+    }))
+    .sort((a, b) => {
+      if (a.role === "Ketua") return -1;
+      if (b.role === "Ketua") return 1;
+      return 0;
+    });
+
+  const leader = item.team_members.find((m) => m.role === "KETUA") || 
+                 item.team_members[0];
+
+  return {
+    members: mappedMembers,
+    supervisor: item.academic_supervisor,
+    leader: leader
+      ? {
+          nim: leader.nim || undefined,
+          name: leader.name || undefined,
+          prodi: leader.prodi || undefined,
+          email: undefined,
+          angkatan: undefined,
+          semester: undefined,
+        }
+      : undefined,
+  };
+}
+
 function SubmissionDosenPage() {
   const [entries, setEntries] = useState<MailEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -427,11 +477,16 @@ function SubmissionDosenPage() {
         ? profileResponse.data?.nip
         : undefined;
       const dosenJabatan = profileResponse.success
-        ? profileResponse.data?.jabatan
+        ? isWakilDekanJabatan(profileResponse.data?.jabatanStruktural)
+          ? "Wakil Dekan Bidang Akademik"
+          : profileResponse.data?.jabatan
         : undefined;
       const dosenEsignatureUrl = profileResponse.success
         ? resolveAssetUrl(profileResponse.data?.esignature?.url)
         : undefined;
+      const isWakdek = profileResponse.success
+        ? isWakilDekanJabatan(profileResponse.data?.jabatanStruktural)
+        : false;
 
       const detailByNim = new Map<string, MahasiswaDetail>();
       const detailByName = new Map<string, MahasiswaDetail>();
@@ -450,35 +505,6 @@ function SubmissionDosenPage() {
         });
       }
 
-      if (response.data && response.data.length > 0) {
-        const detailResponses = await Promise.all(
-          response.data.map(async (item) => ({
-            submissionId: item.submissionId || item.id,
-            detailResponse: await getSubmissionDetailForVerifier(
-              item.submissionId || item.id,
-            ),
-          })),
-        );
-
-        detailResponses.forEach(({ submissionId, detailResponse }) => {
-          if (!detailResponse.success || !detailResponse.data) {
-            return;
-          }
-
-          const teamInfo = extractTeamInfoFromSubmission(detailResponse.data);
-          if (teamInfo) {
-            teamInfoBySubmissionId.set(submissionId, teamInfo);
-          }
-
-          const extracted = extractMahasiswaDetailFromSubmission(
-            detailResponse.data,
-          );
-          if (!extracted) return;
-
-          addMahasiswaDetailIndex(detailByNim, detailByName, extracted);
-        });
-      }
-
       const suratPengantarEntries =
         response.success && response.data
           ? response.data
@@ -489,9 +515,14 @@ function SubmissionDosenPage() {
                   detailByName,
                   item,
                 );
-                const teamInfo = teamInfoBySubmissionId.get(
+                
+                let teamInfo = teamInfoBySubmissionId.get(
                   item.submissionId || item.id,
                 );
+                
+                if (!teamInfo) {
+                  teamInfo = extractTeamInfoFromRequestItem(item) || undefined;
+                }
 
                 return {
                   id: item.id,

@@ -7,10 +7,20 @@ import { API_ENDPOINTS } from "~/lib/constants/endpoints";
 import { sikpClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
+export interface TeamMemberFromRequest {
+  id: string;
+  name: string;
+  nim: string;
+  prodi: string;
+  role: string;
+}
+
 export interface DosenSuratPengantarRequestItem {
   id: string;
   requestId: string;
   submissionId: string;
+  academic_supervisor?: string;
+  team_members?: TeamMemberFromRequest[];
   teamId?: string;
   teamCode?: string;
   nim?: string | null;

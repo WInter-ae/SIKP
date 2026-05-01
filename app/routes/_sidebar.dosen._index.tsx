@@ -28,11 +28,13 @@ export default function DosenDashboard() {
       try {
         const profileResponse = await getMyProfile();
 
+        // Check if user is wakil dekan by checking jabatanStruktural array
         const wakdekByJabatan = Boolean(
           profileResponse.success &&
-            profileResponse.data?.jabatan
-              ?.toLowerCase()
-              .includes("wakil dekan"),
+            Array.isArray(profileResponse.data?.jabatanStruktural) &&
+            profileResponse.data.jabatanStruktural.some(
+              (j) => j.toLowerCase().includes("wakil") && j.toLowerCase().includes("dekan")
+            ),
         );
 
         if (active) {
