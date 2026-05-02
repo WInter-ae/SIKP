@@ -367,13 +367,13 @@ function extractTeamInfoFromSubmission(
     supervisor: resolveSubmissionSupervisor(submission),
     leader: leaderRaw?.user
       ? {
-          nim: leaderRaw.user.nim || undefined,
-          name: leaderRaw.user.name || undefined,
-          prodi: leaderRaw.user.prodi || undefined,
-          email: leaderRaw.user.email || undefined,
-          angkatan: leaderRaw.user.angkatan || undefined,
-          semester: leaderRaw.user.semester || undefined,
-        }
+        nim: leaderRaw.user.nim || undefined,
+        name: leaderRaw.user.name || undefined,
+        prodi: leaderRaw.user.prodi || undefined,
+        email: leaderRaw.user.email || undefined,
+        angkatan: leaderRaw.user.angkatan || undefined,
+        semester: leaderRaw.user.semester || undefined,
+      }
       : undefined,
   };
 }
@@ -399,10 +399,10 @@ function getMahasiswaDetail(
 function isWakilDekanJabatan(jabatanStruktural?: string[]): boolean {
   return Boolean(
     Array.isArray(jabatanStruktural) &&
-      jabatanStruktural.some((jabatan) => {
-        const normalized = jabatan.toLowerCase();
-        return normalized.includes("wakil") && normalized.includes("dekan");
-      }),
+    jabatanStruktural.some((jabatan) => {
+      const normalized = jabatan.toLowerCase();
+      return normalized.includes("wakil") && normalized.includes("dekan");
+    }),
   );
 }
 
@@ -427,21 +427,21 @@ function extractTeamInfoFromRequestItem(
       return 0;
     });
 
-  const leader = item.team_members.find((m) => m.role === "KETUA") || 
-                 item.team_members[0];
+  const leader = item.team_members.find((m) => m.role === "KETUA") ||
+    item.team_members[0];
 
   return {
     members: mappedMembers,
     supervisor: item.academic_supervisor,
     leader: leader
       ? {
-          nim: leader.nim || undefined,
-          name: leader.name || undefined,
-          prodi: leader.prodi || undefined,
-          email: undefined,
-          angkatan: undefined,
-          semester: undefined,
-        }
+        nim: leader.nim || undefined,
+        name: leader.name || undefined,
+        prodi: leader.prodi || undefined,
+        email: undefined,
+        angkatan: undefined,
+        semester: undefined,
+      }
       : undefined,
   };
 }
@@ -508,59 +508,59 @@ function SubmissionDosenPage() {
       const suratPengantarEntries =
         response.success && response.data
           ? response.data
-              .filter((item) => isAdminApprovedForDosenQueue(item))
-              .map((item) => {
-                const detail = getMahasiswaDetail(
-                  detailByNim,
-                  detailByName,
-                  item,
-                );
-                
-                let teamInfo = teamInfoBySubmissionId.get(
-                  item.submissionId || item.id,
-                );
-                
-                if (!teamInfo) {
-                  teamInfo = extractTeamInfoFromRequestItem(item) || undefined;
-                }
+            .filter((item) => isAdminApprovedForDosenQueue(item))
+            .map((item) => {
+              const detail = getMahasiswaDetail(
+                detailByNim,
+                detailByName,
+                item,
+              );
 
-                return {
-                  id: item.id,
-                  tanggal: formatTanggalForTable(
-                    item.tanggal || item.createdAt,
-                  ),
-                  nim: item.nim || "-",
-                  namaMahasiswa: item.namaMahasiswa || "-",
-                  programStudi: detail.programStudi || item.programStudi || "-",
-                  angkatan: detail.angkatan || undefined,
-                  semester: detail.semester || undefined,
-                  email: detail.email || undefined,
-                  jenisSurat: item.jenisSurat || "Surat Pengantar",
-                  status: normalizeStatus(item.status || "menunggu"),
-                  supervisor: teamInfo?.supervisor,
-                  teamMembers: teamInfo?.members,
-                  mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
-                    item as unknown as Record<string, unknown>,
-                  ),
-                  signedFileUrl: resolveSuratPengantarSignedFileUrl(item),
-                  approvedAt: item.approvedAt || item.approved_at,
-                  namaPerusahaan: item.companyName,
-                  tujuanSurat: resolveSuratPengantarTujuan(item),
-                  alamatPerusahaan: item.companyAddress,
-                  teleponPerusahaan: undefined,
-                  jenisProdukUsaha: undefined,
-                  divisi: item.division,
-                  tanggalMulai: item.startDate,
-                  tanggalSelesai: item.endDate,
-                  jumlahSks: undefined,
-                  tahunAjaran: undefined,
-                  dosenNama: dosenNama || "-",
-                  dosenNip: dosenNip || "-",
-                  dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
-                  dosenEsignatureUrl,
-                  nomorSurat: item.nomorSurat || item.letterNumber,
-                };
-              })
+              let teamInfo = teamInfoBySubmissionId.get(
+                item.submissionId || item.id,
+              );
+
+              if (!teamInfo) {
+                teamInfo = extractTeamInfoFromRequestItem(item) || undefined;
+              }
+
+              return {
+                id: item.id,
+                tanggal: formatTanggalForTable(
+                  item.tanggal || item.createdAt,
+                ),
+                nim: item.nim || "-",
+                namaMahasiswa: item.namaMahasiswa || "-",
+                programStudi: detail.programStudi || item.programStudi || "-",
+                angkatan: detail.angkatan || undefined,
+                semester: detail.semester || undefined,
+                email: detail.email || undefined,
+                jenisSurat: item.jenisSurat || "Surat Pengantar",
+                status: normalizeStatus(item.status || "menunggu"),
+                supervisor: teamInfo?.supervisor,
+                teamMembers: teamInfo?.members,
+                mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
+                  item as unknown as Record<string, unknown>,
+                ),
+                signedFileUrl: resolveSuratPengantarSignedFileUrl(item),
+                approvedAt: item.approvedAt || item.approved_at,
+                namaPerusahaan: item.companyName,
+                tujuanSurat: resolveSuratPengantarTujuan(item),
+                alamatPerusahaan: item.companyAddress,
+                teleponPerusahaan: undefined,
+                jenisProdukUsaha: undefined,
+                divisi: item.division,
+                tanggalMulai: item.startDate,
+                tanggalSelesai: item.endDate,
+                jumlahSks: undefined,
+                tahunAjaran: undefined,
+                dosenNama: dosenNama || "-",
+                dosenNip: dosenNip || "-",
+                dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
+                dosenEsignatureUrl,
+                nomorSurat: item.nomorSurat || item.letterNumber,
+              };
+            })
           : [];
 
       setEntries(suratPengantarEntries);
@@ -660,22 +660,22 @@ function SubmissionDosenPage() {
       prev.map((entry) =>
         entry.id === targetEntry.id
           ? {
-              ...entry,
-              status: "disetujui" as const,
-              approvedAt:
-                response.data?.approvedAt ||
-                response.data?.approved_at ||
-                entry.approvedAt,
-              signedFileUrl:
-                resolveAssetUrl(
-                  pickFirstNonEmptyString(
-                    response.data?.signedFileUrl,
-                    response.data?.signed_file_url,
-                    response.data?.finalSignedFileUrl,
-                    response.data?.final_signed_file_url,
-                  ),
-                ) || entry.signedFileUrl,
-            }
+            ...entry,
+            status: "disetujui" as const,
+            approvedAt:
+              response.data?.approvedAt ||
+              response.data?.approved_at ||
+              entry.approvedAt,
+            signedFileUrl:
+              resolveAssetUrl(
+                pickFirstNonEmptyString(
+                  response.data?.signedFileUrl,
+                  response.data?.signed_file_url,
+                  response.data?.finalSignedFileUrl,
+                  response.data?.final_signed_file_url,
+                ),
+              ) || entry.signedFileUrl,
+          }
           : entry,
       ),
     );

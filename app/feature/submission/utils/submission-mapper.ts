@@ -387,7 +387,9 @@ export function mapSubmissionToApplication(
     letterNumber,
     signedFileUrl,
     rejectionComment:
-      submission.adminRejectionReason || submission.rejectionReason,
+      submission.adminRejectionReason ||
+      submission.dosenRejectionReason ||
+      submission.rejectionReason,
     statusHistory: submission.statusHistory,
     documentReviews: submission.documentReviews,
   };
