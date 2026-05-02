@@ -40,6 +40,7 @@ export interface DosenSuratPengantarRequestItem {
   submission_status?: string;
   companyName?: string;
   companyAddress?: string;
+  letterPurpose?: string;
   recipientName?: string;
   destination?: string;
   tujuanSurat?: string;

@@ -475,7 +475,7 @@ function SubmissionPage() {
           // Continue anyway - backend might handle this automatically
         } else {
           console.log("✅ Old document deleted successfully");
-          toast.success("Dokumen lama berhasil dihapus sebelum diganti");
+          toast.success("Dokumen lama berhasil dihapus");
         }
       }
 
@@ -528,14 +528,14 @@ function SubmissionPage() {
         const response =
           currentStatus === "DITOLAK" && latestRequestId
             ? await reapplySuratPermohonanApproval(
-                latestRequestId,
-                memberId,
-                mahasiswaEsignatureUrl,
-              )
+              latestRequestId,
+              memberId,
+              mahasiswaEsignatureUrl,
+            )
             : await requestSuratPermohonanApproval(
-                memberId,
-                mahasiswaEsignatureUrl,
-              );
+              memberId,
+              mahasiswaEsignatureUrl,
+            );
         if (response.success) {
           toast.success(
             currentStatus === "DITOLAK"

@@ -144,6 +144,7 @@ function resolveSuratPengantarTujuan(
   return (
     pickFirstNonEmptyString(
       item.tujuanSurat,
+      item.letterPurpose,
       item.recipientName,
       item.destination,
       item.targetName,

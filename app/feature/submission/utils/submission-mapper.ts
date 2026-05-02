@@ -109,21 +109,8 @@ function getPersonIdentity(value: unknown) {
 }
 
 function extractIdentityFromOriginalName(originalName?: string | null) {
-  const value = pickFirstNonEmptyString(originalName);
-  if (!value) return { name: "", nim: "" };
-
-  const namePart = value
-    .replace(/\.[^.]+$/, "")
-    .split("_")[0]
-    .replace(/[-]+/g, " ")
-    .trim();
-
-  const nimMatch = value.match(/(?:_|-)(\d{3,})(?:\.[^.]+)?$/);
-
-  return {
-    name: namePart,
-    nim: nimMatch?.[1] || "",
-  };
+  // ✅ DISABLED: Extraction from filename often causes incorrect data (e.g. system-generated filenames)
+  return { name: "", nim: "" };
 }
 
 /**
@@ -220,13 +207,11 @@ function resolveMemberIdentity(
     userIdentity.name,
     mahasiswaIdentity.name,
     flatIdentity.name,
-    docIdentity.name,
   );
   const nim = pickFirstNonEmptyString(
     userIdentity.nim,
     mahasiswaIdentity.nim,
     flatIdentity.nim,
-    docIdentity.nim,
   );
   const prodi = pickFirstNonEmptyString(
     userIdentity.prodi,
@@ -258,13 +243,10 @@ export function mapSubmissionToApplication(
   const fallbackMembers: Member[] = [];
   if (acceptedMembers.length === 0) {
     const uploadedDocs = submission.documents || [];
-    const firstDocIdentity = extractIdentityFromOriginalName(
-      uploadedDocs[0]?.originalName,
-    );
     fallbackMembers.push({
       id: `fallback-${submission.id}`,
-      name: firstDocIdentity.name || "Mahasiswa",
-      nim: firstDocIdentity.nim || "-",
+      name: "Mahasiswa",
+      nim: "-",
       role: "Ketua",
     });
   }
@@ -312,7 +294,6 @@ export function mapSubmissionToApplication(
       const uploaderName =
         doc.uploadedByUser?.name ||
         uploaderFromMembers?.name ||
-        extractIdentityFromOriginalName(doc.originalName).name ||
         "Mahasiswa";
 
       return mapSubmissionDocumentToDocumentFile(doc, uploaderName);
