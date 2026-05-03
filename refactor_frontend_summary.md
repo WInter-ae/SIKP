@@ -1,4 +1,4 @@
-# Refactor Frontend Summary: Internship Module (v2.8)
+# Refactor Frontend Summary: Internship Module (v2.9)
 
 Dokumen ini merangkum perubahan pada sisi frontend untuk menyelaraskan dengan refactoring backend **Internship Module v1.4** (Monitoring, Assessment, & Archiving).
 
@@ -41,6 +41,11 @@ Seluruh pemanggilan API telah dipindahkan dari rute berbasis identitas ke rute b
 - **Title Verification Refactor**: Migrasi penuh alur verifikasi judul ke `/api/reporting/title` dengan penanganan status yang lebih robust (DRAFT, SUBMITTED, APPROVED, REJECTED).
 - **Direct PDF Print**: Menambahkan tombol akses cepat untuk mencetak form nilai akhir yang digenerate oleh backend di halaman penilaian.
 
+### 7. Alur Verifikasi Mentor Lapangan (v2.9)
+- **Migrasi Aktor**: Verifikasi pengajuan mentor lapangan kini ditangani oleh **Dosen PA** (sebelumnya Admin).
+- **Domain-Based Integration**: Menggunakan endpoint baru `/api/mentorship/requests` untuk list, approve, dan reject.
+- **SSO Automation**: Alur approval kini otomatis memicu registrasi mentor ke sistem SSO backend tanpa perlu input ID manual dari frontend.
+
 ---
 
 ## 🛠️ Mapping Service yang Diperbarui
@@ -78,5 +83,5 @@ Seluruh pemanggilan API telah dipindahkan dari rute berbasis identitas ke rute b
 
 ---
 
-**Versi:** v2.8 — Split-Screen UI & Full Reporting Domain Integration
+**Versi:** v2.9 — New Mentor Verification Workflow (Dosen PA & SSO Integration)
 **Tanggal:** 2026-05-03

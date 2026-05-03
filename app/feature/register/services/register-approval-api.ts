@@ -68,16 +68,19 @@ export interface MentorEmailChangeRequestItem {
 type RawObj = Record<string, unknown>;
 
 const MENTOR_REQUEST_LIST_ENDPOINTS = [
+  "/api/mentorship/requests",
   "/api/dosen/pembimbing-lapangan/requests",
   "/api/dosen/mentor-registration-requests",
 ] as const;
 
 const MENTOR_REQUEST_APPROVE_ENDPOINTS = [
+  (id: string) => `/api/mentorship/requests/${id}/approve`,
   (id: string) => `/api/dosen/pembimbing-lapangan/${id}/approve`,
   (id: string) => `/api/dosen/mentor-registration-requests/${id}/approve`,
 ] as const;
 
 const MENTOR_REQUEST_REJECT_ENDPOINTS = [
+  (id: string) => `/api/mentorship/requests/${id}/reject`,
   (id: string) => `/api/dosen/pembimbing-lapangan/${id}/reject`,
   (id: string) => `/api/dosen/mentor-registration-requests/${id}/reject`,
 ] as const;

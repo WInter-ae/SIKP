@@ -207,4 +207,24 @@ Berdasarkan audit terakhir, beberapa fitur frontend masih bersifat **Mock/Discon
 ---
 
 **Kontak Backend**: Tim Lead Backend.
-**Status Dokumentasi**: v1.4.1 — Added Integration Audit Checklist.
+**Status Dokumentasi**: v1.4.2 — Added Mentor Verification Workflow (Dosen PA).
+
+## 8. Alur Verifikasi Mentor Baru (Dosen PA & SSO)
+
+Berdasarkan instruksi terbaru dari tim SSO, alur verifikasi mentor telah diubah dari Admin ke **Dosen PA** dengan integrasi SSO otomatis.
+
+### Perubahan Utama:
+*   **Aktor**: Verifikasi dilakukan oleh **Dosen PA** (Bukan Admin lagi).
+*   **Endpoint Baru**:
+    *   `GET /api/mentorship/requests` (Dosen melihat pengajuan anak bimbingannya).
+    *   `POST /api/mentorship/requests/:id/approve` (Dosen menyetujui - otomatis mendaftarkan ke SSO).
+    *   `POST /api/mentorship/requests/:id/reject` (Dosen menolak).
+*   **Tanpa Payload Tambahan**: Saat `approve`, frontend **tidak perlu** mengirim `mentorProfileId`. Backend akan otomatis memanggil `POST /mentor` ke SSO dan menyimpan hasilnya.
+
+### Checklist Implementasi Frontend:
+- [ ] Ubah menu "Verifikasi Mentor" agar muncul di dashboard **Dosen** (khusus Dosen PA).
+- [ ] Pastikan UI approval hanya membutuhkan konfirmasi (tanpa input ID manual).
+- [ ] Tampilkan detail mentor yang diinput mahasiswa (Nama, Instansi, Email) agar Dosen bisa melakukan review sebelum klik Approve.
+
+> [!IMPORTANT]
+> Sistem SSO kini bertindak sebagai **Identity Provider**. Jangan menyimpan password mentor secara lokal. Gunakan `mentorId` dari SSO untuk semua interaksi data mentor.
