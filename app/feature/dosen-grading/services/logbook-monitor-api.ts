@@ -33,6 +33,7 @@ export interface DosenLogbookMonitorByStudentItem {
 type RawObject = Record<string, unknown>;
 
 const LIST_ENDPOINTS = [
+  "/api/mentorship/logbook-monitor",
   "/api/internship-monitoring/mentees",
   "/api/internship-monitoring/logbook", // Fallback for backward compatibility
 ] as const;

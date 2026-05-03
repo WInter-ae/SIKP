@@ -28,28 +28,9 @@ export function StudentGradingCard({
   onViewDetail,
 }: StudentGradingCardProps) {
   const { student, gradingStatus, summary, revisionStatus } = studentInfo;
-  const [hasGraded, setHasGraded] = useState(false);
+  const [hasGraded, setHasGraded] = useState(gradingStatus === "graded");
 
-  // Check if student has been graded by checking localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const nilaiKey = `nilai-kp-${student.studentId}`;
-      const savedNilai = localStorage.getItem(nilaiKey);
-
-      if (savedNilai) {
-        try {
-          const nilaiData = JSON.parse(savedNilai);
-          // Check if nilai has valid data (has tanggalPenilaian)
-          if (nilaiData.tanggalPenilaian) {
-            setHasGraded(true);
-          }
-        } catch (e) {
-          console.error("Error parsing nilai data:", e);
-        }
-      }
-    }
-  }, [student.studentId]);
-
+  // Status badge logic
   const getStatusBadge = () => {
     switch (gradingStatus) {
       case "graded":

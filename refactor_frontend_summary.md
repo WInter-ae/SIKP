@@ -1,4 +1,4 @@
-# Refactor Frontend Summary: Internship Module (v2.9)
+# Refactor Frontend Summary - Internship Module v1.4.2 (v2.10)
 
 Dokumen ini merangkum perubahan pada sisi frontend untuk menyelaraskan dengan refactoring backend **Internship Module v1.4** (Monitoring, Assessment, & Archiving).
 
@@ -45,6 +45,13 @@ Seluruh pemanggilan API telah dipindahkan dari rute berbasis identitas ke rute b
 - **Migrasi Aktor**: Verifikasi pengajuan mentor lapangan kini ditangani oleh **Dosen PA** (sebelumnya Admin).
 - **Domain-Based Integration**: Menggunakan endpoint baru `/api/mentorship/requests` untuk list, approve, dan reject.
 - **SSO Automation**: Alur approval kini otomatis memicu registrasi mentor ke sistem SSO backend tanpa perlu input ID manual dari frontend.
+
+### ✅ Phase 4: Bug Fixes & Refinement (v2.10)
+1.  **Correct ID Resolution**: Fixed `GiveGradePage.tsx` to correctly use `internshipId` (from mentee list) for reporting and evaluation API calls, instead of route `id` (which could be studentId/NIM).
+2.  **Revision Review Cleanup**: Removed duplicate `setLaporan` logic and fixed syntax errors in `RevisionReviewSection.tsx`.
+3.  **Weighted Grading**: Implemented 30/30/30/10 weighted score calculation in `GiveGradePage.tsx` to match frontend form logic and backend expectations.
+4.  **LocalStorage Final Sweep**: Removed remaining auto-save logic in `GradingForm.tsx` and history persistence in `RevisionReviewSection.tsx`.
+5.  **Student Detail Real Data**: Refactored `StudentGradeDetailPage.tsx` to use `getAssessmentRecap` instead of mock data.
 
 ---
 

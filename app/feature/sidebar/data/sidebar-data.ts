@@ -202,7 +202,7 @@ const dosenMenu: NavItem[] = [
         url: "/dosen/kp/verifikasi-surat",
       },
       {
-        title: "Persetujuan Pembimbing",
+        title: "Verifikasi Mentor",
         url: "/dosen/kp/persetujuan-pembimbing",
       },
       {

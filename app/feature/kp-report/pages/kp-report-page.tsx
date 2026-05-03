@@ -69,9 +69,16 @@ export default function KPReportPage() {
             // Fetch real title status
             const titleRes = await getTitleStatus(internshipId);
             if (titleRes.success && titleRes.data) {
+              const backendStatus = titleRes.data.status;
+              let frontendStatus: any = "draft";
+              
+              if (backendStatus === "SUBMITTED") frontendStatus = "diajukan";
+              else if (backendStatus === "APPROVED") frontendStatus = "disetujui";
+              else if (backendStatus === "REJECTED") frontendStatus = "ditolak";
+
               setReportData({
                 judul: titleRes.data.title,
-                statusJudul: titleRes.data.status.toLowerCase() as any,
+                statusJudul: frontendStatus,
                 dosenPembimbing: response.data.lecturer?.id,
                 tanggalPengajuan: titleRes.data.submittedAt,
               });
@@ -80,11 +87,18 @@ export default function KPReportPage() {
             // Fetch real report status
             const reportRes = await getReportStatus(internshipId);
             if (reportRes.success && reportRes.data) {
+              const backendStatus = reportRes.data.status;
+              let frontendStatus: any = "draft";
+
+              if (backendStatus === "SUBMITTED") frontendStatus = "disubmit";
+              else if (backendStatus === "APPROVED") frontendStatus = "disetujui";
+              else if (backendStatus === "REJECTED") frontendStatus = "revisi"; // Mapping REJECTED to revisi for reports
+
               setCurrentReport({
                 namaFile: reportRes.data.fileName,
                 tanggalUpload: new Date(reportRes.data.uploadedAt).toLocaleDateString("id-ID"),
                 ukuranFile: `${(reportRes.data.fileSize / (1024 * 1024)).toFixed(2)} MB`,
-                status: reportRes.data.status.toLowerCase() as any,
+                status: frontendStatus,
               });
             }
           }

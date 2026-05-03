@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import {
   ArrowLeft,
@@ -13,17 +14,45 @@ import { Badge } from "~/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
 import { GradeSection } from "~/feature/evaluation/components/grade-section";
-import { MOCK_STUDENTS_FOR_GRADING } from "../data/mock-students";
+import { getAssessmentRecap } from "~/feature/evaluation/services/evaluation-api";
+import type { StudentEvaluation } from "~/feature/evaluation/types";
+import { toast } from "sonner";
 
 export default function StudentGradeDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [evaluation, setEvaluation] = useState<StudentEvaluation | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const studentInfo = MOCK_STUDENTS_FOR_GRADING.find(
-    (s) => s.student.id === id,
-  );
+  useEffect(() => {
+    async function loadEvaluation() {
+      if (!id) return;
+      setIsLoading(true);
+      try {
+        const res = await getAssessmentRecap(id);
+        if (res.success && res.data) {
+          setEvaluation(res.data);
+        } else {
+          toast.error(res.message || "Gagal memuat detail penilaian");
+        }
+      } catch (error) {
+        toast.error("Terjadi kesalahan saat memuat data");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadEvaluation();
+  }, [id]);
 
-  if (!studentInfo || studentInfo.gradingStatus !== "graded") {
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!evaluation) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md w-full">
@@ -48,11 +77,11 @@ export default function StudentGradeDetailPage() {
   const {
     student,
     fieldSupervisorGrades,
-    academicGrades,
+    academicSupervisorGrades: academicGrades,
     summary,
     notes,
-    gradedAt,
-  } = studentInfo;
+    evaluatedAt: gradedAt,
+  } = evaluation;
 
   const getGradeBadgeColor = (grade: string) => {
     switch (grade) {
@@ -205,7 +234,7 @@ export default function StudentGradeDetailPage() {
                   <span>Pembimbing Lapangan</span>
                 </div>
                 <p className="font-semibold text-gray-900">
-                  {student.fieldSupervisor}
+                  {student.supervisor}
                 </p>
               </div>
 

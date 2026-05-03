@@ -20,43 +20,60 @@ import {
 } from "~/components/ui/select";
 import { Button } from "~/components/ui/button";
 import { StudentGradingCard } from "../components/student-grading-card";
-import { MOCK_STUDENTS_FOR_GRADING } from "../data/mock-students";
+import type { StudentGradingInfo, GradingStatus } from "../types";
+import { getDosenLogbookMonitorItems } from "../services/logbook-monitor-api";
+import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 6;
 
 export default function DosenGradingListPage() {
   const navigate = useNavigate();
 
-  const [students, setStudents] = useState(MOCK_STUDENTS_FOR_GRADING);
+  const [students, setStudents] = useState<StudentGradingInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [revisionFilter, setRevisionFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Load students who have uploaded laporan from localStorage
+  // Load real data from API
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedLaporan = localStorage.getItem("laporan-kp");
-
-      if (savedLaporan) {
-        const laporanData = JSON.parse(savedLaporan);
-
-        // Only show students who have uploaded laporan
-        if (laporanData.fileName && laporanData.status !== "belum_upload") {
-          // Filter students to only show those who uploaded
-          const studentsWithLaporan = MOCK_STUDENTS_FOR_GRADING.filter(
-            (s) => s.student.id === "std-001", // Match with uploaded laporan's student
-          );
-          setStudents(studentsWithLaporan);
+    async function loadMentees() {
+      setIsLoading(true);
+      try {
+        const response = await getDosenLogbookMonitorItems();
+        if (response.success && response.data) {
+          // Map DosenLogbookMonitorItem to StudentGradingInfo
+          const mapped: StudentGradingInfo[] = response.data.map(item => ({
+            student: {
+              id: item.studentId || item.id,
+              name: item.studentName,
+              studentId: item.nim,
+              photo: "", // Optional in real API
+              company: item.company,
+              fieldSupervisor: item.mentorName || "Belum ditentukan",
+              internPeriod: {
+                start: item.date, // Using available date as fallback
+                end: item.date,
+              },
+            },
+            // Logic to determine status (mock logic if backend doesn't provide grading status yet)
+            gradingStatus: item.status === "APPROVED" ? "not-graded" as GradingStatus : "pending" as GradingStatus,
+            revisionStatus: "belum-direvisi",
+          }));
+          setStudents(mapped);
         } else {
-          // No laporan uploaded yet, show empty list
-          setStudents([]);
+          toast.error(response.message || "Gagal memuat data mahasiswa bimbingan");
         }
-      } else {
-        // No laporan data, show empty list
-        setStudents([]);
+      } catch (error) {
+        console.error("Error loading mentees:", error);
+        toast.error("Terjadi kesalahan sistem saat memuat data");
+      } finally {
+        setIsLoading(false);
       }
     }
+
+    loadMentees();
   }, []);
 
   // Filter students based on search and status

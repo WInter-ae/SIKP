@@ -32,8 +32,8 @@ export default function GiveGradePage() {
   const [activeTab, setActiveTab] = useState("revisi");
   const [allRevisionsApproved, setAllRevisionsApproved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [menteeData, setMenteeData] = useState<any>(null);
-  const [reportInfo, setReportInfo] = useState<any>(null);
+  const [menteeData, setMenteeData] = useState<any>(null); // DosenLogbookMonitorItem
+  const [reportInfo, setReportInfo] = useState<any>(null); // ReportSubmission
   const [internshipId, setInternshipId] = useState<string | null>(null);
 
   // Load mentee data and report status
@@ -45,17 +45,17 @@ export default function GiveGradePage() {
         // 1. Get student from mentees list
         const menteesRes = await getDosenLogbookMonitorItems();
         if (menteesRes.success && menteesRes.data) {
-          const found = menteesRes.data.find(m => m.studentId === id || m.nim === id);
+          // id can be UUID (studentId), NIM, or internshipId
+          const found = menteesRes.data.find(m => m.studentId === id || m.nim === id || m.id === id);
           if (found) {
             setMenteeData(found);
+            const iid = found.id;
+            setInternshipId(iid);
             
-            // 2. We need the internshipId. If not in monitoring, try title status
-            const titleRes = await getTitleStatus(id); 
+            // 2. Get title status using internshipId
+            const titleRes = await getTitleStatus(iid); 
             if (titleRes.success && titleRes.data) {
-              const iid = titleRes.data.internshipId;
-              setInternshipId(iid);
-              
-              // 3. Get report status for PDF view
+              // 3. Get report status using internshipId
               const reportRes = await getReportStatus(iid);
               if (reportRes.success && reportRes.data) {
                 setReportInfo(reportRes.data);
@@ -72,10 +72,6 @@ export default function GiveGradePage() {
     }
 
     loadData();
-    
-    // Check if revision is already approved via business logic
-    // (In real app, this comes from the API)
-    setAllRevisionsApproved(true); // Default to true for now to allow grading if data exists
   }, [id]);
 
   if (isLoading) {
@@ -118,12 +114,15 @@ export default function GiveGradePage() {
 
     setIsSubmitting(true);
     try {
-      // 70% component (Academic Supervisor Grade)
-      // We calculate a single score as requested by the v1.4 contract
-      const finalAcademicScore = (data.reportFormat + data.materialMastery + data.analysisDesign + data.attitudeEthics) / 4;
+      // Calculate weighted score (Standard Flow: 30% + 30% + 30% + 10%)
+      const finalAcademicScore = 
+        data.reportFormat * 0.3 + 
+        data.materialMastery * 0.3 + 
+        data.analysisDesign * 0.3 + 
+        data.attitudeEthics * 0.1;
 
       const response = await submitFinalScore({
-        internshipId: internshipId,
+        studentId: menteeData.studentId || id!,
         score: finalAcademicScore,
         feedback: data.notes
       });
@@ -243,6 +242,7 @@ export default function GiveGradePage() {
               <RevisionReviewSection
                 studentId={id!}
                 onAllRevisionsApproved={setAllRevisionsApproved}
+                reportInfo={reportInfo}
               />
             </TabsContent>
 

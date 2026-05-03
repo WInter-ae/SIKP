@@ -451,7 +451,7 @@ export async function getAdminEvaluationByStudentId(
  * POST /api/reporting/score-fast
  */
 export async function submitFinalScore(data: {
-  internshipId: string;
+  studentId: string;
   score: number;
   feedback?: string;
 }): Promise<ApiResponse<null>> {

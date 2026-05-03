@@ -71,24 +71,23 @@ Silakan perbarui seluruh URL fetch di frontend mengikuti tabel di bawah ini:
 | Beri Penilaian | POST | `/api/mentor/assessment` | `/api/mentorship/assessments` |
 | Lihat Penilaian | GET | `/api/mentor/assessment/:id` | `/api/mentorship/assessments/:studentId` |
 | Update Penilaian | PUT | `/api/mentor/assessment/:id` | `/api/mentorship/assessments/:assessmentId` |
+| **VERIFIKASI MENTOR (Dosen PA / Staff)** | | | |
+| Lihat Daftar Pengajuan | GET | `/api/admin/mentorship/requests` | `/api/mentorship/requests` |
+| Approve Pengajuan | POST | `/api/admin/mentorship/approve` | `/api/mentorship/requests/:id/approve` |
+| Tolak Pengajuan | POST | `/api/admin/mentorship/reject` | `/api/mentorship/requests/:id/reject` |
 
-> [!WARNING]
-> Perhatikan URL `/approve-all` — rute lama (`/api/mentor/logbook/:id/approve-all`) **salah** dan sudah tidak ada. Rute yang benar adalah `/api/mentorship/mentees/:studentId/approve-all`.
-
-### C. Fitur Monitoring (Dosen Pembimbing)
+### C. Fitur Monitoring & Verifikasi (Dosen PA / Pembimbing)
 | Fitur | Method | Rute LAMA | Rute BARU |
 | :--- | :--- | :--- | :--- |
 | Daftar Mentees (Progres) | GET | `/api/dosen/internship/list` | `/api/internship-monitoring/mentees` |
 | Detail Logbook Mentee | GET | `/api/dosen/internship/logbook/:id` | `/api/internship-monitoring/mentees/:studentId/logbooks` |
 | Cek Mentees Inaktif | GET | *(Baru)* | `/api/internship-monitoring/inactive` |
+| **Logbook Monitor (Global)** | GET | *(Baru)* | `/api/mentorship/logbook-monitor` |
 
 ### D. Fitur Pelaksanaan Magang (Mahasiswa)
 | Fitur | Method | Rute LAMA | Rute BARU |
 | :--- | :--- | :--- | :--- |
 | Info Magang Aktif | GET | `/api/mahasiswa/internship` | `/api/internships` |
-
-> [!IMPORTANT]
-> Rute info magang adalah **`GET /api/internships`** (tanpa suffix `/active`). Endpoint ini sudah mengembalikan data magang aktif milik mahasiswa yang sedang login.
 
 ### E. Fitur Pelaporan & Penilaian (Mahasiswa & Dosen)
 | Fitur | Method | Rute LAMA | Rute BARU |
@@ -125,7 +124,7 @@ Silakan perbarui seluruh URL fetch di frontend mengikuti tabel di bawah ini:
 
 ## 4. Perubahan Struktur Response (Penting!)
 
-Backend sekarang menggunakan pola **Clean Response**. Pastikan pengecekan status di frontend lebih ketat.
+Backend sekarang menggunakan pola **Clean Response**. Seluruh response sukses maupun error sudah seragam.
 
 ### Contoh Response Sukses (200 OK)
 ```json
@@ -151,80 +150,41 @@ Backend sekarang menggunakan pola **Clean Response**. Pastikan pengecekan status
 - **Field name**: `file`
 - **Max Size**: 2MB
 - **Allowed Types**: `image/jpeg`, `image/png`, `image/webp`
-- **Error Code**: `400 Bad Request` jika tidak memenuhi syarat
 
 ### Tanda Tangan Mentor (`POST /api/mentorship/profile/signature`)
 - **Field name**: `file`
 - **Max Size**: 2MB
 - **Allowed Types**: `image/jpeg`, `image/png`
-- **Error Code**: `400 Bad Request` jika format file tidak valid
 
 > [!TIP]
-> URL foto/tanda tangan yang dikembalikan backend sudah merupakan **Proxy URL** internal (`/api/assets/r2/...`), bukan URL R2 publik langsung. Cukup gunakan URL tersebut sebagai `src` pada `<img>` tag.
+> URL foto/tanda tangan yang dikembalikan backend sudah merupakan **Proxy URL** internal (`/api/assets/r2/...`). Cukup gunakan URL tersebut sebagai `src` pada `<img>` tag.
 
 ---
 
 ## 6. Tanya Jawab (FAQ) - Tim Frontend
 
 **Q: HTTP Client mana yang harus dipakai untuk endpoint magang?**
-**A**: Gunakan `internshipClient` (bukan `iget`/`iput`/`ipost`). Pastikan client ini sudah dikonfigurasi dengan `baseURL` yang mengarah ke backend magang.
-
-**Q: Konfirmasi Port Lokal?**
-**A**: Ya, benar. Worker backend berjalan di port **8789** saat development lokal (`wrangler dev`).
+**A**: Gunakan `internshipClient` (bukan `iget`/`iput`/`ipost`).
 
 **Q: Apakah rute akan digabung di belakang API Gateway?**
-**A**: Seluruh rute (`/api/auth`, `/api/logbooks`, `/api/mentorship`, dll) saat ini sudah berada dalam **satu worker (Monolith)**. Cukup satu variabel `VITE_API_BASE_URL=http://localhost:8789`.
-
-**Q: Bagaimana dengan konfigurasi CORS?**
-**A**: Backend sudah dikonfigurasi untuk menerima request dari semua origin (`*`) di lingkungan dev, termasuk port frontend Anda.
-
-**Q: Apa URL Production-nya?**
-**A**: URL Production resmi adalah `https://backend-sikp.backend-sikp.workers.dev`.
-
-## 7. Checklist Audit Integrasi (PENTING)
-
-Berdasarkan audit terakhir, beberapa fitur frontend masih bersifat **Mock/Disconnected**. Tim Frontend **WAJIB** melakukan update pada bagian berikut:
-
-### 1. Pelaporan Mahasiswa (`KPReportPage`)
-- [ ] **Ganti Mock Handler**: `handleTitleSubmit` dan `handleReportUpload` harus memanggil API asli, bukan sekadar menampilkan toast sukses.
-- [ ] **Update Endpoint**: Pastikan `reporting-api.ts` menggunakan prefix `/api/reporting/...` (bukan `/api/report/...`).
-- [ ] **Status Mapping**: Mapping status dari backend (`APPROVED`, `SUBMITTED`) ke UI harus konsisten (lowercase vs uppercase).
-
-### 2. Verifikasi Judul Dosen (`LecturerTitleVerificationPage`)
-- [ ] **Hapus Fallback Legacy**: Hapus rute lama seperti `/api/dosen/kp/verifikasi-judul` di `title-verification-api.ts`.
-- [ ] **Gunakan Endpoint Baru**: Gunakan `POST /api/reporting/title/:id/approve` untuk persetujuan judul.
-
-### 3. Penilaian Dosen (`GiveGradePage`)
-- [ ] **Hapus LocalStorage**: Fitur penilaian **TIDAK BOLEH** menyimpan hasil nilai ke `localStorage`. 
-- [ ] **Integrasi API**: Gunakan `POST /api/reporting/score-fast` untuk mengirimkan nilai akhir (70%) ke backend.
-- [ ] **Hapus Mock Data**: Hapus penggunaan `MOCK_STUDENTS_FOR_GRADING` dan gunakan data asli dari `GET /api/internship-monitoring/mentees`.
-- [ ] **UI Penilaian & Laporan**: Implementasikan tampilan **Split-Screen** atau **Side-by-Side**. Dosen harus bisa membaca file laporan (PDF Viewer) sambil mengisi form nilai di layar yang sama agar alur Fast Track efisien.
-
-### 4. Modul Arsip
-- [ ] **Data Mapping**: Gunakan field `finalGrade` untuk menampilkan huruf nilai (A/B/C/D).
-- [ ] **Response Format**: Endpoint `/api/archive/student` sekarang mengembalikan **Array langsung** (bukan object `{ internships: [] }`). Pastikan `.filter()` dipanggil langsung pada `res.data`.
+**A**: Seluruh rute saat ini sudah berada dalam **satu worker (Monolith)**. Cukup satu variabel `VITE_API_BASE_URL=http://localhost:8789`.
 
 ---
 
-**Kontak Backend**: Tim Lead Backend.
-**Status Dokumentasi**: v1.4.2 — Added Mentor Verification Workflow (Dosen PA).
+## 7. Checklist Audit Integrasi (v1.4.2)
 
-## 8. Alur Verifikasi Mentor Baru (Dosen PA & SSO)
+### 1. Pelaporan Mahasiswa (`KPReportPage`)
+- [ ] **Update Endpoint**: Pastikan menggunakan prefix `/api/reporting/...`.
 
-Berdasarkan instruksi terbaru dari tim SSO, alur verifikasi mentor telah diubah dari Admin ke **Dosen PA** dengan integrasi SSO otomatis.
+### 2. Verifikasi Mentor (Dosen PA Dashboard)
+- [ ] **Migrasi UI**: Pindahkan menu "Verifikasi Mentor" dari Admin ke Dashboard Dosen (untuk Dosen PA).
+- [ ] **Alur Approval**: Gunakan `POST /api/mentorship/requests/:id/approve` tanpa payload `mentorProfileId`.
+- [ ] **Detail Review**: Tampilkan Nama, Email, dan Instansi mentor yang diajukan mahasiswa.
 
-### Perubahan Utama:
-*   **Aktor**: Verifikasi dilakukan oleh **Dosen PA** (Bukan Admin lagi).
-*   **Endpoint Baru**:
-    *   `GET /api/mentorship/requests` (Dosen melihat pengajuan anak bimbingannya).
-    *   `POST /api/mentorship/requests/:id/approve` (Dosen menyetujui - otomatis mendaftarkan ke SSO).
-    *   `POST /api/mentorship/requests/:id/reject` (Dosen menolak).
-*   **Tanpa Payload Tambahan**: Saat `approve`, frontend **tidak perlu** mengirim `mentorProfileId`. Backend akan otomatis memanggil `POST /mentor` ke SSO dan menyimpan hasilnya.
+### 3. Penilaian Dosen (`GiveGradePage`)
+- [ ] **Integrasi API**: Gunakan `POST /api/reporting/score-fast`.
+- [ ] **Split-Screen**: Implementasikan PDF Viewer laporan di samping form penilaian.
 
-### Checklist Implementasi Frontend:
-- [ ] Ubah menu "Verifikasi Mentor" agar muncul di dashboard **Dosen** (khusus Dosen PA).
-- [ ] Pastikan UI approval hanya membutuhkan konfirmasi (tanpa input ID manual).
-- [ ] Tampilkan detail mentor yang diinput mahasiswa (Nama, Instansi, Email) agar Dosen bisa melakukan review sebelum klik Approve.
+---
 
-> [!IMPORTANT]
-> Sistem SSO kini bertindak sebagai **Identity Provider**. Jangan menyimpan password mentor secara lokal. Gunakan `mentorId` dari SSO untuk semua interaksi data mentor.
+**Status Dokumentasi**: v1.4.2 — Migrated Mentor Approval to Dosen PA & Automated SSO Registration.

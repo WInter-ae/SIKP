@@ -5,7 +5,7 @@ info:
   description: Dokumentasi lengkap API untuk tahap pelaksanaan magang (Execution Phase) hasil refactor ke Service-Based Architecture. Mencakup Logbook, Mentorship, Monitoring, Penilaian, Pelaporan, dan Arsip.
 
 servers:
-  - url: http://localhost:8787
+  - url: http://localhost:8789
     description: Local Development Server
   - url: https://api-sikp.university.ac.id
     description: Production Server
@@ -217,6 +217,58 @@ paths:
           description: Submitted
 
   # ─── MENTORSHIP (Pembimbing Lapangan) ──────────────────────────────────────
+  /api/mentorship/requests:
+    post:
+      tags: [Mentorship]
+      summary: (Mahasiswa) Mengajukan pembimbing lapangan baru
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mentorName, mentorEmail]
+              properties:
+                mentorName: { type: string }
+                mentorEmail: { type: string }
+                mentorPhone: { type: string }
+                companyName: { type: string }
+                position: { type: string }
+    get:
+      tags: [Mentorship]
+      summary: (Dosen PA) Melihat daftar pengajuan mentor anak bimbingan
+      security: [{ bearerAuth: [] }]
+
+  /api/mentorship/requests/{id}/approve:
+    post:
+      tags: [Mentorship]
+      summary: (Dosen PA) Menyetujui pengajuan mentor (Otomatis daftar ke SSO)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      security: [{ bearerAuth: [] }]
+
+  /api/mentorship/requests/{id}/reject:
+    post:
+      tags: [Mentorship]
+      summary: (Dosen PA) Menolak pengajuan mentor
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string }
+      security: [{ bearerAuth: [] }]
+
   /api/mentorship/profile:
     get:
       tags: [Mentorship]
@@ -497,19 +549,114 @@ paths:
             application/pdf:
               schema: { type: string, format: binary }
 
+  # ─── ADMIN (Manajemen Pengajuan & Dashboard) ──────────────────────────────
+  /api/admin/dashboard:
+    get:
+      tags: [Admin]
+      summary: Mendapatkan data ringkasan dashboard admin
+      security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: OK
+
+  /api/admin/submissions:
+    get:
+      tags: [Admin]
+      summary: Mendapatkan daftar seluruh pengajuan surat mahasiswa
+      security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: OK
+
+  /api/admin/submissions/{submissionId}:
+    get:
+      tags: [Admin]
+      summary: Mendapatkan detail pengajuan surat tertentu
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema: { type: string }
+      security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: OK
+
+  /api/admin/submissions/{submissionId}/approve:
+    post:
+      tags: [Admin]
+      summary: Menyetujui pengajuan surat (Verifikasi Dokumen)
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema: { type: string }
+      security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: Approved
+
+  /api/admin/submissions/{submissionId}/reject:
+    post:
+      tags: [Admin]
+      summary: Menolak pengajuan surat dengan alasan
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema: { type: string }
+      security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: Rejected
+
+  /api/admin/submissions/{submissionId}/generate-letter:
+    post:
+      tags: [Admin]
+      summary: Membuat file surat (PDF/DOCX) setelah pengajuan disetujui
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema: { type: string }
+      security: [{ bearerAuth: [] }]
+      responses:
+        201:
+          description: Letter Generated
+
+  /api/admin/statistics:
+    get:
+      tags: [Admin]
+      summary: Mendapatkan statistik performa pengolahan surat
+      security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: OK
+
   # ─── ARCHIVE (Riwayat & Pengarsipan) ───────────────────────────────────────
   /api/archive/student:
     get:
       tags: [Archive]
       summary: Mendapatkan riwayat pengajuan dan pelaksanaan mahasiswa (Selesai/Batal)
       security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: OK
 
   /api/archive/admin/internships:
     get:
       tags: [Archive]
       summary: (Admin) Daftar seluruh pelaksanaan magang yang sudah selesai/diarsipkan
+      security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: OK
 
   /api/archive/admin/submissions:
     get:
       tags: [Archive]
       summary: (Admin) Daftar seluruh pengajuan surat yang sudah selesai/diarsipkan
+      security: [{ bearerAuth: [] }]
+      responses:
+        200:
+          description: OK

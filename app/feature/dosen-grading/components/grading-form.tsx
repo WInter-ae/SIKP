@@ -33,17 +33,6 @@ export function GradingForm({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Auto-save to localStorage when form data changes
-  useEffect(() => {
-    if (!id) return;
-
-    const timer = setTimeout(() => {
-      localStorage.setItem(`grading-draft-${id}`, JSON.stringify(formData));
-    }, 500); // Debounce 500ms
-
-    return () => clearTimeout(timer);
-  }, [formData, id]);
-
   const handleInputChange = (
     field: keyof GradingFormData,
     value: number | string,
@@ -83,10 +72,6 @@ export function GradingForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
-      // Clear draft from localStorage after successful submission
-      if (id) {
-        localStorage.removeItem(`grading-draft-${id}`);
-      }
       onSubmit(formData);
     }
   };
