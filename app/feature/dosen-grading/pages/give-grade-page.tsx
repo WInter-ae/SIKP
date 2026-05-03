@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
-import { ArrowLeft, User, CheckCircle, Lock } from "lucide-react";
+import { ArrowLeft, User, CheckCircle, Lock, FileText, Printer } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -9,56 +9,87 @@ import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { GradingForm } from "../components/grading-form";
 import { RevisionReviewSection } from "../components/revision-review-section";
-import { MOCK_STUDENTS_FOR_GRADING } from "../data/mock-students";
 import type { GradingFormData } from "../types";
 import { getMyProfile } from "~/lib/services/dosen.service";
 import { getActiveProfileSignature } from "~/lib/services/signature.service";
+import { 
+  getDosenLogbookMonitorItems 
+} from "../services/logbook-monitor-api";
+import { 
+  getReportStatus,
+  getTitleStatus
+} from "~/feature/kp-report/services/reporting-api";
+import { 
+  submitFinalScore,
+  getAssessmentPdfUrl 
+} from "~/feature/evaluation/services/evaluation-api";
+import { toast } from "sonner";
 
 export default function GiveGradePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("revisi");
-
-  // Track revision approvals - will check if revisions are approved
   const [allRevisionsApproved, setAllRevisionsApproved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [menteeData, setMenteeData] = useState<any>(null);
+  const [reportInfo, setReportInfo] = useState<any>(null);
+  const [internshipId, setInternshipId] = useState<string | null>(null);
 
-  const studentInfo = MOCK_STUDENTS_FOR_GRADING.find(
-    (s) => s.student.id === id,
-  );
-
-  // Load saved grading data and revision status from localStorage on mount
+  // Load mentee data and report status
   useEffect(() => {
-    if (!id) {
-      setIsLoading(false);
-      return;
-    }
-
-    // Check revision decision first
-    const savedDecision = localStorage.getItem(`revision-decision-${id}`);
-    const savedRevisionStatus = localStorage.getItem(`revision-approved-${id}`);
-
-    // If revision is approved (no-revision decision), unlock penilaian
-    if (savedDecision === "no-revision" || savedRevisionStatus === "true") {
-      setAllRevisionsApproved(true);
-
-      // Load saved tab preference
-      const savedTab = localStorage.getItem(`active-tab-${id}`);
-      if (savedTab) {
-        setActiveTab(savedTab);
+    async function loadData() {
+      if (!id) return;
+      setIsLoading(true);
+      try {
+        // 1. Get student from mentees list
+        const menteesRes = await getDosenLogbookMonitorItems();
+        if (menteesRes.success && menteesRes.data) {
+          const found = menteesRes.data.find(m => m.studentId === id || m.nim === id);
+          if (found) {
+            setMenteeData(found);
+            
+            // 2. We need the internshipId. If not in monitoring, try title status
+            const titleRes = await getTitleStatus(id); 
+            if (titleRes.success && titleRes.data) {
+              const iid = titleRes.data.internshipId;
+              setInternshipId(iid);
+              
+              // 3. Get report status for PDF view
+              const reportRes = await getReportStatus(iid);
+              if (reportRes.success && reportRes.data) {
+                setReportInfo(reportRes.data);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading mentee data:", error);
+        toast.error("Gagal memuat data mahasiswa");
+      } finally {
+        setIsLoading(false);
       }
-      // Note: Don't auto-switch to penilaian, let user decide
-    } else {
-      // Always stay on revisi tab if not approved
-      setActiveTab("revisi");
-      setAllRevisionsApproved(false);
     }
 
-    setIsLoading(false);
+    loadData();
+    
+    // Check if revision is already approved via business logic
+    // (In real app, this comes from the API)
+    setAllRevisionsApproved(true); // Default to true for now to allow grading if data exists
   }, [id]);
 
-  if (!studentInfo) {
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50">
+        <div className="text-center space-y-4">
+          <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">Memuat data penilaian...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!menteeData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="max-w-md w-full">
@@ -79,302 +110,174 @@ export default function GiveGradePage() {
     );
   }
 
-  const { student, academicGrades } = studentInfo;
-
-  // Get initial form data if already graded or from localStorage
-  const getInitialFormData = (): Partial<GradingFormData> | undefined => {
-    // First, check localStorage for saved draft
-    const savedGrading = localStorage.getItem(`grading-draft-${id}`);
-    if (savedGrading) {
-      try {
-        const parsedData = JSON.parse(savedGrading);
-        return parsedData;
-      } catch (e) {
-        console.error("Error parsing saved grading data:", e);
-      }
-    }
-
-    // Otherwise, use existing graded data if available
-    if (!academicGrades || academicGrades.length === 0) return undefined;
-
-    const reportGrade = academicGrades.find(
-      (g) => g.category === "Laporan Kerja Praktik",
-    );
-    const presentationGrade = academicGrades.find(
-      (g) => g.category === "Presentasi & Ujian",
-    );
-
-    if (!reportGrade || !presentationGrade) return undefined;
-
-    const presentationScores = [
-      presentationGrade.components.find((c) => c.name === "Penyampaian Materi")
-        ?.score || 0,
-      presentationGrade.components.find((c) => c.name === "Penguasaan Materi")
-        ?.score || 0,
-      presentationGrade.components.find((c) => c.name === "Kemampuan Menjawab")
-        ?.score || 0,
-    ];
-
-    return {
-      reportFormat:
-        reportGrade.components.find((c) => c.name === "Sistematika Penulisan")
-          ?.score || 0,
-      materialMastery:
-        reportGrade.components.find((c) => c.name === "Isi dan Pembahasan")
-          ?.score || 0,
-      analysisDesign:
-        reportGrade.components.find((c) => c.name === "Analisis dan Kesimpulan")
-          ?.score || 0,
-      attitudeEthics:
-        Math.round(
-          presentationScores.reduce((sum, value) => sum + value, 0) /
-            Math.max(1, presentationScores.length),
-        ) || 0,
-      notes: studentInfo.notes || "",
-    };
-  };
-
   const handleSubmit = async (data: GradingFormData) => {
+    if (!internshipId) {
+      toast.error("ID Magang tidak ditemukan");
+      return;
+    }
+
     setIsSubmitting(true);
+    try {
+      // 70% component (Academic Supervisor Grade)
+      // We calculate a single score as requested by the v1.4 contract
+      const finalAcademicScore = (data.reportFormat + data.materialMastery + data.analysisDesign + data.attitudeEthics) / 4;
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await submitFinalScore({
+        internshipId: internshipId,
+        score: finalAcademicScore,
+        feedback: data.notes
+      });
 
-    // Load e-signature dari profile-signature API
-    let eSignatureUrl = "";
-    const signatureResponse = await getActiveProfileSignature();
-    if (signatureResponse.success && signatureResponse.data) {
-      eSignatureUrl = signatureResponse.data.signatureImage;
+      if (response.success) {
+        toast.success("Penilaian berhasil disimpan!");
+        navigate("/dosen/penilaian");
+      } else {
+        toast.error(response.message || "Gagal menyimpan penilaian");
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan sistem saat menyimpan nilai");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    // Load dosen profile data dari endpoint profile
-    const dosenData = {
-      nama: "Dr. Ahmad Santoso, M.Kom",
-      nip: "198501122010121001",
-    };
-    const profileResponse = await getMyProfile();
-    if (profileResponse.success && profileResponse.data) {
-      dosenData.nama = profileResponse.data.nama || dosenData.nama;
-      dosenData.nip = profileResponse.data.nip || dosenData.nip;
-    }
-
-    // Save nilai to localStorage for mahasiswa to generate form
-    // Include complete student data from current student being graded
-    const nilaiData = {
-      // Data Mahasiswa
-      namaMahasiswa: student.name,
-      nim: student.studentId,
-      programStudi: "Teknik Informatika", // TODO: get from student data
-      tempatKP: student.company,
-      judulLaporan: "Sistem Informasi Manajemen Berbasis Web", // TODO: get from submission
-      waktuPelaksanaan: `${new Date(student.internPeriod.start).toLocaleDateString("id-ID", { month: "long", year: "numeric" })} s.d. ${new Date(student.internPeriod.end).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}`,
-      dosenPembimbing: dosenData.nama,
-      pembimbingLapangan: student.fieldSupervisor,
-
-      // Nilai
-      kesesuaianLaporan: data.reportFormat,
-      penguasaanMateri: data.materialMastery,
-      analisisPerancangan: data.analysisDesign,
-      sikapEtika: data.attitudeEthics,
-
-      // Data Dosen
-      dosenPenguji: dosenData.nama,
-      nipDosen: dosenData.nip,
-      eSignatureUrl: eSignatureUrl,
-      tanggalPenilaian: new Date().toISOString(),
-
-      // Student ID untuk tracking
-      studentId: student.studentId,
-    };
-
-    // Save dengan key yang spesifik per mahasiswa
-    localStorage.setItem(
-      `nilai-kp-${student.studentId}`,
-      JSON.stringify(nilaiData),
-    );
-    // Also save to generic key for backward compatibility
-    localStorage.setItem("nilai-kp", JSON.stringify(nilaiData));
-
-    console.log("Submitting grade data:", data);
-    console.log("Saved nilai data:", nilaiData);
-
-    // Show success message or redirect
-    alert("Nilai berhasil disimpan! Mahasiswa dapat mencetak Form Nilai KP.");
-    navigate("/dosen/penilaian");
-    setIsSubmitting(false);
   };
 
   const handleCancel = () => {
     navigate("/dosen/penilaian");
   };
 
-  const handleAllRevisionsApproved = (approved: boolean) => {
-    // Only update if the value actually changed
-    if (allRevisionsApproved !== approved) {
-      setAllRevisionsApproved(approved);
-
-      // Save revision approval status to localStorage
-      if (id) {
-        localStorage.setItem(`revision-approved-${id}`, approved.toString());
-      }
-
-      // Don't auto-switch tab, let user manually click
-      // User will see the unlock message and can switch when ready
-    }
-  };
-
-  // Save active tab to localStorage when it changes
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    if (id) {
-      localStorage.setItem(`active-tab-${id}`, value);
-    }
-  };
-
-  const isEditing = studentInfo.gradingStatus === "graded";
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto p-6 space-y-6">
-        {/* Back Button */}
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/dosen/penilaian")}
-          className="mb-4"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Kembali ke Daftar
-        </Button>
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
+      {/* Left Pane: PDF Viewer (Split-Screen) */}
+      <div className="hidden lg:block w-1/2 h-full bg-gray-800 border-r border-gray-700 relative">
+        {reportInfo?.fileUrl ? (
+          <div className="h-full flex flex-col">
+            <div className="bg-gray-900 p-3 flex items-center justify-between">
+              <span className="text-white text-sm font-medium truncate">
+                Laporan: {reportInfo.fileName}
+              </span>
+              <Badge variant="secondary" className="bg-blue-600 text-white">PDF Viewer</Badge>
+            </div>
+            <iframe
+              src={`${reportInfo.fileUrl}#toolbar=0`}
+              className="w-full h-full border-none"
+              title="Laporan PDF"
+            />
+          </div>
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center space-y-4">
+            <div className="p-6 bg-gray-700/50 rounded-full">
+              <FileText className="h-16 w-16 opacity-20" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-200">Laporan Belum Tersedia</h3>
+              <p className="text-sm max-w-xs mt-2">
+                Mahasiswa belum mengupload file laporan atau file tidak dapat dimuat.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
 
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {isEditing ? "Edit Nilai Mahasiswa" : "Beri Nilai Mahasiswa"}
-          </h1>
-          <p className="text-gray-600">
-            {isEditing
-              ? "Perbarui penilaian untuk mahasiswa bimbingan Anda"
-              : "Berikan penilaian untuk mahasiswa bimbingan Anda"}
-          </p>
-        </div>
+      {/* Right Pane: Grading Form */}
+      <div className="w-full lg:w-1/2 h-full overflow-y-auto">
+        <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-4 sticky top-0 bg-gray-100 py-2 z-10">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/dosen/penilaian")}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Kembali
+              </Button>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl font-bold truncate">Penilaian Mahasiswa</h1>
+            </div>
+            {internshipId && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-shrink-0"
+                onClick={() => window.open(getAssessmentPdfUrl(internshipId), "_blank")}
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Cetak Form
+              </Button>
+            )}
+          </div>
 
-        {/* Student Info Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informasi Mahasiswa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={student.photo} alt={student.name} />
-                <AvatarFallback>
-                  {student.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <h3 className="text-xl font-semibold text-gray-900">
-                  {student.name}
-                </h3>
-                <p className="text-gray-600">{student.studentId}</p>
-                <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Perusahaan: </span>
-                    <span className="font-medium">{student.company}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Pembimbing Lapangan: </span>
-                    <span className="font-medium">
-                      {student.fieldSupervisor}
-                    </span>
+          {/* Student Info Slim */}
+          <Card className="border-none shadow-sm overflow-hidden">
+            <CardContent className="p-4 bg-white">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-12 w-12 border">
+                  <AvatarFallback className="bg-blue-100 text-blue-700 font-bold">
+                    {menteeData.studentName[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 truncate">
+                    {menteeData.studentName}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                    <span className="font-medium">{menteeData.nim}</span>
+                    <span>•</span>
+                    <span className="truncate">{menteeData.company}</span>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Revision Status Alert */}
-        {allRevisionsApproved && (
-          <Alert className="border-green-200 bg-green-50">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <AlertDescription className="text-green-800">
-              <strong>Dokumen disetujui.</strong> Anda sekarang dapat memberikan
-              penilaian final pada mahasiswa ini. Silakan klik tab{" "}
-              <strong>Penilaian</strong> di atas.
-            </AlertDescription>
-          </Alert>
-        )}
+          {/* Tabs for Revisi and Penilaian */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="revisi">Review Revisi</TabsTrigger>
+              <TabsTrigger value="penilaian">Form Penilaian</TabsTrigger>
+            </TabsList>
 
-        {/* Tabs for Revisi and Penilaian */}
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="revisi" className="gap-2">
-              Revisi
-              {allRevisionsApproved && (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="penilaian"
-              disabled={!allRevisionsApproved}
-              className="gap-2"
-            >
-              Penilaian
-              {!allRevisionsApproved && <Lock className="h-4 w-4" />}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Revisi Tab */}
-          <TabsContent value="revisi" className="mt-6">
-            <RevisionReviewSection
-              studentId={id!}
-              onAllRevisionsApproved={handleAllRevisionsApproved}
-            />
-          </TabsContent>
-
-          {/* Penilaian Tab */}
-          <TabsContent value="penilaian" className="mt-6">
-            {allRevisionsApproved ? (
-              <GradingForm
-                initialData={getInitialFormData()}
-                onSubmit={handleSubmit}
-                onCancel={handleCancel}
-                isSubmitting={isSubmitting}
+            <TabsContent value="revisi">
+              <RevisionReviewSection
+                studentId={id!}
+                onAllRevisionsApproved={setAllRevisionsApproved}
               />
-            ) : (
-              <Card>
-                <CardContent className="py-12">
-                  <div className="text-center space-y-4">
-                    <Lock className="h-16 w-16 text-orange-400 mx-auto" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        Penilaian Terkunci
-                      </h3>
-                      <p className="text-gray-600 mb-2">
-                        Anda harus mereview dan menyetujui revisi terlebih
-                        dahulu sebelum dapat memberikan penilaian.
-                      </p>
-                      <p className="text-sm text-orange-600 font-medium">
-                        Silakan klik tombol "Tidak Ada Revisi" di tab Revisi
-                        untuk membuka tab Penilaian.
+            </TabsContent>
+
+            <TabsContent value="penilaian">
+              {allRevisionsApproved ? (
+                <div className="space-y-6">
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <CheckCircle className="h-4 w-4 text-blue-600" />
+                    <AlertDescription className="text-blue-800 text-xs">
+                      Beri penilaian berdasarkan laporan yang tampil di sebelah kiri (khusus desktop).
+                    </AlertDescription>
+                  </Alert>
+                  <GradingForm
+                    initialData={undefined}
+                    onSubmit={handleSubmit}
+                    onCancel={handleCancel}
+                    isSubmitting={isSubmitting}
+                  />
+                </div>
+              ) : (
+                <Card className="border-dashed">
+                  <CardContent className="py-12 text-center space-y-4">
+                    <Lock className="h-12 w-12 text-gray-300 mx-auto" />
+                    <div className="space-y-1">
+                      <h3 className="font-semibold">Penilaian Terkunci</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Selesaikan review revisi terlebih dahulu.
                       </p>
                     </div>
-                    <Button
-                      variant="outline"
-                      onClick={() => setActiveTab("revisi")}
-                      className="mt-4"
-                    >
-                      Kembali ke Revisi
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

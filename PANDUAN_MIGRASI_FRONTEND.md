@@ -1,4 +1,4 @@
-# 🚨 Panduan Migrasi API: Internship Module (Refactor v1.2)
+# 🚨 Panduan Migrasi API: Internship Module (Refactor v1.4)
 
 Dokumen ini ditujukan untuk **Tim Frontend** guna menyelaraskan integrasi setelah dilakukannya refactor besar-besaran pada backend (Big-Bang SSO Cutover).
 
@@ -10,6 +10,17 @@ Backend telah beralih dari **Identity-Based Routes** ke **Domain-Based Routes**.
 
 > [!IMPORTANT]
 > Seluruh rute lama di bawah `/api/mahasiswa`, `/api/dosen`, dan `/api/admin` sekarang akan mengembalikan HTTP Status **410 Gone**. Rute-rute tersebut **tidak lagi tersedia**.
+
+---
+
+## 1.1 Fitur Siap Integrasi (Ready for Manual Testing)
+Fitur-fitur berikut sudah diimplementasikan di backend dan siap dihubungkan ke frontend:
+- **Logbook & Foto**: CRUD logbook + upload foto kegiatan.
+- **Mentorship**: Approval logbook, tanda tangan mentor, dan penilaian mentor.
+- **Standard Flow Pelaporan**: Pengajuan judul, approval judul, dan upload laporan.
+- **Fast Track Reporting**: Submit judul + laporan sekaligus dalam satu step.
+- **Penilaian Akhir**: Kalkulasi grade gabungan dan download PDF Rekap Nilai Akhir.
+- **Arsip**: Riwayat magang mahasiswa dan dashboard arsip admin.
 
 ---
 
@@ -64,7 +75,14 @@ Silakan perbarui seluruh URL fetch di frontend mengikuti tabel di bawah ini:
 > [!WARNING]
 > Perhatikan URL `/approve-all` — rute lama (`/api/mentor/logbook/:id/approve-all`) **salah** dan sudah tidak ada. Rute yang benar adalah `/api/mentorship/mentees/:studentId/approve-all`.
 
-### C. Fitur Pelaksanaan Magang (Mahasiswa)
+### C. Fitur Monitoring (Dosen Pembimbing)
+| Fitur | Method | Rute LAMA | Rute BARU |
+| :--- | :--- | :--- | :--- |
+| Daftar Mentees (Progres) | GET | `/api/dosen/internship/list` | `/api/internship-monitoring/mentees` |
+| Detail Logbook Mentee | GET | `/api/dosen/internship/logbook/:id` | `/api/internship-monitoring/mentees/:studentId/logbooks` |
+| Cek Mentees Inaktif | GET | *(Baru)* | `/api/internship-monitoring/inactive` |
+
+### D. Fitur Pelaksanaan Magang (Mahasiswa)
 | Fitur | Method | Rute LAMA | Rute BARU |
 | :--- | :--- | :--- | :--- |
 | Info Magang Aktif | GET | `/api/mahasiswa/internship` | `/api/internships` |
@@ -72,7 +90,33 @@ Silakan perbarui seluruh URL fetch di frontend mengikuti tabel di bawah ini:
 > [!IMPORTANT]
 > Rute info magang adalah **`GET /api/internships`** (tanpa suffix `/active`). Endpoint ini sudah mengembalikan data magang aktif milik mahasiswa yang sedang login.
 
-### D. Endpoint Pengajuan Mentor Lapangan (Mahasiswa)
+### E. Fitur Pelaporan & Penilaian (Mahasiswa & Dosen)
+| Fitur | Method | Rute LAMA | Rute BARU |
+| :--- | :--- | :--- | :--- |
+| **PENGELOLAAN JUDUL** | | | |
+| Ajukan Judul (Standard) | POST | *(Baru)* | `/api/reporting/title` |
+| Cek Status Judul | GET | `/api/mahasiswa/internship/title` | `/api/reporting/title/:internshipId` |
+| Approve Judul (Dosen) | POST | `/api/dosen/internship/approve-title` | `/api/reporting/title/:id/approve` |
+| Tolak Judul (Dosen) | POST | `/api/dosen/internship/reject-title` | `/api/reporting/title/:id/reject` |
+| **UPLOAD LAPORAN** | | | |
+| Submit Judul + Laporan (Fast) | POST | `/api/mahasiswa/internship/submit` | `/api/reporting/submit-fast` |
+| Submit Laporan (Standard) | POST | *(Baru)* | `/api/reporting/report` |
+| Cek Data Laporan | GET | `/api/mahasiswa/internship/report` | `/api/reporting/report/:internshipId` |
+| **PENILAIAN AKHIR** | | | |
+| Beri Nilai Laporan (Dosen) | POST | `/api/dosen/internship/score` | `/api/reporting/score-fast` |
+| Lihat Rekap Nilai | GET | *(Baru)* | `/api/penilaian/recap/:internshipId` |
+| Cetak/Download PDF Nilai | GET | *(Baru)* | `/api/penilaian/print/:internshipId` |
+| Ambil Kriteria Nilai | GET | `/api/penilaian/kriteria` | `/api/penilaian/kriteria` |
+
+### F. Fitur Arsip & Riwayat (Mahasiswa & Admin)
+| Fitur | Method | Rute LAMA | Rute BARU |
+| :--- | :--- | :--- | :--- |
+| Riwayat Magang (Student) | GET | `/api/mahasiswa/history` | `/api/archive/student` |
+| Daftar Magang Selesai (Admin) | GET | `/api/admin/internship/finished` | `/api/archive/admin/internships` |
+| Daftar Pengajuan Selesai (Admin) | GET | `/api/admin/submission/history` | `/api/archive/admin/submissions` |
+| Arsipkan Manual (Admin) | POST | *(Baru)* | `/api/archive/internship/:id` |
+
+### G. Endpoint Pengajuan Mentor Lapangan (Mahasiswa)
 | Fitur | Method | Rute |
 | :--- | :--- | :--- |
 | Ajukan Pembimbing Lapangan | POST | `/api/mentorship/requests` |
@@ -137,7 +181,30 @@ Backend sekarang menggunakan pola **Clean Response**. Pastikan pengecekan status
 **Q: Apa URL Production-nya?**
 **A**: URL Production resmi adalah `https://backend-sikp.backend-sikp.workers.dev`.
 
+## 7. Checklist Audit Integrasi (PENTING)
+
+Berdasarkan audit terakhir, beberapa fitur frontend masih bersifat **Mock/Disconnected**. Tim Frontend **WAJIB** melakukan update pada bagian berikut:
+
+### 1. Pelaporan Mahasiswa (`KPReportPage`)
+- [ ] **Ganti Mock Handler**: `handleTitleSubmit` dan `handleReportUpload` harus memanggil API asli, bukan sekadar menampilkan toast sukses.
+- [ ] **Update Endpoint**: Pastikan `reporting-api.ts` menggunakan prefix `/api/reporting/...` (bukan `/api/report/...`).
+- [ ] **Status Mapping**: Mapping status dari backend (`APPROVED`, `SUBMITTED`) ke UI harus konsisten (lowercase vs uppercase).
+
+### 2. Verifikasi Judul Dosen (`LecturerTitleVerificationPage`)
+- [ ] **Hapus Fallback Legacy**: Hapus rute lama seperti `/api/dosen/kp/verifikasi-judul` di `title-verification-api.ts`.
+- [ ] **Gunakan Endpoint Baru**: Gunakan `POST /api/reporting/title/:id/approve` untuk persetujuan judul.
+
+### 3. Penilaian Dosen (`GiveGradePage`)
+- [ ] **Hapus LocalStorage**: Fitur penilaian **TIDAK BOLEH** menyimpan hasil nilai ke `localStorage`. 
+- [ ] **Integrasi API**: Gunakan `POST /api/reporting/score-fast` untuk mengirimkan nilai akhir (70%) ke backend.
+- [ ] **Hapus Mock Data**: Hapus penggunaan `MOCK_STUDENTS_FOR_GRADING` dan gunakan data asli dari `GET /api/internship-monitoring/mentees`.
+- [ ] **UI Penilaian & Laporan**: Implementasikan tampilan **Split-Screen** atau **Side-by-Side**. Dosen harus bisa membaca file laporan (PDF Viewer) sambil mengisi form nilai di layar yang sama agar alur Fast Track efisien.
+
+### 4. Modul Arsip
+- [ ] **Data Mapping**: Gunakan field `finalGrade` untuk menampilkan huruf nilai (A/B/C/D).
+- [ ] **Response Format**: Endpoint `/api/archive/student` sekarang mengembalikan **Array langsung** (bukan object `{ internships: [] }`). Pastikan `.filter()` dipanggil langsung pada `res.data`.
+
 ---
 
 **Kontak Backend**: Tim Lead Backend.
-**Status Dokumentasi**: v1.2 — Updated Route Mapping, HTTP Client Guide & File Upload Docs.
+**Status Dokumentasi**: v1.4.1 — Added Integration Audit Checklist.

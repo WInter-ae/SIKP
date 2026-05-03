@@ -29,6 +29,10 @@ import {
   Printer,
 } from "lucide-react";
 import { printFormNilai, type NilaiKPData } from "../utils/generate-form-nilai";
+import { getCompleteInternshipData } from "~/feature/during-intern/services/student-api";
+import { getAssessmentRecap, getAssessmentPdfUrl } from "~/feature/evaluation/services/evaluation-api";
+import { toast } from "sonner";
+import type { StudentEvaluation } from "../types";
 
 // Status types
 type LaporanStatus =
@@ -174,104 +178,36 @@ export default function PascaMagangPage() {
     description: string;
     variant?: "default" | "destructive";
   } | null>(null);
-  const [nilaiKP, setNilaiKP] = useState(mockNilai);
+  const [internshipId, setInternshipId] = useState<string | null>(null);
+  const [evaluation, setEvaluation] = useState<StudentEvaluation | null>(null);
   const [hasGradeFromDosen, setHasGradeFromDosen] = useState(false);
   const [revisionHistory, setRevisionHistory] = useState<RevisionHistory[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   // Load data
   useEffect(() => {
-    const loadData = () => {
-      // Load dari localStorage atau API
-      if (typeof window !== "undefined") {
-        const savedLaporan = localStorage.getItem("laporan-kp");
-
-        if (savedLaporan) {
-          const parsedLaporan = JSON.parse(savedLaporan);
-          setLaporan(parsedLaporan);
-          console.log("Loaded laporan:", parsedLaporan);
-        } else {
-          localStorage.setItem("laporan-kp", JSON.stringify(mockLaporan));
-        }
-
-        // Load nilai from localStorage - try student-specific first, then generic
-        const studentNim = mockMahasiswa.nim;
-        let savedNilai = localStorage.getItem(`nilai-kp-${studentNim}`);
-
-        // Fallback to generic key
-        if (!savedNilai) {
-          savedNilai = localStorage.getItem("nilai-kp");
-        }
-
-        if (savedNilai) {
-          const parsedNilai = JSON.parse(savedNilai);
-
-          // HANYA set nilai dan hasGradeFromDosen jika tanggalPenilaian ada
-          // Artinya dosen sudah benar-benar memberikan nilai, bukan hanya merevisi
-          if (parsedNilai.tanggalPenilaian) {
-            setNilaiKP(parsedNilai);
-
-            // Check if this is newly graded
-            if (!hasGradeFromDosen) {
-              setHasGradeFromDosen(true);
-
-              // Show notification for new grade only once
-              if (!sessionStorage.getItem("grade-notification-shown")) {
-                setNotification({
-                  title: "✅ Nilai KP Sudah Tersedia!",
-                  description: `Dosen ${parsedNilai.dosenPenguji || "pembimbing"} telah memberikan nilai. Anda dapat mencetak Form Nilai KP.`,
-                });
-
-                sessionStorage.setItem("grade-notification-shown", "true");
-
-                // Auto-dismiss after 8 seconds
-                setTimeout(() => setNotification(null), 8000);
-              }
-            }
-
-            console.log(
-              "Loaded nilai for student (with tanggalPenilaian):",
-              parsedNilai,
-            );
-          } else {
-            // Jika tidak ada tanggalPenilaian, reset state
-            setHasGradeFromDosen(false);
-            console.log(
-              "Nilai data exists but no tanggalPenilaian - dosen masih merevisi",
-            );
+    async function initPage() {
+      setIsLoading(true);
+      try {
+        const internshipRes = await getCompleteInternshipData();
+        if (internshipRes.success && internshipRes.data) {
+          const id = internshipRes.data.internship.id;
+          setInternshipId(id);
+          
+          // Get assessment if internship is finished or has grade
+          const evalRes = await getAssessmentRecap(id);
+          if (evalRes.success && evalRes.data) {
+            setEvaluation(evalRes.data);
+            setHasGradeFromDosen(true);
           }
-        } else {
-          // Tidak ada data nilai sama sekali
-          setHasGradeFromDosen(false);
         }
-
-        // Load revision history
-        const savedHistory = localStorage.getItem("revision-history-kp");
-        if (savedHistory) {
-          const parsedHistory = JSON.parse(savedHistory);
-          setRevisionHistory(parsedHistory);
-          console.log("Loaded revision history:", parsedHistory);
-        }
+      } catch (error) {
+        console.error("Failed to load pasca-magang data:", error);
+      } finally {
+        setIsLoading(false);
       }
-    };
-
-    loadData();
-
-    // Check for changes periodically (every 500ms for faster updates)
-    const intervalId = setInterval(() => {
-      loadData();
-    }, 500);
-
-    // Also reload when window gets focus
-    const handleFocus = () => {
-      loadData();
-    };
-
-    window.addEventListener("focus", handleFocus);
-
-    return () => {
-      clearInterval(intervalId);
-      window.removeEventListener("focus", handleFocus);
-    };
+    }
+    
+    initPage();
   }, []);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,61 +293,9 @@ export default function PascaMagangPage() {
   };
 
   const handlePrintFormNilai = () => {
-    console.log("=== DEBUGGING PDF GENERATION ===");
-    console.log("Current nilaiKP state:", nilaiKP);
-    console.log("Current mockMahasiswa:", mockMahasiswa);
-
-    // Use data from nilaiKP which was saved by dosen
-    const formData: NilaiKPData = {
-      // Data from saved nilai (includes student data saved by dosen)
-      namaMahasiswa: nilaiKP.namaMahasiswa || mockMahasiswa.nama,
-      nim: nilaiKP.nim || mockMahasiswa.nim,
-      programStudi: nilaiKP.programStudi || mockMahasiswa.programStudi,
-      tempatKP: nilaiKP.tempatKP || mockMahasiswa.tempatKP,
-      judulLaporan: nilaiKP.judulLaporan || mockMahasiswa.judulLaporan,
-      waktuPelaksanaan:
-        nilaiKP.waktuPelaksanaan || mockMahasiswa.waktuPelaksanaan,
-      dosenPembimbing: nilaiKP.dosenPembimbing || mockMahasiswa.dosenPembimbing,
-      pembimbingLapangan:
-        nilaiKP.pembimbingLapangan || mockMahasiswa.pembimbingLapangan,
-
-      // Nilai from dosen
-      kesesuaianLaporan: nilaiKP.kesesuaianLaporan || 0,
-      penguasaanMateri: nilaiKP.penguasaanMateri || 0,
-      analisisPerancangan: nilaiKP.analisisPerancangan || 0,
-      sikapEtika: nilaiKP.sikapEtika || 0,
-
-      // Dosen data with e-signature
-      tanggalPenilaian: nilaiKP.tanggalPenilaian
-        ? new Date(nilaiKP.tanggalPenilaian).toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          })
-        : new Date().toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          }),
-      dosenPenguji: nilaiKP.dosenPenguji || "Dr. Ahmad Santoso, M.Kom",
-      nipDosen: nilaiKP.nipDosen || "198501122010121001",
-      eSignatureUrl: nilaiKP.eSignatureUrl || "",
-    };
-
-    console.log("=== FORM DATA TO BE PRINTED ===");
-    console.log("Printing form with data:", formData);
-    console.log("Data validation:");
-    console.log("- namaMahasiswa:", formData.namaMahasiswa);
-    console.log("- nim:", formData.nim);
-    console.log("- kesesuaianLaporan:", formData.kesesuaianLaporan);
-    console.log("- penguasaanMateri:", formData.penguasaanMateri);
-    console.log("- analisisPerancangan:", formData.analisisPerancangan);
-    console.log("- sikapEtika:", formData.sikapEtika);
-    console.log("- dosenPenguji:", formData.dosenPenguji);
-    console.log("- eSignatureUrl:", formData.eSignatureUrl);
-    console.log("================================");
-
-    printFormNilai(formData);
+    if (!internshipId) return;
+    const url = getAssessmentPdfUrl(internshipId);
+    window.open(url, "_blank");
   };
 
   const handleReset = () => {
@@ -451,7 +335,6 @@ export default function PascaMagangPage() {
       };
 
       setLaporan(resetLaporan);
-      setNilaiKP(resetNilai);
       setSelectedFile(null);
       setRevisionStatus("");
       setRevisionHistory([]);
@@ -719,7 +602,7 @@ export default function PascaMagangPage() {
             )}
 
             {/* Preview Nilai dari Dosen - Show if nilai available */}
-            {hasGradeFromDosen && nilaiKP.tanggalPenilaian && (
+            {hasGradeFromDosen && evaluation && (
               <Card className="mb-4 bg-blue-50 border-blue-200">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3">
@@ -731,75 +614,54 @@ export default function PascaMagangPage() {
                         Nilai KP Sudah Diberikan
                       </h3>
                       <p className="text-blue-800 text-sm mb-4">
-                        Dosen {nilaiKP.dosenPenguji} telah memberikan penilaian
+                        Dosen {evaluation.student.academicSupervisor} telah memberikan penilaian
                         untuk Kerja Praktik Anda.
                       </p>
 
                       <div className="bg-white rounded-lg p-4 border border-blue-200">
                         <h4 className="font-semibold text-gray-900 mb-3">
-                          Rincian Nilai:
+                          Ringkasan Nilai:
                         </h4>
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between">
                             <span className="text-gray-600">
-                              Kesesuaian Laporan dengan Format (30%):
+                              Nilai Pembimbing Lapangan (30%):
                             </span>
                             <span className="font-semibold">
-                              {nilaiKP.kesesuaianLaporan}
+                              {evaluation.summary.fieldSupervisorTotal.toFixed(2)}
                             </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-gray-600">
-                              Penguasaan Materi KP (30%):
+                              Nilai Laporan & Sidang (70%):
                             </span>
                             <span className="font-semibold">
-                              {nilaiKP.penguasaanMateri}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              Analisis dan Perancangan (30%):
-                            </span>
-                            <span className="font-semibold">
-                              {nilaiKP.analisisPerancangan}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              Sikap dan Etika (10%):
-                            </span>
-                            <span className="font-semibold">
-                              {nilaiKP.sikapEtika}
+                              {evaluation.summary.academicSupervisorTotal.toFixed(2)}
                             </span>
                           </div>
                           <div className="border-t border-gray-200 pt-2 mt-2">
                             <div className="flex justify-between text-base">
                               <span className="font-semibold text-gray-900">
-                                Rata-rata:
+                                Nilai Akhir:
                               </span>
-                              <span className="font-bold text-blue-600">
-                                {(
-                                  nilaiKP.kesesuaianLaporan * 0.3 +
-                                  nilaiKP.penguasaanMateri * 0.3 +
-                                  nilaiKP.analisisPerancangan * 0.3 +
-                                  nilaiKP.sikapEtika * 0.1
-                                ).toFixed(2)}
-                              </span>
+                              <div className="text-right">
+                                <span className="font-bold text-blue-600 text-xl block">
+                                  {evaluation.summary.finalScore.toFixed(2)}
+                                </span>
+                                <Badge className="bg-green-600">Grade {evaluation.summary.grade}</Badge>
+                              </div>
                             </div>
                           </div>
                         </div>
 
                         <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-700">
                           <p>
-                            Dinilai oleh: {nilaiKP.dosenPenguji} (NIP:{" "}
-                            {nilaiKP.nipDosen})
+                            Dinilai oleh: {evaluation.student.academicSupervisor}
                           </p>
                           <p>
                             Tanggal:{" "}
-                            {nilaiKP.tanggalPenilaian &&
-                              new Date(
-                                nilaiKP.tanggalPenilaian,
-                              ).toLocaleDateString("id-ID", {
+                            {evaluation.evaluatedAt &&
+                              new Date(evaluation.evaluatedAt).toLocaleDateString("id-ID", {
                                 day: "numeric",
                                 month: "long",
                                 year: "numeric",

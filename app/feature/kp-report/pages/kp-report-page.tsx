@@ -14,6 +14,12 @@ import { TitleSubmissionForm } from "../index";
 import { getCompleteInternshipData } from "~/feature/during-intern/services";
 import type { CompleteInternshipData } from "~/feature/during-intern/services/student-api";
 import type { DosenPembimbing, LaporanKPData } from "../types";
+import { 
+  submitInternshipTitle, 
+  getTitleStatus, 
+  submitInternshipReport, 
+  getReportStatus 
+} from "../services/reporting-api";
 
 export default function KPReportPage() {
   const [activeTab, setActiveTab] = useState("judul");
@@ -51,44 +57,77 @@ export default function KPReportPage() {
 
   useEffect(() => {
     async function loadReportContext() {
+      setIsLoading(true);
       try {
         const response = await getCompleteInternshipData();
-
+ 
         if (response.success && response.data) {
           setCompleteData(response.data);
-          setReportData({
-            judul: "",
-            statusJudul: "draft",
-            dosenPembimbing: response.data.lecturer?.id,
-          });
-          setTitleChangeStatus("none");
-          setCurrentReport(undefined);
-          setActiveTab("judul");
+          const internshipId = response.data.internship?.id;
+          
+          if (internshipId) {
+            // Fetch real title status
+            const titleRes = await getTitleStatus(internshipId);
+            if (titleRes.success && titleRes.data) {
+              setReportData({
+                judul: titleRes.data.title,
+                statusJudul: titleRes.data.status.toLowerCase() as any,
+                dosenPembimbing: response.data.lecturer?.id,
+                tanggalPengajuan: titleRes.data.submittedAt,
+              });
+            }
+
+            // Fetch real report status
+            const reportRes = await getReportStatus(internshipId);
+            if (reportRes.success && reportRes.data) {
+              setCurrentReport({
+                namaFile: reportRes.data.fileName,
+                tanggalUpload: new Date(reportRes.data.uploadedAt).toLocaleDateString("id-ID"),
+                ukuranFile: `${(reportRes.data.fileSize / (1024 * 1024)).toFixed(2)} MB`,
+                status: reportRes.data.status.toLowerCase() as any,
+              });
+            }
+          }
         } else {
           toast.error(response.message || "Gagal memuat data laporan KP");
         }
       } catch (error) {
         console.error("Failed to load KP report context:", error);
-        toast.error("Terjadi kesalahan saat memuat data laporan KP");
       } finally {
         setIsLoading(false);
       }
     }
-
+ 
     loadReportContext();
   }, []);
 
-  const handleTitleSubmit = (data: {
+  const handleTitleSubmit = async (data: {
     judulLaporan: string;
     deskripsi: string;
   }) => {
-    setReportData((previous) => ({
-      ...previous,
-      judul: data.judulLaporan,
-      statusJudul: "diajukan",
-      tanggalPengajuan: new Date().toISOString(),
-    }));
-    toast.success("Judul berhasil diajukan!");
+    setIsLoading(true);
+    try {
+      const response = await submitInternshipTitle({
+        title: data.judulLaporan,
+        description: data.deskripsi,
+      });
+
+      if (response.success) {
+        setReportData((previous) => ({
+          ...previous,
+          judul: data.judulLaporan,
+          statusJudul: "diajukan",
+          tanggalPengajuan: new Date().toISOString(),
+        }));
+        toast.success("Judul berhasil diajukan!");
+      } else {
+        toast.error(response.message || "Gagal mengajukan judul");
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan sistem saat mengajukan judul");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleTitleChange = (judulBaru: string, alasan: string) => {
@@ -101,14 +140,27 @@ export default function KPReportPage() {
     toast.success("Perubahan judul berhasil diajukan!");
   };
 
-  const handleReportUpload = (file: File) => {
-    setCurrentReport({
-      namaFile: file.name,
-      tanggalUpload: new Date().toLocaleDateString("id-ID"),
-      ukuranFile: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-      status: "disubmit",
-    });
-    toast.success("Laporan berhasil diupload!");
+  const handleReportUpload = async (file: File) => {
+    setIsLoading(true);
+    try {
+      const response = await submitInternshipReport({ file });
+
+      if (response.success) {
+        setCurrentReport({
+          namaFile: file.name,
+          tanggalUpload: new Date().toLocaleDateString("id-ID"),
+          ukuranFile: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+          status: "disubmit",
+        });
+        toast.success("Laporan berhasil diupload!");
+      } else {
+        toast.error(response.message || "Gagal mengupload laporan");
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan sistem saat mengupload laporan");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReportRemove = () => {

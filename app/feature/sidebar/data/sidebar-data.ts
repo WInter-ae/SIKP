@@ -67,8 +67,8 @@ const mahasiswaMenu: NavItem[] = [
     ],
   },
   {
-    title: "Arsip",
-    url: "#",
+    title: "Arsip Magang",
+    url: "/mahasiswa/kp/arsip",
     icon: Archive,
   },
   {
@@ -126,19 +126,9 @@ const adminMenu: NavItem[] = [
     ],
   },
   {
-    title: "Arsip",
-    url: "#",
+    title: "Arsip Magang",
+    url: "/admin/arsip",
     icon: Archive,
-    items: [
-      {
-        title: "Mahasiswa",
-        url: "#",
-      },
-      {
-        title: "Dosen",
-        url: "#",
-      },
-    ],
   },
   {
     title: "Template",

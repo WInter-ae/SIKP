@@ -1,4 +1,4 @@
-import { sikpClient } from "~/lib/api-client";
+import { internshipClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 export interface DosenLogbookMonitorItem {
@@ -33,12 +33,16 @@ export interface DosenLogbookMonitorByStudentItem {
 type RawObject = Record<string, unknown>;
 
 const LIST_ENDPOINTS = [
-  "/api/internship-monitoring/logbook",
+  "/api/internship-monitoring/mentees",
+  "/api/internship-monitoring/logbook", // Fallback for backward compatibility
 ] as const;
 
 const DETAIL_ENDPOINT_BUILDERS = [
+  (studentId: string) => `/api/internship-monitoring/mentees/${studentId}/logbooks`,
   (studentId: string) => `/api/internship-monitoring/logbook/${studentId}`,
 ] as const;
+
+const INACTIVE_ENDPOINT = "/api/internship-monitoring/inactive";
 
 function asRecord(value: unknown): RawObject | null {
   return typeof value === "object" && value !== null
@@ -180,7 +184,7 @@ export async function getDosenLogbookMonitorItems(): Promise<
   let lastMessage = "Endpoint monitoring logbook belum tersedia";
 
   for (const endpoint of LIST_ENDPOINTS) {
-    const response = await sikpClient.request<unknown>(endpoint);
+    const response = await internshipClient.request<unknown>(endpoint);
 
     if (response.success) {
       const items = getArrayPayload(response.data).map((item, index) =>
@@ -210,7 +214,7 @@ export async function getDosenLogbookMonitorByStudent(
   let lastMessage = "Endpoint detail monitoring logbook belum tersedia";
 
   for (const build of DETAIL_ENDPOINT_BUILDERS) {
-    const response = await sikpClient.request<unknown>(build(studentId));
+    const response = await internshipClient.request<unknown>(build(studentId));
 
     if (response.success) {
       return {
@@ -228,5 +232,29 @@ export async function getDosenLogbookMonitorByStudent(
     success: false,
     message: lastMessage,
     data: null,
+  };
+}
+/**
+ * Get mentees that are inactive (not submitting logbooks)
+ * GET /api/internship-monitoring/inactive
+ */
+export async function getInactiveMentees(): Promise<ApiResponse<DosenLogbookMonitorItem[]>> {
+  const response = await internshipClient.get<unknown>(INACTIVE_ENDPOINT);
+  
+  if (response.success) {
+    const items = getArrayPayload(response.data).map((item, index) =>
+      mapRawItem(item, index),
+    );
+    return {
+      success: true,
+      message: response.message,
+      data: items,
+    };
+  }
+
+  return {
+    success: false,
+    message: response.message || "Gagal mengambil data mahasiswa inaktif.",
+    data: [],
   };
 }

@@ -1,4 +1,4 @@
-import { apiClient, INTERNSHIP_API_BASE_URL } from "~/lib/api-client";
+import { internshipClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 import type {
   AcademicSupervisorGrade,
@@ -17,17 +17,18 @@ type CriterionKey =
   | "kreatifitas";
 
 const ADMIN_LIST_ENDPOINTS = [
+  "/api/archive/admin/internships",
+  "/api/penilaian/recap",
   "/api/admin/penilaian",
-  "/api/admin/assessment",
-  "/api/admin/evaluations",
-  "/api/admin/penilaian/mahasiswa",
 ] as const;
 
 const ADMIN_DETAIL_ENDPOINTS = [
+  "/api/penilaian/recap",
   "/api/admin/penilaian",
-  "/api/admin/assessment",
-  "/api/admin/evaluations",
 ] as const;
+
+const SCORE_FAST_ENDPOINT = "/api/reporting/score-fast";
+const PRINT_PDF_ENDPOINT = "/api/penilaian/print";
 
 function parseNumber(value: unknown, fallback = 0): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -382,10 +383,7 @@ export async function getAdminEvaluations(
   let lastMessage = "Gagal memuat data penilaian admin.";
 
   for (const endpoint of ADMIN_LIST_ENDPOINTS) {
-    const response = await apiClient<unknown>(endpoint, {
-      method: "GET",
-      _baseUrl: INTERNSHIP_API_BASE_URL,
-    } as RequestInit & { _baseUrl: string });
+    const response = await internshipClient.get<unknown>(endpoint);
 
     if (!response.success) {
       lastMessage = response.message || lastMessage;
@@ -418,10 +416,7 @@ export async function getAdminEvaluationByStudentId(
   let lastMessage = "Gagal memuat detail penilaian mahasiswa.";
 
   for (const baseEndpoint of ADMIN_DETAIL_ENDPOINTS) {
-    const response = await apiClient<unknown>(`${baseEndpoint}/${studentId}`, {
-      method: "GET",
-      _baseUrl: INTERNSHIP_API_BASE_URL,
-    } as RequestInit & { _baseUrl: string });
+    const response = await internshipClient.get<unknown>(`${baseEndpoint}/${studentId}`);
 
     if (!response.success) {
       lastMessage = response.message || lastMessage;
@@ -450,4 +445,50 @@ export async function getAdminEvaluationByStudentId(
     message: lastMessage,
     data: null,
   };
+}
+/**
+ * Submit final score for a student (Dosen side)
+ * POST /api/reporting/score-fast
+ */
+export async function submitFinalScore(data: {
+  internshipId: string;
+  score: number;
+  feedback?: string;
+}): Promise<ApiResponse<null>> {
+  return internshipClient.post<null>(SCORE_FAST_ENDPOINT, data);
+}
+
+/**
+ * Get assessment recap for a specific internship
+ * GET /api/penilaian/recap/:internshipId
+ */
+export async function getAssessmentRecap(
+  internshipId: string,
+): Promise<ApiResponse<StudentEvaluation>> {
+  const response = await internshipClient.get<unknown>(
+    `/api/penilaian/recap/${internshipId}`,
+  );
+
+  if (!response.success) {
+    return response as ApiResponse<StudentEvaluation>;
+  }
+
+  const objectRow = pickFirstObject(response.data);
+  const mapped = objectRow ? mapRowToEvaluation(objectRow, []) : null;
+
+  return {
+    success: true,
+    message: response.message,
+    data: mapped as StudentEvaluation,
+  };
+}
+
+/**
+ * Get the download URL for final assessment PDF
+ * GET /api/penilaian/print/:internshipId
+ */
+export function getAssessmentPdfUrl(internshipId: string): string {
+  const baseUrl =
+    import.meta.env.VITE_SIKP_API_BASE_URL || "http://localhost:8789";
+  return `${baseUrl}${PRINT_PDF_ENDPOINT}/${internshipId}`;
 }
