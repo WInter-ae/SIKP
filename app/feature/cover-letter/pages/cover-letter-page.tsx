@@ -59,9 +59,7 @@ function CoverLetterPage() {
       return;
     }
 
-    toast.success(
-      "Pengajuan Ulang berhasil. Silakan lakukan perbaikan dan ajukan kembali.",
-    );
+    toast.success("Silakan lakukan perbaikan dan ajukan kembali.");
     navigate("/mahasiswa/kp/pengajuan");
   };
 

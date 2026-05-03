@@ -1040,6 +1040,22 @@ function SubmissionPage() {
                       >
                         {proposalDocument ? "Terupload" : "Belum diupload"}
                       </Button>
+                      {proposalDocument && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handlePreviewProposal}
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                Lihat
+                              </Button>
+                            </TooltipTrigger>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                       Proposal hanya bisa diupload oleh ketua tim.
