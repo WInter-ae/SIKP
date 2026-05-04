@@ -368,13 +368,13 @@ function extractTeamInfoFromSubmission(
     supervisor: resolveSubmissionSupervisor(submission),
     leader: leaderRaw?.user
       ? {
-        nim: leaderRaw.user.nim || undefined,
-        name: leaderRaw.user.name || undefined,
-        prodi: leaderRaw.user.prodi || undefined,
-        email: leaderRaw.user.email || undefined,
-        angkatan: leaderRaw.user.angkatan || undefined,
-        semester: leaderRaw.user.semester || undefined,
-      }
+          nim: leaderRaw.user.nim || undefined,
+          name: leaderRaw.user.name || undefined,
+          prodi: leaderRaw.user.prodi || undefined,
+          email: leaderRaw.user.email || undefined,
+          angkatan: leaderRaw.user.angkatan || undefined,
+          semester: leaderRaw.user.semester || undefined,
+        }
       : undefined,
   };
 }
@@ -400,10 +400,10 @@ function getMahasiswaDetail(
 function isWakilDekanJabatan(jabatanStruktural?: string[]): boolean {
   return Boolean(
     Array.isArray(jabatanStruktural) &&
-    jabatanStruktural.some((jabatan) => {
-      const normalized = jabatan.toLowerCase();
-      return normalized.includes("wakil") && normalized.includes("dekan");
-    }),
+      jabatanStruktural.some((jabatan) => {
+        const normalized = jabatan.toLowerCase();
+        return normalized.includes("wakil") && normalized.includes("dekan");
+      }),
   );
 }
 
@@ -428,21 +428,21 @@ function extractTeamInfoFromRequestItem(
       return 0;
     });
 
-  const leader = item.team_members.find((m) => m.role === "KETUA") ||
-    item.team_members[0];
+  const leader =
+    item.team_members.find((m) => m.role === "KETUA") || item.team_members[0];
 
   return {
     members: mappedMembers,
     supervisor: item.academic_supervisor,
     leader: leader
       ? {
-        nim: leader.nim || undefined,
-        name: leader.name || undefined,
-        prodi: leader.prodi || undefined,
-        email: undefined,
-        angkatan: undefined,
-        semester: undefined,
-      }
+          nim: leader.nim || undefined,
+          name: leader.name || undefined,
+          prodi: leader.prodi || undefined,
+          email: undefined,
+          angkatan: undefined,
+          semester: undefined,
+        }
       : undefined,
   };
 }
@@ -509,59 +509,59 @@ function SubmissionDosenPage() {
       const suratPengantarEntries =
         response.success && response.data
           ? response.data
-            .filter((item) => isAdminApprovedForDosenQueue(item))
-            .map((item) => {
-              const detail = getMahasiswaDetail(
-                detailByNim,
-                detailByName,
-                item,
-              );
+              .filter((item) => isAdminApprovedForDosenQueue(item))
+              .map((item) => {
+                const detail = getMahasiswaDetail(
+                  detailByNim,
+                  detailByName,
+                  item,
+                );
 
-              let teamInfo = teamInfoBySubmissionId.get(
-                item.submissionId || item.id,
-              );
+                let teamInfo = teamInfoBySubmissionId.get(
+                  item.submissionId || item.id,
+                );
 
-              if (!teamInfo) {
-                teamInfo = extractTeamInfoFromRequestItem(item) || undefined;
-              }
+                if (!teamInfo) {
+                  teamInfo = extractTeamInfoFromRequestItem(item) || undefined;
+                }
 
-              return {
-                id: item.id,
-                tanggal: formatTanggalForTable(
-                  item.tanggal || item.createdAt,
-                ),
-                nim: item.nim || "-",
-                namaMahasiswa: item.namaMahasiswa || "-",
-                programStudi: detail.programStudi || item.programStudi || "-",
-                angkatan: detail.angkatan || undefined,
-                semester: detail.semester || undefined,
-                email: detail.email || undefined,
-                jenisSurat: item.jenisSurat || "Surat Pengantar",
-                status: normalizeStatus(item.status || "menunggu"),
-                supervisor: teamInfo?.supervisor,
-                teamMembers: teamInfo?.members,
-                mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
-                  item as unknown as Record<string, unknown>,
-                ),
-                signedFileUrl: resolveSuratPengantarSignedFileUrl(item),
-                approvedAt: item.approvedAt || item.approved_at,
-                namaPerusahaan: item.companyName,
-                tujuanSurat: resolveSuratPengantarTujuan(item),
-                alamatPerusahaan: item.companyAddress,
-                teleponPerusahaan: undefined,
-                jenisProdukUsaha: undefined,
-                divisi: item.division,
-                tanggalMulai: item.startDate,
-                tanggalSelesai: item.endDate,
-                jumlahSks: undefined,
-                tahunAjaran: undefined,
-                dosenNama: dosenNama || "-",
-                dosenNip: dosenNip || "-",
-                dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
-                dosenEsignatureUrl,
-                nomorSurat: item.nomorSurat || item.letterNumber,
-              };
-            })
+                return {
+                  id: item.id,
+                  tanggal: formatTanggalForTable(
+                    item.tanggal || item.createdAt,
+                  ),
+                  nim: item.nim || "-",
+                  namaMahasiswa: item.namaMahasiswa || "-",
+                  programStudi: detail.programStudi || item.programStudi || "-",
+                  angkatan: detail.angkatan || undefined,
+                  semester: detail.semester || undefined,
+                  email: detail.email || undefined,
+                  jenisSurat: item.jenisSurat || "Surat Pengantar",
+                  status: normalizeStatus(item.status || "menunggu"),
+                  supervisor: teamInfo?.supervisor,
+                  teamMembers: teamInfo?.members,
+                  mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
+                    item as unknown as Record<string, unknown>,
+                  ),
+                  signedFileUrl: resolveSuratPengantarSignedFileUrl(item),
+                  approvedAt: item.approvedAt || item.approved_at,
+                  namaPerusahaan: item.companyName,
+                  tujuanSurat: resolveSuratPengantarTujuan(item),
+                  alamatPerusahaan: item.companyAddress,
+                  teleponPerusahaan: undefined,
+                  jenisProdukUsaha: undefined,
+                  divisi: item.division,
+                  tanggalMulai: item.startDate,
+                  tanggalSelesai: item.endDate,
+                  jumlahSks: undefined,
+                  tahunAjaran: undefined,
+                  dosenNama: dosenNama || "-",
+                  dosenNip: dosenNip || "-",
+                  dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
+                  dosenEsignatureUrl,
+                  nomorSurat: item.nomorSurat || item.letterNumber,
+                };
+              })
           : [];
 
       setEntries(suratPengantarEntries);
@@ -661,22 +661,22 @@ function SubmissionDosenPage() {
       prev.map((entry) =>
         entry.id === targetEntry.id
           ? {
-            ...entry,
-            status: "disetujui" as const,
-            approvedAt:
-              response.data?.approvedAt ||
-              response.data?.approved_at ||
-              entry.approvedAt,
-            signedFileUrl:
-              resolveAssetUrl(
-                pickFirstNonEmptyString(
-                  response.data?.signedFileUrl,
-                  response.data?.signed_file_url,
-                  response.data?.finalSignedFileUrl,
-                  response.data?.final_signed_file_url,
-                ),
-              ) || entry.signedFileUrl,
-          }
+              ...entry,
+              status: "disetujui" as const,
+              approvedAt:
+                response.data?.approvedAt ||
+                response.data?.approved_at ||
+                entry.approvedAt,
+              signedFileUrl:
+                resolveAssetUrl(
+                  pickFirstNonEmptyString(
+                    response.data?.signedFileUrl,
+                    response.data?.signed_file_url,
+                    response.data?.finalSignedFileUrl,
+                    response.data?.final_signed_file_url,
+                  ),
+                ) || entry.signedFileUrl,
+            }
           : entry,
       ),
     );
@@ -842,35 +842,46 @@ function SubmissionDosenPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredEntries.map((entry) => (
-                    <TableRow key={entry.id} className="hover:bg-muted/50">
-                      <TableCell className="text-foreground pl-6">
-                        {entry.tanggal}
-                      </TableCell>
-                      <TableCell className="text-primary font-medium">
-                        {entry.nim}
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium text-foreground">
-                          {entry.namaMahasiswa}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {entry.jenisSurat || "Surat"}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(entry.status)}</TableCell>
-                      <TableCell className="pr-6">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-primary border-primary/50 hover:bg-primary/5"
-                          onClick={() => handleReview(entry)}
-                        >
-                          {entry.status === "menunggu" ? "Review" : "Lihat"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredEntries.map((entry) => {
+                    const members = entry.teamMembers || [];
+                    const leader =
+                      members.find((member) => member.role === "Ketua") ||
+                      members[0];
+                    return (
+                      <TableRow key={entry.id} className="hover:bg-muted/50">
+                        <TableCell className="text-foreground pl-6">
+                          {entry.tanggal}
+                        </TableCell>
+                        <TableCell className="text-primary font-medium">
+                          {entry.nim}
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium text-foreground">
+                            {leader?.name || entry.namaMahasiswa || "Unknown"}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {members.length > 1
+                              ? `+ ${members.length - 1} Anggota`
+                              : "Individu"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-foreground">
+                          {entry.jenisSurat || "Surat"}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                        <TableCell className="pr-6">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-primary border-primary/50 hover:bg-primary/5"
+                            onClick={() => handleReview(entry)}
+                          >
+                            {entry.status === "menunggu" ? "Review" : "Lihat"}
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}

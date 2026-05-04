@@ -528,14 +528,14 @@ function SubmissionPage() {
         const response =
           currentStatus === "DITOLAK" && latestRequestId
             ? await reapplySuratPermohonanApproval(
-              latestRequestId,
-              memberId,
-              mahasiswaEsignatureUrl,
-            )
+                latestRequestId,
+                memberId,
+                mahasiswaEsignatureUrl,
+              )
             : await requestSuratPermohonanApproval(
-              memberId,
-              mahasiswaEsignatureUrl,
-            );
+                memberId,
+                mahasiswaEsignatureUrl,
+              );
         if (response.success) {
           toast.success(
             currentStatus === "DITOLAK"
@@ -909,7 +909,9 @@ function SubmissionPage() {
             </p>
             {submission?.rejectionReason && (
               <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-destructive/30">
-                <p className="text-xs font-semibold mb-1">💬 Catatan Admin:</p>
+                <p className="text-xs font-semibold mb-1">
+                  💬 Alasan penolakan:
+                </p>
                 <p className="text-sm">{submission?.rejectionReason}</p>
               </div>
             )}
