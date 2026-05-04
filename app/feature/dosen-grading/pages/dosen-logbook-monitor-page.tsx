@@ -37,14 +37,14 @@ function getStatusBadge(status: DosenLogbookMonitorItem["status"]) {
   if (status === "APPROVED") {
     return (
       <Badge className="bg-green-600 hover:bg-green-600">
-        Disetujui Mentor
+        Disetujui Pembimbing
       </Badge>
     );
   }
   if (status === "REJECTED") {
-    return <Badge variant="destructive">Ditolak Mentor</Badge>;
+    return <Badge variant="destructive">Ditolak Pembimbing</Badge>;
   }
-  return <Badge variant="secondary">Menunggu Review Mentor</Badge>;
+  return <Badge variant="secondary">Menunggu Review Pembimbing</Badge>;
 }
 
 export default function DosenLogbookMonitorPage() {

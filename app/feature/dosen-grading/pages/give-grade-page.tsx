@@ -196,15 +196,27 @@ export default function GiveGradePage() {
               <h1 className="text-xl font-bold truncate">Penilaian Mahasiswa</h1>
             </div>
             {internshipId && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex-shrink-0"
-                onClick={() => window.open(getAssessmentPdfUrl(internshipId), "_blank")}
-              >
-                <Printer className="h-4 w-4 mr-2" />
-                Cetak Form
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-shrink-0 lg:hidden"
+                  disabled={!reportInfo?.fileUrl}
+                  onClick={() => reportInfo?.fileUrl && window.open(reportInfo.fileUrl, "_blank")}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Lihat Laporan
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-shrink-0"
+                  onClick={() => window.open(getAssessmentPdfUrl(internshipId), "_blank")}
+                >
+                  <Printer className="h-4 w-4 mr-2" />
+                  Cetak Form
+                </Button>
+              </div>
             )}
           </div>
 

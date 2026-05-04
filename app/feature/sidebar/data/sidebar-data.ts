@@ -53,7 +53,7 @@ const mahasiswaMenu: NavItem[] = [
         // ],
       },
       {
-        title: "Saat Magang",
+        title: "Pelaksanaan",
         url: "/mahasiswa/kp/saat-magang",
       },
       {
@@ -61,13 +61,13 @@ const mahasiswaMenu: NavItem[] = [
         url: "/mahasiswa/kp/pengujian-sidang",
       },
       {
-        title: "Pasca Magang",
+        title: "Pasca KP",
         url: "#",
       },
     ],
   },
   {
-    title: "Arsip Magang",
+    title: "Arsip KP",
     url: "/mahasiswa/kp/arsip",
     icon: Archive,
   },
@@ -266,7 +266,7 @@ const mentorMenu: NavItem[] = [
     icon: Home,
   },
   {
-    title: "Mahasiswa Magang",
+    title: "Mahasiswa Bimbingan",
     url: "/mentor/mentee",
     icon: Users,
   },

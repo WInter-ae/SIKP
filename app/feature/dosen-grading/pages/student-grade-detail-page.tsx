@@ -142,8 +142,8 @@ export default function StudentGradeDetailPage() {
         {/* Student Header */}
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4 flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 flex-1 text-center sm:text-left">
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={student.photo} alt={student.name} />
                   <AvatarFallback className="text-2xl">
@@ -176,7 +176,7 @@ export default function StudentGradeDetailPage() {
                   </div>
                 </div>
               </div>
-              <div className="text-right">
+              <div className="text-center sm:text-right">
                 {summary && (
                   <>
                     <div className="text-4xl font-bold text-green-700">

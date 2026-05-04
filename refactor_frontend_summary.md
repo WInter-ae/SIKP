@@ -1,4 +1,4 @@
-# Refactor Frontend Summary - Internship Module v1.4.2 (v2.10)
+# Refactor Frontend Summary - Internship Module v1.4.2 (v2.15)
 
 Dokumen ini merangkum perubahan pada sisi frontend untuk menyelaraskan dengan refactoring backend **Internship Module v1.4** (Monitoring, Assessment, & Archiving).
 
@@ -52,6 +52,7 @@ Seluruh pemanggilan API telah dipindahkan dari rute berbasis identitas ke rute b
 3.  **Weighted Grading**: Implemented 30/30/30/10 weighted score calculation in `GiveGradePage.tsx` to match frontend form logic and backend expectations.
 4.  **LocalStorage Final Sweep**: Removed remaining auto-save logic in `GradingForm.tsx` and history persistence in `RevisionReviewSection.tsx`.
 5.  **Student Detail Real Data**: Refactored `StudentGradeDetailPage.tsx` to use `getAssessmentRecap` instead of mock data.
+6.  **UI Refinement & Responsive Polish**: Fixed header responsiveness in student details, added mobile PDF access in grading page, and enhanced empty state designs.
 
 ---
 
@@ -79,16 +80,25 @@ Seluruh pemanggilan API telah dipindahkan dari rute berbasis identitas ke rute b
 
 ---
 
-## 📋 TODO — Pekerjaan Selanjutnya
+### 4. 🔍 Phase 6: Terminology Consistency Audit (Completed)
+- [x] **Dosen Sidebar**: Tinjau "Verifikasi Mentor" (Tetap untuk ringkas) vs "Verifikasi Pembimbing Lapangan".
+- [x] **Register Approval Page**: Update placeholder "Cari nama mentor..." menjadi "Cari nama pembimbing..." pada `register-approval-page.tsx`.
+- [x] **Student Grading Card**: Pastikan label tetap "Pembimbing Lapangan" untuk konsistensi dengan recap nilai.
+- [x] **KP Report Page**: Sinkronisasi label "Dosen Pembimbing" dan "Pembimbing Lapangan" pada ringkasan status mahasiswa.
+- [x] **Field Mentor Module**: Mengubah "Mentor Lapangan" menjadi "Pembimbing Lapangan" pada heading utama dan alert info untuk formalitas.
 
-### 1. 🚀 Persiapan Produksi
-- [ ] Verifikasi endpoint `/api/assets/r2` di lingkungan production untuk upload foto.
-- [ ] Uji coba cetak PDF dengan data mahasiswa yang memiliki karakter khusus (UTF-8).
+### 5. 📝 Phase 7: Terminology Standardization (Reporting & Monitoring) (Completed)
+- [x] **Logbook Monitoring**: Memperbarui status badge di `dosen-logbook-monitor-page.tsx` dari "Mentor" menjadi **"Pembimbing"** untuk tampilan Dosen PA.
+- [x] **Logbook Submission**: Standarisasi toast dan button di `logbook-page.tsx` dari "Mentor" menjadi **"Pembimbing Lapangan"**.
+- [x] **Audit Pelaporan**: Memvalidasi seluruh instruksi pengajuan logbook agar konsisten menggunakan istilah formal.
 
-### 2. 🧪 Testing & QA
-- [ ] Smoke test untuk role **KAPRODI** dan **WAKIL_DEKAN** pada modul monitoring.
+### 6. 🏛️ Phase 8: Internship vs Kerja Praktik (KP) Audit (Completed)
+- [x] **Navigation/Sidebar**: Mengubah "Saat Magang" menjadi **"Pelaksanaan"** dan "Pasca Magang" menjadi **"Pasca KP"** pada menu mahasiswa.
+- [x] **Arsip KP**: Mengubah "Arsip Magang" menjadi **"Arsip KP"** pada sidebar mahasiswa dan dosen.
+- [x] **Akses Mentor**: Mengubah "Mahasiswa Magang" menjadi **"Mahasiswa Bimbingan"** pada dashboard pembimbing lapangan.
+- [x] **Status & Timeline**: Sinkronisasi label timeline menjadi **"Pelaksanaan"** dan **"Pasca KP"** untuk profesionalitas.
 
 ---
 
-**Versi:** v2.9 — New Mentor Verification Workflow (Dosen PA & SSO Integration)
-**Tanggal:** 2026-05-03
+**Versi:** v2.15 — "Magang" vs "KP" Terminology Audit
+**Tanggal:** 2026-05-04

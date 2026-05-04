@@ -392,7 +392,7 @@ export default function RegisterApprovalPage() {
           <div className="flex flex-col gap-4 pt-4 sm:flex-row">
             <div className="flex-1">
               <Input
-                placeholder="Cari nama mentor, mahasiswa, atau perusahaan..."
+                placeholder="Cari nama pembimbing, mahasiswa, atau perusahaan..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="max-w-sm"

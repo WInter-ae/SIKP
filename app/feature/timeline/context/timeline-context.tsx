@@ -56,13 +56,13 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
     {
       id: 5,
       step: TimelineStep.SAAT_MAGANG,
-      title: "Saat Magang",
+      title: "Pelaksanaan",
       active: false,
     },
     {
       id: 6,
       step: TimelineStep.PASCA_MAGANG,
-      title: "Pasca Magang",
+      title: "Pasca KP",
       active: false,
     },
   ].map((item) => ({

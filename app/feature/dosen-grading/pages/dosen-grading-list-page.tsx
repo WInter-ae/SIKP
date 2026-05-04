@@ -291,28 +291,31 @@ export default function DosenGradingListPage() {
           </h2>
 
           {students.length === 0 ? (
-            <Card className="p-12 dark:bg-gray-800 dark:border-gray-700">
-              <div className="text-center">
-                <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <Card className="p-12 border-dashed border-2 dark:bg-gray-800/50 dark:border-gray-700 bg-gray-50/50">
+              <div className="text-center max-w-md mx-auto">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <Users className="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
                   Belum Ada Mahasiswa yang Upload Laporan
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Daftar mahasiswa akan muncul setelah mereka mengupload Laporan
-                  Kerja Praktik di halaman Pasca Magang.
+                <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Daftar mahasiswa akan muncul secara otomatis di sini setelah mereka mengunggah Laporan
+                  Kerja Praktik pada halaman Pasca Magang.
                 </p>
               </div>
             </Card>
           ) : filteredStudents.length === 0 ? (
-            <Card className="p-12 dark:bg-gray-800 dark:border-gray-700">
-              <div className="text-center">
-                <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <Card className="p-12 border-dashed border-2 dark:bg-gray-800/50 dark:border-gray-700 bg-gray-50/50">
+              <div className="text-center max-w-md mx-auto">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <Search className="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
                   Tidak Ada Hasil Pencarian
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Tidak ada mahasiswa yang sesuai dengan filter atau pencarian
-                  Anda.
+                <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Kami tidak menemukan mahasiswa yang sesuai dengan kata kunci "{searchQuery}" atau filter yang Anda pilih.
                 </p>
               </div>
             </Card>

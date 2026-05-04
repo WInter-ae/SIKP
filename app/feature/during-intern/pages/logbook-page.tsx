@@ -736,7 +736,7 @@ function LogbookPage() {
     );
 
     if (pendingEntries.length === 0) {
-      toast.info("Semua logbook sudah diajukan atau disetujui mentor!");
+      toast.info("Semua logbook sudah diajukan atau disetujui pembimbing lapangan!");
       return;
     }
 
@@ -782,7 +782,7 @@ function LogbookPage() {
 
         if (successCount === pendingEntries.length) {
           toast.success(
-            `✅ Semua ${successCount} logbook berhasil diajukan ke mentor!`,
+            `✅ Semua ${successCount} logbook berhasil diajukan ke pembimbing lapangan!`,
           );
         } else {
           toast.warning(
@@ -2247,7 +2247,7 @@ function LogbookPage() {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-lg font-semibold text-foreground">
-                        Ajukan Logbook ke Mentor
+                        Ajukan Logbook ke Pembimbing Lapangan
                       </h3>
                       <p className="max-w-xl text-sm leading-6 text-muted-foreground">
                         Kumpulkan seluruh logbook untuk dikirim ke mentor dalam

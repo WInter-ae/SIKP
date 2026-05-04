@@ -211,7 +211,7 @@ function FieldMentorPage() {
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       {/* Header Section */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Mentor Lapangan</h1>
+        <h1 className="text-3xl font-bold text-foreground">Pembimbing Lapangan</h1>
         <p className="text-muted-foreground">
           Kelola data mentor lapangan untuk kerja praktik Anda
         </p>
@@ -226,7 +226,7 @@ function FieldMentorPage() {
       {/* Info Section */}
       <Alert className="border-l-4 border-primary bg-primary/5">
         <UserPlus className="h-5 w-5" />
-        <AlertTitle>Informasi Mentor Lapangan</AlertTitle>
+        <AlertTitle>Informasi Pembimbing Lapangan (Mentor)</AlertTitle>
         <AlertDescription className="mt-2">
           <p className="mb-2">
             Halaman ini digunakan untuk mengajukan mentor lapangan Anda kepada
@@ -256,10 +256,10 @@ function FieldMentorPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
-              Mentor Lapangan Terdaftar
+              Pembimbing Lapangan Terdaftar
             </CardTitle>
             <CardDescription>
-              Data mentor lapangan yang telah didaftarkan
+              Data pembimbing lapangan yang telah didaftarkan
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
