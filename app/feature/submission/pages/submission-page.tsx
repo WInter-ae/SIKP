@@ -113,9 +113,9 @@ function SubmissionPage() {
   const [rejectionReasonByKey, setRejectionReasonByKey] = useState<
     Record<string, string>
   >({});
-  const [dosenNameByKey, setDosenNameByKey] = useState<Record<string, string>>(
-    {},
-  );
+  const [dosenKpNameByKey, setDosenKpNameByKey] = useState<
+    Record<string, string>
+  >({});
   const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>("idle");
   const [autoSaveError, setAutoSaveError] = useState<string | null>(null);
   const [isProposalReuploadConfirmOpen, setIsProposalReuploadConfirmOpen] =
@@ -182,7 +182,7 @@ function SubmissionPage() {
       const nextSignedUrls: Record<string, string> = {};
       const nextLatestRequestIds: Record<string, string> = {};
       const nextRejectionReasons: Record<string, string> = {};
-      const nextDosenNames: Record<string, string> = {};
+      const nextDosenKpNames: Record<string, string> = {};
       response.data.forEach((item) => {
         const requestKey = getRequestKey(
           item.memberMahasiswaId,
@@ -193,12 +193,12 @@ function SubmissionPage() {
           nextLatestRequestIds[requestKey] = item.latestRequestId;
         if (item.rejectionReason)
           nextRejectionReasons[requestKey] = item.rejectionReason;
-        if (item.dosenName) nextDosenNames[requestKey] = item.dosenName;
+        if (item.dosenName) nextDosenKpNames[requestKey] = item.dosenName;
       });
       setSignedUrlByKey(nextSignedUrls);
       setLatestRequestIdByKey(nextLatestRequestIds);
       setRejectionReasonByKey(nextRejectionReasons);
-      setDosenNameByKey(nextDosenNames);
+      setDosenKpNameByKey(nextDosenKpNames);
     } catch (error) {
       console.error("❌ Error loading letter request statuses:", error);
     }
@@ -325,7 +325,7 @@ function SubmissionPage() {
             setSignedUrlByKey({});
             setLatestRequestIdByKey({});
             setRejectionReasonByKey({});
-            setDosenNameByKey({});
+            setDosenKpNameByKey({});
           }
         } else {
           setLoadError(response.message || "Gagal memuat data tim");
@@ -475,7 +475,7 @@ function SubmissionPage() {
           // Continue anyway - backend might handle this automatically
         } else {
           console.log("✅ Old document deleted successfully");
-          toast.success("Dokumen lama berhasil dihapus sebelum diganti");
+          toast.success("Dokumen lama berhasil dihapus");
         }
       }
 
@@ -814,7 +814,7 @@ function SubmissionPage() {
 
   if (isUserLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <p className="text-muted-foreground">Memuat data tim...</p>
       </div>
     );
@@ -834,7 +834,7 @@ function SubmissionPage() {
         </div>
 
         <Card className="mb-8">
-          <CardContent className="flex min-h-[220px] items-center justify-center p-6">
+          <CardContent className="flex min-h-55 items-center justify-center p-6">
             <div className="flex flex-col items-center gap-4">
               <Alert
                 variant="destructive"
@@ -909,7 +909,9 @@ function SubmissionPage() {
             </p>
             {submission?.rejectionReason && (
               <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-destructive/30">
-                <p className="text-xs font-semibold mb-1">💬 Catatan Admin:</p>
+                <p className="text-xs font-semibold mb-1">
+                  💬 Alasan penolakan:
+                </p>
                 <p className="text-sm">{submission?.rejectionReason}</p>
               </div>
             )}
@@ -1040,6 +1042,22 @@ function SubmissionPage() {
                       >
                         {proposalDocument ? "Terupload" : "Belum diupload"}
                       </Button>
+                      {proposalDocument && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handlePreviewProposal}
+                                className="text-muted-foreground hover:text-foreground"
+                              >
+                                Lihat
+                              </Button>
+                            </TooltipTrigger>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                       Proposal hanya bisa diupload oleh ketua tim.
@@ -1076,7 +1094,7 @@ function SubmissionPage() {
                 currentMahasiswaId={currentMemberId}
                 submittedRequestKeys={submittedRequestKeys}
                 submittedRequestStatusByKey={submittedRequestStatusByKey}
-                dosenNameByKey={dosenNameByKey}
+                dosenKpNameByKey={dosenKpNameByKey}
                 onUpload={handleDocumentUpload}
                 onSubmitRequest={handleAjukanSurat}
                 disabled={isSubmissionSubmitted}

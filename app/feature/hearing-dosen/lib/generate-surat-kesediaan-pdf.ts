@@ -85,7 +85,7 @@ export async function generateSuratKesediaanPdf(
   y += 8;
   pdf.text("Demikianlah pernyataan ini dibuat agar maklum.", 20, y);
 
-  y += 32;
+  y += 15;
   pdf.text(`Palembang, ${formattedDate}`, 130, y);
   y += 7;
   pdf.text("Calon Dosen Pembimbing,", 130, y);

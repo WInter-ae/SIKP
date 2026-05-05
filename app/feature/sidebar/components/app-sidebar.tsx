@@ -97,18 +97,24 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
     return userProp || defaultUser;
   }, [activeIdentity?.label, contextRole, contextUser, defaultUser, userProp]);
 
+  const userJabatanStruktural = React.useMemo(() => {
+    const jabatanStruktural = contextUser?.jabatanStruktural || activeIdentity?.profile.jabatanStruktural;
+    return Array.isArray(jabatanStruktural) ? jabatanStruktural.join(", ") : undefined;
+  }, [activeIdentity?.profile.jabatanStruktural, contextUser?.jabatanStruktural]);
+
   const navItems = React.useMemo(
     () =>
       getSidebarMenuByUrl(
         location.pathname,
         primaryRole,
-        contextUser?.jabatan || activeIdentity?.profile.jabatan,
+        userJabatanStruktural || contextUser?.jabatan || activeIdentity?.profile.jabatan,
       ),
     [
       activeIdentity?.profile.jabatan,
       contextUser?.jabatan,
       location.pathname,
       primaryRole,
+      userJabatanStruktural,
     ],
   );
 

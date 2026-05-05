@@ -15,13 +15,17 @@ import {
 
 export interface DosenProfile {
   id: string;
-  nip: string;
+  nip?: string;
+  nidn?: string;
   nama: string;
-  email: string;
-  telepon: string;
-  jabatan: string;
-  fakultas: string;
-  programStudi: string;
+  email?: string;
+  telepon?: string;
+  jabatan?: string;
+  jabatanFungsional?: string;
+  jabatanStruktural?: string[];
+  fakultas?: string;
+  programStudi?: string;
+  prodi?: string;
   esignature?: {
     url: string;
     key: string;

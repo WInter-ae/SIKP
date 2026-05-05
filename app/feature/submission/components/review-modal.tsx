@@ -139,10 +139,11 @@ function ReviewModal({
         titleEmpty: !doc.title,
       });
 
-      if (!groups[doc.title]) {
-        groups[doc.title] = [];
+      const normalizedTitle = doc.title || "Dokumen Lainnya";
+      if (!groups[normalizedTitle]) {
+        groups[normalizedTitle] = [];
       }
-      groups[doc.title].push(doc);
+      groups[normalizedTitle].push(doc);
     });
 
     console.log("📂 Final grouped documents:", {
@@ -236,12 +237,12 @@ function ReviewModal({
     const mappedSignature = currentApplication.wakilDekanSignature;
     const wakilDekanName =
       mappedSignature?.name ||
-      (user?.role === "WAKIL_DEKAN"
-        ? user?.nama || "Wakil Dekan Bidang Akademik"
-        : "Wakil Dekan Bidang Akademik");
+      (user?.role === "WAKIL_DEKAN" ? user?.nama : null) ||
+      "Wakil Dekan Bidang Akademik";
     const wakilDekanNip =
       mappedSignature?.nip ||
-      (user?.role === "WAKIL_DEKAN" ? user.nip || "-" : "-");
+      (user?.role === "WAKIL_DEKAN" ? user?.nip : null) ||
+      "-";
     const wakilDekanJabatan =
       mappedSignature?.position || "Wakil Dekan Bidang Akademik";
 
@@ -300,7 +301,9 @@ function ReviewModal({
       setIsGeneratingPdf(true);
       const mailEntry = buildMailEntryFromApplication(application);
 
-      if (mailEntry.status === "disetujui" && mailEntry.signedFileUrl) {
+      // ✅ Admin always gets a fresh preview to see signatures, 
+      // even if there is a signedFileUrl (which might be a placeholder)
+      if (mailEntry.status === "disetujui" && mailEntry.signedFileUrl && user?.role !== "admin") {
         window.open(mailEntry.signedFileUrl, "_blank", "noopener,noreferrer");
         toast.success("Membuka surat signed dari server.");
         return;
@@ -414,17 +417,17 @@ function ReviewModal({
     const status = docReviews[doc.id];
     const displayStatus = getDisplayStatus(doc);
     const isEditable = isAdminReviewStage;
+    const uploadedByLabel = doc.uploadedBy || "Mahasiswa";
     return (
       <div
         key={doc.id}
         onClick={() => window.open(doc.url || "#", "_blank")}
-        className={`flex items-center justify-between p-3 bg-card rounded border cursor-pointer transition-opacity hover:opacity-80 ${
-          displayStatus === "REJECTED"
+        className={`flex items-center justify-between p-3 bg-card rounded border cursor-pointer transition-opacity hover:opacity-80 ${displayStatus === "REJECTED"
             ? "border-destructive/50 bg-destructive/10"
             : displayStatus === "APPROVED"
               ? "border-green-500/50 bg-green-500/10"
               : "border-border"
-        }`}
+          }`}
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-gray-200 text-green-600 rounded flex items-center justify-center">
@@ -432,7 +435,7 @@ function ReviewModal({
           </div>
           <div>
             <p className="text-sm font-medium text-foreground">
-              {doc.uploadedBy}
+              {uploadedByLabel}
             </p>
             <p className="text-xs text-muted-foreground">{doc.uploadDate}</p>
             {displayStatus && (
@@ -453,11 +456,10 @@ function ReviewModal({
                   e.stopPropagation();
                   handleDocAction(doc.id, "approved");
                 }}
-                className={`font-medium transition-all duration-200 transform active:translate-y-1 active:shadow-sm ${
-                  status === "approved"
-                    ? "bg-gradient-to-b from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl hover:from-green-400 hover:to-green-500 active:shadow-none"
+                className={`font-medium transition-all duration-200 transform active:translate-y-1 active:shadow-sm ${status === "approved"
+                    ? "bg-linear-to-b from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl hover:from-green-400 hover:to-green-500 active:shadow-none"
                     : "border border-green-200 text-green-600 hover:border-green-400 hover:bg-green-50 shadow-md hover:shadow-lg active:shadow-none"
-                }`}
+                  }`}
               >
                 Setuju
               </Button>
@@ -469,11 +471,10 @@ function ReviewModal({
                   e.stopPropagation();
                   handleDocAction(doc.id, "rejected");
                 }}
-                className={`font-medium transition-all duration-200 transform active:translate-y-1 active:shadow-sm ${
-                  status === "rejected"
-                    ? "bg-gradient-to-b from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl hover:from-red-400 hover:to-red-500 active:shadow-none"
+                className={`font-medium transition-all duration-200 transform active:translate-y-1 active:shadow-sm ${status === "rejected"
+                    ? "bg-linear-to-b from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl hover:from-red-400 hover:to-red-500 active:shadow-none"
                     : "border border-red-200 text-red-600 hover:border-red-400 hover:bg-red-50 shadow-md hover:shadow-lg active:shadow-none"
-                }`}
+                  }`}
                 title="Tolak Dokumen"
               >
                 Tolak
@@ -510,7 +511,7 @@ function ReviewModal({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="text-2xl">
             Verifikasi Pengajuan Surat Pengantar KP
           </DialogTitle>
@@ -543,11 +544,10 @@ function ReviewModal({
                 {application.members.map((member) => (
                   <div
                     key={member.id}
-                    className={`p-4 rounded-lg border ${
-                      member.role === "Ketua"
+                    className={`p-4 rounded-lg border ${member.role === "Ketua"
                         ? "border-primary/30 bg-primary/5"
                         : "border-border bg-muted/50"
-                    }`}
+                      }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <Badge
@@ -689,22 +689,22 @@ function ReviewModal({
                             ? docs.length > 0
                               ? docs.map((doc) => renderDocItem(doc))
                               : renderMissingDocItem(
-                                  "Ketua Tim",
-                                  "missing-proposal",
-                                )
+                                "Ketua Tim",
+                                "missing-proposal",
+                              )
                             : application.members.map((member) => {
-                                const doc = docs.find(
-                                  (d) => d.uploadedBy === member.name,
+                              const doc = docs.find(
+                                (d) => d.uploadedBy === member.name,
+                              );
+                              if (doc) {
+                                return renderDocItem(doc);
+                              } else {
+                                return renderMissingDocItem(
+                                  member.name,
+                                  `missing-${member.id}-${title}`,
                                 );
-                                if (doc) {
-                                  return renderDocItem(doc);
-                                } else {
-                                  return renderMissingDocItem(
-                                    member.name,
-                                    `missing-${member.id}-${title}`,
-                                  );
-                                }
-                              })}
+                              }
+                            })}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -793,7 +793,7 @@ function ReviewModal({
               <CardContent className="space-y-4">
                 <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-green-600 text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-green-600 text-white rounded-lg flex items-center justify-center shrink-0">
                       <Check className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
@@ -834,7 +834,7 @@ function ReviewModal({
               <CardContent className="space-y-4">
                 <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/30">
                   <div className="flex gap-3">
-                    <div className="w-10 h-10 bg-destructive text-white rounded-lg flex items-center justify-center flex-shrink-0">
+                    <div className="w-10 h-10 bg-destructive text-white rounded-lg flex items-center justify-center shrink-0">
                       <AlertCircle className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
@@ -852,11 +852,11 @@ function ReviewModal({
           )}
         </div>
 
-        <div className="flex-shrink-0 border-t border-border pt-4">
+        <div className="shrink-0 border-t border-border pt-4">
           <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
             <Button variant="outline" onClick={handleClose}>
               {application.status === "approved" ||
-              application.status === "rejected"
+                application.status === "rejected"
                 ? "Tutup"
                 : "Batal"}
             </Button>

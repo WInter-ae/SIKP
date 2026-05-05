@@ -328,9 +328,13 @@ export function getSidebarMenuByUrl(
     return adminMenu;
   }
   if (pathname.startsWith("/dosen")) {
-    // Check if user is Wakil Dekan Bidang Akademik by checking jabatan
-    if (userJabatan && userJabatan.toLowerCase().includes("wakil dekan")) {
-      return wakilDekanMenu;
+    // Check if user is Wakil Dekan by checking jabatan (can contain "WAKIL_DEKAN", "wakil dekan", etc)
+    if (userJabatan) {
+      const jabatanLower = userJabatan.toLowerCase();
+      const isWakdek = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+      if (isWakdek) {
+        return wakilDekanMenu;
+      }
     }
     return dosenMenu;
   }
@@ -350,8 +354,12 @@ export function getSidebarMenuByUrl(
     normalizedRole === "KAPRODI" ||
     normalizedRole === "WAKIL_DEKAN"
   ) {
-    if (userJabatan && userJabatan.toLowerCase().includes("wakil dekan")) {
-      return wakilDekanMenu;
+    if (userJabatan) {
+      const jabatanLower = userJabatan.toLowerCase();
+      const isWakdek = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+      if (isWakdek) {
+        return wakilDekanMenu;
+      }
     }
     return dosenMenu;
   }

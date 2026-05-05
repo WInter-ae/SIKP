@@ -19,6 +19,20 @@ export default function CallbackPage() {
 
     const code = searchParams.get("code");
     const state = searchParams.get("state");
+    const errorParam = searchParams.get("error");
+    const errorDescription = searchParams.get("error_description");
+
+    if (errorParam) {
+      if (errorParam === "access_denied") {
+        setError(
+          "Akses dibatalkan oleh pengguna. Silakan coba login kembali dan berikan izin akses.",
+        );
+      } else {
+        setError(errorDescription || `Terjadi kesalahan SSO: ${errorParam}`);
+      }
+      setIsProcessing(false);
+      return;
+    }
 
     if (!code || !state) {
       setError(
