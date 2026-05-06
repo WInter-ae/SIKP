@@ -329,7 +329,7 @@ function AdminResponseLetterPage() {
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Page Header */}
           <div className="flex justify-between items-center">
-            <div>
+            <div className="relative pb-2">
               <h1 className="text-xl sm:text-3xl font-bold text-foreground">
                 Surat Balasan
               </h1>
@@ -337,51 +337,73 @@ function AdminResponseLetterPage() {
                 Kelola dan review surat balasan dari perusahaan untuk kerja
                 praktik mahasiswa
               </p>
+              <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
             </div>
           </div>
 
           {/* Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {stats.map((stat, index) => (
-              <Card key={index}>
-                <CardContent className="p-6 flex items-start gap-4">
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center text-white flex-shrink-0 ${stat.iconBgColor}`}
-                  >
-                    <stat.icon className="h-6 w-6" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-foreground">
-                      {stat.value}
-                    </h3>
-                    <p className="text-muted-foreground text-md">
-                      {stat.title}
-                    </p>
-                    {stat.breakdown && (
-                      <div className="space-y-1 mt-1">
-                        {stat.breakdown.map((item, idx) => (
-                          <div key={idx} className="text-xs font-medium">
-                            <span
-                              className={
-                                item.label === "Disetujui"
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-destructive"
-                              }
-                            >
-                              {item.label}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {" "}
-                              : {item.count}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+            {stats.map((stat, index) => {
+              const borderColors = [
+                "border-l-blue-600",
+                "border-l-yellow-300",
+                "border-l-red-500",
+              ];
+              const iconBgColors = [
+                "bg-blue-50 dark:bg-blue-900/20",
+                "bg-yellow-50 dark:bg-yellow-900/20",
+                "bg-red-50 dark:bg-red-900/20",
+              ];
+              const iconColors = [
+                "text-blue-600 dark:text-blue-400",
+                "text-yellow-600 dark:text-yellow-300",
+                "text-red-600 dark:text-red-400",
+              ];
+
+              return (
+                <Card
+                  key={index}
+                  className={`border-l-4 ${borderColors[index % 3]} shadow-sm hover:shadow-md transition-shadow duration-200`}
+                >
+                  <CardContent className="p-6 flex items-start gap-4">
+                    <div
+                      className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${iconBgColors[index % 3]} ${iconColors[index % 3]}`}
+                    >
+                      <stat.icon className="h-6 w-6" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-foreground">
+                        {stat.value}
+                      </h3>
+                      <p className="text-muted-foreground text-md font-medium">
+                        {stat.title}
+                      </p>
+                      {stat.breakdown && (
+                        <div className="space-y-1 mt-1">
+                          {stat.breakdown.map((item, idx) => (
+                            <div key={idx} className="text-xs font-medium">
+                              <span
+                                className={
+                                  item.label === "Disetujui"
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-destructive"
+                                }
+                              >
+                                {item.label}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {" "}
+                                : {item.count}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
           {/* Filter and Search */}
           <Card>
@@ -397,7 +419,7 @@ function AdminResponseLetterPage() {
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] font-semibold">
                   <SelectValue placeholder="Pilih Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -410,7 +432,7 @@ function AdminResponseLetterPage() {
                 value={verificationFilter}
                 onValueChange={setVerificationFilter}
               >
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[180px] font-semibold">
                   <SelectValue placeholder="Verifikasi" />
                 </SelectTrigger>
                 <SelectContent>
@@ -421,10 +443,6 @@ function AdminResponseLetterPage() {
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <Button>
-                <Filter className="w-4 h-4 mr-2" />
-                Filter
-              </Button>
             </CardContent>
           </Card>
 

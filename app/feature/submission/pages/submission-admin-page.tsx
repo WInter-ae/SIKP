@@ -440,7 +440,7 @@ function SubmissionAdminPage() {
         </div>
 
         {/* Filter and Search */}
-        <Card className="border-t-4 border-t-blue-600">
+        <Card className="">
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
             <div className="flex-1 min-w-62.5 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -453,7 +453,7 @@ function SubmissionAdminPage() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-45">
+              <SelectTrigger className="w-45 font-semibold">
                 <SelectValue placeholder="Pilih Status" />
               </SelectTrigger>
               <SelectContent>
@@ -463,10 +463,6 @@ function SubmissionAdminPage() {
                 <SelectItem value="rejected">Ditolak</SelectItem>
               </SelectContent>
             </Select>
-            <Button>
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
           </CardContent>
         </Card>
 

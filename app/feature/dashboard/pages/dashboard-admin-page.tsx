@@ -14,6 +14,9 @@ import {
   FileText,
   UserCheck,
   Inbox,
+  CheckCircle2,
+  TrendingUp,
+  BarChart3,
 } from "lucide-react";
 
 export type AdminActivityItem = {
@@ -173,7 +176,7 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
       </div>
 
       <Card className="shadow-lg border-none bg-linear-to-b from-background to-blue-50/20 dark:to-blue-900/5 overflow-hidden">
-        <div className="h-1.5 w-full bg-linear-to-r from-blue-600 to-transparent" />
+        <div className="h-1.5 w-full" />
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-blue-600" />
@@ -186,28 +189,50 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
         </CardHeader>
         <CardContent>
           {statistikPengajuan.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-8 py-2">
               {statistikPengajuan.map((stat) => (
-                <div key={stat.month} className="flex items-center gap-4">
-                  <div className="w-12 text-sm font-medium">{stat.month}</div>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">
-                        Pengajuan: {stat.submissions}
+                <div key={stat.month} className="group">
+                  <div className="flex items-end justify-between mb-2">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground w-[45px] uppercase tracking-tight">
+                          {stat.month}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">
+                            Total Pengajuan
+                          </span>
+                          <span className="text-sm font-black leading-none">
+                            {stat.submissions}
+                          </span>
+                        </div>
+                        <div className="h-6 w-px bg-border" />
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">
+                            Disetujui
+                          </span>
+                          <span className="text-sm font-black text-blue-600 dark:text-blue-400 leading-none">
+                            {stat.approved}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">
+                        Approval Rate
                       </span>
-                      <span className="text-muted-foreground">
-                        Approved: {stat.approved}
+                      <span className="text-2xl font-black text-blue-600 dark:text-blue-400 leading-none">
+                        {stat.approvalRate}%
                       </span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-secondary/50 overflow-hidden">
-                      <div
-                        className="h-2 rounded-full bg-linear-to-r from-blue-600 to-blue-400 transition-all shadow-[0_0_8px_rgba(37,99,235,0.3)]"
-                        style={{ width: `${stat.approvalRate}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Approval rate: {stat.approvalRate}%
-                    </p>
+                  </div>
+                  <div className="h-2 w-full bg-secondary/30 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-linear-to-r from-blue-600 to-blue-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(37,99,235,0.2)]"
+                      style={{ width: `${stat.approvalRate}%` }}
+                    />
                   </div>
                 </div>
               ))}
@@ -218,8 +243,7 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-none bg-linear-to-b from-background to-yellow-50/20 dark:to-yellow-900/5 overflow-hidden">
-        <div className="h-1.5 w-full bg-linear-to-r from-yellow-300 to-transparent" />
+      <Card className="shadow-lg border-l-0 border-t-yellow-300 border-t-4 border-r-0 border-b-0 bg-linear-to-b from-background to-yellow-50/20 dark:to-yellow-900/5 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ListOrdered className="h-5 w-5 text-yellow-600" />
