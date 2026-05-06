@@ -7,16 +7,23 @@ interface StatCardProps {
   value: string | number;
   icon: LucideIcon;
   iconBgColor: string;
+  className?: string;
 }
 
-function StatCard({ title, value, icon: Icon, iconBgColor }: StatCardProps) {
+function StatCard({
+  title,
+  value,
+  icon: Icon,
+  iconBgColor,
+  className,
+}: StatCardProps) {
   return (
-    <Card>
+    <Card className={className}>
       <CardContent className="p-6 flex items-center">
         <div
-          className={`w-14 h-14 rounded-full flex items-center justify-center text-white mr-4 ${iconBgColor}`}
+          className={`w-14 h-14 rounded-full flex items-center justify-center mr-4 ${iconBgColor}`}
         >
-          <Icon className="h-6 w-6" />
+          <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
         </div>
         <div>
           <h3 className="text-2xl font-bold text-foreground">{value}</h3>

@@ -314,13 +314,14 @@ function ResponseLetterPage() {
   return (
     <div className="pb-24">
       {/* Header Section */}
-      <div className="mb-6">
+      <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Surat Balasan
         </h1>
         <p className="text-sm text-muted-foreground">
           Upload surat balasan dan pantau status persetujuan kerja praktik
         </p>
+        <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
 
       {/* Info Alert */}
@@ -329,7 +330,7 @@ function ResponseLetterPage() {
           <Info className="h-5 w-5 text-primary" />
           <AlertDescription className="text-foreground">
             {verificationStatus.verified &&
-            verificationStatus.letterStatus === "approved"
+              verificationStatus.letterStatus === "approved"
               ? "Surat balasan telah diverifikasi. Anda dapat melanjutkan ke tahap berikutnya."
               : isLeader
                 ? "Pastikan surat balasan telah diupload dengan benar sebelum mengirimkan ke admin"
@@ -340,13 +341,13 @@ function ResponseLetterPage() {
 
       {/* Main Form Card */}
       {isLoading ? (
-        <Card className="mb-8">
+        <Card className="mb-8 border-t-4 border-t-blue-600">
           <CardContent className="p-6">
             <ResponseLetterLoadingState />
           </CardContent>
         </Card>
       ) : !hasTeam ? (
-        <Card className="mb-8">
+        <Card className="mb-8 border-t-4 border-t-blue-600">
           <CardContent className="flex min-h-[220px] items-center justify-center p-6">
             <div className="flex flex-col items-center gap-4">
               <Alert
@@ -365,7 +366,7 @@ function ResponseLetterPage() {
           </CardContent>
         </Card>
       ) : !canManageResponseLetter ? (
-        <Card className="mb-8">
+        <Card className="mb-8 border-t-4 border-t-blue-600">
           <CardContent className="flex min-h-[220px] items-center justify-center p-6">
             <div className="flex flex-col items-center gap-4">
               <Alert
@@ -385,13 +386,13 @@ function ResponseLetterPage() {
           </CardContent>
         </Card>
       ) : error && !responseLetter ? (
-        <Card className="mb-8">
+        <Card className="mb-8 border-t-4 border-t-blue-600">
           <CardContent className="p-6">
             <ResponseLetterErrorState error={error} onRetry={refetch} />
           </CardContent>
         </Card>
       ) : (
-        <Card className="mb-8">
+        <Card className="mb-8 border-t-4 border-t-blue-600">
           <CardContent>
             {/* Upload Surat Balasan Section */}
             <CardHeader className="px-0 pt-0 mb-2">
@@ -553,7 +554,7 @@ function ResponseLetterPage() {
 
             {/* Next Button - Different behavior based on verification status */}
             {verificationStatus.verified &&
-            verificationStatus.letterStatus === "approved" ? (
+              verificationStatus.letterStatus === "approved" ? (
               <Button
                 onClick={() => setShowAnnouncement(true)}
                 className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] hover:bg-blue-700 text-white border-none shadow-lg"

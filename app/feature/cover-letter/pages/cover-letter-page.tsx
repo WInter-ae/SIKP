@@ -89,16 +89,17 @@ function CoverLetterPage() {
   return (
     <div className="pb-24">
       {/* Header Section */}
-      <div className="mb-6">
-        <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-2 leading-tight">
+      <div className="mb-6 relative pb-2">
+        <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Status Pengajuan Surat Pengantar
         </h1>
         <p className="text-sm text-muted-foreground">
           Monitor status pengajuan surat pengantar kerja praktik Anda
         </p>
+        <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
 
-      <Card className="mb-8">
+      <Card className="mb-8 shadow-sm">
         <CardContent className="p-4 sm:p-6">
           {/* Render loading state */}
           {isLoading && <SubmissionLoadingState />}
@@ -156,7 +157,7 @@ function CoverLetterPage() {
               onClick={() => navigate("/mahasiswa/kp/surat-balasan")}
               className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] hover:bg-blue-700 text-white border-none shadow-lg disabled:opacity-50"
             >
-               <a className="hidden md:inline">Selanjutnya</a>
+              <a className="hidden md:inline">Selanjutnya</a>
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

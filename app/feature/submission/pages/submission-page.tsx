@@ -539,14 +539,14 @@ function SubmissionPage() {
         const response =
           currentStatus === "DITOLAK" && latestRequestId
             ? await reapplySuratPermohonanApproval(
-                latestRequestId,
-                memberId,
-                mahasiswaEsignatureUrl,
-              )
+              latestRequestId,
+              memberId,
+              mahasiswaEsignatureUrl,
+            )
             : await requestSuratPermohonanApproval(
-                memberId,
-                mahasiswaEsignatureUrl,
-              );
+              memberId,
+              mahasiswaEsignatureUrl,
+            );
         if (response.success) {
           toast.success(
             currentStatus === "DITOLAK"
@@ -844,7 +844,7 @@ function SubmissionPage() {
           </p>
         </div>
 
-        <Card className="mb-8">
+        <Card className="mb-8 border-t-4 border-t-blue-600">
           <CardContent className="flex min-h-55 items-center justify-center p-6">
             <div className="flex flex-col items-center gap-4">
               <Alert
@@ -869,7 +869,7 @@ function SubmissionPage() {
   return (
     <div className="pb-10">
       {/* Header Section */}
-      <div className="mb-6">
+      <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Pengajuan Syarat Kerja Praktik
         </h1>
@@ -877,12 +877,7 @@ function SubmissionPage() {
           Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
           Praktik
         </p>
-        {/* {teamName && (
-          <p className="text-sm text-muted-foreground mt-2">
-            Tim: {teamName} ({teamMembers.length} anggota, status{" "}
-            {teamStatus || "-"})
-          </p>
-        )} */}
+        <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
 
       {/* Info Alert */}
@@ -951,7 +946,7 @@ function SubmissionPage() {
         </Alert>
       )}
 
-      <Card className="mb-6">
+      <Card className="mb-6 border-t-4 border-t-blue-600">
         <CardContent>
           {/* Keterangan Lain Section */}
           <div className="mb-8">

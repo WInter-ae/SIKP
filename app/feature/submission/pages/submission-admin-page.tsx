@@ -74,12 +74,12 @@ function SubmissionAdminPage() {
             documentsCount: response.data[0]?.documents?.length || 0,
             firstDocument: response.data[0]?.documents?.[0]
               ? {
-                  id: response.data[0].documents[0].id,
-                  documentType: response.data[0].documents[0].documentType,
-                  hasUploadedByUser:
-                    !!response.data[0].documents[0].uploadedByUser,
-                  uploadedByUser: response.data[0].documents[0].uploadedByUser,
-                }
+                id: response.data[0].documents[0].id,
+                documentType: response.data[0].documents[0].documentType,
+                hasUploadedByUser:
+                  !!response.data[0].documents[0].uploadedByUser,
+                uploadedByUser: response.data[0].documents[0].uploadedByUser,
+              }
               : null,
           });
 
@@ -270,11 +270,11 @@ function SubmissionAdminPage() {
             prev.map((app) =>
               app.id === selectedApplication.id
                 ? {
-                    ...app,
-                    status: "approved" as const,
-                    letterNumber,
-                    documentReviews: docReviews,
-                  }
+                  ...app,
+                  status: "approved" as const,
+                  letterNumber,
+                  documentReviews: docReviews,
+                }
                 : app,
             ),
           );
@@ -288,7 +288,7 @@ function SubmissionAdminPage() {
         console.error("❌ Backend validation error:", response.message);
         toast.error(
           response.message ||
-            "Gagal menyetujui pengajuan. Periksa validasi dokumen.",
+          "Gagal menyetujui pengajuan. Periksa validasi dokumen.",
         );
       }
     } catch (error) {
@@ -325,11 +325,11 @@ function SubmissionAdminPage() {
             prev.map((app) =>
               app.id === selectedApplication.id
                 ? {
-                    ...app,
-                    status: "rejected" as const,
-                    rejectionComment: comment,
-                    documentReviews: docReviews,
-                  }
+                  ...app,
+                  status: "rejected" as const,
+                  rejectionComment: comment,
+                  documentReviews: docReviews,
+                }
                 : app,
             ),
           );
@@ -343,7 +343,7 @@ function SubmissionAdminPage() {
         console.error("❌ Backend validation error:", response.message);
         toast.error(
           response.message ||
-            "Gagal menolak pengajuan. Pastikan validasi terpenuhi.",
+          "Gagal menolak pengajuan. Pastikan validasi terpenuhi.",
         );
       }
     } catch (error) {
@@ -396,31 +396,51 @@ function SubmissionAdminPage() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Page Header */}
         <div className="flex justify-between items-center">
-          <div>
+          <div className="relative pb-2">
             <h1 className="text-xl sm:text-3xl font-bold text-foreground">
               Penerimaan Pengajuan Surat Pengantar
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Kelola dan review pengajuan surat pengantar dari mahasiswa
             </p>
+            <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
           </div>
         </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-          {stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              icon={stat.icon}
-              iconBgColor={stat.iconBgColor}
-            />
-          ))}
+          <StatCard
+            title={stats[0].title}
+            value={stats[0].value}
+            icon={stats[0].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
+          <StatCard
+            title={stats[1].title}
+            value={stats[1].value}
+            icon={stats[1].icon}
+            iconBgColor="bg-yellow-50 dark:bg-yellow-900/20"
+            className="border-l-4 border-l-yellow-300 shadow-sm"
+          />
+          <StatCard
+            title={stats[2].title}
+            value={stats[2].value}
+            icon={stats[2].icon}
+            iconBgColor="bg-red-50 dark:bg-red-900/20"
+            className="border-l-4 border-l-red-500 shadow-sm"
+          />
+          <StatCard
+            title={stats[3].title}
+            value={stats[3].value}
+            icon={stats[3].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
         </div>
 
         {/* Filter and Search */}
-        <Card>
+        <Card className="border-t-4 border-t-blue-600">
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
             <div className="flex-1 min-w-62.5 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

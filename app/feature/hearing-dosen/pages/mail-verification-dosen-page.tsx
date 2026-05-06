@@ -411,8 +411,8 @@ function MailVerificationDosenPage() {
 
     const response = isPermohonan
       ? await approveDosenSuratPermohonanRequest(id, {
-          mahasiswaEsignatureUrl: targetEntry.mahasiswaEsignatureUrl,
-        })
+        mahasiswaEsignatureUrl: targetEntry.mahasiswaEsignatureUrl,
+      })
       : await approveDosenSuratKesediaanRequest(id);
 
     if (!response.success) {
@@ -424,18 +424,18 @@ function MailVerificationDosenPage() {
       prev.map((e) =>
         e.id === id
           ? {
-              ...e,
-              status: "disetujui" as const,
-              approvedAt:
-                response.data?.approvedAt ||
-                response.data?.approved_at ||
-                e.approvedAt,
-              signedFileUrl:
-                resolveAssetUrl(
-                  response.data?.signedFileUrl ||
-                    response.data?.signed_file_url,
-                ) || e.signedFileUrl,
-            }
+            ...e,
+            status: "disetujui" as const,
+            approvedAt:
+              response.data?.approvedAt ||
+              response.data?.approved_at ||
+              e.approvedAt,
+            signedFileUrl:
+              resolveAssetUrl(
+                response.data?.signedFileUrl ||
+                response.data?.signed_file_url,
+              ) || e.signedFileUrl,
+          }
           : e,
       ),
     );
@@ -513,29 +513,29 @@ function MailVerificationDosenPage() {
       kesediaanIds.length > 0
         ? approveBulkDosenSuratKesediaanRequests(kesediaanIds)
         : Promise.resolve({
-            success: true,
-            message: "",
-            data: { approvedCount: 0 },
-          }),
+          success: true,
+          message: "",
+          data: { approvedCount: 0 },
+        }),
       permohonanIds.length > 0
         ? approveBulkDosenSuratPermohonanRequests(permohonanIds, {
-            signatures: entries
-              .filter(
-                (e) =>
-                  permohonanIds.includes(e.id) &&
-                  typeof e.mahasiswaEsignatureUrl === "string" &&
-                  e.mahasiswaEsignatureUrl.trim().length > 0,
-              )
-              .map((e) => ({
-                requestId: e.id,
-                mahasiswaEsignatureUrl: e.mahasiswaEsignatureUrl!,
-              })),
-          })
+          signatures: entries
+            .filter(
+              (e) =>
+                permohonanIds.includes(e.id) &&
+                typeof e.mahasiswaEsignatureUrl === "string" &&
+                e.mahasiswaEsignatureUrl.trim().length > 0,
+            )
+            .map((e) => ({
+              requestId: e.id,
+              mahasiswaEsignatureUrl: e.mahasiswaEsignatureUrl!,
+            })),
+        })
         : Promise.resolve({
-            success: true,
-            message: "",
-            data: { approvedCount: 0 },
-          }),
+          success: true,
+          message: "",
+          data: { approvedCount: 0 },
+        }),
     ]);
 
     if (!kesediaanResult.success && kesediaanIds.length > 0) {
@@ -546,7 +546,7 @@ function MailVerificationDosenPage() {
     if (!permohonanResult.success && permohonanIds.length > 0) {
       toast.error(
         permohonanResult.message ||
-          "Gagal menyetujui surat permohonan terpilih.",
+        "Gagal menyetujui surat permohonan terpilih.",
       );
     }
 
@@ -607,29 +607,49 @@ function MailVerificationDosenPage() {
     <div className="p-4 sm:p-6 md:p-8 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
-          <div>
+          <div className="relative pb-2">
             <h1 className="text-xl sm:text-3xl font-bold text-foreground">
               Verifikasi Surat Mahasiswa
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Kelola dan verifikasi pengajuan surat dari mahasiswa
             </p>
+            <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-          {stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              icon={stat.icon}
-              iconBgColor={stat.iconBgColor}
-            />
-          ))}
+          <StatCard
+            title={stats[0].title}
+            value={stats[0].value}
+            icon={stats[0].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
+          <StatCard
+            title={stats[1].title}
+            value={stats[1].value}
+            icon={stats[1].icon}
+            iconBgColor="bg-yellow-50 dark:bg-yellow-900/20"
+            className="border-l-4 border-l-yellow-300 shadow-sm"
+          />
+          <StatCard
+            title={stats[2].title}
+            value={stats[2].value}
+            icon={stats[2].icon}
+            iconBgColor="bg-red-50 dark:bg-red-900/20"
+            className="border-l-4 border-l-red-500 shadow-sm"
+          />
+          <StatCard
+            title={stats[3].title}
+            value={stats[3].value}
+            icon={stats[3].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
         </div>
 
-        <Card>
+        <Card className="border-t-4 border-t-blue-600">
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
             <div className="relative flex-1 min-w-62.5">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -659,7 +679,7 @@ function MailVerificationDosenPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-t-4 border-t-blue-600">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold text-foreground">

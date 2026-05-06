@@ -30,27 +30,20 @@ const mahasiswaMenu: NavItem[] = [
     isActive: true,
     items: [
       {
-        title: "Pengajuan",
+        title: "Bentuk tim",
         url: "/mahasiswa/kp/buat-tim",
-        isActive: true,
-        // items: [
-        //   {
-        //     title: "Pembuatan Tim",
-        //     url: "/mahasiswa/kp/buat-tim",
-        //   },
-        //   {
-        //     title: "Pengajuan Surat Pengantar",
-        //     url: "/mahasiswa/kp/pengajuan",
-        //   },
-        //   {
-        //     title: "Status Pengajuan",
-        //     url: "/mahasiswa/kp/surat-pengantar",
-        //   },
-        //   {
-        //     title: "Surat Balasan",
-        //     url: "/mahasiswa/kp/surat-balasan",
-        //   },
-        // ],
+      },
+      {
+        title: "Pengajuan KP",
+        url: "/mahasiswa/kp/pengajuan",
+      },
+      {
+        title: "Status Pengajuan",
+        url: "/mahasiswa/kp/surat-pengantar",
+      },
+      {
+        title: "Surat Balasan",
+        url: "/mahasiswa/kp/surat-balasan",
       },
       {
         title: "Saat Magang",

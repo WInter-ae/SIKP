@@ -105,7 +105,7 @@ export default function Page() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="bg-yellow-400 fixed inset-x-0 top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 md:hidden">
+        <header className="bg-yellow-300 fixed inset-x-0 top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 md:hidden">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1" />
           <span className="bg-white border-2 border-white px-2 py-0.5 font-bold text-xs tracking-widest text-black rounded uppercase shadow-[2px_4px_8px_rgba(0,0,0,0.15)]">

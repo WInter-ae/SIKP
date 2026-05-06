@@ -145,9 +145,9 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
           opacity: 0.03,
         }}
       />
-      <SidebarHeader className="px-3 pt-4 pb-3 bg-yellow-400">
+      <SidebarHeader className="px-3 pt-4 pb-3 bg-yellow-300">
         <div className="flex items-center gap-3 rounded-2xl border border-sidebar-border/60 bg-sidebar-accent/90 backdrop-blur-sm px-3 py-3 shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg">
-          <div className="bg-yellow-400 text-black ring-white/90 flex aspect-square size-10 items-center justify-center rounded-xl bg-linear-to-br shadow-lg ring-4">
+          <div className="bg-yellow-300 text-black ring-white/90 flex aspect-square size-10 items-center justify-center rounded-xl bg-linear-to-br shadow-lg ring-4">
             <GraduationCap className="size-6" />
           </div>
           <div className="grid flex-1 text-left leading-tight">

@@ -799,9 +799,9 @@ export default function TeamCreationPage() {
         // Timeout error - show helpful message
         console.warn(
           "⚠️ PERFORMANCE ISSUE: Backend response is slow (>5s). Possible causes:\n" +
-            "1. Database query not optimized\n" +
-            "2. Network latency too high\n" +
-            "3. Server resources limited",
+          "1. Database query not optimized\n" +
+          "2. Network latency too high\n" +
+          "3. Server resources limited",
         );
       } else if (
         errorMsg.includes("userId") ||
@@ -2305,9 +2305,9 @@ export default function TeamCreationPage() {
         setTeam((prev) =>
           prev
             ? {
-                ...prev,
-                status: "FIXED",
-              }
+              ...prev,
+              status: "FIXED",
+            }
             : null,
         );
 
@@ -3050,11 +3050,10 @@ export default function TeamCreationPage() {
                 {team.members.map((member) => (
                   <div
                     key={member.id}
-                    className={`rounded-lg border p-4 ${
-                      member.isLeader
+                    className={`rounded-lg border p-4 ${member.isLeader
                         ? "border-primary/30 bg-primary/5"
                         : "border-border bg-muted/50"
-                    }`}
+                      }`}
                   >
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <Badge
@@ -3080,21 +3079,22 @@ export default function TeamCreationPage() {
         </DialogContent>
       </Dialog>
       {/* Header Section */}
-      <div className="mb-6">
+      <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Pembuatan Tim
         </h1>
         <p className="text-sm text-muted-foreground">
           Buat tim Anda untuk melaksanakan Kerja Praktik
         </p>
+        <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
       <div className="mb-6">
         {/* User Info Section */}
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm border-l-4 border-l-blue-600">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <UserRound className="h-5 w-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                <UserRound className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-foreground truncate">
@@ -3211,7 +3211,7 @@ export default function TeamCreationPage() {
                 currentUserId={user?.id}
               />
             ) : (
-              <Card>
+              <Card className="border-l-4 border-l-yellow-300 shadow-sm">
                 <CardContent className="py-8">
                   <h3 className="text-lg font-semibold mb-2">Daftar Anggota</h3>
                   <div className="text-center py-8">
@@ -3370,8 +3370,8 @@ export default function TeamCreationPage() {
           onConfirm={executeConfirmAction}
           variant={
             confirmAction.type.includes("reject") ||
-            confirmAction.type === "remove" ||
-            confirmAction.type === "cancel-invite"
+              confirmAction.type === "remove" ||
+              confirmAction.type === "cancel-invite"
               ? "destructive"
               : "default"
           }

@@ -33,6 +33,10 @@ export function NavMain({ items }: { items: NavItem[] }) {
     if (!url || url === "#") {
       return false;
     }
+    // Dashboard root paths should match exactly
+    if (["/mahasiswa", "/admin", "/dosen", "/mentor"].includes(url)) {
+      return pathname === url;
+    }
     return pathname === url || pathname.startsWith(`${url}/`);
   };
 
@@ -54,7 +58,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
             <SidebarMenuSubButton
               asChild
               isActive={subItemActive}
-              className="h-8 rounded-lg text-[13px] font-medium transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-sidebar-accent/8 hover:shadow-md data-[active=true]:bg-sidebar-accent/20 data-[active=true]:shadow-md"
+              className="h-8 rounded-lg text-[13px] font-medium transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-yellow-300/15 hover:shadow-sm data-[active=true]:bg-yellow-300/80 data-[active=true]:text-black data-[active=true]:shadow-md"
             >
               <Link to={subItem.url} onClick={handleLinkClick}>
                 <span>{subItem.title}</span>
@@ -73,7 +77,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
             <CollapsibleTrigger asChild>
               <SidebarMenuSubButton
                 isActive={subItemActive}
-                className="h-8 rounded-lg text-[13px] font-semibold transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-sidebar-accent/8 hover:shadow-md data-[active=true]:bg-sidebar-accent/20 data-[active=true]:shadow-md"
+                className="h-8 rounded-lg text-[13px] font-semibold transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-yellow-300/15 hover:shadow-sm data-[active=true]:bg-yellow-300 data-[active=true]:text-black data-[active=true]:shadow-md"
               >
                 <span>{subItem.title}</span>
                 <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -108,7 +112,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                   asChild
                   tooltip={item.title}
                   isActive={itemActive}
-                  className="h-10 rounded-xl px-3 text-[15px] font-medium transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-sidebar-accent/8 hover:shadow-md data-[active=true]:bg-sidebar-accent/20 data-[active=true]:shadow-md"
+                  className="h-10 rounded-xl px-3 text-[15px] font-medium transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-yellow-300/15 hover:shadow-sm data-[active=true]:bg-yellow-300 data-[active=true]:text-black data-[active=true]:shadow-md"
                 >
                   <Link to={item.url} onClick={handleLinkClick}>
                     {item.icon && <item.icon />}
@@ -132,7 +136,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                   <SidebarMenuButton
                     tooltip={item.title}
                     isActive={itemActive}
-                    className="h-10 rounded-xl px-3 text-[15px] font-semibold transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-sidebar-accent/8 hover:shadow-md data-[active=true]:bg-sidebar-accent/20 data-[active=true]:shadow-md"
+                    className="h-10 rounded-xl px-3 text-[15px] font-semibold transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-yellow-300/15 hover:shadow-sm data-[active=true]:bg-yellow-300 data-[active=true]:text-black data-[active=true]:shadow-md"
                   >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>

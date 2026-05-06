@@ -109,39 +109,76 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
 
   return (
     <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6">
-      <div>
+      <div className="relative pb-2">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
           Dashboard Admin Prodi
         </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
           Ringkasan metrik utama pengelolaan kerja praktik.
         </p>
+        <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
 
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((card) => (
-          <Card key={card.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {card.title}
-              </CardTitle>
-              <card.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {formatValue(card.value)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {card.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {statCards.map((card, index) => {
+          const borderColors = [
+            "border-l-blue-600",
+            "border-l-yellow-300",
+            "border-l-red-500",
+            "border-l-blue-600",
+            "border-l-yellow-300",
+            "border-l-red-500",
+            "border-l-blue-600"
+          ];
+          const bgColors = [
+            "bg-blue-50/30 dark:bg-blue-900/10",
+            "bg-yellow-50/30 dark:bg-yellow-900/10",
+            "bg-red-50/30 dark:bg-red-900/10",
+            "bg-blue-50/30 dark:bg-blue-900/10",
+            "bg-yellow-50/30 dark:bg-yellow-900/10",
+            "bg-red-50/30 dark:bg-red-900/10",
+            "bg-blue-50/30 dark:bg-blue-900/10"
+          ];
+          const iconColors = [
+            "text-blue-600 dark:text-blue-400",
+            "text-yellow-600 dark:text-yellow-300",
+            "text-red-600 dark:text-red-400",
+            "text-blue-600 dark:text-blue-400",
+            "text-yellow-600 dark:text-yellow-400",
+            "text-red-600 dark:text-red-400",
+            "text-blue-600 dark:text-blue-400"
+          ];
+          
+          return (
+            <Card key={card.title} className={`border-l-4 ${borderColors[index % borderColors.length]} ${bgColors[index % bgColors.length]} shadow-sm hover:shadow-md transition-shadow duration-200`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                  {card.title}
+                </CardTitle>
+                <div className={`p-2 rounded-full bg-background border border-border shadow-xs ${iconColors[index % iconColors.length]}`}>
+                  <card.icon className="h-4 w-4" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-extrabold tracking-tight">
+                  {formatValue(card.value)}
+                </div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-2">
+                  {card.description}
+                </p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      <Card>
+      <Card className="shadow-lg border-none bg-linear-to-b from-background to-blue-50/20 dark:to-blue-900/5 overflow-hidden">
+        <div className="h-1.5 w-full bg-linear-to-r from-blue-600 to-transparent" />
         <CardHeader>
-          <CardTitle>Statistik Pengajuan 4 Bulan Terakhir</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-blue-600" />
+            Statistik Pengajuan 4 Bulan Terakhir
+          </CardTitle>
           <CardDescription>
             Menampilkan total pengajuan, total approved, dan approval rate per
             bulan.
@@ -162,9 +199,9 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
                         Approved: {stat.approved}
                       </span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-secondary">
+                    <div className="h-2 w-full rounded-full bg-secondary/50 overflow-hidden">
                       <div
-                        className="h-2 rounded-full bg-primary transition-all"
+                        className="h-2 rounded-full bg-linear-to-r from-blue-600 to-blue-400 transition-all shadow-[0_0_8px_rgba(37,99,235,0.3)]"
                         style={{ width: `${stat.approvalRate}%` }}
                       />
                     </div>
@@ -181,9 +218,13 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-lg border-none bg-linear-to-b from-background to-yellow-50/20 dark:to-yellow-900/5 overflow-hidden">
+        <div className="h-1.5 w-full bg-linear-to-r from-yellow-300 to-transparent" />
         <CardHeader>
-          <CardTitle>Log Aktivitas Terbaru</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ListOrdered className="h-5 w-5 text-yellow-600" />
+            Log Aktivitas Terbaru
+          </CardTitle>
           <CardDescription>
             Riwayat aktivitas administrasi terbaru
           </CardDescription>
