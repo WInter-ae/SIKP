@@ -758,7 +758,7 @@ function SubmissionDosenPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           {stats.map((stat, index) => (
             <StatCard
               key={index}
@@ -806,7 +806,7 @@ function SubmissionDosenPage() {
               Daftar Pengajuan Surat untuk Verifikasi Dosen
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">
@@ -822,68 +822,116 @@ function SubmissionDosenPage() {
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="pl-6 whitespace-nowrap">
-                      Tanggal
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">NIM</TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Nama Mahasiswa
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Jenis Surat
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">
-                      Aksi
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile Card View */}
+                <div className="block md:hidden divide-y divide-border">
                   {filteredEntries.map((entry) => {
                     const members = entry.teamMembers || [];
                     const leader =
                       members.find((member) => member.role === "Ketua") ||
                       members[0];
                     return (
-                      <TableRow key={entry.id} className="hover:bg-muted/50">
-                        <TableCell className="text-foreground pl-6">
-                          {entry.tanggal}
-                        </TableCell>
-                        <TableCell className="text-primary font-medium">
-                          {entry.nim}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-foreground">
-                            {leader?.name || entry.namaMahasiswa || "Unknown"}
+                      <div key={entry.id} className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground truncate">
+                              {leader?.name || entry.namaMahasiswa || "Unknown"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              NIM: {entry.nim}
+                            </p>
                           </div>
-                          <span className="text-xs text-muted-foreground">
-                            {members.length > 1
-                              ? `+ ${members.length - 1} Anggota`
-                              : "Individu"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-foreground">
-                          {entry.jenisSurat || "Surat"}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(entry.status)}</TableCell>
-                        <TableCell className="pr-6">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-primary border-primary/50 hover:bg-primary/5"
-                            onClick={() => handleReview(entry)}
-                          >
-                            {entry.status === "menunggu" ? "Review" : "Lihat"}
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+                          {getStatusBadge(entry.status)}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Tanggal</p>
+                            <p className="text-foreground">{entry.tanggal}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">Jenis Surat</p>
+                            <p className="text-foreground">{entry.jenisSurat || "Surat"}</p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full text-primary border-primary/50 hover:bg-primary/5"
+                          onClick={() => handleReview(entry)}
+                        >
+                          {entry.status === "menunggu" ? "Review" : "Lihat Detail"}
+                        </Button>
+                      </div>
                     );
                   })}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="pl-6 whitespace-nowrap">
+                          Tanggal
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">NIM</TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Nama Mahasiswa
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Jenis Surat
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                        <TableHead className="pr-6 whitespace-nowrap">
+                          Aksi
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredEntries.map((entry) => {
+                        const members = entry.teamMembers || [];
+                        const leader =
+                          members.find((member) => member.role === "Ketua") ||
+                          members[0];
+                        return (
+                          <TableRow key={entry.id} className="hover:bg-muted/50">
+                            <TableCell className="text-foreground pl-6">
+                              {entry.tanggal}
+                            </TableCell>
+                            <TableCell className="text-primary font-medium">
+                              {entry.nim}
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium text-foreground">
+                                {leader?.name || entry.namaMahasiswa || "Unknown"}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {members.length > 1
+                                  ? `+ ${members.length - 1} Anggota`
+                                  : "Individu"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-foreground">
+                              {entry.jenisSurat || "Surat"}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                            <TableCell className="pr-6">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-primary border-primary/50 hover:bg-primary/5"
+                                onClick={() => handleReview(entry)}
+                              >
+                                {entry.status === "menunggu" ? "Review" : "Lihat"}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

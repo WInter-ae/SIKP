@@ -98,16 +98,26 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
   }, [activeIdentity?.label, contextRole, contextUser, defaultUser, userProp]);
 
   const userJabatanStruktural = React.useMemo(() => {
-    const jabatanStruktural = contextUser?.jabatanStruktural || activeIdentity?.profile.jabatanStruktural;
-    return Array.isArray(jabatanStruktural) ? jabatanStruktural.join(", ") : undefined;
-  }, [activeIdentity?.profile.jabatanStruktural, contextUser?.jabatanStruktural]);
+    const jabatanStruktural =
+      contextUser?.jabatanStruktural ||
+      activeIdentity?.profile.jabatanStruktural;
+
+    return Array.isArray(jabatanStruktural)
+      ? jabatanStruktural.join(", ")
+      : undefined;
+  }, [
+    activeIdentity?.profile.jabatanStruktural,
+    contextUser?.jabatanStruktural,
+  ]);
 
   const navItems = React.useMemo(
     () =>
       getSidebarMenuByUrl(
         location.pathname,
         primaryRole,
-        userJabatanStruktural || contextUser?.jabatan || activeIdentity?.profile.jabatan,
+        userJabatanStruktural ||
+          contextUser?.jabatan ||
+          activeIdentity?.profile.jabatan,
       ),
     [
       activeIdentity?.profile.jabatan,
@@ -121,20 +131,28 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
   return (
     <Sidebar
       collapsible="icon"
-      className="border-r border-sidebar-border/70 bg-gradient-to-b from-sidebar via-sidebar to-sidebar/95"
+      className="relative overflow-hidden border-r border-sidebar-border/70 bg-linear-to-b from-sidebar via-sidebar to-sidebar/95 shadow-sm"
       {...props}
     >
-      <SidebarHeader className="px-3 pt-4 pb-3">
-        <div className="flex items-center gap-3 rounded-xl border border-sidebar-border/70 bg-sidebar-accent/40 px-3 py-3 shadow-sm">
-          <div className="from-primary to-primary/80 text-primary-foreground ring-primary/20 flex aspect-square size-10 items-center justify-center rounded-xl bg-gradient-to-br shadow-md ring-4">
+      {/* Animated subtle gradient overlay for elegance */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 animate-gradient"
+        style={{
+          backgroundImage:
+            "linear-gradient(120deg, var(--sidebar), var(--sidebar-accent))",
+          backgroundSize: "200% 200%",
+          opacity: 0.03,
+        }}
+      />
+      <SidebarHeader className="px-3 pt-4 pb-3 bg-yellow-400">
+        <div className="flex items-center gap-3 rounded-2xl border border-sidebar-border/60 bg-sidebar-accent/90 backdrop-blur-sm px-3 py-3 shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg">
+          <div className="bg-yellow-400 text-black ring-white/90 flex aspect-square size-10 items-center justify-center rounded-xl bg-linear-to-br shadow-lg ring-4">
             <GraduationCap className="size-6" />
           </div>
           <div className="grid flex-1 text-left leading-tight">
             <span className="truncate text-base font-bold tracking-tight">
-              SIKP
-            </span>
-            <span className="truncate text-xs font-medium text-muted-foreground">
-              Sistem Informasi Kerja Praktik
+              SIKP MI UNSRI
             </span>
           </div>
         </div>

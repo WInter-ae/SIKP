@@ -73,7 +73,7 @@ interface DashboardMahasiswaPageProps {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed text-center text-sm text-muted-foreground">
+    <div className="flex min-h-30 flex-col items-center justify-center gap-2 rounded-lg border border-dashed text-center text-sm text-muted-foreground">
       <Inbox className="h-5 w-5" />
       <span>{message}</span>
     </div>
@@ -89,8 +89,46 @@ export default function DashboardMahasiswaPage({
   const statusPengajuan = data?.statusPengajuan;
   const teamInfo = data?.teamInfo;
   const activities = data?.activities ?? [];
-  const hasTeam = Boolean(teamInfo?.teamId || teamInfo?.teamName);
+  const hasTeam = Boolean(
+    teamInfo?.teamId || teamInfo?.teamName || teamInfo?.members?.length,
+  );
   const hasPengajuan = Boolean(statusPengajuan?.submitted);
+
+  if (!hasTeam) {
+    return (
+      <div className="flex min-h-[calc(100svh-3.5rem)] flex-col gap-4 p-4 sm:gap-6 sm:p-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Dashboard Mahasiswa
+          </h1>
+          <p className="text-sm text-muted-foreground sm:text-base">
+            Selamat datang di Sistem Informasi Kerja Praktik
+          </p>
+        </div>
+
+        <div className="flex flex-1 items-center">
+          <Card className="mx-auto w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle>Informasi Pelaksanaan Kerja Praktik</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex min-h-55 flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Tim belum dibentuk. Silakan buat tim terlebih dahulu.
+                </p>
+                <Button asChild>
+                  <Link to="/mahasiswa/kp/buat-tim">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Buat Tim
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6">
@@ -103,7 +141,7 @@ export default function DashboardMahasiswaPage({
         </p>
       </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:auto-rows-min">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:auto-rows-min">
         <Card className="md:col-start-1 md:row-start-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
@@ -221,19 +259,7 @@ export default function DashboardMahasiswaPage({
                   </p>
                 </div>
               </div>
-            ) : (
-              <div className="flex min-h-[140px] flex-col items-center justify-center gap-3 rounded-lg border border-dashed text-center">
-                <p className="text-sm text-muted-foreground">
-                  Tim belum dibentuk. Silakan buat tim terlebih dahulu.
-                </p>
-                <Button asChild>
-                  <Link to="/mahasiswa/kp/buat-tim">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Buat Tim
-                  </Link>
-                </Button>
-              </div>
-            )}
+            ) : null}
           </CardContent>
         </Card>
 
@@ -290,17 +316,17 @@ export default function DashboardMahasiswaPage({
                 {activities.map((activity, index) => (
                   <div
                     key={`${activity.action}-${index}`}
-                    className="flex items-center gap-4 text-sm"
+                    className="flex items-start gap-3 text-sm"
                   >
                     <div
-                      className={`h-2 w-2 rounded-full ${
+                      className={`h-2 w-2 rounded-full shrink-0 mt-1.5 ${
                         activity.status === "success"
                           ? "bg-green-500"
                           : "bg-blue-500"
                       }`}
                     />
-                    <span className="flex-1">{activity.action}</span>
-                    <span className="text-muted-foreground">
+                    <span className="flex-1 min-w-0 break-words">{activity.action}</span>
+                    <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap">
                       {activity.time}
                     </span>
                   </div>

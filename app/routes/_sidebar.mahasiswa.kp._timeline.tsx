@@ -6,7 +6,7 @@ export default function TimelineLayout() {
   return (
     <TimelineProvider>
       <div className="min-h-screen">
-        <main className="max-w-6xl mx-auto p-6">
+        <main className="mx-auto max-w-6xl p-3 sm:p-6">
           <Timeline />
           <Outlet />
         </main>

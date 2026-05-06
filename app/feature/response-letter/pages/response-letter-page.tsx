@@ -29,9 +29,13 @@ import { ConfirmDialog } from "../components/confirm-dialog";
 import { FileUploadDialog } from "../components/file-upload-dialog";
 
 import { AlertCircle, ArrowLeft, ArrowRight, Info } from "lucide-react";
+import { useSidebar } from "~/components/ui/sidebar";
 
 function ResponseLetterPage() {
   const navigate = useNavigate();
+  const { state, isMobile } = useSidebar();
+  const leftOffset = isMobile ? "0" : state === "expanded" ? "16rem" : "3rem";
+
   const {
     responseLetter,
     isLoading,
@@ -308,7 +312,7 @@ function ResponseLetterPage() {
   };
 
   return (
-    <>
+    <div className="pb-24">
       {/* Header Section */}
       <div className="mb-6">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
@@ -391,19 +395,19 @@ function ResponseLetterPage() {
           <CardContent>
             {/* Upload Surat Balasan Section */}
             <CardHeader className="px-0 pt-0 mb-2">
-              <CardTitle className="text-xl font-semibold text-foreground">
+              <CardTitle className="text-base font-semibold text-foreground">
                 Upload Surat Balasan
               </CardTitle>
             </CardHeader>
             <Separator className="mb-4" />
 
             {/* Upload Area - Conditional based on file selection and responseLetter */}
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-4 mb-4">
               <div className="flex-grow">
                 {file || responseLetter ? (
                   // After file selection OR after submission: Show "Terupload" button or "Belum Diupload"
                   <div className="mb-2">
-                    <p className="block font-medium mb-2">
+                    <p className="block text-sm font-medium mb-2">
                       Surat Balasan dari Perusahaan
                     </p>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -462,7 +466,7 @@ function ResponseLetterPage() {
                 ) : (
                   // Before file selection for non-leader: Show "Belum Diupload"
                   <div className="mb-2">
-                    <p className="block font-medium mb-2">
+                    <p className="block text-sm font-medium mb-2">
                       Surat Balasan dari Perusahaan
                     </p>
                     <Button
@@ -483,7 +487,7 @@ function ResponseLetterPage() {
 
             {/* Status Surat Balasan Section */}
             <CardHeader className="px-0 pt-0">
-              <CardTitle className="text-xl font-semibold text-foreground">
+              <CardTitle className="text-base font-semibold text-foreground">
                 Status Surat Balasan
               </CardTitle>
             </CardHeader>
@@ -529,40 +533,53 @@ function ResponseLetterPage() {
         </Card>
       )}
 
-      {/* Navigation Buttons */}
+      {/* Sticky Navigation Buttons */}
       {hasTeam && canManageResponseLetter && (
-        <div className="flex justify-between items-center gap-2 mt-6">
-          <Button variant="secondary" asChild className="px-6 py-3 font-medium">
-            <Link to="/mahasiswa/kp/surat-pengantar">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Sebelumnya
-            </Link>
-          </Button>
-          {/* Next Button - Different behavior based on verification status */}
-          {verificationStatus.verified &&
-          verificationStatus.letterStatus === "approved" ? (
+        <div
+          className="fixed bottom-0 right-0 z-40 transition-all duration-300 pointer-events-none"
+          style={{ left: leftOffset }}
+        >
+          <div className="max-w-5xl mx-auto flex justify-between items-center gap-4 p-6 pointer-events-auto">
             <Button
-              onClick={() => setShowAnnouncement(true)}
-              className="px-6 py-3 font-medium"
+              variant="destructive"
+              asChild
+              className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-[#FF4D4D] hover:bg-red-600 text-white border-none shadow-lg"
             >
-              Selanjutnya
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <Link to="/mahasiswa/kp/surat-pengantar">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Sebelumnya
+              </Link>
             </Button>
-          ) : verificationStatus.verified &&
-            verificationStatus.letterStatus === "rejected" ? (
-            <Button
-              onClick={handleResetTeam}
-              disabled={isResettingTeam}
-              className="px-6 py-3 font-medium bg-amber-600 hover:bg-amber-700"
-            >
-              {isResettingTeam ? "Mereset..." : "Mulai Ulang"}
-            </Button>
-          ) : (
-            <Button disabled className="px-6 py-3 font-medium opacity-50">
-              Selanjutnya
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
+
+            {/* Next Button - Different behavior based on verification status */}
+            {verificationStatus.verified &&
+            verificationStatus.letterStatus === "approved" ? (
+              <Button
+                onClick={() => setShowAnnouncement(true)}
+                className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] hover:bg-blue-700 text-white border-none shadow-lg"
+              >
+                Selanjutnya
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            ) : verificationStatus.verified &&
+              verificationStatus.letterStatus === "rejected" ? (
+              <Button
+                onClick={handleResetTeam}
+                disabled={isResettingTeam}
+                className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-amber-600 hover:bg-amber-700 text-white border-none shadow-lg"
+              >
+                {isResettingTeam ? "Mereset..." : "Mulai Ulang"}
+              </Button>
+            ) : (
+              <Button
+                disabled
+                className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] text-white border-none shadow-lg opacity-50"
+              >
+                Selanjutnya
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
       )}
 
@@ -608,7 +625,7 @@ function ResponseLetterPage() {
         cancelText="Batal"
         variant="destructive"
       />
-    </>
+    </div>
   );
 }
 

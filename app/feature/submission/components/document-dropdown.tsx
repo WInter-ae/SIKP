@@ -29,7 +29,7 @@ interface DocumentDropdownProps {
     string,
     "MENUNGGU" | "DISETUJUI" | "DITOLAK"
   >;
-  dosenNameByKey?: Record<string, string>;
+  dosenKpNameByKey?: Record<string, string>;
   signedUrlByKey?: Record<string, string>;
   rejectionReasonByKey?: Record<string, string>;
   onUpload?: (documentId: number, memberId: string, file: File) => void;
@@ -47,7 +47,7 @@ function DocumentDropdown({
   currentMahasiswaId,
   submittedRequestKeys,
   submittedRequestStatusByKey,
-  dosenNameByKey,
+  dosenKpNameByKey,
   signedUrlByKey,
   rejectionReasonByKey,
   onUpload,
@@ -289,10 +289,10 @@ function DocumentDropdown({
               return (
                 <div
                   key={member.id}
-                  className="flex justify-between items-center py-3 border-b border-border last:border-b-0"
+                  className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-3 border-b border-border last:border-b-0 gap-3 sm:gap-4"
                 >
                   <div className="flex flex-col gap-1">
-                    <div className="font-medium text-foreground">
+                    <div className="text-xs md:text-sm font-medium text-foreground">
                       {member.name} ({member.role})
                     </div>
                     {/* ✅ Selalu tampilkan badge status jika ada status dokumen */}
@@ -330,7 +330,7 @@ function DocumentDropdown({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="border-green-500 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 gap-1.5 h-8 px-3"
+                          className="border-green-500 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 gap-1.5 h-8 px-2 sm:px-3"
                           onClick={() => {
                             const url = signedUrlByKey?.[requestKey];
                             if (url) {
@@ -345,8 +345,8 @@ function DocumentDropdown({
                           <span className="font-semibold text-xs">
                             Disetujui
                           </span>
-                          <span className="w-px h-3.5 bg-green-400" />
-                          <span className="text-xs">Klik untuk download</span>
+                          <span className="hidden sm:block w-px h-3.5 bg-green-400" />
+                          <span className="text-xs hidden sm:inline">Klik untuk download</span>
                           <Download className="w-3.5 h-3.5" />
                         </Button>
                       ) : canAjukan && requestStatus === "DITOLAK" ? (
@@ -365,10 +365,10 @@ function DocumentDropdown({
                                 documentType: document.type ?? "",
                               })
                             }
-                          >
+                          ><a className="text-xs md:text-sm">
                             {submittingMemberId === member.id
                               ? "Mengajukan ulang..."
-                              : "Ditolak"}
+                              : "Ditolak"} </a>
                           </Button>
                           {rejectionReasonByKey?.[requestKey] && (
                             <TooltipProvider>
@@ -383,17 +383,16 @@ function DocumentDropdown({
                                 </TooltipTrigger>
                                 <TooltipContent
                                   side="top"
-                                  className="w-88 max-w-[90vw]"
+                                  className="w-full max-w-[280px] sm:max-w-xs p-3"
                                 >
                                   <p className="font-bold text-sm mb-1 text-red-500">
                                     Alasan Penolakan :
                                   </p>
-                                  <div className="text-sm flex items-start gap-1.5 leading-6">
-                                    <span className="font-bold shrink-0 whitespace-nowrap">
-                                      {(dosenNameByKey?.[requestKey] ||
-                                        "Dosen") + " :"}
+                                  <div className="text-sm flex flex-col gap-1 leading-relaxed">
+                                    <span className="font-bold text-foreground break-all">
+                                      {(dosenKpNameByKey?.[requestKey] || "Dosen") + " :"}
                                     </span>
-                                    <span className="font-medium whitespace-normal wrap-break-word">
+                                    <span className="font-medium text-muted-foreground break-words">
                                       {rejectionReasonByKey[requestKey]}
                                     </span>
                                   </div>
@@ -423,11 +422,12 @@ function DocumentDropdown({
                             )
                           }
                         >
+                          <a className="text-xs md:text-sm">
                           {submittingMemberId === member.id
                             ? "Mengajukan..."
                             : isRequestSubmitted
                               ? getSubmittedButtonLabel(requestStatus)
-                              : "Ajukan"}
+                              : "Ajukan"}</a>
                         </Button>
                       ) : null}
                       <Button
@@ -441,7 +441,7 @@ function DocumentDropdown({
                           })
                         }
                       >
-                        Upload
+                        <a className="text-xs md:text-sm">Upload</a>
                       </Button>
                     </div>
                   )}

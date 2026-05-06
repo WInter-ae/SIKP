@@ -54,7 +54,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
             <SidebarMenuSubButton
               asChild
               isActive={subItemActive}
-              className="h-8 rounded-lg text-[13px] font-medium transition-all duration-200"
+              className="h-8 rounded-lg text-[13px] font-medium transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-sidebar-accent/8 hover:shadow-md data-[active=true]:bg-sidebar-accent/20 data-[active=true]:shadow-md"
             >
               <Link to={subItem.url} onClick={handleLinkClick}>
                 <span>{subItem.title}</span>
@@ -73,7 +73,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
             <CollapsibleTrigger asChild>
               <SidebarMenuSubButton
                 isActive={subItemActive}
-                className="h-8 rounded-lg text-[13px] font-semibold transition-all duration-200"
+                className="h-8 rounded-lg text-[13px] font-semibold transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-sidebar-accent/8 hover:shadow-md data-[active=true]:bg-sidebar-accent/20 data-[active=true]:shadow-md"
               >
                 <span>{subItem.title}</span>
                 <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
@@ -93,7 +93,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
   return (
     <SidebarGroup className="px-2 py-3">
       <SidebarGroupLabel className="mb-2 px-3 text-[11px] font-semibold tracking-[0.12em] uppercase">
-        Platform
+        Menu
       </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
@@ -108,7 +108,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                   asChild
                   tooltip={item.title}
                   isActive={itemActive}
-                  className="h-10 rounded-xl px-3 text-[15px] font-medium transition-all duration-200"
+                  className="h-10 rounded-xl px-3 text-[15px] font-medium transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-sidebar-accent/8 hover:shadow-md data-[active=true]:bg-sidebar-accent/20 data-[active=true]:shadow-md"
                 >
                   <Link to={item.url} onClick={handleLinkClick}>
                     {item.icon && <item.icon />}
@@ -132,7 +132,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                   <SidebarMenuButton
                     tooltip={item.title}
                     isActive={itemActive}
-                    className="h-10 rounded-xl px-3 text-[15px] font-semibold transition-all duration-200"
+                    className="h-10 rounded-xl px-3 text-[15px] font-semibold transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-sidebar-accent/8 hover:shadow-md data-[active=true]:bg-sidebar-accent/20 data-[active=true]:shadow-md"
                   >
                     {item.icon && <item.icon />}
                     <span>{item.title}</span>

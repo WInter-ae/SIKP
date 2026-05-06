@@ -7,18 +7,35 @@
   --font-sans:
     "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --text-2xs: 0.625rem;
+  --text-3xs: 0.5rem;
 }
 
-html,
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   @apply bg-white dark:bg-gray-950;
-  overflow-x: hidden;
   -webkit-tap-highlight-color: transparent;
   scroll-behavior: smooth;
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+}
+
+/* Prevent layout shift from Radix UI scroll lock when using scrollbar-gutter */
+:root {
+  --removed-body-scroll-bar-size: 0px !important;
+}
+
+/* Ensure nothing shifts or shrinks when the scroll is locked */
+[data-scroll-locked] {
+  padding-right: 0px !important;
+  margin-right: 0px !important;
+  width: 100% !important;
 }
 
 @theme inline {
@@ -210,4 +227,200 @@ body {
 
 .animate-glow-pulse {
   animation: glow-pulse 3s ease-in-out infinite;
+}
+
+/* Mobile adjustments: shrink common UI elements for small screens */
+@media (max-width: 640px) {
+  :root {
+    --radius: 0.5rem;
+  }
+
+  /* Cards */
+  [data-slot="card"] {
+    padding: 0.75rem !important;
+    gap: 0.75rem !important;
+    border-radius: 0.75rem !important;
+  }
+
+  [data-slot="card-header"],
+  [data-slot="card-content"],
+  [data-slot="card-footer"] {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Buttons */
+  [data-slot="button"] {
+    height: 2.25rem !important; /* 36px */
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+    font-size: 0.875rem !important;
+  }
+
+  /* Avatar */
+  [data-slot="avatar"] {
+    width: 2.25rem !important;
+    height: 2.25rem !important;
+  }
+
+  [data-slot="avatar-image"],
+  [data-slot="avatar-fallback"] {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Reduce spacing for lists and menus */
+  [data-slot="sidebar-menu"] li,
+  [data-slot="sidebar-menu-item"] {
+    padding-top: 0.35rem !important;
+    padding-bottom: 0.35rem !important;
+  }
+
+  /* Reduce header spacing */
+  header, .site-header {
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  /* Smaller radii on small screens */
+  .rounded-xl {
+    border-radius: 0.75rem !important;
+  }
+
+  /* User info card - reduce avatar and font sizes */
+  .rounded-xl.border.bg-card.p-4.shadow-sm {
+    padding: 0.75rem !important;
+  }
+
+  /* Reduce inline avatar icons in user info cards */
+  .rounded-full.bg-primary\/10.flex.items-center.justify-center.shrink-0 {
+    width: 2rem !important;
+    height: 2rem !important;
+  }
+
+  .rounded-full.bg-primary\/10.flex.items-center.justify-center.shrink-0 svg {
+    width: 1rem !important;
+    height: 1rem !important;
+  }
+
+  /* Reduce font in user info sections */
+  .rounded-xl.border.bg-card.p-4.shadow-sm p {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  .rounded-xl.border.bg-card.p-4.shadow-sm .font-semibold {
+    font-size: 0.9375rem !important;
+  }
+
+  /* Team code section also smaller */
+  .rounded-xl.border.bg-primary\/10.p-4 {
+    padding: 0.75rem !important;
+  }
+
+  .rounded-xl.border.bg-primary\/10.p-4 p {
+    font-size: 0.875rem !important;
+  }
+
+  .rounded-xl.border.bg-primary\/10.p-4 .font-semibold {
+    font-size: 1rem !important;
+  }
+
+  /* Dialog/Modal adjustments for mobile - targeted to data-slot attributes */
+  [data-slot="dialog-content"] {
+    padding: 1rem !important;
+    gap: 1rem !important;
+    max-width: calc(100vw - 1rem) !important;
+    width: calc(100vw - 1rem) !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  /* Dialog header - center align on mobile */
+  [data-slot="dialog-header"] {
+    gap: 0.5rem !important;
+    text-align: center !important;
+  }
+
+  /* Dialog title - smaller font */
+  [data-slot="dialog-title"] {
+    font-size: 1rem !important;
+    line-height: 1.25rem !important;
+    font-weight: 600 !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Dialog description - smaller font and proper wrapping */
+  [data-slot="dialog-description"] {
+    font-size: 0.8125rem !important;
+    line-height: 1.25rem !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+  }
+
+  /* Dialog content text wrapping */
+  [data-slot="dialog-content"] p {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.25rem !important;
+  }
+
+  /* Dialog footer - center buttons on mobile */
+  [data-slot="dialog-footer"] {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    justify-content: center !important;
+  }
+
+  /* Dialog footer buttons */
+  [data-slot="dialog-footer"] button {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 1rem !important;
+    height: 2.25rem !important;
+    width: 100% !important;
+  }
+
+  /* Reduce spacing in dialog content sections */
+  [data-slot="dialog-content"] .space-y-4 > * + * {
+    margin-top: 0.75rem !important;
+  }
+
+  [data-slot="dialog-content"] .space-y-3 > * + * {
+    margin-top: 0.5rem !important;
+  }
+
+  [data-slot="dialog-content"] .space-y-6 > * + * {
+    margin-top: 1rem !important;
+  }
+
+  /* Close button positioning */
+  [data-slot="dialog-close"] {
+    top: 0.75rem !important;
+    right: 0.75rem !important;
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+  }
+
+  /* List items in dialog */
+  [data-slot="dialog-content"] li {
+    font-size: 0.8125rem !important;
+    line-height: 1.25rem !important;
+    margin-left: 1rem !important;
+  }
+
+  /* Blue info box in dialog */
+  [data-slot="dialog-content"] .bg-blue-50 {
+    padding: 0.75rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  [data-slot="dialog-content"] .bg-blue-50 p {
+    font-size: 0.75rem !important;
+    line-height: 1.1rem !important;
+    margin-bottom: 0.25rem !important;
+  }
 }

@@ -355,8 +355,105 @@ export default function TemplateManagementPage() {
             </div>
           </div>
 
-          {/* Table */}
-          <div className="border rounded-lg overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-3">
+            {filteredTemplates.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground">
+                {searchQuery || filterType !== "all"
+                  ? "Tidak ada template yang sesuai dengan filter"
+                  : "Belum ada template. Klik tombol 'Tambah Template' untuk membuat."}
+              </p>
+            ) : (
+              filteredTemplates.map((template) => (
+                <div
+                  key={template.id}
+                  className="border rounded-lg p-4 space-y-3 bg-card"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{template.name}</p>
+                      {template.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {template.description}
+                        </p>
+                      )}
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="shrink-0">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedTemplate(template);
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleViewTemplate(template)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Lihat
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDownloadTemplate(template)}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleToggleActive(template.id)}
+                        >
+                          {template.isActive ? (
+                            <ToggleLeft className="h-4 w-4 mr-2" />
+                          ) : (
+                            <ToggleRight className="h-4 w-4 mr-2" />
+                          )}
+                          {template.isActive ? "Nonaktifkan" : "Aktifkan"}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setTemplateToDelete(template);
+                            setDeleteDialogOpen(true);
+                          }}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Hapus
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">{getTypeLabel(template.type)}</Badge>
+                    <Badge
+                      variant={template.isActive ? "default" : "destructive"}
+                    >
+                      {template.isActive ? "Aktif" : "Nonaktif"}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground self-center">
+                      {new Date(template.updatedAt).toLocaleDateString("id-ID", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

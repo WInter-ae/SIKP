@@ -55,7 +55,7 @@ function FileUpload({
       <Label className="block font-medium mb-2">{label}</Label>
       <div
         className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition",
+          "border-2 border-dashed rounded-lg p-2 md:p-5 text-center cursor-pointer transition",
           disabled
             ? "border-border bg-muted cursor-not-allowed opacity-50"
             : isDragging
@@ -77,8 +77,8 @@ function FileUpload({
           htmlFor="file-upload"
           className={cn("cursor-pointer", disabled && "cursor-not-allowed")}
         >
-          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-muted-foreground">
+          <Upload className="h-4 w-4 md:h-8 md:w-8 text-muted-foreground mx-auto mb-1 mt-1" />
+          <p className="text-xs md:text-sm text-muted-foreground mb-2">
             {disabled
               ? "File tidak dapat diubah setelah pengajuan"
               : fileName

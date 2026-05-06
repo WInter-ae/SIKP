@@ -194,17 +194,17 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
               {activities.map((activity, index) => (
                 <div
                   key={`${activity.action}-${activity.time}-${index}`}
-                  className="flex items-center gap-4 text-sm"
+                  className="flex items-start gap-3 text-sm"
                 >
                   <div
-                    className={`h-2 w-2 rounded-full ${
+                    className={`h-2 w-2 rounded-full shrink-0 mt-1.5 ${
                       activity.status === "success"
                         ? "bg-green-500"
                         : "bg-blue-500"
                     }`}
                   />
-                  <span className="flex-1">{activity.action}</span>
-                  <span className="text-muted-foreground">{activity.time}</span>
+                  <span className="flex-1 min-w-0 break-words">{activity.action}</span>
+                  <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap">{activity.time}</span>
                 </div>
               ))}
             </div>

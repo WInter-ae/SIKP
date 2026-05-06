@@ -13,6 +13,7 @@ import {
 import { useSubmissionStatus } from "~/feature/cover-letter/hooks/use-submission-status";
 
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useSidebar } from "~/components/ui/sidebar";
 import { resetSubmissionToDraft } from "~/lib/services/submission-api.service";
 
 /**
@@ -23,6 +24,9 @@ import { resetSubmissionToDraft } from "~/lib/services/submission-api.service";
  */
 function CoverLetterPage() {
   const navigate = useNavigate();
+  const { state, isMobile } = useSidebar();
+  const leftOffset = isMobile ? "0" : state === "expanded" ? "16rem" : "3rem";
+
   const { submission, isLoading, error, refetch } = useSubmissionStatus();
 
   const signedFileUrl = (() => {
@@ -83,11 +87,11 @@ function CoverLetterPage() {
     submission?.status === "APPROVED" || submission?.status === "COMPLETED";
 
   return (
-    <>
+    <div className="pb-24">
       {/* Header Section */}
       <div className="mb-6">
-        <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
-          Halaman Status Pengajuan Surat Pengantar
+        <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-2 leading-tight">
+          Status Pengajuan Surat Pengantar
         </h1>
         <p className="text-sm text-muted-foreground">
           Monitor status pengajuan surat pengantar kerja praktik Anda
@@ -95,7 +99,7 @@ function CoverLetterPage() {
       </div>
 
       <Card className="mb-8">
-        <CardContent className="p-6">
+        <CardContent className="p-4 sm:p-6">
           {/* Render loading state */}
           {isLoading && <SubmissionLoadingState />}
 
@@ -131,29 +135,34 @@ function CoverLetterPage() {
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons - Only show if there's a submission */}
+      {/* Sticky Navigation Buttons */}
       {submission && !isLoading && !isDraftSubmission && (
-        <div className="flex justify-between items-center gap-2 mt-6">
-          <Button
-            variant="secondary"
-            onClick={() => navigate("/mahasiswa/kp/pengajuan")}
-            className="px-6 py-3 font-medium"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Sebelumnya
-          </Button>
+        <div
+          className="fixed bottom-0 right-0 z-40 transition-all duration-300 pointer-events-none"
+          style={{ left: leftOffset }}
+        >
+          <div className="max-w-5xl mx-auto flex justify-between items-center gap-4 p-6 pointer-events-auto">
+            <Button
+              variant="destructive"
+              onClick={() => navigate("/mahasiswa/kp/pengajuan")}
+              className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#FF4D4D] hover:bg-red-600 text-white border-none shadow-lg"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <a className="hidden md:inline">Sebelumnya</a>
+            </Button>
 
-          <Button
-            disabled={!isNextButtonEnabled}
-            onClick={() => navigate("/mahasiswa/kp/surat-balasan")}
-            className="px-6 py-3 font-medium"
-          >
-            Selanjutnya
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
+            <Button
+              disabled={!isNextButtonEnabled}
+              onClick={() => navigate("/mahasiswa/kp/surat-balasan")}
+              className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] hover:bg-blue-700 text-white border-none shadow-lg disabled:opacity-50"
+            >
+               <a className="hidden md:inline">Selanjutnya</a>
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
