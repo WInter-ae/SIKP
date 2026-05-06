@@ -14,6 +14,7 @@ export interface NavItem {
   url: string;
   icon?: LucideIcon;
   isActive?: boolean;
+  disabled?: boolean;
   items?: NavItem[];
 }
 

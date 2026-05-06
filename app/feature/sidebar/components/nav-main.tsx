@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Lock } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import type { NavItem } from "../types";
 
@@ -56,13 +56,25 @@ export function NavMain({ items }: { items: NavItem[] }) {
         return (
           <SidebarMenuSubItem key={`${depth}-${subItem.title}`}>
             <SidebarMenuSubButton
-              asChild
+              asChild={!subItem.disabled}
               isActive={subItemActive}
-              className="h-8 rounded-lg text-[13px] font-medium transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-yellow-300/15 hover:shadow-sm data-[active=true]:bg-yellow-300/80 data-[active=true]:text-black data-[active=true]:shadow-md"
+              disabled={subItem.disabled}
+              className={`h-8 rounded-lg text-[13px] font-medium transition-all duration-200 will-change-transform ${
+                subItem.disabled
+                  ? "opacity-50 cursor-not-allowed grayscale"
+                  : "hover:translate-x-1 hover:bg-yellow-300/15 hover:shadow-sm data-[active=true]:bg-yellow-300/80 data-[active=true]:text-black data-[active=true]:shadow-md"
+              }`}
             >
-              <Link to={subItem.url} onClick={handleLinkClick}>
-                <span>{subItem.title}</span>
-              </Link>
+              {subItem.disabled ? (
+                <div className="flex w-full items-center justify-between">
+                  <span>{subItem.title}</span>
+                  <Lock className="h-3 w-3" />
+                </div>
+              ) : (
+                <Link to={subItem.url} onClick={handleLinkClick}>
+                  <span>{subItem.title}</span>
+                </Link>
+              )}
             </SidebarMenuSubButton>
           </SidebarMenuSubItem>
         );
@@ -109,15 +121,28 @@ export function NavMain({ items }: { items: NavItem[] }) {
             return (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton
-                  asChild
+                  asChild={!item.disabled}
                   tooltip={item.title}
                   isActive={itemActive}
-                  className="h-10 rounded-xl px-3 text-[15px] font-medium transition-all duration-200 will-change-transform hover:translate-x-1 hover:bg-yellow-300/15 hover:shadow-sm data-[active=true]:bg-yellow-300 data-[active=true]:text-black data-[active=true]:shadow-md"
+                  disabled={item.disabled}
+                  className={`h-10 rounded-xl px-3 text-[15px] font-medium transition-all duration-200 will-change-transform ${
+                    item.disabled
+                      ? "opacity-50 cursor-not-allowed grayscale"
+                      : "hover:translate-x-1 hover:bg-yellow-300/15 hover:shadow-sm data-[active=true]:bg-yellow-300 data-[active=true]:text-black data-[active=true]:shadow-md"
+                  }`}
                 >
-                  <Link to={item.url} onClick={handleLinkClick}>
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                  </Link>
+                  {item.disabled ? (
+                    <div className="flex w-full items-center">
+                      {item.icon && <item.icon />}
+                      <span className="flex-1">{item.title}</span>
+                      <Lock className="h-4 w-4" />
+                    </div>
+                  ) : (
+                    <Link to={item.url} onClick={handleLinkClick}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </Link>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             );

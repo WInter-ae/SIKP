@@ -20,6 +20,8 @@ import type { User } from "../types";
 import { useUser } from "~/contexts/user-context";
 import { useIdentity } from "~/contexts/identity-context";
 import type { EffectiveRole } from "~/lib/sso-types";
+import { get } from "~/lib/api-client";
+import type { DashboardMahasiswaData } from "../../dashboard/pages/dashboard-mahasiswa-page";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: User;
@@ -50,6 +52,11 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
   const location = useLocation();
   const { user: contextUser } = useUser();
   const { effectiveRoles, activeIdentity } = useIdentity();
+  const [submissionStatus, setSubmissionStatus] = React.useState<{
+    submitted: boolean;
+    approved: boolean;
+  }>({ submitted: false, approved: false });
+
 
   const defaultUser = React.useMemo(
     () => getDefaultUser(location.pathname),
@@ -82,6 +89,28 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
       effectiveRoles[0]
     );
   }, [effectiveRoles]);
+
+  React.useEffect(() => {
+    if (contextRole !== "MAHASISWA") return;
+
+    const fetchStatus = async () => {
+      try {
+        const response = await get<DashboardMahasiswaData>(
+          "/api/mahasiswa/dashboard",
+        );
+        if (response.success && response.data?.statusPengajuan) {
+          setSubmissionStatus({
+            submitted: !!response.data.statusPengajuan.submitted,
+            approved: response.data.statusPengajuan.code === "approved",
+          });
+        }
+      } catch (error) {
+        console.error("Failed to fetch submission status for sidebar:", error);
+      }
+    };
+
+    void fetchStatus();
+  }, [contextRole]);
 
   const user = React.useMemo(() => {
     if (contextUser) {
@@ -118,6 +147,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
         userJabatanStruktural ||
           contextUser?.jabatan ||
           activeIdentity?.profile.jabatan,
+        submissionStatus,
       ),
     [
       activeIdentity?.profile.jabatan,

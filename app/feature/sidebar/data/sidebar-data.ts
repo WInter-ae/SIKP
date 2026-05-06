@@ -325,16 +325,41 @@ export function getSidebarMenuByRole(role: EffectiveRole): NavItem[] {
 export function getSidebarMenuByUrl(
   pathname: string,
   userRole?: string,
-  userJabatan?: string,
+  userJabatanStruktural?: string,
+  submissionStatus?: { submitted: boolean; approved: boolean },
 ): NavItem[] {
+  // Clone the menu to avoid mutating the original
+  const getMahasiswaMenu = () => {
+    return mahasiswaMenu.map((item) => {
+      if (item.title === "Kerja Praktik" && item.items) {
+        return {
+          ...item,
+          items: item.items.map((subItem) => {
+            if (subItem.title === "Status Pengajuan") {
+              return { ...subItem, disabled: !submissionStatus?.submitted };
+            }
+            if (subItem.title === "Surat Balasan") {
+              return { ...subItem, disabled: !submissionStatus?.approved };
+            }
+            return subItem;
+          }),
+        };
+      }
+      return item;
+    });
+  };
+
+  const currentMahasiswaMenu = submissionStatus ? getMahasiswaMenu() : mahasiswaMenu;
+
   if (pathname.startsWith("/admin")) {
     return adminMenu;
   }
   if (pathname.startsWith("/dosen")) {
     // Check if user is Wakil Dekan by checking jabatan (can contain "WAKIL_DEKAN", "wakil dekan", etc)
-    if (userJabatan) {
-      const jabatanLower = userJabatan.toLowerCase();
-      const isWakdek = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+    if (userJabatanStruktural) {
+      const jabatanLower = userJabatanStruktural.toLowerCase();
+      const isWakdek =
+        jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
       if (isWakdek) {
         return wakilDekanMenu;
       }
@@ -345,7 +370,7 @@ export function getSidebarMenuByUrl(
     return mentorMenu;
   }
   if (pathname.startsWith("/mahasiswa")) {
-    return mahasiswaMenu;
+    return currentMahasiswaMenu;
   }
 
   const normalizedRole = userRole?.toUpperCase();
@@ -357,9 +382,10 @@ export function getSidebarMenuByUrl(
     normalizedRole === "KAPRODI" ||
     normalizedRole === "WAKIL_DEKAN"
   ) {
-    if (userJabatan) {
-      const jabatanLower = userJabatan.toLowerCase();
-      const isWakdek = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+    if (userJabatanStruktural) {
+      const jabatanLower = userJabatanStruktural.toLowerCase();
+      const isWakdek =
+        jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
       if (isWakdek) {
         return wakilDekanMenu;
       }
@@ -367,8 +393,8 @@ export function getSidebarMenuByUrl(
     return dosenMenu;
   }
 
-  if (normalizedRole === "MAHASISWA") return mahasiswaMenu;
+  if (normalizedRole === "MAHASISWA") return currentMahasiswaMenu;
 
   // Default ke mahasiswa jika tidak ada yang cocok
-  return mahasiswaMenu;
+  return currentMahasiswaMenu;
 }
