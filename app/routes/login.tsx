@@ -2,7 +2,6 @@ import { GalleryVerticalEnd } from "lucide-react";
 import { Link } from "react-router";
 
 import { LoginForm } from "~/feature/login/components/login-form";
-import loginBg from "~/assets/images/login-bg.png";
 
 export default function LoginPage() {
   return (

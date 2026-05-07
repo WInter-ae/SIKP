@@ -7,7 +7,6 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getDashboardPath } from "~/lib/sso-types";
-import logoUnsri from "~/assets/images/unsri.png";
 
 export function LoginForm({
   className,
@@ -61,9 +60,9 @@ export function LoginForm({
         <div className="flex flex-col items-center gap-4 text-center sm:gap-6">
           <div className="relative">
             <div className="animate-glow-pulse absolute inset-0 rounded-full bg-primary/20 blur-xl sm:blur-2xl"></div>
-            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-3 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.1)] sm:h-24 sm:w-24 sm:rounded-[1.5rem] sm:p-4 dark:bg-slate-800">
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-3 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.1)] sm:h-24 w-24 sm:rounded-[1.5rem] sm:p-4 dark:bg-slate-800">
               <img
-                src={logoUnsri}
+                src="/images/unsri.png"
                 alt="Logo UNSRI"
                 className="h-12 w-12 object-contain sm:h-16 sm:w-16"
               />
