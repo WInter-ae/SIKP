@@ -84,16 +84,6 @@ const mahasiswaMenu: NavItem[] = [
     url: "/mahasiswa/kp/laporan",
     icon: BookMarked,
   },
-  {
-    title: "Profil",
-    url: "/mahasiswa/profil",
-    icon: UserCircle,
-  },
-  {
-    title: "Pengaturan",
-    url: "#",
-    icon: Settings,
-  },
 ];
 
 // Menu untuk Admin Prodi
@@ -156,11 +146,6 @@ const adminMenu: NavItem[] = [
     ],
   },
   {
-    title: "Profil",
-    url: "#",
-    icon: UserCircle,
-  },
-  {
     title: "Pengaturan",
     url: "#",
     icon: Settings,
@@ -219,16 +204,6 @@ const dosenMenu: NavItem[] = [
     url: "/dosen/penilaian",
     icon: Award,
   },
-  {
-    title: "Profil",
-    url: "/dosen/profil",
-    icon: UserCircle,
-  },
-  {
-    title: "Pengaturan",
-    url: "#",
-    icon: Settings,
-  },
 ];
 
 // Menu untuk Wakil Dekan Bidang Akademik
@@ -248,16 +223,6 @@ const wakilDekanMenu: NavItem[] = [
         url: "/dosen/kp/surat-pengantar",
       },
     ],
-  },
-  {
-    title: "Profil",
-    url: "/dosen/profil",
-    icon: UserCircle,
-  },
-  {
-    title: "Pengaturan",
-    url: "#",
-    icon: Settings,
   },
 ];
 

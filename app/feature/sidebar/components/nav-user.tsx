@@ -1,6 +1,6 @@
 import { useAuth } from "~/contexts/auth-context";
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from "lucide-react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -37,6 +37,7 @@ export function NavUser({ user }: { user: User }) {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showSSODialog, setShowSSODialog] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const userInitials = user.name
     .split(" ")
@@ -107,7 +108,7 @@ export function NavUser({ user }: { user: User }) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowSSODialog(true)}>
                   <BadgeCheck />
                   Profil
                 </DropdownMenuItem>
@@ -139,6 +140,29 @@ export function NavUser({ user }: { user: User }) {
             <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={() => void handleLogout()}>
               {isLoggingOut ? "Memproses..." : "Ya, Logout"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showSSODialog} onOpenChange={setShowSSODialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pengalihan ke Layanan SSO</AlertDialogTitle>
+            <AlertDialogDescription>
+              Aplikasi SIKP menggunakan autentikasi
+              terpusat. Anda akan dialihkan ke platform SSO UNSRI untuk melakukan
+              pengelolaan profil. Apakah Anda ingin melanjutkan?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Kembali</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() =>
+                window.open("https://sso-unsri.vercel.app/dashboard", "_blank")
+              }
+            >
+              Lanjutkan ke SSO
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
