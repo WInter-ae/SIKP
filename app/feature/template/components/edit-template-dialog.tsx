@@ -20,15 +20,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { TEMPLATE_CATEGORIES } from "../types/template.types";
 import type {
   Template,
   TemplateType,
   TemplateField,
 } from "../types/template.types";
 import { toast } from "sonner";
-import { Upload } from "lucide-react";
-import { autoGenerateFields } from "../services/template.service";
 import {
   updateTemplate,
   type TemplateResponse,
@@ -48,11 +45,7 @@ export function EditTemplateDialog({
   onSuccess,
 }: EditTemplateDialogProps) {
   const [name, setName] = useState(template?.name || "");
-  const [type, setType] = useState<TemplateType>(
-    template?.type || "Template Only",
-  );
   const [description, setDescription] = useState(template?.description || "");
-  const [fields, setFields] = useState<TemplateField[]>([]);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -60,9 +53,7 @@ export function EditTemplateDialog({
   useEffect(() => {
     if (template) {
       setName(template.name);
-      setType(template.type);
       setDescription(template.description || "");
-      setFields(template.fields || []);
       setUploadedFile(null); // Reset file input
     }
   }, [template]);
@@ -85,23 +76,12 @@ export function EditTemplateDialog({
       return;
     }
 
-    if (
-      type === "Generate & Template" &&
-      fields.length === 0 &&
-      !uploadedFile
-    ) {
-      toast.error('Fields wajib diisi untuk tipe "Generate & Template"');
-      return;
-    }
-
     setIsLoading(true);
     try {
       const response = await updateTemplate(template.id, {
         ...(uploadedFile && { file: uploadedFile }),
         name: name.trim(),
-        type,
         description: description.trim(),
-        fields: type === "Generate & Template" ? fields : [],
       });
 
       if (response.success) {
@@ -127,90 +107,73 @@ export function EditTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!max-w-none w-[50vw] h-auto overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Template</DialogTitle>
-          <DialogDescription>
-            Edit metadata atau upload ulang file template untuk memperbarui
-            konten.
+      <DialogContent className="sm:max-w-[550px] rounded-2xl border-none shadow-2xl p-6">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-2xl font-bold text-foreground">Edit Template</DialogTitle>
+          <DialogDescription className="text-muted-foreground font-medium">
+            Perbarui informasi atau file template yang sudah ada
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-5 py-6">
           <div className="space-y-2">
-            <Label htmlFor="edit-name">Nama Template</Label>
+            <Label htmlFor="edit-name" className="text-sm font-bold text-foreground">Nama Template</Label>
             <Input
               id="edit-name"
               placeholder="Nama template"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              className="h-11 rounded-xl border-gray-200 focus:border-blue-500 transition-all"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="edit-type">Tipe</Label>
-            <Select
-              value={type}
-              onValueChange={(value) => setType(value as TemplateType)}
-            >
-              <SelectTrigger id="edit-type">
-                <SelectValue placeholder="Pilih tipe template" />
-              </SelectTrigger>
-              <SelectContent>
-                {TEMPLATE_CATEGORIES.map((category) => (
-                  <SelectItem key={category.value} value={category.value}>
-                    {category.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-description">Deskripsi</Label>
+            <Label htmlFor="edit-description" className="text-sm font-bold text-foreground">Deskripsi (Opsional)</Label>
             <Textarea
               id="edit-description"
               placeholder="Deskripsi template..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="w-full"
+              rows={3}
+              className="w-full resize-none rounded-xl border-gray-200 focus:border-blue-500 transition-all"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="file">Upload Ulang File Template (Opsional)</Label>
-            <div className="flex items-center gap-3">
-              <Input
-                id="file"
-                type="file"
-                accept=".html,.txt,.docx"
-                onChange={handleFileUpload}
-                className="cursor-pointer flex-1"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Mengupload file baru akan menggantikan konten dan variabel
-              template yang ada.
-            </p>
-            {uploadedFile && (
-              <p className="text-sm text-muted-foreground mt-2">
-                File baru: {uploadedFile.name} (
-                {(uploadedFile.size / 1024).toFixed(2)} KB)
+            <Label htmlFor="file" className="text-sm font-bold text-foreground">Ganti File Template (Opsional)</Label>
+            <Input
+              id="file"
+              type="file"
+              accept=".html,.txt,.docx"
+              onChange={handleFileUpload}
+              className="cursor-pointer h-11 rounded-xl border-gray-200 file:bg-muted file:border-0 file:text-sm file:font-semibold file:mr-4 file:px-4 file:h-full transition-all"
+            />
+            {!uploadedFile ? (
+              <p className="text-[10px] font-medium text-muted-foreground italic mt-1">
+                Biarkan kosong jika tidak ingin mengganti file.
+              </p>
+            ) : (
+              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">
+                File Baru: {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(1)} KB)
               </p>
             )}
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="gap-3 sm:gap-0">
           <Button
-            variant="outline"
+            variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={isLoading}
+            className="rounded-xl font-bold text-muted-foreground hover:bg-muted"
           >
             Batal
           </Button>
-          <Button onClick={handleSubmit} disabled={isLoading}>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isLoading}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-8 shadow-lg shadow-blue-500/20"
+          >
             {isLoading ? "Menyimpan..." : "Simpan Perubahan"}
           </Button>
         </DialogFooter>

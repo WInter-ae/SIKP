@@ -1,34 +1,24 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
-import { useUser } from "~/contexts/user-context";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import { Button } from "~/components/ui/button";
-import { FileText, Download, Sparkles } from "lucide-react";
+import { FileText, Download, Search, Eye, FileDown } from "lucide-react";
+import { Input } from "~/components/ui/input";
+import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
-import { GenerateTemplateDialog } from "../components/generate-template-dialog";
 import {
   getActiveTemplates,
   downloadTemplate,
   type TemplateResponse,
 } from "~/lib/services/template.service";
+import { useNavigate } from "react-router";
+import { useUser } from "~/contexts/user-context";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
 
 export default function TemplatePage() {
   const navigate = useNavigate();
   const { user } = useUser();
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<TemplateResponse | null>(null);
-  const [isGenerateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Check if user is logged in and fetch templates
   useEffect(() => {
@@ -65,111 +55,122 @@ export default function TemplatePage() {
     }
   };
 
-  const handleDownloadTemplate = async (template: TemplateResponse) => {
+  const handleDownload = async (template: TemplateResponse) => {
     try {
       await downloadTemplate(template.id, template.originalName);
-      toast.success(`Template "${template.name}" berhasil didownload.`);
-    } catch (error: unknown) {
-      console.error("Error downloading template:", error);
-
-      if (
-        (error as Error).message?.includes("Forbidden") ||
-        (error as Error).message?.includes("Unauthorized")
-      ) {
-        toast.error("Anda tidak memiliki akses untuk mendownload template");
-        return;
-      }
-
-      toast.error("Gagal mendownload template");
+      toast.success(`Template "${template.name}" berhasil diunduh.`);
+    } catch (error: any) {
+      toast.error(error.message || "Gagal mengunduh template");
     }
   };
 
-  const handleGenerateClick = (template: TemplateResponse) => {
-    setSelectedTemplate(template);
-    setGenerateDialogOpen(true);
+  const handlePreview = async (template: TemplateResponse) => {
+    try {
+      await downloadTemplate(template.id, template.originalName, true);
+    } catch (error: any) {
+      toast.error(error.message || "Gagal memuat pratinjau");
+    }
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Template Surat Kerja Praktik
-          </h1>
-          <p className="text-muted-foreground">Memuat templates...</p>
-        </div>
-      </div>
-    );
-  }
+  const filteredTemplates = templates.filter((template) =>
+    template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // Show message if user is not logged in
-  if (!user) {
-    return null;
-  }
+  // Define alternating border colors
+  const borderColors = [
+    "border-l-blue-600",
+    "border-l-yellow-300",
+    "border-l-red-500",
+  ];
+
+  if (!user) return null;
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">
-          Template Surat Kerja Praktik
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Unduh atau generate template surat yang diperlukan untuk kerja praktik
-        </p>
-      </div>
-
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {templates.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              Belum ada template yang tersedia
+    <div className="p-4 sm:p-6 md:p-8 bg-background min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Page Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="relative pb-2">
+            <h1 className="text-xl sm:text-3xl font-bold text-foreground">
+              Template Surat Kerja Praktik
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Unduh format dokumen resmi yang diperlukan untuk kegiatan Kerja Praktik
             </p>
+            <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
           </div>
+
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Cari dokumen..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-10"
+            />
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="h-48 animate-pulse bg-muted" />
+            ))}
+          </div>
+        ) : filteredTemplates.length === 0 ? (
+          <Card className="p-12 flex flex-col items-center justify-center text-center space-y-4 shadow-sm border-dashed">
+            <div className="p-4 bg-muted rounded-full">
+              <FileDown className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-lg font-semibold">Tidak ditemukan template</p>
+              <p className="text-sm text-muted-foreground italic">
+                {searchQuery ? "Coba gunakan kata kunci pencarian lain" : "Belum ada dokumen yang tersedia saat ini"}
+              </p>
+            </div>
+          </Card>
         ) : (
-          templates.map((template) => (
-            <Card key={template.id} className="flex flex-col">
-              <CardHeader className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-emerald-700" />
-                </div>
-                <div className="space-y-1">
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
-                  <CardDescription className="line-clamp-3">
-                    {template.description}
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow" />
-              <CardFooter className="flex flex-col space-y-2">
-                {template.type === "Generate & Template" && (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredTemplates.map((template, index) => (
+              <Card 
+                key={template.id} 
+                className={`flex flex-col h-full shadow-sm hover:shadow-md transition-all border-l-4 ${borderColors[index % borderColors.length]}`}
+              >
+                <CardHeader className="space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2 bg-muted rounded-lg">
+                      <FileText className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <CardTitle className="text-base font-bold leading-tight line-clamp-1">
+                      {template.name}
+                    </CardTitle>
+                    <CardDescription className="text-xs line-clamp-3 min-h-[3rem]">
+                      {template.description || "Gunakan format dokumen ini sesuai dengan ketentuan yang berlaku."}
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="flex-grow" />
+
+                <CardFooter className="pt-0">
                   <Button
-                    onClick={() => handleGenerateClick(template)}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                    size="lg"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 rounded-xl"
+                    onClick={() => handleDownload(template)}
                   >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Generate Otomatis
+                    <Download className="h-4 w-4 mr-2" />
+                    Unduh Template
                   </Button>
-                )}
-                <Button
-                  variant="secondary"
-                  className="bg-gray-200 text-black w-full hover:bg-gray-300"
-                  onClick={() => handleDownloadTemplate(template)}
-                >
-                  <Download className=" h-4 w-4 mr-2" />
-                  Download Template
-                </Button>
-              </CardFooter>
-            </Card>
-          ))
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
-
-      <GenerateTemplateDialog
-        template={selectedTemplate}
-        open={isGenerateDialogOpen}
-        onOpenChange={setGenerateDialogOpen}
-      />
     </div>
   );
 }

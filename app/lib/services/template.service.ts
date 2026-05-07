@@ -21,19 +21,13 @@ import type {
 export interface CreateTemplateRequest {
   file: File;
   name: string;
-  type: TemplateType;
   description?: string;
-  fields?: TemplateField[];
-  isActive?: boolean;
 }
 
 export interface UpdateTemplateRequest {
   file?: File;
   name?: string;
-  type?: TemplateType;
   description?: string;
-  fields?: TemplateField[];
-  isActive?: boolean;
 }
 
 export interface TemplateResponse extends Template {
@@ -87,14 +81,9 @@ function validateTemplateFile(
  * Admin: semua template (aktif & nonaktif). Mahasiswa: hanya isActive = true.
  */
 export async function getAllTemplates(params?: {
-  type?: TemplateType;
-  isActive?: boolean;
   search?: string;
 }): Promise<ApiResponse<TemplateResponse[]>> {
   const queryParams = new URLSearchParams();
-  if (params?.type) queryParams.append("type", params.type);
-  if (params?.isActive !== undefined)
-    queryParams.append("isActive", String(params.isActive));
   if (params?.search) queryParams.append("search", params.search);
 
   const endpoint = `/api/templates${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
@@ -107,9 +96,7 @@ export async function getAllTemplates(params?: {
 export async function getActiveTemplates(): Promise<
   ApiResponse<TemplateResponse[]>
 > {
-  return sikpClient.get<TemplateResponse[]>(
-    API_ENDPOINTS.TEMPLATE.GET_ALL + "/active",
-  );
+  return sikpClient.get<TemplateResponse[]>(API_ENDPOINTS.TEMPLATE.GET_ALL);
 }
 
 /**
@@ -131,26 +118,10 @@ export async function createTemplate(
   if (!validation.valid)
     return { success: false, message: validation.message, data: null };
 
-  if (
-    data.type === "Generate & Template" &&
-    (!data.fields || data.fields.length === 0)
-  ) {
-    return {
-      success: false,
-      message: 'Fields wajib diisi untuk tipe "Generate & Template"',
-      data: null,
-    };
-  }
-
   const formData = new FormData();
   formData.append("file", data.file);
   formData.append("name", data.name);
-  formData.append("type", data.type);
   if (data.description) formData.append("description", data.description);
-  if (data.fields && data.fields.length > 0)
-    formData.append("fields", JSON.stringify(data.fields));
-  if (data.isActive !== undefined)
-    formData.append("isActive", String(data.isActive));
 
   return sikpClient.upload<TemplateResponse>(
     API_ENDPOINTS.TEMPLATE.GET_ALL,
@@ -171,28 +142,11 @@ export async function updateTemplate(
       return { success: false, message: validation.message, data: null };
   }
 
-  if (
-    data.type === "Generate & Template" &&
-    data.fields &&
-    data.fields.length === 0
-  ) {
-    return {
-      success: false,
-      message: 'Fields tidak boleh kosong untuk tipe "Generate & Template"',
-      data: null,
-    };
-  }
-
   const formData = new FormData();
   if (data.file) formData.append("file", data.file);
   if (data.name) formData.append("name", data.name);
-  if (data.type) formData.append("type", data.type);
   if (data.description !== undefined)
     formData.append("description", data.description);
-  if (data.fields !== undefined)
-    formData.append("fields", JSON.stringify(data.fields));
-  if (data.isActive !== undefined)
-    formData.append("isActive", String(data.isActive));
 
   // PUT + FormData — gunakan request() karena upload() hanya POST
   return sikpClient.request<TemplateResponse>(`/api/templates/${templateId}`, {
@@ -210,17 +164,7 @@ export async function deleteTemplate(
   return sikpClient.del<void>(`/api/templates/${templateId}`);
 }
 
-/**
- * Toggle template active status (Admin only).
- */
-export async function toggleTemplateActive(
-  templateId: string,
-): Promise<ApiResponse<TemplateResponse>> {
-  return sikpClient.request<TemplateResponse>(
-    `/api/templates/${templateId}/toggle-active`,
-    { method: "PATCH" },
-  );
-}
+
 
 /**
  * Get template download URL.
@@ -230,35 +174,60 @@ export function getTemplateDownloadUrl(templateId: string): string {
 }
 
 /**
- * Download template file — trigger browser download.
+ * Download template file — trigger browser download or preview.
  * Menggunakan fetch langsung karena perlu streaming blob ke browser.
  */
 export async function downloadTemplate(
   templateId: string,
   fileName: string,
+  isPreview: boolean = false,
 ): Promise<void> {
   const token = await getAuthToken();
 
-  const response = await fetch(
+  const urlWithParams = new URL(
     `${API_BASE_URL}/api/templates/${templateId}/download`,
-    {
-      method: "GET",
-      headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      credentials: "include",
-    },
   );
+  if (isPreview) {
+    urlWithParams.searchParams.append("preview", "true");
+  }
 
-  if (!response.ok) throw new Error("Gagal mendownload template");
+  const response = await fetch(urlWithParams.toString(), {
+    method: "GET",
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    let errorMessage = "Gagal memproses template";
+    try {
+      const errorData = await response.json();
+      if (errorData && typeof errorData === "object" && "message" in errorData) {
+        errorMessage = (errorData as { message: string }).message;
+      }
+    } catch {
+      // Fallback to default message if JSON parsing fails
+    }
+    throw new Error(errorMessage);
+  }
 
   const blob = await response.blob();
   const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+
+  if (isPreview) {
+    // Untuk preview, buka di tab baru
+    window.open(url, "_blank");
+    // Kita tidak bisa revoke URL segera karena tab baru butuh waktu untuk load
+    // Tapi browser biasanya handle blob URLs di tab baru dengan baik
+  } else {
+    // Untuk download, gunakan elemen <a>
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
 }
 
 /**
