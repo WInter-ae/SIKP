@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import {
   UserPlus,
@@ -14,6 +14,7 @@ import {
   Info,
   Clock,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,55 +52,58 @@ function FieldMentorPage() {
   });
   const [currentMentor, setCurrentMentor] = useState<FieldMentor | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadMentorData = useCallback(async () => {
+    setIsLoadingMentor(true);
+    try {
+      const response = await getCompleteInternshipData();
 
-    async function loadMentorData() {
-      setIsLoadingMentor(true);
+      if (!response.success || !response.data) {
+        setIsLoadingMentor(false);
+        return;
+      }
 
-      try {
-        const response = await getCompleteInternshipData();
+      const internship = response.data.internship;
+      const mentor = response.data.mentor;
+      const internshipStatus = internship?.status;
 
-        if (!isMounted || !response.success || !response.data?.mentor) {
-          return;
-        }
-
-        const mentor = response.data.mentor;
-        const internshipStatus = response.data.internship.status;
+      if (mentor) {
+        // Normalize status to lowercase to match UI switch logic
+        const rawStatus = (mentor.status || "pending").toLowerCase();
+        const status = (["pending", "registered", "approved", "rejected"].includes(rawStatus) 
+          ? rawStatus 
+          : (internshipStatus === "AKTIF" ? "approved" : "pending")) as FieldMentor["status"];
 
         setCurrentMentor({
           id: mentor.id,
-          code: `AUTO-${mentor.id}`,
-          name: mentor.name,
-          email: mentor.email,
-          company: mentor.company,
-          position: mentor.position,
+          code: (mentor as any).code || `REQ-${mentor.id.slice(0, 8)}`,
+          name: mentor.name || "-",
+          email: mentor.email || "-",
+          company: mentor.company || "-",
+          position: mentor.position || "-",
           phone: mentor.phone || "-",
-          status: internshipStatus === "AKTIF" ? "approved" : "registered",
-          createdAt: response.data.internship.createdAt,
-          registeredAt: response.data.internship.updatedAt,
-          approvedAt:
-            internshipStatus === "AKTIF"
-              ? response.data.internship.updatedAt
-              : undefined,
-          photo: undefined,
-          nip: "",
+          status: status,
+          createdAt: mentor.createdAt || internship.createdAt,
+          registeredAt: mentor.createdAt || internship.updatedAt,
+          approvedAt: status === "approved" ? internship.updatedAt : undefined,
+          photo: (mentor as any).photo || (mentor as any).photoUrl,
+          nip: (mentor as any).nip || "",
+          address: (mentor as any).address || (mentor as any).companyAddress || mentor.company || "-",
+          rejectionReason: mentor.rejectionReason,
         });
-      } catch {
-        // Keep empty state when backend data is unavailable or user is not authenticated.
-      } finally {
-        if (isMounted) {
-          setIsLoadingMentor(false);
-        }
+      } else {
+        setCurrentMentor(null);
       }
+    } catch (error) {
+      console.error("Error loading mentor data:", error);
+      toast.error("Gagal memuat data mentor.");
+    } finally {
+      setIsLoadingMentor(false);
     }
-
-    loadMentorData();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    loadMentorData();
+  }, [loadMentorData]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -110,8 +114,14 @@ function FieldMentorPage() {
 
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    
+    // Simple validation
+    if (!mentorRequest.mentorEmail.includes('@')) {
+      toast.error("Email mentor tidak valid.");
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       const response = await requestMentor(mentorRequest);
 
@@ -119,21 +129,6 @@ function FieldMentorPage() {
         toast.success(
           "Pengajuan mentor berhasil dikirim! Menunggu persetujuan dari Dosen PA.",
         );
-
-        // Refresh data or set to pending state locally
-        setCurrentMentor({
-          id: "pending-" + Date.now(),
-          code: "PENDING",
-          name: mentorRequest.mentorName,
-          email: mentorRequest.mentorEmail,
-          company: mentorRequest.company,
-          position: mentorRequest.position,
-          phone: mentorRequest.mentorPhone,
-          status: "pending",
-          createdAt: new Date().toISOString(),
-          nip: "",
-        });
-
         setShowRequestForm(false);
         setMentorRequest({
           mentorName: "",
@@ -143,6 +138,8 @@ function FieldMentorPage() {
           position: "",
           address: "",
         });
+        // Refresh data to show pending status
+        await loadMentorData();
       } else {
         toast.error(response.message || "Gagal mengirim pengajuan mentor.");
       }
@@ -199,8 +196,10 @@ function FieldMentorPage() {
   };
 
   const getInitials = (name: string) => {
+    if (!name) return "??";
     return name
       .split(" ")
+      .filter(Boolean)
       .map((n) => n[0])
       .join("")
       .toUpperCase()
@@ -222,6 +221,29 @@ function FieldMentorPage() {
         <ArrowLeft className="mr-2 h-4 w-4" />
         Kembali
       </Button>
+
+      {/* Rejection Alert */}
+      {currentMentor?.status === "rejected" && (
+        <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-900">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle className="font-bold">Pengajuan Mentor Ditolak</AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="font-medium">Alasan: {currentMentor.rejectionReason || "Data mentor tidak sesuai kriteria."}</p>
+            <p className="mt-2 text-sm">Silakan ajukan kembali dengan data mentor yang baru atau hubungi Dosen PA Anda.</p>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="mt-4"
+              onClick={() => {
+                setCurrentMentor(null);
+                setShowRequestForm(true);
+              }}
+            >
+              Ajukan Ulang
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Info Section */}
       <Alert className="border-l-4 border-primary bg-primary/5">
@@ -251,7 +273,7 @@ function FieldMentorPage() {
       </Alert>
 
       {/* Current Mentor Section */}
-      {currentMentor && (
+      {currentMentor && currentMentor.status !== "rejected" && (
         <Card className="border-l-4 border-green-500">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -652,3 +674,4 @@ function FieldMentorPage() {
 }
 
 export default FieldMentorPage;
+

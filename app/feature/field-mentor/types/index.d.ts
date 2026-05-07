@@ -12,6 +12,8 @@ export interface FieldMentor {
   approvedAt?: string;
   photo?: string;
   nip: string;
+  address?: string;
+  rejectionReason?: string;
 }
 
 export interface MentorRequest {

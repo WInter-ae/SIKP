@@ -141,7 +141,12 @@ export default function RegisterApprovalPage() {
       setRegistrations(
         registrations.map((reg) =>
           reg.id === selectedRegistration.id
-            ? { ...reg, status: "approved" }
+            ? { 
+                ...reg, 
+                status: "approved",
+                statusLabel: "Disetujui",
+                statusColor: "green"
+              }
             : reg,
         ),
       );
@@ -179,7 +184,12 @@ export default function RegisterApprovalPage() {
       setRegistrations(
         registrations.map((reg) =>
           reg.id === selectedRegistration.id
-            ? { ...reg, status: "rejected" }
+            ? { 
+                ...reg, 
+                status: "rejected",
+                statusLabel: "Ditolak",
+                statusColor: "red"
+              }
             : reg,
         ),
       );
@@ -430,7 +440,7 @@ export default function RegisterApprovalPage() {
             </div>
           ) : (
             <div className="rounded-md border overflow-x-auto">
-              <Table>
+              <Table className="min-w-[1100px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Pembimbing Lapangan</TableHead>
@@ -474,15 +484,19 @@ export default function RegisterApprovalPage() {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium text-sm">
-                            {registration.studentName}
+                            {registration.studentName.replace(/Mahasiswa \(Profile ID: .*\)/g, "Mahasiswa")}
                           </span>
-                          <span className="text-xs text-muted-foreground">
-                            {registration.studentNim}
-                          </span>
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Mail className="h-3 w-3" />
-                            {registration.studentEmail}
-                          </div>
+                          {registration.studentNim && registration.studentNim !== "-" && (
+                            <span className="text-xs text-muted-foreground">
+                              {registration.studentNim}
+                            </span>
+                          )}
+                          {registration.studentEmail && registration.studentEmail !== "-" && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Mail className="h-3 w-3" />
+                              {registration.studentEmail}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -494,19 +508,19 @@ export default function RegisterApprovalPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {registration.status === "pending" && (
+                        {(registration.status === "pending") && (
                           <Badge variant="secondary">
                             <Clock className="mr-1 h-3 w-3" />
-                            Menunggu
+                            {registration.statusLabel || "Menunggu"}
                           </Badge>
                         )}
-                        {registration.status === "approved" && (
+                        {(registration.status === "approved") && (
                           <Badge variant="default" className="bg-green-500">
                             <CheckCircle className="mr-1 h-3 w-3" />
                             Disetujui
                           </Badge>
                         )}
-                        {registration.status === "rejected" && (
+                        {(registration.status === "rejected") && (
                           <Badge variant="destructive">
                             <XCircle className="mr-1 h-3 w-3" />
                             Ditolak

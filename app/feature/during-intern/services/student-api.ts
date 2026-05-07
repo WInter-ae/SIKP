@@ -99,7 +99,10 @@ export interface CompleteInternshipData {
     company: string;
     position: string;
     phone?: string;
+    status?: string;
+    rejectionReason?: string;
     signature?: string;
+    createdAt?: string;
   };
   lecturer?: {
     id: string;
@@ -243,6 +246,9 @@ function mapBackendToFrontend(
           company: mentor.company,
           position: mentor.position,
           phone: mentor.phone,
+          status: (mentor as any).status,
+          rejectionReason: (mentor as any).rejectionReason,
+          createdAt: (mentor as any).createdAt,
           signature: mentor.signature || undefined,
         }
       : undefined,

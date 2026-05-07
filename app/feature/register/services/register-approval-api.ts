@@ -168,9 +168,9 @@ function mapRegistration(raw: RawObj, index: number): PendingRegistration {
     status: normalizeStatus(
       getFirstString(raw, ["status", "verificationStatus"], "pending"),
     ),
-    studentName: getFirstString(student, ["name", "nama", "studentName"], "-"),
-    studentNim: getFirstString(student, ["nim", "studentNim"], "-"),
-    studentEmail: getFirstString(student, ["email", "studentEmail"], "-"),
+    studentName: getFirstString(student, ["studentName", "name", "nama", "nama_lengkap", "fullName", "mahasiswa_nama", "student_name", "nama_mahasiswa", "user_name"], "-"),
+    studentNim: getFirstString(student, ["studentNim", "nim", "nim_mahasiswa", "student_nim"], "-"),
+    studentEmail: getFirstString(student, ["studentEmail", "email", "mahasiswa_email", "student_email"], "-"),
   };
 }
 

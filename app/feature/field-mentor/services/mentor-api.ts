@@ -660,6 +660,11 @@ export async function deleteMentorSignature(): Promise<
 export async function requestMentor(
   data: MentorRequest,
 ): Promise<ApiResponse<null>> {
-  return internshipClient.post<null>("/api/mentorship/requests", data);
+  const payload = {
+    ...data,
+    companyName: data.company,
+    companyAddress: data.address,
+  };
+  return internshipClient.post<null>("/api/mentorship/requests", payload);
 }
 
