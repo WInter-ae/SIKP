@@ -149,7 +149,7 @@ export function StatusTimeline({
                             >
                               <Download className="h-3.5 w-3.5 mr-1.5" />
                               <span className="sm:hidden">Unduh</span>
-                              <span className="hidden sm:inline">Unduh Surat</span>
+                              <span className="hidden sm:inline">Unduh Surat Pengantar</span>
                             </a>
                           </Button>
                         </div>

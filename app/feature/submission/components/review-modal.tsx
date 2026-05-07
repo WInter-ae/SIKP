@@ -510,9 +510,9 @@ function ReviewModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader className="shrink-0">
-          <DialogTitle className="text-2xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-5xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 border-b shrink-0">
+          <DialogTitle className="text-xl sm:text-2xl font-bold">
             Verifikasi Pengajuan Surat Pengantar KP
           </DialogTitle>
           <DialogDescription>
@@ -521,7 +521,7 @@ function ReviewModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-8 py-4 flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* 1. Informasi Mahasiswa (Tim) */}
           <Card>
             <CardHeader className="pb-3">
@@ -852,9 +852,9 @@ function ReviewModal({
           )}
         </div>
 
-        <div className="shrink-0 border-t border-border pt-4">
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3">
-            <Button variant="outline" onClick={handleClose}>
+        <div className="p-4 sm:p-6 pt-2 sm:pt-4 border-t flex-col sm:flex-row gap-3 sm:gap-2 shrink-0">
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-between gap-3 w-full">
+            <Button variant="outline" onClick={handleClose} className="w-full sm:w-auto">
               {application.status === "approved" ||
                 application.status === "rejected"
                 ? "Tutup"
@@ -866,6 +866,7 @@ function ReviewModal({
                   variant="destructive"
                   onClick={handleRejectApplication}
                   disabled={!allDocsReviewed}
+                  className="w-full sm:w-auto"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Tolak Pengajuan
@@ -875,7 +876,7 @@ function ReviewModal({
                   disabled={
                     hasRejectedDocs || hasMissingDocs || !allDocsReviewed
                   }
-                  className="bg-green-600 hover:bg-green-700 text-white"
+                  className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
                 >
                   <Check className="w-4 h-4 mr-2" />
                   Setujui Pengajuan

@@ -358,37 +358,33 @@ function SubmissionAdminPage() {
       | "Menunggu Review"
       | "Menunggu TTD Wakil Dekan" = "Menunggu Review",
   ) => {
-    switch (status) {
-      case "pending":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-          >
-            {pendingLabel}
-          </Badge>
-        );
-      case "approved":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
-          >
-            Disetujui
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-destructive/10 text-destructive border-destructive/30"
-          >
-            Ditolak
-          </Badge>
-        );
-      default:
-        return <Badge variant="secondary">Unknown</Badge>;
-    }
+    const isApproved = status === "approved";
+    const isRejected = status === "rejected";
+    const isPending = status === "pending";
+
+    return (
+      <Badge
+        variant="outline"
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 font-medium whitespace-nowrap ${
+          isApproved
+            ? "bg-green-50 text-green-700 border-green-200"
+            : isRejected
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-amber-50 text-amber-700 border-amber-200"
+        }`}
+      >
+        <span
+          className={`mr-1.5 h-1.5 w-1.5 rounded-full ${
+            isApproved ? "bg-green-500" : isRejected ? "bg-red-500" : "bg-amber-500"
+          }`}
+        />
+        {status === "approved"
+          ? "Disetujui"
+          : status === "rejected"
+            ? "Ditolak"
+            : pendingLabel}
+      </Badge>
+    );
   };
 
   return (
@@ -490,52 +486,8 @@ function SubmissionAdminPage() {
               </div>
             ) : (
               <>
-                {/* Mobile Card View */}
-                <div className="block md:hidden divide-y divide-border">
-                  {filteredApplications.map((app) => {
-                    const leader =
-                      app.members.find((m) => m.role === "Ketua") ||
-                      app.members[0];
-                    return (
-                      <div key={app.id} className="p-4 space-y-3">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0">
-                            <p className="font-medium text-foreground truncate">
-                              {leader?.name || "Unknown"}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {app.members.length > 1
-                                ? `+ ${app.members.length - 1} Anggota`
-                                : "Individu"}
-                            </p>
-                          </div>
-                          {getStatusBadge(app.status, app.pendingLabel)}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div>
-                            <p className="text-xs text-muted-foreground">Tanggal</p>
-                            <p className="text-foreground">{app.date}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-muted-foreground">Perusahaan</p>
-                            <p className="text-foreground truncate">{app.internship.namaTempat}</p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full text-primary border-primary/50 hover:bg-primary/5"
-                          onClick={() => handleReview(app)}
-                        >
-                          {app.status === "pending" ? "Review" : "Lihat Detail"}
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-x-auto">
+                {/* Scrollable Table View (Mobile & Desktop) */}
+                <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">

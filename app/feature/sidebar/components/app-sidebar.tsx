@@ -110,7 +110,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
     };
 
     void fetchStatus();
-  }, [contextRole]);
+  }, [contextRole, location.pathname]);
 
   const user = React.useMemo(() => {
     if (contextUser) {
@@ -154,6 +154,7 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
       contextUser?.jabatan,
       location.pathname,
       primaryRole,
+      submissionStatus,
       userJabatanStruktural,
     ],
   );

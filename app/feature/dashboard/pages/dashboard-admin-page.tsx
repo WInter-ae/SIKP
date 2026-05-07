@@ -37,7 +37,7 @@ export interface DashboardAdminData {
   jumlahTimKp?: number;
   mahasiswaAktifSemester4?: number;
   totalPengajuanSuratPengantar?: number;
-  totalSuratBalasanDisetujuiTerverifikasi?: number;
+  totalSuratBalasan?: number;
   totalDosenPembimbingKp?: number;
   totalTemplateDokumen?: number;
   statistikPengajuan?: AdminMonthlyStat[];
@@ -91,9 +91,9 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
       icon: ListOrdered,
     },
     {
-      title: "Surat Balasan Disetujui & Terverifikasi",
-      value: data?.totalSuratBalasanDisetujuiTerverifikasi,
-      description: "letter_status APPROVED dan verified = true.",
+      title: "Total Surat Balasan",
+      value: data?.totalSuratBalasan,
+      description: "Total seluruh surat balasan yang masuk.",
       icon: CheckCircle,
     },
     {
@@ -122,7 +122,7 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
         <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
 
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2.5 sm:gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {statCards.map((card, index) => {
           const borderColors = [
             "border-l-blue-600",
@@ -153,22 +153,19 @@ export default function DashboardAdminPage({ data }: DashboardAdminPageProps) {
           ];
           
           return (
-            <Card key={card.title} className={`border-l-4 ${borderColors[index % borderColors.length]} ${bgColors[index % bgColors.length]} shadow-sm hover:shadow-md transition-shadow duration-200`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <Card key={card.title} className={`py-3 border-l-4 ${borderColors[index % borderColors.length]} ${bgColors[index % bgColors.length]} shadow-sm hover:shadow-md transition-shadow duration-200`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
+                <CardTitle className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                   {card.title}
                 </CardTitle>
-                <div className={`p-2 rounded-full bg-background border border-border shadow-xs ${iconColors[index % iconColors.length]}`}>
-                  <card.icon className="h-4 w-4" />
+                <div className={`p-1.5 rounded-full bg-background border border-border shadow-xs ${iconColors[index % iconColors.length]}`}>
+                  <card.icon className="h-3.5 w-3.5" />
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-extrabold tracking-tight">
+              <CardContent className="px-4">
+                <div className="text-2xl font-extrabold tracking-tight">
                   {formatValue(card.value)}
                 </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1 line-clamp-2">
-                  {card.description}
-                </p>
               </CardContent>
             </Card>
           );

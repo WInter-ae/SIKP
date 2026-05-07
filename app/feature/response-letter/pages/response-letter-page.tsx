@@ -540,15 +540,15 @@ function ResponseLetterPage() {
           className="fixed bottom-0 right-0 z-40 transition-all duration-300 pointer-events-none"
           style={{ left: leftOffset }}
         >
-          <div className="max-w-5xl mx-auto flex justify-between items-center gap-4 p-6 pointer-events-auto">
+          <div className="max-w-5xl mx-auto flex justify-between items-center gap-4 p-4 pointer-events-auto">
             <Button
               variant="destructive"
               asChild
-              className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-[#FF4D4D] hover:bg-red-600 text-white border-none shadow-lg"
+              className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#FF4D4D] hover:bg-red-600 text-white border-none shadow-lg"
             >
               <Link to="/mahasiswa/kp/surat-pengantar">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Sebelumnya
+                <span className="hidden sm:inline">Sebelumnya</span>
               </Link>
             </Button>
 
@@ -557,9 +557,9 @@ function ResponseLetterPage() {
               verificationStatus.letterStatus === "approved" ? (
               <Button
                 onClick={() => setShowAnnouncement(true)}
-                className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] hover:bg-blue-700 text-white border-none shadow-lg"
+                className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] hover:bg-blue-700 text-white border-none shadow-lg"
               >
-                Selanjutnya
+                <span className="hidden sm:inline">Selanjutnya</span>
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             ) : verificationStatus.verified &&
@@ -567,16 +567,16 @@ function ResponseLetterPage() {
               <Button
                 onClick={handleResetTeam}
                 disabled={isResettingTeam}
-                className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-amber-600 hover:bg-amber-700 text-white border-none shadow-lg"
+                className="flex-none px-4 sm:px-8 py-2 font-semibold bg-amber-600 hover:bg-amber-700 text-white border-none shadow-lg"
               >
                 {isResettingTeam ? "Mereset..." : "Mulai Ulang"}
               </Button>
             ) : (
               <Button
                 disabled
-                className="flex-1 sm:flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] text-white border-none shadow-lg opacity-50"
+                className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] text-white border-none shadow-lg opacity-50"
               >
-                Selanjutnya
+                <span className="hidden sm:inline">Selanjutnya</span>
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}
@@ -620,7 +620,7 @@ function ResponseLetterPage() {
         open={showResetConfirm}
         onOpenChange={setShowResetConfirm}
         title="Mulai Ulang Proses KP"
-        description="Surat balasan Anda telah ditolak oleh admin. Apakah Anda yakin ingin memulai ulang proses dari awal? Semua data tim akan direset dan data submission sebelumnya akan terhapus."
+        description="Surat balasan Anda telah ditolak oleh admin dan Anda akan memulai ulang proses dari awal Semua data tim akan direset dan data submission sebelumnya akan terhapus."
         onConfirm={confirmResetTeam}
         confirmText="Ya, Mulai Ulang"
         cancelText="Batal"
