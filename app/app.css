@@ -212,6 +212,10 @@ body {
   animation: float 6s ease-in-out infinite;
 }
 
+.animate-float-delayed {
+  animation: float 6s ease-in-out 2s infinite;
+}
+
 .animate-gradient {
   animation: gradient 8s ease infinite;
 }
