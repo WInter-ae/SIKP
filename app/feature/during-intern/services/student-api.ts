@@ -100,6 +100,7 @@ export interface CompleteInternshipData {
     position: string;
     phone?: string;
     status?: string;
+    companyAddress?: string;
     rejectionReason?: string;
     signature?: string;
     createdAt?: string;
@@ -247,6 +248,7 @@ function mapBackendToFrontend(
           position: mentor.position,
           phone: mentor.phone,
           status: (mentor as any).status,
+          companyAddress: (mentor as any).companyAddress,
           rejectionReason: (mentor as any).rejectionReason,
           createdAt: (mentor as any).createdAt,
           signature: mentor.signature || undefined,
@@ -407,7 +409,7 @@ async function getCompleteInternshipDataFallback(): Promise<
       submissionsResponse.data.length > 0
     ) {
       const approved = submissionsResponse.data.find(
-        (s: any) => s.status === "APPROVED",
+        (s: any) => s.status === "APPROVED" || s.adminVerificationStatus === "APPROVED",
       );
       const submissionToUse = approved || submissionsResponse.data[0];
       if (submissionToUse) {
@@ -442,7 +444,12 @@ async function getCompleteInternshipDataFallback(): Promise<
         studentId: studentData.id,
         submissionId: submission?.id || "",
         teamId: submission?.teamId,
-        status: submission?.status === "APPROVED" ? "AKTIF" : "PENDING",
+        status:
+          submission?.status === "APPROVED" ||
+          submission?.status === "PENDING_DOSEN_VERIFICATION" ||
+          submission?.status === "COMPLETED"
+            ? "AKTIF"
+            : "PENDING",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },

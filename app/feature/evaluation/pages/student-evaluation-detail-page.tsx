@@ -431,7 +431,7 @@ export default function StudentEvaluationDetailPage() {
                     
                     setIsSubmitting(true);
                     const res = await submitFinalScore({
-                      internshipId: id, // Assuming ID is internshipId based on routing
+                      studentId: id, // Assuming ID is studentId based on routing
                       score,
                       feedback
                     });

@@ -133,16 +133,13 @@ function MenteeDetailPage() {
 
         setMentee(menteeRes.data);
 
-        let logbookEntries =
-          logbookRes.success && logbookRes.data?.entries
-            ? logbookRes.data.entries
-            : [];
-
-        if (!logbookEntries || logbookEntries.length === 0) {
+        if (logbookRes.success && Array.isArray(logbookRes.data)) {
+          setLogbookEntries(logbookRes.data);
+        } else {
+          setLogbookEntries([]);
           console.log(`⚠️ No logbook for userId ${studentUserId}`);
         }
 
-        setLogbookEntries(logbookEntries);
         setAssessment(
           assessmentRes.success && assessmentRes.data
             ? assessmentRes.data

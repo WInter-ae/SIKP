@@ -511,7 +511,7 @@ export default function RegisterApprovalPage() {
                         {(registration.status === "pending") && (
                           <Badge variant="secondary">
                             <Clock className="mr-1 h-3 w-3" />
-                            {registration.statusLabel || "Menunggu"}
+                            {(registration as any).statusLabel || "Menunggu"}
                           </Badge>
                         )}
                         {(registration.status === "approved") && (

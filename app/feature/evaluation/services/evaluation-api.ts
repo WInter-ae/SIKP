@@ -1,4 +1,4 @@
-import { internshipClient } from "~/lib/api-client";
+import { internshipClient, API_BASE_URL } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 import type {
   AcademicSupervisorGrade,
@@ -488,7 +488,5 @@ export async function getAssessmentRecap(
  * GET /api/penilaian/print/:internshipId
  */
 export function getAssessmentPdfUrl(internshipId: string): string {
-  const baseUrl =
-    import.meta.env.VITE_SIKP_API_BASE_URL || "http://localhost:8789";
-  return `${baseUrl}${PRINT_PDF_ENDPOINT}/${internshipId}`;
+  return `${API_BASE_URL}${PRINT_PDF_ENDPOINT}/${internshipId}`;
 }

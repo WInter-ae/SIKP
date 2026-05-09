@@ -303,7 +303,7 @@ function ReviewModal({
 
       // ✅ Admin always gets a fresh preview to see signatures, 
       // even if there is a signedFileUrl (which might be a placeholder)
-      if (mailEntry.status === "disetujui" && mailEntry.signedFileUrl && user?.role !== "admin") {
+      if (mailEntry.status === "disetujui" && mailEntry.signedFileUrl && user?.role !== "ADMIN") {
         window.open(mailEntry.signedFileUrl, "_blank", "noopener,noreferrer");
         toast.success("Membuka surat signed dari server.");
         return;

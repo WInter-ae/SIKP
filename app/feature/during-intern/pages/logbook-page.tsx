@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import {
@@ -200,6 +200,8 @@ function mapBackendLogbookEntry(entry: {
 }
 
 function LogbookPage() {
+  const entryFormRef = useRef<HTMLDivElement>(null);
+
   const [isPeriodSaved, setIsPeriodSaved] = useState(false);
   const [workPeriod, setWorkPeriod] = useState<WorkPeriod>({
     startDay: "senin",
@@ -520,6 +522,8 @@ function LogbookPage() {
       try {
         setIsSavingLogbook(true);
 
+        let finalEntryId = editingId;
+
         if (editingId) {
           // Update existing entry
           const response = await updateLogbookEntry(editingId, {
@@ -541,7 +545,6 @@ function LogbookPage() {
 
           setLogbookEntries(updatedEntries);
           setEditingId(null);
-          toast.success("Logbook berhasil diperbarui!");
         } else {
           // Create new entry
           const response = await createLogbookEntry({
@@ -556,15 +559,41 @@ function LogbookPage() {
             );
           }
 
+          finalEntryId = response.data.id;
           const createdEntry = mapBackendLogbookEntry(response.data);
           const updatedEntries = [...logbookEntries, createdEntry];
 
           setLogbookEntries(updatedEntries);
-          toast.success("Logbook berhasil disimpan ke backend!");
         }
 
+        // --- Photo Upload Logic ---
+        if (photoFile && finalEntryId) {
+          try {
+            setIsUploadingPhoto(true);
+            setUploadingPhotoForId(finalEntryId);
+            const photoRes = await uploadLogbookPhoto(finalEntryId, photoFile);
+            if (photoRes.success && photoRes.data) {
+              const photoUrl = photoRes.data.photoUrl;
+              setLogbookEntries((prev) =>
+                prev.map((e) =>
+                  e.id === finalEntryId ? { ...e, photoUrl } : e,
+                ),
+              );
+            }
+          } catch (photoError) {
+            console.error("Failed to upload photo:", photoError);
+            toast.error("Logbook disimpan, namun gagal mengupload foto.");
+          } finally {
+            setIsUploadingPhoto(false);
+            setUploadingPhotoForId(null);
+          }
+        }
+
+        toast.success(editingId ? "Logbook berhasil diperbarui!" : "Logbook berhasil disimpan!");
         setSelectedDate("");
         setDescription("");
+        setPhotoFile(null);
+        setPhotoPreview(null);
       } catch (error) {
         toast.error(
           error instanceof Error
@@ -580,51 +609,25 @@ function LogbookPage() {
   };
 
   const handleEditLogbook = (entry: LogbookEntry) => {
-    // Check if entry is approved - jangan bisa edit
-    if (entry.mentorSignature?.status === "approved") {
+    // Check if entry is approved or pending review - jangan bisa edit
+    if (entry.mentorSignature?.status === "approved" || entry.status === "PENDING") {
+      const reason = entry.status === "PENDING" ? "sedang ditinjau" : "sudah disetujui";
       toast.error(
-        "Tidak bisa mengedit logbook yang sudah disetujui. Hanya entri PENDING yang dapat diubah.",
+        `Tidak bisa mengedit logbook yang ${reason}. Hanya entri DRAFT atau REJECTED yang dapat diubah.`,
       );
       return;
     }
     setEditingId(entry.id);
     setSelectedDate(entry.date);
     setDescription(entry.description);
+    setPhotoPreview(entry.photoUrl || null);
+    setPhotoFile(null); // Reset file selection to current photo
+
+    // Scroll to entry form
+    entryFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const handleDeleteLogbook = (id: string) => {
-    if (isSavingLogbook) return;
 
-    const deleteEntry = async () => {
-      try {
-        setIsSavingLogbook(true);
-
-        const response = await deleteLogbookEntry(id);
-
-        if (!response.success) {
-          throw new Error(
-            response.message || "Gagal menghapus logbook dari backend.",
-          );
-        }
-
-        const updatedEntries = logbookEntries.filter(
-          (entry) => entry.id !== id,
-        );
-        setLogbookEntries(updatedEntries);
-        toast.success("Logbook berhasil dihapus!");
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Gagal menghapus logbook dari backend.",
-        );
-      } finally {
-        setIsSavingLogbook(false);
-      }
-    };
-
-    void deleteEntry();
-  };
 
   const handleCancelEdit = () => {
     setEditingId(null);
@@ -1709,7 +1712,7 @@ function LogbookPage() {
       {isPeriodSaved && (
         <>
           {/* Section 2: Add Logbook Entry Form */}
-          <Card>
+          <Card ref={entryFormRef}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {editingId ? (
@@ -2062,27 +2065,12 @@ function LogbookPage() {
                                         onClick={() => handleEditLogbook(entry)}
                                         disabled={
                                           isSavingLogbook ||
-                                          entry?.mentorSignature?.status ===
-                                            "approved"
+                                          entry?.mentorSignature?.status === "approved" ||
+                                          entry?.status === "PENDING"
                                         }
                                       >
                                         <Edit className="h-3 w-3 mr-1" />
                                         Edit
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() =>
-                                          handleDeleteLogbook(entry.id)
-                                        }
-                                        disabled={
-                                          isSavingLogbook ||
-                                          entry?.mentorSignature?.status ===
-                                            "approved"
-                                        }
-                                      >
-                                        <XCircle className="h-3 w-3 mr-1" />
-                                        Hapus
                                       </Button>
                                     </div>
                                     {entry?.mentorSignature?.status ===
@@ -2121,11 +2109,53 @@ function LogbookPage() {
                                   rel="noopener noreferrer"
                                   title="Lihat foto kegiatan"
                                 >
-                                  <img
-                                    src={entry.photoUrl}
-                                    alt="Foto kegiatan"
-                                    className="h-14 w-14 object-cover rounded-md border mx-auto hover:scale-110 transition-transform"
-                                  />
+                                    <div className="relative group mx-auto h-14 w-14">
+                                      <img
+                                        src={entry.photoUrl}
+                                        alt="Foto kegiatan"
+                                        className="h-14 w-14 object-cover rounded-md border"
+                                      />
+                                      {/* Overlay for replacement (only for editable entries) */}
+                                      {entry.status !== "PENDING" && entry.mentorSignature?.status !== "approved" && (
+                                        <label
+                                          htmlFor={`foto-replace-${entry.id}`}
+                                          className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                                          title="Ganti foto kegiatan"
+                                        >
+                                          <Camera className="h-5 w-5 text-white" />
+                                          <input
+                                            id={`foto-replace-${entry.id}`}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="sr-only"
+                                            onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (file) {
+                                                const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+                                                if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
+                                                try {
+                                                  setIsUploadingPhoto(true);
+                                                  setUploadingPhotoForId(entry.id);
+                                                  const res = await uploadLogbookPhoto(entry.id, file);
+                                                  if (!res.success) throw new Error(res.message || "Gagal upload foto.");
+                                                  setLogbookEntries((prev) =>
+                                                    prev.map((en) =>
+                                                      en.id === entry.id ? { ...en, photoUrl: res.data?.photoUrl ?? en.photoUrl } : en,
+                                                    ),
+                                                  );
+                                                  toast.success("Foto berhasil diganti!");
+                                                } catch (err) {
+                                                  toast.error(err instanceof Error ? err.message : "Gagal ganti foto.");
+                                                } finally {
+                                                  setIsUploadingPhoto(false);
+                                                  setUploadingPhotoForId(null);
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </label>
+                                      )}
+                                    </div>
                                 </a>
                               ) : entry ? (
                                 <div className="flex flex-col items-center gap-1">

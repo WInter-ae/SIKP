@@ -578,7 +578,7 @@ export async function uploadMentorSignature(
  * Redirect ke SSO untuk kelola tanda tangan (fallback UI helper)
  * Tidak memanggil backend secara langsung.
  */
-export async function saveMentorSignature(): Promise<
+export async function saveMentorSignature(signatureData?: string): Promise<
   ApiResponse<MentorProfile>
 > {
   const manageUrlResponse = await getSignatureManageUrl();
@@ -657,8 +657,14 @@ export async function deleteMentorSignature(): Promise<
  * Ajukan pembimbing lapangan baru (Mahasiswa side)
  * POST /api/mentorship/requests
  */
+export interface MentorRequestPayload {
+  company: string;
+  address: string;
+  [key: string]: any;
+}
+
 export async function requestMentor(
-  data: MentorRequest,
+  data: MentorRequestPayload,
 ): Promise<ApiResponse<null>> {
   const payload = {
     ...data,

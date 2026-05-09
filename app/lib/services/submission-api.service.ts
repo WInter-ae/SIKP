@@ -234,9 +234,22 @@ export async function updateSubmissionStatus(
   documentReviews?: Record<string, "approved" | "rejected">,
   letterNumber?: string,
 ): Promise<ApiResponse<Submission>> {
+  // Transform documentReviews from Record to Array for backend validation
+  const formattedReviews = documentReviews
+    ? Object.entries(documentReviews).map(([id, reviewStatus]) => ({
+        documentId: id,
+        status: reviewStatus.toUpperCase() as "APPROVED" | "REJECTED",
+      }))
+    : undefined;
+
   return sikpClient.put<Submission>(
     `/api/admin/submissions/${submissionId}/status`,
-    { status, rejectionReason, documentReviews, letterNumber },
+    {
+      status,
+      rejectionReason,
+      documentReviews: formattedReviews,
+      letterNumber,
+    },
   );
 }
 

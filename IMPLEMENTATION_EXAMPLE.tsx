@@ -19,7 +19,7 @@ import type { Team, Submission } from "~/lib/types";
  */
 export function MahasiswaDashboardExample() {
   const navigate = useNavigate();
-  const { user, isLoading } = useUser();
+  const { user, isLoading } = useUser() as any;
   const [teams, setTeams] = useState<Team[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);

@@ -19,13 +19,13 @@ import {
 } from "~/components/ui/table";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   CheckCircle,
   Clock,
   ArrowLeft,
   User,
   Calendar,
-  Download,
 } from "lucide-react";
 
 import {
@@ -54,8 +54,8 @@ function coerceText(value: unknown, fallback = "-") {
   return fallback;
 }
 
-function formatDate(dateString?: string) {
-  if (!dateString) return "-";
+function formatDate(dateString?: string, mounted = true) {
+  if (!dateString || !mounted) return dateString || "-";
   const parsed = new Date(dateString);
   if (Number.isNaN(parsed.getTime())) return "-";
   return parsed.toLocaleDateString("id-ID", {
@@ -101,6 +101,11 @@ function StudentLogbookDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isApprovingAll, setIsApprovingAll] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -261,11 +266,7 @@ function StudentLogbookDetailPage() {
     }
   }
 
-  function handleExportLogbook() {
-    toast.info(
-      "Fitur export logbook akan diaktifkan setelah endpoint tersedia.",
-    );
-  }
+
 
   function getStatusBadge(status: ViewLogbookEntry["status"]) {
     if (status === "APPROVED") {
@@ -347,10 +348,6 @@ function StudentLogbookDetailPage() {
               <CheckCircle className="mr-2 h-4 w-4" />
               {isApprovingAll ? "Memproses..." : "Paraf Semua"}
             </Button>
-            <Button onClick={handleExportLogbook} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export Logbook
-            </Button>
           </div>
         </div>
       </div>
@@ -363,13 +360,22 @@ function StudentLogbookDetailPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
-              <p className="font-medium">
-                {student.nama || student.name || "-"}
-              </p>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-shrink-0">
+              <Avatar className="h-24 w-24 rounded-lg border-2 border-muted">
+                <AvatarImage src={(student as any).photoUrl || (student as any).photo} alt={student.nama || student.name} />
+                <AvatarFallback className="rounded-lg text-2xl font-bold bg-muted">
+                  {(student.nama || student.name || "M").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
             </div>
+            <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
+                <p className="font-medium text-lg">
+                  {student.nama || student.name || "-"}
+                </p>
+              </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">NIM</p>
               <p className="font-medium">{student.nim}</p>
@@ -379,9 +385,9 @@ function StudentLogbookDetailPage() {
               <p className="font-medium">{student.prodi || "-"}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Perusahaan</p>
+              <p className="text-sm text-muted-foreground">Periode Magang</p>
               <p className="font-medium">
-                {student.companyName || student.company || "-"}
+                {formatDate(student.internshipStartDate || student.startDate, mounted)} - {formatDate(student.internshipEndDate || student.endDate, mounted)}
               </p>
             </div>
             <div className="space-y-1">
@@ -393,7 +399,8 @@ function StudentLogbookDetailPage() {
               <p className="font-medium">{student.email || "-"}</p>
             </div>
           </div>
-        </CardContent>
+        </div>
+      </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -483,7 +490,7 @@ function StudentLogbookDetailPage() {
                   entries.map((entry) => (
                     <TableRow key={entry.id} className="align-top">
                       <TableCell className="align-middle text-left text-xs sm:text-sm border-r py-4 pr-3 whitespace-nowrap">
-                        {formatDate(entry.date)}
+                        {formatDate(entry.date, mounted)}
                       </TableCell>
                       <TableCell className="align-middle text-left py-4 min-w-0">
                         <div className="min-h-16 min-w-0 break-words flex flex-col justify-center gap-2">

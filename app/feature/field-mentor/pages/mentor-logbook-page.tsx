@@ -41,11 +41,13 @@ import {
   type MentorProfile,
 } from "../services";
 
+
 function mapBackendStudent(mentee: MenteeData): Student | null {
-  if (!mentee.userId) return null;
+  const studentId = mentee.userId || (mentee as any).studentId;
+  if (!studentId) return null;
 
   return {
-    id: mentee.userId,
+    id: studentId,
     name: mentee.nama || mentee.name || "-",
     nim: mentee.nim,
     email: mentee.email,
@@ -56,7 +58,7 @@ function mapBackendStudent(mentee: MenteeData): Student | null {
     position: mentee.division || "-",
     startDate: mentee.internshipStartDate || "",
     endDate: mentee.internshipEndDate || "",
-    photo: undefined,
+    photo: (mentee as any).photoUrl,
   };
 }
 
@@ -68,6 +70,11 @@ export default function MentorLogbookPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -135,7 +142,7 @@ export default function MentorLogbookPage() {
                 return [] as LogbookEntry[];
               }
 
-              const entries = response.data?.entries || [];
+              const entries = response.data || [];
 
               if (!entries || entries.length === 0) {
                 return [] as LogbookEntry[];
@@ -157,7 +164,7 @@ export default function MentorLogbookPage() {
                         mentorName: mentorProfile?.name || "Mentor",
                         mentorPosition: mentorProfile?.position || "",
                         status: "approved",
-                        notes: entry.rejectionNote,
+                        notes: entry.rejectionReason,
                       }
                     : entry.status === "REJECTED"
                       ? {
@@ -166,7 +173,7 @@ export default function MentorLogbookPage() {
                           mentorName: mentorProfile?.name || "Mentor",
                           mentorPosition: mentorProfile?.position || "",
                           status: "rejected",
-                          notes: entry.rejectionNote,
+                          notes: entry.rejectionReason,
                         }
                       : undefined,
               })) as LogbookEntry[];
@@ -389,10 +396,14 @@ export default function MentorLogbookPage() {
                                 <Avatar>
                                   <AvatarImage src={student.photo} />
                                   <AvatarFallback>
-                                    {student.name
-                                      .split(" ")
-                                      .map((n) => n[0])
-                                      .join("")}
+                                    {student.name && student.name !== "-"
+                                      ? student.name
+                                          .split(" ")
+                                          .filter(Boolean)
+                                          .map((n) => n[0])
+                                          .join("")
+                                          .toUpperCase()
+                                      : "M"}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
@@ -414,22 +425,22 @@ export default function MentorLogbookPage() {
                                 <Calendar className="h-4 w-4 text-muted-foreground" />
                                 <div>
                                   <p>
-                                    {new Date(
+                                    {mounted && student.startDate ? new Date(
                                       student.startDate,
                                     ).toLocaleDateString("id-ID", {
                                       day: "2-digit",
                                       month: "short",
-                                    })}
+                                    }) : student.startDate || "-"}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
                                     s/d{" "}
-                                    {new Date(
+                                    {mounted && student.endDate ? new Date(
                                       student.endDate,
                                     ).toLocaleDateString("id-ID", {
                                       day: "2-digit",
                                       month: "short",
                                       year: "numeric",
-                                    })}
+                                    }) : student.endDate || "-"}
                                   </p>
                                 </div>
                               </div>

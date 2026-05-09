@@ -8,6 +8,7 @@ import {
   User,
   ArrowRight,
   AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -25,12 +26,16 @@ import {
 import {
   getDosenLogbookMonitorItems,
   getInactiveMentees,
+  syncMenteesProgress,
   type DosenLogbookMonitorItem,
 } from "../services/logbook-monitor-api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { toast } from "sonner";
 
 function getDetailLinkKey(item: DosenLogbookMonitorItem) {
-  return item.detailRouteKey || item.studentId || item.nim || item.id;
+  const key = item.detailRouteKey || item.studentId || item.nim || item.id;
+  console.log(`[DosenLogbookMonitorPage] Detail link for ${item.studentName}:`, { key, item });
+  return key;
 }
 
 function getStatusBadge(status: DosenLogbookMonitorItem["status"]) {
@@ -50,36 +55,54 @@ function getStatusBadge(status: DosenLogbookMonitorItem["status"]) {
 export default function DosenLogbookMonitorPage() {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [logbooks, setLogbooks] = useState<DosenLogbookMonitorItem[]>([]);
   const [inactiveMentees, setInactiveMentees] = useState<DosenLogbookMonitorItem[]>([]);
   const [activeTab, setActiveTab] = useState("all");
 
+  const loadData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    setErrorMessage(null);
+
+    const [logbookRes, inactiveRes] = await Promise.all([
+      getDosenLogbookMonitorItems(),
+      getInactiveMentees(),
+    ]);
+
+    if (logbookRes.success && logbookRes.data) {
+      setLogbooks(logbookRes.data);
+    } else if (!silent) {
+      setErrorMessage(logbookRes.message || "Gagal memuat data logbook.");
+    }
+
+    if (inactiveRes.success && inactiveRes.data) {
+      setInactiveMentees(inactiveRes.data);
+    }
+
+    if (!silent) setIsLoading(false);
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
-
-      const [logbookRes, inactiveRes] = await Promise.all([
-        getDosenLogbookMonitorItems(),
-        getInactiveMentees(),
-      ]);
-
-      if (logbookRes.success && logbookRes.data) {
-        setLogbooks(logbookRes.data);
-      } else {
-        setErrorMessage(logbookRes.message || "Gagal memuat data logbook.");
-      }
-
-      if (inactiveRes.success && inactiveRes.data) {
-        setInactiveMentees(inactiveRes.data);
-      }
-
-      setIsLoading(false);
-    };
-
     loadData();
   }, []);
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await syncMenteesProgress();
+      if (res.success) {
+        toast.success(`Sinkronisasi berhasil! ${res.data?.synced || 0} mahasiswa baru ditambahkan ke pantauan.`);
+        await loadData(true);
+      } else {
+        toast.error(res.message || "Gagal sinkronisasi data PA.");
+      }
+    } catch (err) {
+      toast.error("Terjadi kesalahan saat sinkronisasi.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const filteredLogbooks = useMemo(() => {
     const keyword = query.toLowerCase().trim();
@@ -109,14 +132,25 @@ export default function DosenLogbookMonitorPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Monitoring Logbook Mahasiswa
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Halaman ini khusus pemantauan Dosen PA (read-only). Tidak ada aksi
-          approve/reject.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Monitoring Logbook Mahasiswa
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Halaman ini khusus pemantauan Dosen PA (read-only). Tidak ada aksi
+            approve/reject.
+          </p>
+        </div>
+        <Button 
+          onClick={handleSync} 
+          disabled={isSyncing} 
+          variant="outline"
+          className="bg-white hover:bg-slate-50"
+        >
+          <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+          {isSyncing ? "Mensinkronkan..." : "Sinkronisasi Mahasiswa PA"}
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

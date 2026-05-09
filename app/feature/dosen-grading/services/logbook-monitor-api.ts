@@ -33,9 +33,9 @@ export interface DosenLogbookMonitorByStudentItem {
 type RawObject = Record<string, unknown>;
 
 const LIST_ENDPOINTS = [
-  "/api/mentorship/logbook-monitor",
   "/api/internship-monitoring/mentees",
   "/api/internship-monitoring/logbook", // Fallback for backward compatibility
+  "/api/mentorship/logbook-monitor",
 ] as const;
 
 const DETAIL_ENDPOINT_BUILDERS = [
@@ -101,7 +101,7 @@ function getArrayPayload(data: unknown): RawObject[] {
 function getDetailRouteKey(raw: RawObject, student: RawObject): string {
   return (
     getFirstString(student, ["id", "studentId", "userId"], "") ||
-    getFirstString(raw, ["studentId", "userId"], "") ||
+    getFirstString(raw, ["studentId", "userId", "mahasiswaId"], "") ||
     getFirstString(student, ["nim", "studentNim"], "") ||
     getFirstString(raw, ["nim", "studentNim"], "") ||
     ""
@@ -132,50 +132,58 @@ function mapRawDetail(
       "-",
     ),
     mentorId: getFirstString(wrapped, ["mentorId"], "") || null,
-    logbooks: items.map((item, index) => mapRawItem(item, index)),
+    logbooks: items.map((item, index) => mapRawLogbookItem(item, index)),
   };
 }
 
-function mapRawItem(raw: RawObject, index: number): DosenLogbookMonitorItem {
+function mapRawMenteeItem(raw: RawObject, index: number): DosenLogbookMonitorItem {
   const student = asRecord(raw.student) || asRecord(raw.mahasiswa) || {};
-  const mentor = asRecord(raw.mentor) || {};
+  const stats = asRecord(raw.stats) || {};
   const company = asRecord(raw.company) || asRecord(raw.perusahaan) || {};
+  
+  const studentName = getFirstString(raw, ["studentName"], getFirstString(student, ["name", "nama", "studentName"], "-"));
+  const nim = getFirstString(raw, ["nim"], getFirstString(student, ["nim", "studentNim"], "-"));
+  const companyName = getFirstString(raw, ["companyName"], getFirstString(raw, ["company"], getFirstString(company, ["name", "nama"], "-")));
+  const lastUpdate = getFirstString(stats, ["lastLogbookDate"], getFirstString(raw, ["date", "tanggal", "lastLogbookDate"], "-"));
+  const totalApproved = Number(stats.totalApproved || 0);
+  const totalPending = Number(stats.totalPending || 0);
+
   const detailRouteKey = getDetailRouteKey(raw, student);
 
   return {
-    id: getFirstString(raw, ["id", "logbookId"], `logbook-${index}`),
+    id: getFirstString(raw, ["id", "internshipId", "logbookId"], `item-${index}`),
     detailRouteKey,
     studentId:
       getFirstString(
-        student,
-        ["id", "studentId", "userId"],
-        getFirstString(raw, ["studentId", "userId"], ""),
+        raw,
+        ["mahasiswaId", "studentId", "userId"],
+        getFirstString(student, ["id", "studentId", "userId"], "")
       ) || undefined,
-    studentName: getFirstString(student, ["name", "nama", "studentName"], "-"),
-    nim: getFirstString(student, ["nim", "studentNim"], "-"),
-    company: getFirstString(
-      raw,
-      ["company", "companyName"],
-      getFirstString(company, ["name", "nama"], "-"),
-    ),
+    studentName,
+    nim,
+    company: companyName,
+    date: lastUpdate === "-" ? "Belum ada entri" : lastUpdate,
+    activity: `${totalApproved} Disetujui, ${totalPending} Menunggu`,
+    status: totalPending > 0 ? "PENDING" : (totalApproved > 0 ? "APPROVED" : "PENDING"),
+    hours: Number.isFinite(Number(stats.totalHours)) ? Number(stats.totalHours) : undefined,
+    mentorName: getFirstString(raw, ["mentorName"], ""),
+  };
+}
+
+function mapRawLogbookItem(raw: RawObject, index: number): DosenLogbookMonitorItem {
+  return {
+    id: getFirstString(raw, ["id", "logbookId"], `logbook-${index}`),
+    detailRouteKey: "", // Not needed for detail items
+    studentId: undefined,
+    studentName: "-",
+    nim: "-",
+    company: "-",
     date: getFirstString(raw, ["date", "tanggal", "createdAt"], "-"),
     activity: getFirstString(raw, ["activity", "kegiatan", "description"], "-"),
-    status: normalizeStatus(
-      getFirstString(raw, ["status", "logbookStatus"], "PENDING"),
-    ),
+    status: normalizeStatus(getFirstString(raw, ["status", "logbookStatus"], "PENDING")),
     hours: Number.isFinite(Number(raw.hours)) ? Number(raw.hours) : undefined,
-    rejectionReason:
-      getFirstString(raw, ["rejectionReason", "reason", "catatan"], "") ||
-      undefined,
-    mentorName:
-      getFirstString(
-        mentor,
-        ["name", "nama", "mentorName"],
-        getFirstString(raw, ["mentorName"], ""),
-      ) || undefined,
-    mentorId: getFirstString(raw, ["mentorId"], "") || undefined,
-    studentEmail:
-      getFirstString(student, ["email", "studentEmail"], "") || undefined,
+    rejectionReason: getFirstString(raw, ["rejectionReason", "reason", "catatan"], "") || undefined,
+    photoUrl: getFirstString(raw, ["photoUrl", "photo_url"], "") || null,
   };
 }
 
@@ -189,7 +197,7 @@ export async function getDosenLogbookMonitorItems(): Promise<
 
     if (response.success) {
       const items = getArrayPayload(response.data).map((item, index) =>
-        mapRawItem(item, index),
+        mapRawMenteeItem(item, index),
       );
       return {
         success: true,
@@ -235,16 +243,13 @@ export async function getDosenLogbookMonitorByStudent(
     data: null,
   };
 }
-/**
- * Get mentees that are inactive (not submitting logbooks)
- * GET /api/internship-monitoring/inactive
- */
+
 export async function getInactiveMentees(): Promise<ApiResponse<DosenLogbookMonitorItem[]>> {
   const response = await internshipClient.get<unknown>(INACTIVE_ENDPOINT);
   
   if (response.success) {
     const items = getArrayPayload(response.data).map((item, index) =>
-      mapRawItem(item, index),
+      mapRawMenteeItem(item, index),
     );
     return {
       success: true,
@@ -258,4 +263,8 @@ export async function getInactiveMentees(): Promise<ApiResponse<DosenLogbookMoni
     message: response.message || "Gagal mengambil data mahasiswa inaktif.",
     data: [],
   };
+}
+
+export async function syncMenteesProgress(): Promise<ApiResponse<{ synced: number }>> {
+  return await internshipClient.post<{ synced: number }>("/api/internship-monitoring/sync");
 }

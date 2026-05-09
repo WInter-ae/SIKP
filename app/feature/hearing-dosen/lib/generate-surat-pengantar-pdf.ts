@@ -4,11 +4,7 @@ import unsriLogoUrl from "~/assets/images/unsri.png";
 
 import type { MailEntry } from "../../hearing-dosen/types/dosen";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_APP_AUTH_URL ||
-  import.meta.env.VITE_API_BASE_URL ||
-  "https://backend-sikp.backend-sikp.workers.dev";
+import { API_BASE_URL } from "~/lib/api-client";
 
 function getImageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" {
   return dataUrl.startsWith("data:image/png") ? "PNG" : "JPEG";

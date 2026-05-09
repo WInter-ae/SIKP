@@ -156,10 +156,10 @@ function FieldMentorPage() {
       case "pending":
         return (
           <Badge
-            variant="secondary"
-            className="bg-amber-100 text-amber-800 hover:bg-amber-100"
+            variant="outline"
+            className="bg-amber-50 text-amber-700 border-amber-200 px-3 py-1 font-medium animate-pulse"
           >
-            <Clock className="mr-1 h-3 w-3" />
+            <Clock className="mr-2 h-3.5 w-3.5" />
             Menunggu Persetujuan Dosen PA
           </Badge>
         );
@@ -176,10 +176,10 @@ function FieldMentorPage() {
       case "approved":
         return (
           <Badge
-            variant="secondary"
-            className="bg-green-100 text-green-800 hover:bg-green-100"
+            variant="outline"
+            className="bg-green-50 text-green-700 border-green-200 px-3 py-1 font-medium"
           >
-            <CheckCircle className="mr-1 h-3 w-3" />
+            <CheckCircle className="mr-2 h-3.5 w-3.5" />
             Disetujui - Aktif
           </Badge>
         );
@@ -365,6 +365,15 @@ function FieldMentorPage() {
                     {currentMentor.position}
                   </p>
                 </div>
+                <div className="md:col-span-2 space-y-1 pt-2 border-t border-slate-50">
+                  <Label className="text-muted-foreground text-sm flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5" />
+                    Alamat Perusahaan
+                  </Label>
+                  <p className="font-medium text-slate-700 leading-relaxed">
+                    {currentMentor.address || "-"}
+                  </p>
+                </div>
                 <div className="md:col-span-2 space-y-1">
                   <Label className="text-muted-foreground text-sm">
                     Status
@@ -375,24 +384,23 @@ function FieldMentorPage() {
             </div>
 
             {/* Approval Waiting Section */}
+            {/* Approval Waiting Section */}
             {currentMentor.status === "pending" && (
-              <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-amber-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-amber-900 dark:text-amber-200">
-                        Menunggu Persetujuan Dosen PA
-                      </p>
-                      <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
-                        Pengajuan sedang ditinjau oleh Dosen PA. Anda akan
-                        menerima notifikasi setelah ada keputusan. Mentor akan
-                        mendapat email aktivasi jika pengajuan disetujui.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="mt-4 p-5 bg-amber-50/80 border border-amber-200 rounded-xl flex items-start gap-4">
+                <div className="bg-amber-100 p-2 rounded-full">
+                  <Clock className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-amber-900 text-lg">
+                    Menunggu Persetujuan Dosen PA
+                  </h4>
+                  <p className="text-amber-800 mt-1 leading-relaxed">
+                    Pengajuan sedang ditinjau oleh Dosen PA. Anda akan
+                    menerima notifikasi setelah ada keputusan. Mentor akan
+                    mendapat email aktivasi jika pengajuan disetujui.
+                  </p>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>

@@ -146,7 +146,7 @@ function getArrayData(data: unknown): RawObj[] {
 
 function mapRegistration(raw: RawObj, index: number): PendingRegistration {
   const mentor = asRecord(raw.mentor) || asRecord(raw.pembimbing) || raw;
-  const student = asRecord(raw.student) || asRecord(raw.mahasiswa) || {};
+  const student = asRecord(raw.student) || asRecord(raw.mahasiswa) || raw;
 
   return {
     id: getFirstString(raw, ["id", "requestId"], `request-${index}`),
