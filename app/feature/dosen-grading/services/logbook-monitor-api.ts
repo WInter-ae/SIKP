@@ -12,6 +12,8 @@ export interface DosenLogbookMonitorItem {
   activity: string;
   status: "PENDING" | "APPROVED" | "REJECTED";
   hours?: number;
+  totalApproved?: number;
+  totalPending?: number;
   rejectionReason?: string;
   mentorName?: string;
   mentorId?: string;
@@ -190,6 +192,8 @@ function mapRawMenteeItem(raw: RawObject, index: number): DosenLogbookMonitorIte
     activity: `${totalApproved} Disetujui, ${totalPending} Menunggu`,
     status: totalPending > 0 ? "PENDING" : (totalApproved > 0 ? "APPROVED" : "PENDING"),
     hours: Number.isFinite(Number(stats.totalHours)) ? Number(stats.totalHours) : undefined,
+    totalApproved,
+    totalPending,
     mentorName: getFirstString(raw, ["mentorName"], ""),
   };
 }

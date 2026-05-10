@@ -22,6 +22,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { id as localeId } from "date-fns/locale";
+import { cn } from "~/lib/utils";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -844,7 +845,10 @@ function LogbookPage() {
   };
 
   const getLogbookForDate = (date: string) => {
-    return logbookEntries.find((entry) => entry.date === date);
+    return logbookEntries.find((entry) => {
+      const entryDate = entry.date.split(/[T ]/)[0];
+      return entryDate === date;
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -913,8 +917,8 @@ function LogbookPage() {
   const getMentorSignatureBadge = (entry: LogbookEntry | undefined) => {
     if (!entry) {
       return (
-        <Badge variant="outline" className="bg-gray-50">
-          <span className="text-muted-foreground">Belum diisi</span>
+        <Badge variant="outline" className="bg-amber-50 border-amber-200">
+          <span className="text-amber-700 font-medium">Belum diisi</span>
         </Badge>
       );
     }
@@ -1032,6 +1036,22 @@ function LogbookPage() {
     if (entry.mentorSignature?.status === "rejected") return "Ditolak";
     if (entry.status === "DRAFT") return "Belum Diajukan";
     return "Menunggu";
+  };
+
+  const imageUrlToBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error("Error converting image to base64:", error);
+      return url; // fallback to original URL
+    }
   };
 
   const normalizeSignatureSrc = (signature?: string): string | null => {
@@ -1370,11 +1390,23 @@ function LogbookPage() {
       const logbookData = buildLogbookData();
 
       if (format === "pdf") {
+        // For PDF, we try to convert signature to base64 to ensure it renders correctly
+        if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
+          logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
+        }
+        
         openPdfPreviewTab(logbookData);
         toast.success(
           "Preview PDF dibuka. Gunakan Simpan sebagai PDF agar hasil 1:1 dengan preview.",
         );
       } else {
+        // For DOCX, we MUST convert signature to base64
+        if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
+          toast.loading("Menyiapkan tanda tangan mentor...", { id: "docx-gen" });
+          logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
+          toast.dismiss("docx-gen");
+        }
+        
         await generateLogbookDOCX(logbookData);
         toast.success("Logbook DOCX berhasil didownload!");
       }
@@ -1392,7 +1424,10 @@ function LogbookPage() {
     
     // Check if every generated date has an approved entry
     return generatedDates.every((date) => {
-      const entry = logbookEntries.find((e) => e.date === date);
+      const entry = logbookEntries.find((e) => {
+        const entryDate = e.date.split(/[T ]/)[0];
+        return entryDate === date;
+      });
       return entry?.mentorSignature?.status === "approved";
     });
   };
@@ -1401,6 +1436,18 @@ function LogbookPage() {
     if (!selectedExportFormat) return;
 
     const logbookData = buildLogbookData();
+
+    // Convert signature to base64 if needed for both PDF and DOCX
+    if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
+      try {
+        toast.loading("Menyiapkan tanda tangan mentor...", { id: "gen-prep" });
+        logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
+        toast.dismiss("gen-prep");
+      } catch (e) {
+        console.error("Failed to convert signature:", e);
+        toast.dismiss("gen-prep");
+      }
+    }
 
     try {
       if (selectedExportFormat === "pdf") {
@@ -1753,7 +1800,8 @@ function LogbookPage() {
       {isPeriodSaved && (
         <>
           {/* Section 2: Add Logbook Entry Form */}
-          <Card ref={entryFormRef}>
+          <div ref={entryFormRef} className="scroll-mt-20">
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {editingId ? (
@@ -2006,6 +2054,7 @@ function LogbookPage() {
               </div>
             </CardContent>
           </Card>
+          </div>
 
           {/* Section 3: Generated Logbook Table */}
           <Card>
@@ -2090,9 +2139,23 @@ function LogbookPage() {
                                 {weekNum}
                               </TableCell>
                             )}
-                            <TableCell>
+                            <TableCell
+                              className={cn(
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
+                              )}
+                              onClick={() => {
+                                if (!entry) {
+                                  setSelectedDate(date);
+                                  setCalendarMonth(fromDateKey(date));
+                                  entryFormRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }}
+                            >
                               <div className="flex flex-col">
-                                <span className="font-medium">
+                                <span className="font-medium group-hover:text-primary transition-colors">
                                   {getDayName(date)}
                                 </span>
                                 <span className="text-sm text-muted-foreground">
@@ -2100,10 +2163,42 @@ function LogbookPage() {
                                 </span>
                               </div>
                             </TableCell>
-                            <TableCell className="text-center font-medium">
-                              {entry?.time || "-"}
+                            <TableCell 
+                              className={cn(
+                                "text-center font-medium",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
+                              )}
+                              onClick={() => {
+                                if (!entry) {
+                                  setSelectedDate(date);
+                                  setCalendarMonth(fromDateKey(date));
+                                  entryFormRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }}
+                            >
+                              <span className={cn(!entry && "group-hover:text-primary transition-colors")}>
+                                {entry?.time || "-"}
+                              </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell 
+                              className={cn(
+                                "relative",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
+                              )}
+                              onClick={() => {
+                                if (!entry) {
+                                  setSelectedDate(date);
+                                  setCalendarMonth(fromDateKey(date));
+                                  entryFormRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }}
+                            >
                               <div className="space-y-2 break-words">
                                 {entry ? (
                                   <div className="space-y-2">
@@ -2119,7 +2214,10 @@ function LogbookPage() {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => handleEditLogbook(entry)}
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // Prevent cell click
+                                          handleEditLogbook(entry);
+                                        }}
                                         disabled={
                                           isSavingLogbook ||
                                           entry?.mentorSignature?.status === "approved" ||
@@ -2151,7 +2249,7 @@ function LogbookPage() {
                                     )}
                                   </div>
                                 ) : (
-                                  <span className="text-muted-foreground italic">
+                                  <span className="text-amber-600 italic group-hover:text-amber-700 transition-colors font-medium">
                                     Belum diisi
                                   </span>
                                 )}
@@ -2271,9 +2369,30 @@ function LogbookPage() {
                                 <span className="text-xs text-muted-foreground">—</span>
                               )}
                             </TableCell>
-                            <TableCell className="text-center">
+                            <TableCell 
+                              className={cn(
+                                "text-center",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
+                              )}
+                              onClick={() => {
+                                if (!entry) {
+                                  setSelectedDate(date);
+                                  setCalendarMonth(fromDateKey(date));
+                                  entryFormRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }}
+                            >
                               <div className="flex flex-col items-center gap-1 break-words">
-                                {getMentorSignatureBadge(entry)}
+                                {entry ? (
+                                  getMentorSignatureBadge(entry)
+                                ) : (
+                                  <Badge variant="outline" className="bg-amber-50 border-amber-200 text-amber-700 group-hover:text-amber-800 transition-colors font-medium">
+                                    Belum diisi
+                                  </Badge>
+                                )}
 
                                 {/* Notes dari mentor (untuk approved) */}
                                 {entry?.mentorSignature?.status ===
@@ -2289,7 +2408,10 @@ function LogbookPage() {
                                   "rejected" &&
                                   entry?.mentorSignature?.notes && (
                                     <div className="mt-2 w-full">
-                                      <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-left">
+                                      <div 
+                                        onClick={() => handleEditLogbook(entry)}
+                                        className="bg-red-50 border border-red-200 rounded-lg p-2 text-left cursor-pointer hover:bg-red-100 transition-colors"
+                                      >
                                         <p className="text-xs font-semibold text-red-900 mb-1">
                                           📝 Catatan Revisi:
                                         </p>

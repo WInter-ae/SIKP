@@ -8,8 +8,19 @@ import {
   Clock,
   TrendingUp,
   Users,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Button } from "~/components/ui/button";
 
 import {
   Card,
@@ -23,6 +34,7 @@ import {
   getMentees,
   getStudentAssessment,
   getStudentLogbook,
+  getMentorSignature,
   type AssessmentData,
   type LogbookEntry,
   type MenteeData,
@@ -129,6 +141,7 @@ export default function MentorDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -142,6 +155,12 @@ export default function MentorDashboard() {
       setErrorMessage(null);
 
       try {
+        // Check for signature
+        const sigRes = await getMentorSignature();
+        if (sigRes.success && (!sigRes.data || !sigRes.data.signature)) {
+          setShowSignatureDialog(true);
+        }
+
         const menteesRes = await getMentees();
 
         if (!isMounted) return;
@@ -539,6 +558,60 @@ export default function MentorDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl">
+          <DialogHeader>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4 animate-pulse">
+              <Sparkles className="h-8 w-8 text-primary" />
+            </div>
+            <DialogTitle className="text-center text-2xl font-bold">Siapkan E-Signature Anda</DialogTitle>
+            <DialogDescription className="text-center pt-2 text-base">
+              Kami melihat Anda belum memiliki tanda tangan digital (E-Signature) di profil SSO Anda.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="rounded-2xl border border-primary/20 p-5 bg-primary/5 space-y-3">
+              <h4 className="font-bold flex items-center gap-2 text-primary">
+                <ClipboardCheck className="h-5 w-5" />
+                Kegunaan E-Signature:
+              </h4>
+              <ul className="text-sm space-y-3 text-foreground/80 font-medium list-none pl-1">
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  Menyetujui (Paraf) Logbook Harian mahasiswa bimbingan Anda.
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  Menandatangani Formulir Penilaian Akhir Kerja Praktik.
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  Memvalidasi laporan dan dokumen resmi magang mahasiswa.
+                </li>
+              </ul>
+            </div>
+            <p className="text-sm text-center text-muted-foreground px-4">
+              Tanda tangan ini cukup disiapkan satu kali di sistem SSO dan akan digunakan otomatis untuk seluruh keperluan administrasi SIKP.
+            </p>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-3">
+            <Button 
+              variant="ghost" 
+              className="w-full sm:w-auto"
+              onClick={() => setShowSignatureDialog(false)}
+            >
+              Nanti Saja
+            </Button>
+            <Button 
+              className="w-full sm:w-auto bg-gradient-to-r from-primary to-secondary hover:shadow-lg transition-all"
+              onClick={() => window.location.href = "https://sso-unsri.vercel.app/profile"}
+            >
+              Siapkan Sekarang
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

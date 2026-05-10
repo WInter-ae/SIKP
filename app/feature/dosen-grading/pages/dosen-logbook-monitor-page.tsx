@@ -9,7 +9,12 @@ import {
   ArrowRight,
   AlertCircle,
   RefreshCw,
+  CheckCircle,
+  Clock,
+  Building2,
+  Users,
 } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
@@ -118,6 +123,11 @@ export default function DosenLogbookMonitorPage() {
     });
   }, [logbooks, query]);
 
+  // Global statistics
+  const totalMentees = logbooks.length;
+  const globalPending = logbooks.reduce((sum, item) => sum + (item.totalPending || 0), 0);
+  const globalApproved = logbooks.reduce((sum, item) => sum + (item.totalApproved || 0), 0);
+
   if (isLoading) {
     return (
       <div className="space-y-6 p-6">
@@ -155,49 +165,50 @@ export default function DosenLogbookMonitorPage() {
 
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Total Entri</CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <p className="text-3xl font-bold">{logbooks.length}</p>
-            <BookMarked className="h-5 w-5 text-muted-foreground" />
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Mahasiswa PA</p>
+                <p className="text-3xl font-bold">{totalMentees}</p>
+              </div>
+              <Users className="h-8 w-8 text-blue-500" />
+            </div>
           </CardContent>
         </Card>
+        
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Mahasiswa Terpantau
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <p className="text-3xl font-bold">
-              {new Set(logbooks.map((i) => i.nim)).size}
-            </p>
-            <User className="h-5 w-5 text-muted-foreground" />
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Menunggu Paraf Mentor</p>
+                <p className="text-3xl font-bold">{globalPending}</p>
+              </div>
+              <Clock className="h-8 w-8 text-yellow-500" />
+            </div>
           </CardContent>
         </Card>
-        <Card className="border-orange-200 bg-orange-50/30">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-orange-800">
-              Mahasiswa Inaktif
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <p className="text-3xl font-bold text-orange-700">
-              {inactiveMentees.length}
-            </p>
-            <AlertCircle className="h-5 w-5 text-orange-600" />
-          </CardContent>
-        </Card>
+        
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">
-              Status Read-Only
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <Badge variant="outline">Monitoring Saja</Badge>
-            <Eye className="h-5 w-5 text-muted-foreground" />
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Disetujui</p>
+                <p className="text-3xl font-bold">{globalApproved}</p>
+              </div>
+              <CheckCircle className="h-8 w-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={inactiveMentees.length > 0 ? "border-orange-200 bg-orange-50/30" : ""}>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Mahasiswa Inaktif</p>
+                <p className="text-3xl font-bold text-orange-700">{inactiveMentees.length}</p>
+              </div>
+              <AlertCircle className="h-8 w-8 text-orange-500" />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -239,10 +250,10 @@ export default function DosenLogbookMonitorPage() {
                       <TableHead>Mahasiswa</TableHead>
                       <TableHead>NIM</TableHead>
                       <TableHead>Perusahaan</TableHead>
-                      <TableHead>Tanggal</TableHead>
-                      <TableHead>Aktivitas</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead className="text-right">Detail</TableHead>
+                      <TableHead className="text-center">Total Logbook</TableHead>
+                      <TableHead className="text-center">Disetujui</TableHead>
+                      <TableHead className="text-center">Menunggu Paraf</TableHead>
+                      <TableHead className="text-right">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -255,20 +266,48 @@ export default function DosenLogbookMonitorPage() {
                     ) : (
                       filteredLogbooks.map((item) => (
                         <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.studentName}</TableCell>
-                          <TableCell>{item.nim}</TableCell>
-                          <TableCell>{item.company}</TableCell>
                           <TableCell>
-                            <div className="inline-flex items-center gap-1">
-                              <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                              {item.date}
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={item.photoUrl || undefined} />
+                                <AvatarFallback className="text-xs">
+                                  {item.studentName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-medium text-sm">{item.studentName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {item.studentEmail || "No Email"}
+                                </p>
+                              </div>
                             </div>
                           </TableCell>
-                          <TableCell className="max-w-[200px] truncate">{item.activity}</TableCell>
-                          <TableCell>{getStatusBadge(item.status)}</TableCell>
+                          <TableCell className="font-mono text-sm">{item.nim}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="text-sm">{item.company}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline">{(item.totalApproved || 0) + (item.totalPending || 0)}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge className="bg-green-500 hover:bg-green-600">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              {item.totalApproved || 0}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700">
+                              <Clock className="w-3 h-3 mr-1" />
+                              {item.totalPending || 0}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="text-right">
                             <Button asChild variant="outline" size="sm">
                               <Link to={`/dosen/kp/logbook-monitor/${getDetailLinkKey(item)}`}>
+                                <Eye className="h-4 w-4 mr-2" />
                                 Detail
                               </Link>
                             </Button>

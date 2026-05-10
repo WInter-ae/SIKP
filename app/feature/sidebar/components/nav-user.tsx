@@ -107,7 +107,15 @@ export function NavUser({ user }: { user: User }) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (user.role === "MENTOR") {
+                      window.location.href = "https://sso-unsri.vercel.app/profile";
+                    } else {
+                      navigate(`/${user.role?.toLowerCase()}/profil`);
+                    }
+                  }}
+                >
                   <BadgeCheck />
                   Profil
                 </DropdownMenuItem>

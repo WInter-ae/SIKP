@@ -68,7 +68,7 @@ export function ApproveLogbookButton({
           {
             action: {
               label: "Ke Profil",
-              onClick: () => (window.location.href = "/mentor/profile"),
+              onClick: () => (window.location.href = "https://sso-unsri.vercel.app/profile"),
             },
           },
         );
@@ -108,7 +108,7 @@ export function ApproveLogbookButton({
           {
             action: {
               label: "Ke Profil",
-              onClick: () => (window.location.href = "/mentor/profile"),
+              onClick: () => (window.location.href = "https://sso-unsri.vercel.app/profile"),
             },
           },
         );
@@ -273,7 +273,7 @@ export function BulkApproveButton({
           {
             action: {
               label: "Ke Profil",
-              onClick: () => (window.location.href = "/mentor/profile"),
+              onClick: () => (window.location.href = "https://sso-unsri.vercel.app/profile"),
             },
           },
         );

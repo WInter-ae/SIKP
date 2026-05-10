@@ -292,7 +292,7 @@ const mentorMenu: NavItem[] = [
   },
   {
     title: "Profil",
-    url: "/mentor/profil",
+    url: "https://sso-unsri.vercel.app/profile",
     icon: UserCircle,
   },
   {

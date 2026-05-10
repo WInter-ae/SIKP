@@ -145,13 +145,17 @@ export default function MentorLogbookPage() {
                 return [] as LogbookEntry[];
               }
 
-              const entries = response.data || [];
+              // Backend might return { entries: [...] } or just [...]
+              const rawData = response.data;
+              const entries = Array.isArray(rawData) 
+                ? rawData 
+                : (rawData as any)?.entries || [];
 
-              if (!entries || entries.length === 0) {
+              if (!entries || !Array.isArray(entries) || entries.length === 0) {
                 return [] as LogbookEntry[];
               }
 
-              return entries.map((entry) => ({
+              return entries.map((entry: any) => ({
                 id: entry.id,
                 studentId: student.id,
                 studentName: student.name,
