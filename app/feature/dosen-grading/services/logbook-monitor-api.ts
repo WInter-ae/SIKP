@@ -26,6 +26,10 @@ export interface DosenLogbookMonitorByStudentItem {
   nim: string;
   email?: string | null;
   company: string;
+  programStudi?: string;
+  division?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   mentorId?: string | null;
   logbooks: DosenLogbookMonitorItem[];
 }
@@ -131,6 +135,10 @@ function mapRawDetail(
       ["company", "companyName", "instansi"],
       "-",
     ),
+    programStudi: getFirstString(wrapped, ["programStudi", "prodi"], "-"),
+    division: getFirstString(wrapped, ["division", "bidang"], "-"),
+    startDate: getFirstString(wrapped, ["startDate"], ""),
+    endDate: getFirstString(wrapped, ["endDate"], ""),
     mentorId: getFirstString(wrapped, ["mentorId"], "") || null,
     logbooks: items.map((item, index) => mapRawLogbookItem(item, index)),
   };

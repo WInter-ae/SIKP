@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ArrowLeft, BookMarked, CalendarDays, Camera } from "lucide-react";
+import { ArrowLeft, BookMarked, CalendarDays, Camera, User } from "lucide-react";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   getDosenLogbookMonitorByStudent,
   getDosenLogbookMonitorItems,
@@ -138,6 +139,29 @@ export default function DosenLogbookMonitorDetailPage() {
     };
   }, [studentId]);
 
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return "-";
+    try {
+      return new Date(dateString).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
   const stats = useMemo(() => {
     const logbooks = detail?.logbooks || [];
     return {
@@ -188,32 +212,57 @@ export default function DosenLogbookMonitorDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Informasi Mahasiswa</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Informasi Mahasiswa
+          </CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Nama
-            </p>
-            <p className="font-medium">{detail?.studentName || "-"}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              NIM
-            </p>
-            <p className="font-medium">{detail?.nim || "-"}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Perusahaan
-            </p>
-            <p className="font-medium">{detail?.company || "-"}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Email
-            </p>
-            <p className="font-medium">{detail?.email || "-"}</p>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-shrink-0">
+              <Avatar className="h-24 w-24 rounded-lg border-2 border-muted">
+                <AvatarFallback className="rounded-lg text-2xl font-bold bg-muted">
+                  {getInitials(detail?.studentName)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            {/* Grid Information */}
+            <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
+                <p className="font-medium text-lg">
+                  {detail?.studentName || "-"}
+                </p>
+              </div>
+              
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">NIM</p>
+                <p className="font-medium">{detail?.nim || "-"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Program Studi</p>
+                <p className="font-medium">{detail?.programStudi || "-"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Periode Magang</p>
+                <p className="font-medium">
+                  {detail?.startDate ? `${formatDate(detail.startDate)} - ${formatDate(detail.endDate)}` : "-"}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Bidang</p>
+                <p className="font-medium">{detail?.division || "-"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium break-all">{detail?.email || "-"}</p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
