@@ -19,6 +19,7 @@ import {
   File,
   Camera,
   ImageIcon,
+  AlertTriangle,
 } from "lucide-react";
 import { id as localeId } from "date-fns/locale";
 
@@ -99,6 +100,7 @@ interface LogbookEntry {
     mentorName: string;
     notes?: string;
   };
+  time?: string;
 }
 
 interface WorkPeriod {
@@ -184,6 +186,7 @@ function mapBackendLogbookEntry(entry: {
     hours: entry.hours,
     photoUrl: entry.photoUrl || entry.photo_url || null,
     status: mappedStatus,
+    time: entry.createdAt ? new Date(entry.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : "-",
     mentorSignature: signatureStatus
       ? {
           status: signatureStatus,
@@ -239,6 +242,7 @@ function LogbookPage() {
   const [selectedExportFormat, setSelectedExportFormat] = useState<
     "docx" | "pdf" | null
   >(null);
+  const [showIncompleteLogbookDialog, setShowIncompleteLogbookDialog] = useState(false);
 
   // Fetch complete internship data (⭐ ONE API CALL FOR ALL DATA)
   useEffect(() => {
@@ -511,8 +515,6 @@ function LogbookPage() {
       return;
     }
 
-    const activityText = description.trim();
-
     const submitEntry = async () => {
       if (!completeData?.student?.userId) {
         toast.error("Data mahasiswa belum siap.");
@@ -523,6 +525,7 @@ function LogbookPage() {
         setIsSavingLogbook(true);
 
         let finalEntryId = editingId;
+        const activityText = description.trim();
 
         if (editingId) {
           // Update existing entry
@@ -707,14 +710,48 @@ function LogbookPage() {
     new Date(`${dateKey}T00:00:00`);
 
   const shiftSelectedDate = (deltaDays: number) => {
-    const baseDate = selectedDate
-      ? fromDateKey(selectedDate)
-      : generatedDates.length > 0
-        ? fromDateKey(generatedDates[0])
-        : new Date();
-    const nextDate = new Date(baseDate);
-    nextDate.setDate(nextDate.getDate() + deltaDays);
-    setSelectedDate(toDateKey(nextDate));
+    if (generatedDates.length === 0) return;
+
+    const currentIdx = selectedDate 
+      ? generatedDates.indexOf(selectedDate) 
+      : -1;
+    
+    let nextIdx: number;
+    
+    if (currentIdx === -1) {
+      // If no date selected, try to find the last interacted date from entries
+      // or pick first/last based on direction
+      if (logbookEntries.length > 0) {
+        // Sort entries by date to find the most recent one
+        const sortedEntries = [...logbookEntries].sort((a, b) => 
+          a.date.localeCompare(b.date)
+        );
+        const lastEntryDate = sortedEntries[sortedEntries.length - 1].date;
+        const lastEntryIdx = generatedDates.indexOf(lastEntryDate);
+        
+        if (lastEntryIdx !== -1) {
+          nextIdx = lastEntryIdx + deltaDays;
+        } else {
+          nextIdx = deltaDays > 0 ? 0 : generatedDates.length - 1;
+        }
+      } else {
+        nextIdx = deltaDays > 0 ? 0 : generatedDates.length - 1;
+      }
+    } else {
+      nextIdx = currentIdx + deltaDays;
+    }
+
+    // Boundary check
+    if (nextIdx < 0 || nextIdx >= generatedDates.length) {
+      const edge = deltaDays > 0 ? "akhir" : "awal";
+      toast.info(`Anda sudah berada di ${edge} periode kerja praktik.`);
+      return;
+    }
+
+    const nextDateKey = generatedDates[nextIdx];
+    const nextDate = fromDateKey(nextDateKey);
+
+    setSelectedDate(nextDateKey);
     setCalendarMonth(nextDate);
   };
 
@@ -942,12 +979,12 @@ function LogbookPage() {
     if (isDataMissing) {
       // Tampilkan dialog konfirmasi data kosong
       setShowEmptyDataDialog(true);
-    } else if (hasApprovedEntries()) {
-      // Data lengkap DAN ada entri yang approved - tampilkan format choice dialog
+    } else if (isLogbookFullyApproved()) {
+      // Data lengkap DAN SEMUA entri sudah approved - tampilkan format choice dialog
       setShowFormatChoiceDialog(true);
     } else {
-      // Data lengkap tapi belum ada entri approved - langsung generate DOCX
-      await generateDirectly("docx");
+      // Data lengkap tapi ada entri belum approved atau belum diisi - tampilkan peringatan
+      setShowIncompleteLogbookDialog(true);
     }
   };
 
@@ -1350,10 +1387,14 @@ function LogbookPage() {
     }
   };
 
-  const hasApprovedEntries = (): boolean => {
-    return logbookEntries.some(
-      (entry) => entry.mentorSignature?.status === "approved",
-    );
+  const isLogbookFullyApproved = (): boolean => {
+    if (generatedDates.length === 0) return false;
+    
+    // Check if every generated date has an approved entry
+    return generatedDates.every((date) => {
+      const entry = logbookEntries.find((e) => e.date === date);
+      return entry?.mentorSignature?.status === "approved";
+    });
   };
 
   const performGenerate = async () => {
@@ -1788,7 +1829,14 @@ function LogbookPage() {
                           }
                           onSelect={(date) => {
                             if (!date) return;
-                            setSelectedDate(toDateKey(date));
+                            const dateKey = toDateKey(date);
+                            if (!generatedDates.includes(dateKey)) {
+                              toast.error(
+                                "Tanggal tidak termasuk hari kerja pada periode yang sudah Anda set. Pilih tanggal sesuai periode kerja praktik.",
+                              );
+                              return;
+                            }
+                            setSelectedDate(dateKey);
                             setCalendarMonth(date);
                             setIsDatePickerOpen(false);
                           }}
@@ -2005,6 +2053,9 @@ function LogbookPage() {
                         <TableHead className="w-24 text-xs">
                           Hari, Tanggal
                         </TableHead>
+                        <TableHead className="w-16 text-center text-xs">
+                          Jam
+                        </TableHead>
                         <TableHead className="text-xs">
                           Deskripsi Kegiatan
                         </TableHead>
@@ -2027,7 +2078,10 @@ function LogbookPage() {
                         const showWeekNumber = weekNum !== prevWeekNum;
 
                         return (
-                          <TableRow key={index}>
+                          <TableRow 
+                            key={index}
+                            className={showWeekNumber && index > 0 ? "border-t-4 border-gray-300" : ""}
+                          >
                             {showWeekNumber && (
                               <TableCell
                                 className="text-center font-medium bg-muted/50"
@@ -2045,6 +2099,9 @@ function LogbookPage() {
                                   {formatDate(date)}
                                 </span>
                               </div>
+                            </TableCell>
+                            <TableCell className="text-center font-medium">
+                              {entry?.time || "-"}
                             </TableCell>
                             <TableCell>
                               <div className="space-y-2 break-words">
@@ -2429,6 +2486,63 @@ function LogbookPage() {
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Ya, Download Template
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Warning Dialog for Incomplete Logbook (missing approvals) */}
+          <AlertDialog
+            open={showIncompleteLogbookDialog}
+            onOpenChange={setShowIncompleteLogbookDialog}
+          >
+            <AlertDialogContent className="sm:max-w-[500px]">
+              <AlertDialogHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-3 bg-amber-100 rounded-full">
+                    <AlertTriangle className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <AlertDialogTitle className="text-xl">
+                    Logbook Belum Terverifikasi Penuh
+                  </AlertDialogTitle>
+                </div>
+                <AlertDialogDescription className="text-base space-y-4 pt-2">
+                  <p className="text-foreground">
+                    Beberapa entri logbook Anda belum disetujui oleh mentor atau
+                    belum diisi lengkap untuk seluruh periode kerja.
+                  </p>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <p className="text-sm text-amber-900 font-medium mb-2">
+                      ⚠️ Penting untuk Diketahui:
+                    </p>
+                    <p className="text-sm text-amber-800 leading-relaxed">
+                      Hasil generate berupa <strong>Docx</strong> dan hanya
+                      berisi data mahasiswa dan aktivitas{" "}
+                      <strong>tanpa tanda tangan/paraf mentor</strong>.
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    💡 <strong>Saran:</strong> Pastikan seluruh logbook sudah
+                    disetujui mentor jika Anda membutuhkan dokumen yang memiliki
+                    tanda tangan digital.
+                  </p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="mt-2 sm:mt-0">
+                  Batal
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    setShowIncompleteLogbookDialog(false);
+                    await generateDirectly("docx");
+                  }}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Lanjutkan Download
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

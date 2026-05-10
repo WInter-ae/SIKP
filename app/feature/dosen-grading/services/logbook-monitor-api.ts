@@ -18,6 +18,8 @@ export interface DosenLogbookMonitorItem {
   studentEmail?: string;
   photoUrl?: string | null;
   photo_url?: string | null;
+  time?: string;
+  approvedTime?: string;
 }
 
 export interface DosenLogbookMonitorByStudentItem {
@@ -62,8 +64,10 @@ function getFirstString(
 ): string {
   for (const key of keys) {
     const value = record[key];
+    if (value === null || value === undefined) continue;
+    
     if (typeof value === "string" && value.trim()) return value;
-    if (typeof value === "number") return String(value);
+    if (typeof value !== "object") return String(value);
   }
   return fallback;
 }
@@ -127,9 +131,21 @@ function mapRawDetail(
       ["studentId"],
       getFirstString(student, ["id", "studentId"], fallbackStudentId),
     ),
-    studentName: getFirstString(student, ["name", "nama", "studentName"], "-"),
-    nim: getFirstString(student, ["nim", "studentNim"], "-"),
-    email: getFirstString(student, ["email", "studentEmail"], "") || null,
+    studentName: getFirstString(
+      wrapped,
+      ["studentName", "name", "nama"],
+      getFirstString(student, ["name", "nama", "studentName"], "-"),
+    ),
+    nim: getFirstString(
+      wrapped,
+      ["nim", "studentNim"],
+      getFirstString(student, ["nim", "studentNim"], "-"),
+    ),
+    email: getFirstString(
+      wrapped,
+      ["email", "studentEmail"],
+      getFirstString(student, ["email", "studentEmail"], "") || "",
+    ) || null,
     company: getFirstString(
       wrapped,
       ["company", "companyName", "instansi"],
@@ -192,6 +208,9 @@ function mapRawLogbookItem(raw: RawObject, index: number): DosenLogbookMonitorIt
     hours: Number.isFinite(Number(raw.hours)) ? Number(raw.hours) : undefined,
     rejectionReason: getFirstString(raw, ["rejectionReason", "reason", "catatan"], "") || undefined,
     photoUrl: getFirstString(raw, ["photoUrl", "photo_url"], "") || null,
+    mentorName: getFirstString(raw, ["mentorName"], "-"),
+    time: raw.createdAt ? new Date(raw.createdAt as string).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : "-",
+    approvedTime: raw.verifiedAt ? new Date(raw.verifiedAt as string).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : "-",
   };
 }
 

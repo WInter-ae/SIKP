@@ -87,6 +87,7 @@ export interface SessionUser {
   jumlahSksLulus?: number;
   phone?: string;
   jabatan?: string;
+  instansi?: string;
   jabatanFungsional?: string;
   jabatanStruktural?: string[];
 }
@@ -492,6 +493,7 @@ export function toSessionUser(
       activeIdentity?.profile.jumlahSksLulus,
     phone: pickString(record.phone) || activeIdentity?.profile.phone,
     jabatan: pickString(record.jabatan) || activeIdentity?.profile.jabatan,
+    instansi: pickString(record.instansi) || activeIdentity?.profile.instansi,
     jabatanFungsional:
       pickString(record.jabatanFungsional) ||
       activeIdentity?.profile.jabatanFungsional,

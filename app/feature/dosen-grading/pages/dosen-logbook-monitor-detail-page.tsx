@@ -242,6 +242,11 @@ export default function DosenLogbookMonitorDetailPage() {
               </div>
 
               <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Perusahaan</p>
+                <p className="font-medium">{detail?.company || "-"}</p>
+              </div>
+
+              <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Program Studi</p>
                 <p className="font-medium">{detail?.programStudi || "-"}</p>
               </div>
@@ -317,8 +322,9 @@ export default function DosenLogbookMonitorDetailPage() {
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Aktivitas</TableHead>
-                  <TableHead>Jam</TableHead>
-                  <TableHead className="text-center">Foto</TableHead>
+                  <TableHead className="w-28">Jam Input</TableHead>
+                  <TableHead className="w-28 text-center">Jam Disetujui</TableHead>
+                  <TableHead className="w-32 text-center">Foto</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Catatan Revisi</TableHead>
                   <TableHead>Mentor</TableHead>
@@ -346,7 +352,10 @@ export default function DosenLogbookMonitorDetailPage() {
                       <TableCell className="max-w-[380px] truncate">
                         {item.activity}
                       </TableCell>
-                      <TableCell>{item.hours ?? "-"}</TableCell>
+                      <TableCell>{item.time || "-"}</TableCell>
+                      <TableCell className="text-center font-medium">
+                        {item.approvedTime || "-"}
+                      </TableCell>
                       {/* Foto Kegiatan — Read Only */}
                       <TableCell className="text-center">
                         {item.photoUrl || item.photo_url ? (

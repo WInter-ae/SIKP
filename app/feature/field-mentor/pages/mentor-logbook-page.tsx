@@ -31,6 +31,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+import { useUser } from "~/contexts/user-context";
 import type { LogbookEntry, Student } from "../types/logbook";
 import {
   getMentorProfile,
@@ -62,7 +63,9 @@ function mapBackendStudent(mentee: MenteeData): Student | null {
   };
 }
 
+
 export default function MentorLogbookPage() {
+  const { user } = useUser();
   const [students, setStudents] = useState<Student[]>([]);
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [mentorProfile, setMentorProfile] = useState<MentorProfile | null>(
@@ -270,26 +273,48 @@ export default function MentorLogbookPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">
                     Nama Mentor
                   </p>
-                  <p className="font-medium">{mentorProfile?.name || "-"}</p>
+                  <p className="font-medium">{mentorProfile?.name && mentorProfile.name !== "-" ? mentorProfile.name : (user?.nama || "-")}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Email
+                  </p>
+                  <p className="font-medium truncate" title={mentorProfile?.email || user?.email}>
+                    {mentorProfile?.email && mentorProfile.email !== "-" ? mentorProfile.email : (user?.email || "-")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">
+                    No. Telepon
+                  </p>
+                  <p className="font-medium">{mentorProfile?.phone && mentorProfile.phone !== "-" ? mentorProfile.phone : (user?.phone || "-")}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">
                     Perusahaan
                   </p>
-                  <p className="font-medium">{mentorProfile?.company || "-"}</p>
+                  <p className="font-medium">{mentorProfile?.company && mentorProfile.company !== "-" ? mentorProfile.company : (user?.instansi || (user?.jabatan?.includes("at") ? user.jabatan.split("at")[1].trim() : "-"))}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Jabatan</p>
                   <p className="font-medium">
-                    {mentorProfile?.position || "-"}
+                    {mentorProfile?.position && mentorProfile.position !== "-" ? mentorProfile.position : (user?.jabatan || "-")}
                   </p>
                 </div>
               </div>
+              {mentorProfile?.address && (
+                <div className="mt-4 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground mb-1">Alamat Perusahaan</p>
+                  <p className="font-medium text-sm leading-relaxed">
+                    {mentorProfile.address}
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

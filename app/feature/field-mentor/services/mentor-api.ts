@@ -323,7 +323,21 @@ function normalizeAssessmentPayload(payload: unknown): AssessmentData | null {
  * GET /api/mentor/profile
  */
 export async function getMentorProfile(): Promise<ApiResponse<MentorProfile>> {
-  return internshipClient.get<MentorProfile>("/api/mentorship/profile");
+  const response = await internshipClient.get<any>("/api/mentorship/profile");
+  
+  if (response.success && response.data) {
+    const raw = response.data;
+    // Map backend fields to frontend fields
+    const mapped: MentorProfile = {
+      ...raw,
+      name: raw.name || raw.fullName || raw.nama || "-",
+      company: raw.company || raw.instansi || raw.perusahaan || "-",
+      position: raw.position || raw.jabatan || "-",
+    };
+    return { ...response, data: mapped };
+  }
+  
+  return response;
 }
 
 /**
