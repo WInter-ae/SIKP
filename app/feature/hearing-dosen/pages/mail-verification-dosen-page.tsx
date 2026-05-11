@@ -411,8 +411,8 @@ function MailVerificationDosenPage() {
 
     const response = isPermohonan
       ? await approveDosenSuratPermohonanRequest(id, {
-          mahasiswaEsignatureUrl: targetEntry.mahasiswaEsignatureUrl,
-        })
+        mahasiswaEsignatureUrl: targetEntry.mahasiswaEsignatureUrl,
+      })
       : await approveDosenSuratKesediaanRequest(id);
 
     if (!response.success) {
@@ -424,18 +424,18 @@ function MailVerificationDosenPage() {
       prev.map((e) =>
         e.id === id
           ? {
-              ...e,
-              status: "disetujui" as const,
-              approvedAt:
-                response.data?.approvedAt ||
-                response.data?.approved_at ||
-                e.approvedAt,
-              signedFileUrl:
-                resolveAssetUrl(
-                  response.data?.signedFileUrl ||
-                    response.data?.signed_file_url,
-                ) || e.signedFileUrl,
-            }
+            ...e,
+            status: "disetujui" as const,
+            approvedAt:
+              response.data?.approvedAt ||
+              response.data?.approved_at ||
+              e.approvedAt,
+            signedFileUrl:
+              resolveAssetUrl(
+                response.data?.signedFileUrl ||
+                response.data?.signed_file_url,
+              ) || e.signedFileUrl,
+          }
           : e,
       ),
     );
@@ -513,29 +513,29 @@ function MailVerificationDosenPage() {
       kesediaanIds.length > 0
         ? approveBulkDosenSuratKesediaanRequests(kesediaanIds)
         : Promise.resolve({
-            success: true,
-            message: "",
-            data: { approvedCount: 0 },
-          }),
+          success: true,
+          message: "",
+          data: { approvedCount: 0 },
+        }),
       permohonanIds.length > 0
         ? approveBulkDosenSuratPermohonanRequests(permohonanIds, {
-            signatures: entries
-              .filter(
-                (e) =>
-                  permohonanIds.includes(e.id) &&
-                  typeof e.mahasiswaEsignatureUrl === "string" &&
-                  e.mahasiswaEsignatureUrl.trim().length > 0,
-              )
-              .map((e) => ({
-                requestId: e.id,
-                mahasiswaEsignatureUrl: e.mahasiswaEsignatureUrl!,
-              })),
-          })
+          signatures: entries
+            .filter(
+              (e) =>
+                permohonanIds.includes(e.id) &&
+                typeof e.mahasiswaEsignatureUrl === "string" &&
+                e.mahasiswaEsignatureUrl.trim().length > 0,
+            )
+            .map((e) => ({
+              requestId: e.id,
+              mahasiswaEsignatureUrl: e.mahasiswaEsignatureUrl!,
+            })),
+        })
         : Promise.resolve({
-            success: true,
-            message: "",
-            data: { approvedCount: 0 },
-          }),
+          success: true,
+          message: "",
+          data: { approvedCount: 0 },
+        }),
     ]);
 
     if (!kesediaanResult.success && kesediaanIds.length > 0) {
@@ -546,7 +546,7 @@ function MailVerificationDosenPage() {
     if (!permohonanResult.success && permohonanIds.length > 0) {
       toast.error(
         permohonanResult.message ||
-          "Gagal menyetujui surat permohonan terpilih.",
+        "Gagal menyetujui surat permohonan terpilih.",
       );
     }
 
@@ -607,29 +607,49 @@ function MailVerificationDosenPage() {
     <div className="p-4 sm:p-6 md:p-8 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
-          <div>
+          <div className="relative pb-2">
             <h1 className="text-xl sm:text-3xl font-bold text-foreground">
               Verifikasi Surat Mahasiswa
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Kelola dan verifikasi pengajuan surat dari mahasiswa
             </p>
+            <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              icon={stat.icon}
-              iconBgColor={stat.iconBgColor}
-            />
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          <StatCard
+            title={stats[0].title}
+            value={stats[0].value}
+            icon={stats[0].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
+          <StatCard
+            title={stats[1].title}
+            value={stats[1].value}
+            icon={stats[1].icon}
+            iconBgColor="bg-yellow-50 dark:bg-yellow-900/20"
+            className="border-l-4 border-l-yellow-300 shadow-sm"
+          />
+          <StatCard
+            title={stats[2].title}
+            value={stats[2].value}
+            icon={stats[2].icon}
+            iconBgColor="bg-red-50 dark:bg-red-900/20"
+            className="border-l-4 border-l-red-500 shadow-sm"
+          />
+          <StatCard
+            title={stats[3].title}
+            value={stats[3].value}
+            icon={stats[3].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
         </div>
 
-        <Card>
+        <Card className="border-t-4 border-t-blue-600">
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
             <div className="relative flex-1 min-w-62.5">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -659,7 +679,7 @@ function MailVerificationDosenPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-t-4 border-t-blue-600">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg font-semibold text-foreground">
@@ -677,7 +697,7 @@ function MailVerificationDosenPage() {
               )}
             </div>
           </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">Memuat data surat...</p>
@@ -691,87 +711,153 @@ function MailVerificationDosenPage() {
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="pl-4 w-10">
-                      <input
-                        type="checkbox"
-                        checked={
-                          filteredEntries.length > 0 &&
-                          selectedIds.size === filteredEntries.length
-                        }
-                        onChange={toggleSelectAll}
-                        aria-label="Pilih semua"
-                        className="cursor-pointer accent-primary"
-                      />
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">Tanggal</TableHead>
-                    <TableHead className="whitespace-nowrap">NIM</TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Nama Mahasiswa
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Jenis Surat
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">
-                      Aksi
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile Card View */}
+                <div className="block md:hidden divide-y divide-border">
                   {filteredEntries.map((entry) => (
-                    <TableRow key={entry.id} className="hover:bg-muted/50">
-                      <TableCell className="pl-4">
+                    <div key={entry.id} className="p-4 space-y-3">
+                      <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
                           checked={selectedIds.has(entry.id)}
                           onChange={() => toggleSelect(entry.id)}
                           aria-label={`Pilih ${entry.namaMahasiswa}`}
-                          className="cursor-pointer accent-primary"
+                          className="cursor-pointer accent-primary mt-1 shrink-0"
                         />
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {entry.tanggal}
-                      </TableCell>
-                      <TableCell className="text-primary font-medium">
-                        {entry.nim}
-                      </TableCell>
-                      <TableCell className="font-medium text-foreground">
-                        {entry.namaMahasiswa}
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {entry.jenisSurat}
-                      </TableCell>
-                      <TableCell>{getStatusBadge(entry.status)}</TableCell>
-                      <TableCell className="pr-6">
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-primary border-primary/50 hover:bg-primary/10"
-                            onClick={() => handleView(entry)}
-                          >
-                            <Eye className="w-3.5 h-3.5 mr-1.5" />
-                            Lihat
-                          </Button>
-                          {entry.status === "menunggu" && (
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="font-medium text-foreground truncate">
+                                {entry.namaMahasiswa}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                NIM: {entry.nim}
+                              </p>
+                            </div>
+                            {getStatusBadge(entry.status)}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm mt-2">
+                            <div>
+                              <p className="text-xs text-muted-foreground">Tanggal</p>
+                              <p className="text-foreground">{entry.tanggal}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground">Jenis Surat</p>
+                              <p className="text-foreground">{entry.jenisSurat}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2 mt-3">
                             <Button
+                              variant="outline"
                               size="sm"
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              onClick={() => void handleApproveInline(entry)}
+                              className="flex-1 text-primary border-primary/50 hover:bg-primary/10"
+                              onClick={() => handleView(entry)}
                             >
-                              <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                              Approve
+                              <Eye className="w-3.5 h-3.5 mr-1.5" />
+                              Lihat
                             </Button>
-                          )}
+                            {entry.status === "menunggu" && (
+                              <Button
+                                size="sm"
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                                onClick={() => void handleApproveInline(entry)}
+                              >
+                                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                                Approve
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="pl-4 w-10">
+                          <input
+                            type="checkbox"
+                            checked={
+                              filteredEntries.length > 0 &&
+                              selectedIds.size === filteredEntries.length
+                            }
+                            onChange={toggleSelectAll}
+                            aria-label="Pilih semua"
+                            className="cursor-pointer accent-primary"
+                          />
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">Tanggal</TableHead>
+                        <TableHead className="whitespace-nowrap">NIM</TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Nama Mahasiswa
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Jenis Surat
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                        <TableHead className="pr-6 whitespace-nowrap">
+                          Aksi
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredEntries.map((entry) => (
+                        <TableRow key={entry.id} className="hover:bg-muted/50">
+                          <TableCell className="pl-4">
+                            <input
+                              type="checkbox"
+                              checked={selectedIds.has(entry.id)}
+                              onChange={() => toggleSelect(entry.id)}
+                              aria-label={`Pilih ${entry.namaMahasiswa}`}
+                              className="cursor-pointer accent-primary"
+                            />
+                          </TableCell>
+                          <TableCell className="text-foreground">
+                            {entry.tanggal}
+                          </TableCell>
+                          <TableCell className="text-primary font-medium">
+                            {entry.nim}
+                          </TableCell>
+                          <TableCell className="font-medium text-foreground">
+                            {entry.namaMahasiswa}
+                          </TableCell>
+                          <TableCell className="text-foreground">
+                            {entry.jenisSurat}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                          <TableCell className="pr-6">
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-primary border-primary/50 hover:bg-primary/10"
+                                onClick={() => handleView(entry)}
+                              >
+                                <Eye className="w-3.5 h-3.5 mr-1.5" />
+                                Lihat
+                              </Button>
+                              {entry.status === "menunggu" && (
+                                <Button
+                                  size="sm"
+                                  className="bg-green-600 hover:bg-green-700 text-white"
+                                  onClick={() => void handleApproveInline(entry)}
+                                >
+                                  <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
+                                  Approve
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

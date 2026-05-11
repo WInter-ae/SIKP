@@ -4,16 +4,6 @@ export type TemplateType =
   | "berita-acara"
   | "form-nilai";
 
-export type TemplateCategory = {
-  value: TemplateType;
-  label: string;
-};
-
-export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
-  { value: "Template Only", label: "Template Only" },
-  { value: "Generate & Template", label: "Generate & Template" },
-];
-
 /**
  * Field metadata untuk dynamic form generation
  */
@@ -58,7 +48,6 @@ export interface Template {
   version: number; // Version untuk tracking perubahan
   createdAt: string;
   updatedAt: string;
-  isActive: boolean;
   previousVersionId?: string; // Link ke version sebelumnya
 }
 
@@ -70,6 +59,4 @@ export interface CreateTemplateData {
   fields: TemplateField[];
 }
 
-export interface UpdateTemplateData extends Partial<CreateTemplateData> {
-  isActive?: boolean;
-}
+export interface UpdateTemplateData extends Partial<CreateTemplateData> {}

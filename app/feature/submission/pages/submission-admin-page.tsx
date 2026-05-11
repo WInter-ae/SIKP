@@ -74,12 +74,12 @@ function SubmissionAdminPage() {
             documentsCount: response.data[0]?.documents?.length || 0,
             firstDocument: response.data[0]?.documents?.[0]
               ? {
-                  id: response.data[0].documents[0].id,
-                  documentType: response.data[0].documents[0].documentType,
-                  hasUploadedByUser:
-                    !!response.data[0].documents[0].uploadedByUser,
-                  uploadedByUser: response.data[0].documents[0].uploadedByUser,
-                }
+                id: response.data[0].documents[0].id,
+                documentType: response.data[0].documents[0].documentType,
+                hasUploadedByUser:
+                  !!response.data[0].documents[0].uploadedByUser,
+                uploadedByUser: response.data[0].documents[0].uploadedByUser,
+              }
               : null,
           });
 
@@ -270,11 +270,11 @@ function SubmissionAdminPage() {
             prev.map((app) =>
               app.id === selectedApplication.id
                 ? {
-                    ...app,
-                    status: "approved" as const,
-                    letterNumber,
-                    documentReviews: docReviews,
-                  }
+                  ...app,
+                  status: "approved" as const,
+                  letterNumber,
+                  documentReviews: docReviews,
+                }
                 : app,
             ),
           );
@@ -288,7 +288,7 @@ function SubmissionAdminPage() {
         console.error("❌ Backend validation error:", response.message);
         toast.error(
           response.message ||
-            "Gagal menyetujui pengajuan. Periksa validasi dokumen.",
+          "Gagal menyetujui pengajuan. Periksa validasi dokumen.",
         );
       }
     } catch (error) {
@@ -325,11 +325,11 @@ function SubmissionAdminPage() {
             prev.map((app) =>
               app.id === selectedApplication.id
                 ? {
-                    ...app,
-                    status: "rejected" as const,
-                    rejectionComment: comment,
-                    documentReviews: docReviews,
-                  }
+                  ...app,
+                  status: "rejected" as const,
+                  rejectionComment: comment,
+                  documentReviews: docReviews,
+                }
                 : app,
             ),
           );
@@ -343,7 +343,7 @@ function SubmissionAdminPage() {
         console.error("❌ Backend validation error:", response.message);
         toast.error(
           response.message ||
-            "Gagal menolak pengajuan. Pastikan validasi terpenuhi.",
+          "Gagal menolak pengajuan. Pastikan validasi terpenuhi.",
         );
       }
     } catch (error) {
@@ -358,37 +358,33 @@ function SubmissionAdminPage() {
       | "Menunggu Review"
       | "Menunggu TTD Wakil Dekan" = "Menunggu Review",
   ) => {
-    switch (status) {
-      case "pending":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-          >
-            {pendingLabel}
-          </Badge>
-        );
-      case "approved":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
-          >
-            Disetujui
-          </Badge>
-        );
-      case "rejected":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-destructive/10 text-destructive border-destructive/30"
-          >
-            Ditolak
-          </Badge>
-        );
-      default:
-        return <Badge variant="secondary">Unknown</Badge>;
-    }
+    const isApproved = status === "approved";
+    const isRejected = status === "rejected";
+    const isPending = status === "pending";
+
+    return (
+      <Badge
+        variant="outline"
+        className={`inline-flex items-center rounded-full px-2.5 py-0.5 font-medium whitespace-nowrap ${
+          isApproved
+            ? "bg-green-50 text-green-700 border-green-200"
+            : isRejected
+              ? "bg-red-50 text-red-700 border-red-200"
+              : "bg-amber-50 text-amber-700 border-amber-200"
+        }`}
+      >
+        <span
+          className={`mr-1.5 h-1.5 w-1.5 rounded-full ${
+            isApproved ? "bg-green-500" : isRejected ? "bg-red-500" : "bg-amber-500"
+          }`}
+        />
+        {status === "approved"
+          ? "Disetujui"
+          : status === "rejected"
+            ? "Ditolak"
+            : pendingLabel}
+      </Badge>
+    );
   };
 
   return (
@@ -396,31 +392,51 @@ function SubmissionAdminPage() {
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Page Header */}
         <div className="flex justify-between items-center">
-          <div>
+          <div className="relative pb-2">
             <h1 className="text-xl sm:text-3xl font-bold text-foreground">
               Penerimaan Pengajuan Surat Pengantar
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
               Kelola dan review pengajuan surat pengantar dari mahasiswa
             </p>
+            <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
           </div>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              icon={stat.icon}
-              iconBgColor={stat.iconBgColor}
-            />
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          <StatCard
+            title={stats[0].title}
+            value={stats[0].value}
+            icon={stats[0].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
+          <StatCard
+            title={stats[1].title}
+            value={stats[1].value}
+            icon={stats[1].icon}
+            iconBgColor="bg-yellow-50 dark:bg-yellow-900/20"
+            className="border-l-4 border-l-yellow-300 shadow-sm"
+          />
+          <StatCard
+            title={stats[2].title}
+            value={stats[2].value}
+            icon={stats[2].icon}
+            iconBgColor="bg-red-50 dark:bg-red-900/20"
+            className="border-l-4 border-l-red-500 shadow-sm"
+          />
+          <StatCard
+            title={stats[3].title}
+            value={stats[3].value}
+            icon={stats[3].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
         </div>
 
         {/* Filter and Search */}
-        <Card>
+        <Card className="">
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
             <div className="flex-1 min-w-62.5 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -433,7 +449,7 @@ function SubmissionAdminPage() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-45">
+              <SelectTrigger className="w-45 font-semibold">
                 <SelectValue placeholder="Pilih Status" />
               </SelectTrigger>
               <SelectContent>
@@ -443,10 +459,6 @@ function SubmissionAdminPage() {
                 <SelectItem value="rejected">Ditolak</SelectItem>
               </SelectContent>
             </Select>
-            <Button>
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
           </CardContent>
         </Card>
 
@@ -457,7 +469,7 @@ function SubmissionAdminPage() {
               Daftar Pengajuan Surat Pengantar
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">
@@ -473,65 +485,70 @@ function SubmissionAdminPage() {
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="pl-6 whitespace-nowrap">
-                      Tanggal
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Nama Mahasiswa
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Perusahaan
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">
-                      Aksi
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredApplications.map((app) => {
-                    const leader =
-                      app.members.find((m) => m.role === "Ketua") ||
-                      app.members[0];
-                    return (
-                      <TableRow key={app.id} className="hover:bg-muted/50">
-                        <TableCell className="text-foreground pl-6">
-                          {app.date}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-foreground">
-                            {leader?.name || "Unknown"}
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {app.members.length > 1
-                              ? `+ ${app.members.length - 1} Anggota`
-                              : "Individu"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-foreground">
-                          {app.internship.namaTempat}
-                        </TableCell>
-                        <TableCell>
-                          {getStatusBadge(app.status, app.pendingLabel)}
-                        </TableCell>
-                        <TableCell className="pr-6">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-primary border-primary/50 hover:bg-primary/5"
-                            onClick={() => handleReview(app)}
-                          >
-                            {app.status === "pending" ? "Review" : "Lihat"}
-                          </Button>
-                        </TableCell>
+              <>
+                {/* Scrollable Table View (Mobile & Desktop) */}
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="pl-6 whitespace-nowrap">
+                          Tanggal
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Nama Mahasiswa
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Perusahaan
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                        <TableHead className="pr-6 whitespace-nowrap">
+                          Aksi
+                        </TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredApplications.map((app) => {
+                        const leader =
+                          app.members.find((m) => m.role === "Ketua") ||
+                          app.members[0];
+                        return (
+                          <TableRow key={app.id} className="hover:bg-muted/50">
+                            <TableCell className="text-foreground pl-6">
+                              {app.date}
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium text-foreground">
+                                {leader?.name || "Unknown"}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {app.members.length > 1
+                                  ? `+ ${app.members.length - 1} Anggota`
+                                  : "Individu"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-foreground">
+                              {app.internship.namaTempat}
+                            </TableCell>
+                            <TableCell>
+                              {getStatusBadge(app.status, app.pendingLabel)}
+                            </TableCell>
+                            <TableCell className="pr-6">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-primary border-primary/50 hover:bg-primary/5"
+                                onClick={() => handleReview(app)}
+                              >
+                                {app.status === "pending" ? "Review" : "Lihat"}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

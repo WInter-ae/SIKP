@@ -30,7 +30,11 @@ import {
   Trash2,
   AlertCircle,
   UserRound,
+  ArrowLeft,
+  ArrowRight,
+  Crown,
 } from "lucide-react";
+import { useSidebar } from "~/components/ui/sidebar";
 
 // Type untuk response API yang fleksibel
 interface ApiResponse<T> {
@@ -62,8 +66,10 @@ import {
 } from "~/lib/services/submission-api.service";
 import { getResponseLetterBySubmission } from "~/lib/services/response-letter.service";
 
-const TeamCreationPage = () => {
+export default function TeamCreationPage() {
   const navigate = useNavigate();
+  const { state, isMobile } = useSidebar();
+  const leftOffset = isMobile ? "0" : state === "expanded" ? "16rem" : "3rem";
   const { user } = useUser();
   const { isLoading: isUserLoading, isAuthenticated } = useAuth();
 
@@ -798,9 +804,9 @@ const TeamCreationPage = () => {
         // Timeout error - show helpful message
         console.warn(
           "⚠️ PERFORMANCE ISSUE: Backend response is slow (>5s). Possible causes:\n" +
-            "1. Database query not optimized\n" +
-            "2. Network latency too high\n" +
-            "3. Server resources limited",
+          "1. Database query not optimized\n" +
+          "2. Network latency too high\n" +
+          "3. Server resources limited",
         );
       } else if (
         errorMsg.includes("userId") ||
@@ -2304,9 +2310,9 @@ const TeamCreationPage = () => {
         setTeam((prev) =>
           prev
             ? {
-                ...prev,
-                status: "FIXED",
-              }
+              ...prev,
+              status: "FIXED",
+            }
             : null,
         );
 
@@ -2685,7 +2691,7 @@ const TeamCreationPage = () => {
   // Show loading jika user context masih loading
   if (isUserLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex items-center justify-center min-h-100">
         <div className="text-center">
           <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
           <p className="text-muted-foreground">Memuat data user...</p>
@@ -2700,13 +2706,13 @@ const TeamCreationPage = () => {
   }
 
   return (
-    <>
+    <div className="pb-10">
       {/* Join Success Dialog */}
       <Dialog
         open={showJoinSuccessDialog}
         onOpenChange={setShowJoinSuccessDialog}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-125">
           <DialogHeader>
             <DialogTitle>Permintaan Bergabung Terkirim</DialogTitle>
             <DialogDescription>
@@ -2751,7 +2757,7 @@ const TeamCreationPage = () => {
         open={showDeleteSuccessDialog}
         onOpenChange={setShowDeleteSuccessDialog}
       >
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-100">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-green-600">✅</span> Tim Berhasil Dihapus
@@ -2777,7 +2783,7 @@ const TeamCreationPage = () => {
         open={showInviteMessageDialog}
         onOpenChange={setShowInviteMessageDialog}
       >
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-112.5">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {inviteMessageData?.type === "success" && (
@@ -2815,7 +2821,7 @@ const TeamCreationPage = () => {
         open={showConfirmInviteDialog}
         onOpenChange={setShowConfirmInviteDialog}
       >
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-112.5">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-blue-600">❓</span> Konfirmasi Undangan
@@ -2866,7 +2872,7 @@ const TeamCreationPage = () => {
         open={showConfirmRejectInviteDialog}
         onOpenChange={setShowConfirmRejectInviteDialog}
       >
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-112.5">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-red-600">❓</span> Tolak Undangan
@@ -2905,7 +2911,7 @@ const TeamCreationPage = () => {
         open={showConfirmAcceptInviteDialog}
         onOpenChange={setShowConfirmAcceptInviteDialog}
       >
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-112.5">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <span className="text-green-600">❓</span> Terima Undangan
@@ -2941,29 +2947,29 @@ const TeamCreationPage = () => {
 
       {/* Team Information Dialog */}
       <Dialog open={showTeamInfoDialog} onOpenChange={setShowTeamInfoDialog}>
-        <DialogContent className="sm:max-w-[980px] max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-h-[90svh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] overflow-y-auto p-4 sm:max-w-245 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-left text-base sm:text-lg">
               <Users className="h-5 w-5 text-primary" />
               Informasi Tim Kerja Praktik
             </DialogTitle>
           </DialogHeader>
 
           {team && (
-            <div className="space-y-4 py-1 mt-5">
+            <div className="mt-4 space-y-4 py-1 sm:mt-5">
               {team.isLeader && (
                 <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <Users className="h-5 w-5 text-primary" />
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+                      <div className="hidden md:inline w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                        <Users className="h-5 w-10 text-primary mt-2" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
+                        <p className="mb-1 text-sm text-muted-foreground">
                           Kode Tim
                         </p>
-                        <div className="flex items-center gap-2">
-                          <p className="text-xl font-bold font-mono text-foreground tracking-wide truncate">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="break-all !text-md md:text-xl font-bold font-mono text-foreground tracking-wide">
                             {team.code}
                           </p>
                           <Button
@@ -2979,13 +2985,35 @@ const TeamCreationPage = () => {
                               <Copy className="h-4 w-4" />
                             )}
                           </Button>
+
+                          {/* Mobile-only trash icon next to code */}
+                          {user &&
+                            team.isLeader &&
+                            (team.status !== "FIXED" || canDeleteFixedTeam) && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  handleDeleteTeam("manual_delete")
+                                }
+                                disabled={isDeletingTeam}
+                                className="h-7 w-7 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 sm:hidden"
+                                title="Hapus tim"
+                              >
+                                {isDeletingTeam ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="mt-1 !text-2xs md:!text-xs text-muted-foreground">
                           Bagikan kode ini untuk mengundang anggota tim
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 self-start shrink-0 sm:self-auto">
                       {isNewlyCreated && (
                         <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border border-green-200">
                           Baru
@@ -2999,7 +3027,7 @@ const TeamCreationPage = () => {
                             size="sm"
                             onClick={() => handleDeleteTeam("manual_delete")}
                             disabled={isDeletingTeam}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 mt-4"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10 hidden sm:inline-flex"
                             title="Hapus tim"
                           >
                             {isDeletingTeam ? (
@@ -3015,36 +3043,37 @@ const TeamCreationPage = () => {
               )}
 
               <div className="rounded-xl border border-border bg-primary/10 p-4">
-                <p className="text-sm text-muted-foreground mb-1">
+                <p className="mb-1 text-sm text-muted-foreground">
                   Dosen Pembimbing Akademik (Ketua)
                 </p>
-                <p className="text-xl font-semibold text-primary">
+                <p className="wrap-break-word text-lg font-semibold text-primary sm:text-xl">
                   {team.dosen_kp_name || "Belum ditentukan"}
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {team.members.map((member) => (
                   <div
                     key={member.id}
-                    className={`p-4 rounded-lg border ${
-                      member.isLeader
+                    className={`rounded-lg border p-4 ${member.isLeader
                         ? "border-primary/30 bg-primary/5"
                         : "border-border bg-muted/50"
-                    }`}
+                      }`}
                   >
-                    <div className="flex justify-between items-start mb-2">
+                    <div className="mb-2 flex items-start justify-between gap-2">
                       <Badge
                         variant={member.isLeader ? "default" : "secondary"}
                       >
                         {member.isLeader ? "Ketua" : "Anggota"}
                       </Badge>
                     </div>
-                    <p className="font-bold text-foreground">{member.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="wrap-break-word font-bold text-foreground">
+                      {member.name}
+                    </p>
+                    <p className="wrap-break-word text-sm text-muted-foreground">
                       {member.nim || "-"}
                     </p>
-                    <p className="text-sm text-muted-foreground/80">
+                    <p className="wrap-break-word text-sm text-muted-foreground/80">
                       {user.prodi || "-"}
                     </p>
                   </div>
@@ -3055,21 +3084,22 @@ const TeamCreationPage = () => {
         </DialogContent>
       </Dialog>
       {/* Header Section */}
-      <div className="mb-6">
+      <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Pembuatan Tim
         </h1>
         <p className="text-sm text-muted-foreground">
           Buat tim Anda untuk melaksanakan Kerja Praktik
         </p>
+        <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
       <div className="mb-6">
         {/* User Info Section */}
-        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm border-l-4 border-l-blue-600">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <UserRound className="h-5 w-5 text-primary" />
+              <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
+                <UserRound className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-foreground truncate">
@@ -3084,7 +3114,7 @@ const TeamCreationPage = () => {
         </div>
       </div>
       {isLoading ? (
-        <Card className="mb-8">
+        <Card className="mb-6">
           <CardContent className="py-12 text-center">
             <Loader2 className="h-16 w-16 mx-auto text-blue-500 mb-4 animate-spin" />
             <p className="text-muted-foreground font-medium">
@@ -3096,7 +3126,7 @@ const TeamCreationPage = () => {
           </CardContent>
         </Card>
       ) : loadError && !team ? (
-        <Card className="mb-8 border-red-200 bg-red-50">
+        <Card className="mb-6 border-red-200 bg-red-50">
           <CardContent className="py-12 text-center">
             <AlertCircle className="h-16 w-16 mx-auto text-red-500 mb-4" />
             <p className="text-foreground font-semibold mb-2">
@@ -3138,10 +3168,11 @@ const TeamCreationPage = () => {
 
               {user && team.isLeader && team.status !== "FIXED" && (
                 <Button
+                  className="text-sm"
                   onClick={() => setShowInviteDialog(true)}
                   disabled={isCreatingTeam}
                 >
-                  <UserPlus className="mr-2 h-4 w-4" />
+                  <UserPlus className="hidden sm:inline-block mr-2 h-4 w-4" />
                   Undang Anggota
                 </Button>
               )}
@@ -3185,7 +3216,7 @@ const TeamCreationPage = () => {
                 currentUserId={user?.id}
               />
             ) : (
-              <Card>
+              <Card className="border-l-4 border-l-yellow-300 shadow-sm">
                 <CardContent className="py-8">
                   <h3 className="text-lg font-semibold mb-2">Daftar Anggota</h3>
                   <div className="text-center py-8">
@@ -3194,10 +3225,11 @@ const TeamCreationPage = () => {
                       Anda belum memiliki tim. Silakan buat tim baru atau gabung
                       dengan tim yang sudah ada.
                     </p>
-                    <div className="flex justify-center gap-4">
+                    <div className="flex flex-col sm:flex-row justify-center gap-3">
                       <Button
                         onClick={handleCreateTeam}
                         disabled={isCreatingTeam}
+                        className="w-full sm:w-auto"
                       >
                         {isCreatingTeam ? (
                           <>
@@ -3215,6 +3247,7 @@ const TeamCreationPage = () => {
                         variant="secondary"
                         onClick={() => setShowJoinDialog(true)}
                         disabled={isCreatingTeam}
+                        className="w-full sm:w-auto"
                       >
                         <Users className="mr-2 h-4 w-4" />
                         Gabung Tim
@@ -3274,27 +3307,37 @@ const TeamCreationPage = () => {
         </>
       )}
 
-      {/* Next Button */}
-      <div className="text-center mt-8">
-        <Button
-          onClick={handleNext}
-          size="lg"
-          className="w-full sm:w-auto px-8 py-3 font-medium text-lg"
-          disabled={
-            isLoading || !team || (team.status !== "FIXED" && !team.isLeader)
-          }
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-2 w-2 animate-spin" />
-              Sedang diproses...
-            </>
-          ) : team?.status === "FIXED" ? (
-            "Selanjutnya"
-          ) : (
-            "Tetapkan Tim"
-          )}
-        </Button>
+      {/* Sticky Navigation Buttons */}
+      <div
+        className="fixed bottom-0 right-0 z-40 transition-all duration-300 pointer-events-none"
+        style={{ left: leftOffset }}
+      >
+        <div className="max-w-5xl mx-auto flex justify-end items-center gap-4 p-4 pointer-events-auto">
+          <Button
+            onClick={handleNext}
+            disabled={
+              isLoading || !team || (team.status !== "FIXED" && !team.isLeader)
+            }
+            className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] hover:bg-blue-700 text-white border-none shadow-lg disabled:opacity-50"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="sm:mr-2 h-4 w-4 animate-spin" />
+                <span className="hidden sm:inline">Proses...</span>
+              </>
+            ) : team?.status === "FIXED" ? (
+              <>
+                <span className="hidden sm:inline">Selanjutnya</span>
+                <ArrowRight className="sm:ml-2 h-4 w-4" />
+              </>
+            ) : (
+              <>
+                <span className="hidden sm:inline">Tetapkan Tim</span>
+                <Check className="sm:hidden h-4 w-4" />
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Dialog Gabung Tim */}
@@ -3332,8 +3375,8 @@ const TeamCreationPage = () => {
           onConfirm={executeConfirmAction}
           variant={
             confirmAction.type.includes("reject") ||
-            confirmAction.type === "remove" ||
-            confirmAction.type === "cancel-invite"
+              confirmAction.type === "remove" ||
+              confirmAction.type === "cancel-invite"
               ? "destructive"
               : "default"
           }
@@ -3448,8 +3491,6 @@ const TeamCreationPage = () => {
           </DialogContent>
         </Dialog>
       )}
-    </>
+    </div>
   );
-};
-
-export default TeamCreationPage;
+}

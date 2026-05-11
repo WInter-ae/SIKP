@@ -53,6 +53,7 @@ import { getMyMahasiswaProfile } from "~/lib/services/mahasiswa.service";
 import { useUser } from "~/contexts/user-context";
 import { useAuth } from "~/contexts/auth-context";
 import { AlertCircle, ArrowLeft, ArrowRight, Info } from "lucide-react";
+import { useSidebar } from "~/components/ui/sidebar";
 
 function normalizePlaceholderValue(value?: string | null): string {
   if (!value) return "";
@@ -71,6 +72,9 @@ type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
 
 function SubmissionPage() {
   const navigate = useNavigate();
+  const { state, isMobile } = useSidebar();
+  const leftOffset = isMobile ? "0" : state === "expanded" ? "16rem" : "3rem";
+
   const { user } = useUser();
   const { isLoading: isUserLoading, isAuthenticated } = useAuth();
 
@@ -144,7 +148,10 @@ function SubmissionPage() {
     (doc) => !isSuratPengantarDocument(doc.documentType),
   );
 
-  const loadSubmittedRequestStatuses = async (submissionId: string) => {
+  const loadSubmittedRequestStatuses = async (
+    submissionId: string,
+    fallbackDosenName?: string,
+  ) => {
     try {
       const response = await getSubmissionLetterRequestStatuses(submissionId);
 
@@ -154,13 +161,6 @@ function SubmissionPage() {
           response.message,
         );
         return;
-      }
-
-      if (response.data.length === 0) {
-        console.warn(
-          "⚠️ Letter request status endpoint returned no parsable items for submission:",
-          submissionId,
-        );
       }
 
       const nextKeys = new Set<string>();
@@ -193,7 +193,15 @@ function SubmissionPage() {
           nextLatestRequestIds[requestKey] = item.latestRequestId;
         if (item.rejectionReason)
           nextRejectionReasons[requestKey] = item.rejectionReason;
-        if (item.dosenName) nextDosenKpNames[requestKey] = item.dosenName;
+
+        // ✅ Fallback to team's lecturer name if status API only has UUID/null
+        if (item.dosenName) {
+          nextDosenKpNames[requestKey] = item.dosenName;
+        } else if (fallbackDosenName) {
+          nextDosenKpNames[requestKey] = fallbackDosenName;
+        } else if (submission?.team?.academicSupervisor) {
+          nextDosenKpNames[requestKey] = submission.team.academicSupervisor;
+        }
       });
       setSignedUrlByKey(nextSignedUrls);
       setLatestRequestIdByKey(nextLatestRequestIds);
@@ -296,7 +304,10 @@ function SubmissionPage() {
             if (submissionResponse.data.documents) {
               setSubmissionDocuments(submissionResponse.data.documents);
             }
-            await loadSubmittedRequestStatuses(submissionResponse.data.id);
+            await loadSubmittedRequestStatuses(
+              submissionResponse.data.id,
+              submissionResponse.data.team?.dosenKpName,
+            );
             // form dengan data submission pada db yang ada
             setAdditionalInfo({
               tujuanSurat: normalizePlaceholderValue(
@@ -528,14 +539,14 @@ function SubmissionPage() {
         const response =
           currentStatus === "DITOLAK" && latestRequestId
             ? await reapplySuratPermohonanApproval(
-                latestRequestId,
-                memberId,
-                mahasiswaEsignatureUrl,
-              )
+              latestRequestId,
+              memberId,
+              mahasiswaEsignatureUrl,
+            )
             : await requestSuratPermohonanApproval(
-                memberId,
-                mahasiswaEsignatureUrl,
-              );
+              memberId,
+              mahasiswaEsignatureUrl,
+            );
         if (response.success) {
           toast.success(
             currentStatus === "DITOLAK"
@@ -833,7 +844,7 @@ function SubmissionPage() {
           </p>
         </div>
 
-        <Card className="mb-8">
+        <Card className="mb-8 border-t-4 border-t-blue-600">
           <CardContent className="flex min-h-55 items-center justify-center p-6">
             <div className="flex flex-col items-center gap-4">
               <Alert
@@ -856,9 +867,9 @@ function SubmissionPage() {
   }
 
   return (
-    <>
+    <div className="pb-10">
       {/* Header Section */}
-      <div className="mb-6">
+      <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
           Halaman Pengajuan Syarat Kerja Praktik
         </h1>
@@ -866,12 +877,7 @@ function SubmissionPage() {
           Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
           Praktik
         </p>
-        {/* {teamName && (
-          <p className="text-sm text-muted-foreground mt-2">
-            Tim: {teamName} ({teamMembers.length} anggota, status{" "}
-            {teamStatus || "-"})
-          </p>
-        )} */}
+        <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
 
       {/* Info Alert */}
@@ -940,7 +946,7 @@ function SubmissionPage() {
         </Alert>
       )}
 
-      <Card className="mb-8">
+      <Card className="mb-6 border-t-4 border-t-blue-600">
         <CardContent>
           {/* Keterangan Lain Section */}
           <div className="mb-8">
@@ -1131,26 +1137,36 @@ function SubmissionPage() {
         </CardContent>
       </Card>
 
-      {/* Navigation Buttons - Always show */}
-      <div className="flex justify-between items-center gap-2 mt-6">
-        <Button variant="secondary" asChild className="px-6 py-3 font-medium">
-          <Link to="/mahasiswa/kp/buat-tim">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Sebelumnya
-          </Link>
-        </Button>
-        <Button
-          className="px-6 py-3 font-medium"
-          disabled={!canGoNext}
-          onClick={() => {
-            if (canGoNext) {
-              navigate("/mahasiswa/kp/surat-pengantar");
-            }
-          }}
-        >
-          Selanjutnya
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+      {/* Sticky Navigation Buttons */}
+      <div
+        className="fixed bottom-0 right-0 z-40 transition-all duration-300 pointer-events-none"
+        style={{ left: leftOffset }}
+      >
+        <div className="max-w-5xl mx-auto flex justify-between items-center gap-4 p-4 pointer-events-auto">
+          <Button
+            variant="destructive"
+            asChild
+            className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#FF4D4D] hover:bg-red-600 text-white border-none shadow-lg"
+          >
+            <Link to="/mahasiswa/kp/buat-tim">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              <span className="hidden sm:inline">Sebelumnya</span>
+            </Link>
+          </Button>
+
+          <Button
+            className="flex-none px-4 sm:px-8 py-2 font-semibold bg-[#0066FF] hover:bg-blue-700 text-white border-none shadow-lg disabled:opacity-50"
+            disabled={!canGoNext}
+            onClick={() => {
+              if (canGoNext) {
+                navigate("/mahasiswa/kp/surat-pengantar");
+              }
+            }}
+          >
+            <span className="hidden sm:inline">Selanjutnya</span>
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
       </div>
       <ConfirmDialog
         open={isProposalReuploadConfirmOpen}
@@ -1194,7 +1210,7 @@ function SubmissionPage() {
         cancelText="Batal"
         variant="default"
       />
-    </>
+    </div>
   );
 }
 

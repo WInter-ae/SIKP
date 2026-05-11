@@ -53,50 +53,87 @@ export function LoginForm({
       onSubmit={onSubmit}
       {...props}
     >
-      <div className="flex flex-col gap-5 rounded-xl border border-border/60 bg-card p-6 shadow-sm">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <div className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-full">
-            <ShieldCheck className="h-6 w-6" />
+      <div className="group relative flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] transition-all duration-300 sm:gap-6 sm:rounded-[2rem] sm:p-10 hover:-translate-y-1 dark:bg-slate-900">
+        {/* 3D "Thickness" Simulation - hidden or smaller on mobile */}
+        <div className="absolute inset-0 -z-10 translate-x-[4px] translate-y-[4px] rounded-3xl bg-slate-200/50 sm:translate-x-[6px] sm:translate-y-[6px] sm:rounded-[2rem]" />
+
+        <div className="flex flex-col items-center gap-4 text-center sm:gap-6">
+          <div className="relative">
+            <div className="animate-glow-pulse absolute inset-0 rounded-full bg-primary/20 blur-xl sm:blur-2xl"></div>
+            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-3 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05),0_10px_20px_rgba(0,0,0,0.1)] sm:h-24 w-24 sm:rounded-[1.5rem] sm:p-4 dark:bg-slate-800">
+              <img
+                src="/images/unsri.png"
+                alt="Logo UNSRI"
+                className="h-12 w-12 object-contain sm:h-16 sm:w-16"
+              />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold">Masuk dengan SSO UNSRI</h1>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            Autentikasi akun SIKP sekarang menggunakan SSO UNSRI dengan keamanan
-            Authorization Code + PKCE.
+
+          <div className="space-y-1 sm:space-y-2">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+              Masuk ke SIKP
+            </h1>
+            <div className="mx-auto h-1 w-8 rounded-full bg-primary/30 sm:w-12" />
+            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-[0.2em] opacity-80 sm:text-xs">
+              Integrasi SSO UNSRI
+            </p>
+          </div>
+
+          <p className="text-slate-500 max-w-[260px] text-xs leading-relaxed sm:max-w-[300px] sm:text-sm dark:text-slate-400">
+            Akses portal Kerja Praktik Anda dengan aman melalui sistem
+            autentikasi terpusat.
           </p>
         </div>
 
         {(error || callbackError) && (
           <div
             role="alert"
-            className="rounded-md bg-destructive/15 p-3 text-sm text-destructive"
+            className="animate-in fade-in zoom-in-95 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-center text-xs font-semibold text-destructive sm:rounded-2xl sm:p-4 sm:text-sm"
           >
             {error || callbackError}
           </div>
         )}
 
-        <Button type="submit" disabled={isSubmitting || isLoading}>
+        <Button
+          type="submit"
+          size="lg"
+          disabled={isSubmitting || isLoading}
+          className="relative h-12 w-full overflow-hidden rounded-xl bg-primary text-base font-bold shadow-[0_10px_20px_-5px_rgba(var(--primary),0.4)] transition-all sm:h-14 sm:rounded-2xl sm:text-lg hover:translate-y-[-2px] active:translate-y-[1px]"
+        >
           {isSubmitting || isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Memproses...
-            </>
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin sm:h-5 sm:w-5" />
+              <span>Memproses...</span>
+            </div>
           ) : (
-            <>
-              <ShieldCheck className="h-4 w-4" />
-              Login dengan SSO UNSRI
-            </>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 sm:h-6 sm:w-6" />
+              <span>Login SSO UNSRI</span>
+            </div>
           )}
         </Button>
 
-        <p className="text-muted-foreground text-center text-xs">
-          Login email/password lokal sudah dinonaktifkan pada mode integrasi
-          SSO.
-        </p>
+        <div className="space-y-4 sm:space-y-6">
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-100 dark:border-slate-800" />
+            </div>
+            <span className="relative bg-white px-3 text-[9px] font-bold uppercase tracking-widest text-slate-400 sm:px-4 sm:text-[10px] dark:bg-slate-900">
+              Keamanan Terjamin
+            </span>
+          </div>
 
-        <div className="text-center text-sm">
-          <Link to="/" className="text-primary underline underline-offset-4">
-            Kembali ke beranda
-          </Link>
+          <div className="flex items-center justify-center">
+            <Link
+              to="/"
+              className="text-primary hover:text-primary/80 group flex items-center gap-2 text-xs font-bold transition-all sm:text-sm"
+            >
+              <span>Kembali ke Beranda</span>
+              <span className="transition-transform group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
+          </div>
         </div>
       </div>
     </form>

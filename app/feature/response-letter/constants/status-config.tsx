@@ -34,9 +34,9 @@ export function getResponseLetterStatusConfig(
       textColor: "text-gray-600 dark:text-gray-400",
     },
     APPROVED: {
-      title: "Surat Balasan Disetujui",
+      title: "Surat Balasan(berstatus: Disetujui) Terverifikasi",
       description:
-        "Selamat! Surat balasan Anda telah diverifikasi dan disetujui oleh admin. Kerja praktik Anda telah disetujui.",
+        "Surat balasan Anda telah diverifikasi oleh admin. Sekarang, anda diizinkan untuk melaksanakan kerja praktik.",
       icon: <CheckCircle2 className="size-6" />,
       iconBg: "bg-green-600",
       bg: "bg-green-50 dark:bg-green-950/20",
@@ -44,9 +44,9 @@ export function getResponseLetterStatusConfig(
       textColor: "text-green-600 dark:text-green-400",
     },
     REJECTED: {
-      title: "Surat Balasan Ditolak",
+      title: "Surat Balasan(berstatus: Ditolak) Terverifikasi",
       description:
-        "Surat balasan Anda ditolak oleh admin. Silakan periksa komentar di bawah dan ajukan ulang dengan perbaikan yang diperlukan.",
+        "Surat balasan Anda telah diverifikasi oleh admin. Dikarenakan surat balasan Anda ditolak, silakan ajukan ulang dengan mencari instansi lain.",
       icon: <XCircle className="size-6" />,
       iconBg: "bg-red-600",
       bg: "bg-red-50 dark:bg-red-950/20",

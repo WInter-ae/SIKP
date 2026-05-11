@@ -5,28 +5,30 @@ import { LoginForm } from "~/feature/login/components/login-form";
 
 export default function LoginPage() {
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
-      <div className="flex flex-col gap-4 p-6 md:p-10">
-        <div className="flex justify-center gap-2 md:justify-start">
-          <Link to="/" className="flex items-center gap-2 font-medium">
-            <div className="bg-primary text-primary-foreground flex size-6 items-center justify-center rounded-md">
-              <GalleryVerticalEnd className="size-4" />
+    <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-[#f8fafc] p-6 md:p-10">
+      {/* Subtle Pattern or Clean White */}
+      <div className="absolute inset-0 z-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40" />
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <Link to="/" className="group flex items-center gap-3">
+            <div className="bg-primary flex size-10 items-center justify-center rounded-xl shadow-lg transition-transform group-hover:rotate-12">
+              <GalleryVerticalEnd className="text-primary-foreground size-6" />
             </div>
-            SIKP
+            <span className="text-2xl font-black tracking-tighter uppercase">
+              SIKP
+            </span>
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-md">
-            <LoginForm />
-          </div>
+
+        <LoginForm />
+
+        <div className="mt-8 text-center">
+          <p className="text-muted-foreground text-xs font-medium opacity-60">
+            &copy; {new Date().getFullYear()} Universitas Sriwijaya. All rights
+            reserved.
+          </p>
         </div>
-      </div>
-      <div className="bg-muted relative hidden lg:block">
-        <img
-          src="https://ui.shadcn.com/placeholder.svg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
       </div>
     </div>
   );

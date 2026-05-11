@@ -47,7 +47,7 @@ function FileUpload({ label, onFileChange }: FileUploadProps) {
       <Label className="block font-medium mb-2">{label}</Label>
       <div
         className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition",
+          "border-2 border-dashed rounded-lg p-4 sm:p-8 text-center cursor-pointer transition",
           isDragging
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50",
@@ -63,8 +63,8 @@ function FileUpload({ label, onFileChange }: FileUploadProps) {
           onChange={handleFileChange}
         />
         <label htmlFor="response-file-upload" className="cursor-pointer">
-          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-          <p className="text-muted-foreground">
+          <Upload className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">
             {fileName ? fileName : "Klik untuk upload atau drag and drop file"}
           </p>
         </label>

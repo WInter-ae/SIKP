@@ -47,10 +47,24 @@ function normalizeLatestStatus(
   return null;
 }
 
-function getString(item: RawItem, keys: string[]): string | null {
+function isUUID(value: string | null): boolean {
+  if (!value) return false;
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(value);
+}
+
+function getString(
+  item: RawItem,
+  keys: string[],
+  excludeUUID = false,
+): string | null {
   for (const key of keys) {
     const value = item[key];
-    if (typeof value === "string" && value.trim()) return value;
+    if (typeof value === "string" && value.trim()) {
+      if (excludeUUID && isUUID(value)) continue;
+      return value;
+    }
   }
   return null;
 }
@@ -111,28 +125,44 @@ function normalizeStatusItem(item: RawItem): LetterRequestStatusItem | null {
     "reason",
   ]);
 
-  const dosenObjectResult = RawItemSchema.safeParse(item.dosen);
+  const dosenObjectResult = RawItemSchema.safeParse(item.dosen || item.lecturer || item.verifier || item.approver || item.dosenKp);
   const dosenObject = dosenObjectResult.success ? dosenObjectResult.data : null;
   const dosenNameFromObject = dosenObject
-    ? getString(dosenObject, [
-        "name",
-        "nama",
-        "fullName",
-        "namaLengkap",
-        "nama_lengkap",
-      ])
+    ? getString(
+        dosenObject,
+        [
+          "name",
+          "nama",
+          "fullName",
+          "namaLengkap",
+          "nama_lengkap",
+          "dosen_name",
+          "dosenName",
+          "display_name",
+        ],
+        true,
+      )
     : null;
   const dosenName =
-    getString(item, [
-      "dosenNama",
-      "dosen_nama",
-      "namaDosen",
-      "nama_dosen",
-      "dosenName",
-      "dosen_name",
-      "lecturerName",
-      "lecturer_name",
-    ]) ?? dosenNameFromObject;
+    getString(
+      item,
+      [
+        "dosen_full_name",
+        "dosenNama",
+        "dosen_nama",
+        "namaDosen",
+        "nama_dosen",
+        "dosenName",
+        "dosen_name",
+        "lecturerName",
+        "lecturer_name",
+        "verifierName",
+        "verifier_name",
+        "approverName",
+        "approver_name",
+      ],
+      true,
+    ) ?? dosenNameFromObject;
 
   return {
     memberMahasiswaId: memberMahasiswaId,

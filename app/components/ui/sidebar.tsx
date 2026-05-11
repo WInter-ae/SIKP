@@ -1,4 +1,7 @@
+"use client";
+
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
@@ -163,6 +166,43 @@ function Sidebar({
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
+  const [portalRoot, setPortalRoot] = React.useState<HTMLElement | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let root = document.getElementById("sikp-sidebar-portal");
+    let created = false;
+
+    if (!root) {
+      root = document.createElement("div");
+      root.id = "sikp-sidebar-portal";
+      // Use a fixed, zero-sized portal root so it doesn't cover the viewport
+      // (prevents click blocking) while preserving fixed-position children
+      // behavior. Keep pointer events off on the root itself.
+      Object.assign(root.style, {
+        position: "fixed",
+        top: "0",
+        left: "0",
+        width: "0",
+        height: "0",
+        overflow: "visible",
+        pointerEvents: "none",
+        zIndex: "0",
+      });
+      document.body.appendChild(root);
+      created = true;
+    }
+
+    setPortalRoot(root);
+
+    return () => {
+      if (created && root && root.parentElement) {
+        root.parentElement.removeChild(root);
+      }
+    };
+  }, []);
+
   if (collapsible === "none") {
     return (
       <div
@@ -185,7 +225,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+          className="text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden backdrop-blur-sm bg-(--sidebar)/95 shadow-2xl"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -204,50 +244,68 @@ function Sidebar({
   }
 
   return (
-    <div
-      className="group peer text-sidebar-foreground hidden md:block"
-      data-state={state}
-      data-collapsible={state === "collapsed" ? collapsible : ""}
-      data-variant={variant}
-      data-side={side}
-      data-slot="sidebar"
-    >
-      {/* This is what handles the sidebar gap on desktop */}
-      <div
-        data-slot="sidebar-gap"
-        className={cn(
-          "relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear",
-          "group-data-[collapsible=offcanvas]:w-0",
-          "group-data-[side=right]:rotate-180",
-          variant === "floating" || variant === "inset"
-            ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+    <>
+      {/* Render a portal for desktop sidebar so it's not affected by ancestor transforms */}
+      {portalRoot &&
+        createPortal(
+          <div style={{ pointerEvents: "none" }}>
+            <div
+              className="group peer text-sidebar-foreground hidden md:block"
+              data-state={state}
+              data-collapsible={state === "collapsed" ? collapsible : ""}
+              data-variant={variant}
+              data-side={side}
+              data-slot="sidebar"
+              style={{ pointerEvents: "auto" }}
+            >
+              {/* This is what handles the sidebar gap on desktop */}
+              <div
+                data-slot="sidebar-gap"
+                className={cn(
+                  "relative bg-transparent transition-[width] duration-200 ease-linear",
+                  "group-data-[collapsible=offcanvas]:w-0",
+                  "group-data-[side=right]:rotate-180",
+                  variant === "floating" || variant === "inset"
+                    ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
+                    : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+                )}
+                style={{ width: SIDEBAR_WIDTH }}
+              />
+              <div
+                data-slot="sidebar-container"
+                className={cn(
+                  "fixed inset-y-0 hidden h-screen transition-[left,right,width] duration-200 ease-linear md:flex",
+                  side === "left"
+                    ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
+                    : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
+                  // Adjust the padding for floating and inset variants.
+                  variant === "floating" || variant === "inset"
+                    ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
+                    : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+                  className,
+                )}
+                {...props}
+                style={
+                  {
+                    pointerEvents: "auto",
+                    width: SIDEBAR_WIDTH,
+                    zIndex: 9999,
+                  } as React.CSSProperties
+                }
+              >
+                <div
+                  data-sidebar="sidebar"
+                  data-slot="sidebar-inner"
+                  className="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
+                >
+                  {children}
+                </div>
+              </div>
+            </div>
+          </div>,
+          portalRoot,
         )}
-      />
-      <div
-        data-slot="sidebar-container"
-        className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
-          side === "left"
-            ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-            : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-          // Adjust the padding for floating and inset variants.
-          variant === "floating" || variant === "inset"
-            ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
-          className,
-        )}
-        {...props}
-      >
-        <div
-          data-sidebar="sidebar"
-          data-slot="sidebar-inner"
-          className="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow-sm"
-        >
-          {children}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
 
@@ -289,7 +347,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
       onClick={toggleSidebar}
       title="Toggle Sidebar"
       className={cn(
-        "hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex",
+        "hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 sm:flex",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",
         "[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize",
         "hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full",
@@ -303,14 +361,38 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
 }
 
 function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
+  const { isMobile, state } = useSidebar();
+  const [side, setSide] = React.useState<"left" | "right">("left");
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const portal = document.getElementById("sikp-sidebar-portal");
+    const sidebarEl = portal?.querySelector('[data-slot="sidebar"]');
+    const ds = sidebarEl?.getAttribute("data-side");
+    if (ds === "right" || ds === "left") setSide(ds as "left" | "right");
+  }, []);
+
+  const style: React.CSSProperties = {};
+  if (!isMobile) {
+    if (state === "expanded") {
+      if (side === "left") style.marginLeft = SIDEBAR_WIDTH;
+      else style.marginRight = SIDEBAR_WIDTH;
+    } else {
+      // collapsed -> leave small rail space so content doesn't jump under icons
+      if (side === "left") style.marginLeft = SIDEBAR_WIDTH_ICON;
+      else style.marginRight = SIDEBAR_WIDTH_ICON;
+    }
+  }
+
   return (
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "bg-background relative flex w-full flex-1 flex-col",
+        "bg-background relative flex w-full flex-1 flex-col min-h-0 overflow-auto",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
         className,
       )}
+      style={style}
       {...props}
     />
   );

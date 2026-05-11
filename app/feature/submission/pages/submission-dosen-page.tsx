@@ -368,13 +368,13 @@ function extractTeamInfoFromSubmission(
     supervisor: resolveSubmissionSupervisor(submission),
     leader: leaderRaw?.user
       ? {
-          nim: leaderRaw.user.nim || undefined,
-          name: leaderRaw.user.name || undefined,
-          prodi: leaderRaw.user.prodi || undefined,
-          email: leaderRaw.user.email || undefined,
-          angkatan: leaderRaw.user.angkatan || undefined,
-          semester: leaderRaw.user.semester || undefined,
-        }
+        nim: leaderRaw.user.nim || undefined,
+        name: leaderRaw.user.name || undefined,
+        prodi: leaderRaw.user.prodi || undefined,
+        email: leaderRaw.user.email || undefined,
+        angkatan: leaderRaw.user.angkatan || undefined,
+        semester: leaderRaw.user.semester || undefined,
+      }
       : undefined,
   };
 }
@@ -400,10 +400,10 @@ function getMahasiswaDetail(
 function isWakilDekanJabatan(jabatanStruktural?: string[]): boolean {
   return Boolean(
     Array.isArray(jabatanStruktural) &&
-      jabatanStruktural.some((jabatan) => {
-        const normalized = jabatan.toLowerCase();
-        return normalized.includes("wakil") && normalized.includes("dekan");
-      }),
+    jabatanStruktural.some((jabatan) => {
+      const normalized = jabatan.toLowerCase();
+      return normalized.includes("wakil") && normalized.includes("dekan");
+    }),
   );
 }
 
@@ -436,13 +436,13 @@ function extractTeamInfoFromRequestItem(
     supervisor: item.academic_supervisor,
     leader: leader
       ? {
-          nim: leader.nim || undefined,
-          name: leader.name || undefined,
-          prodi: leader.prodi || undefined,
-          email: undefined,
-          angkatan: undefined,
-          semester: undefined,
-        }
+        nim: leader.nim || undefined,
+        name: leader.name || undefined,
+        prodi: leader.prodi || undefined,
+        email: undefined,
+        angkatan: undefined,
+        semester: undefined,
+      }
       : undefined,
   };
 }
@@ -509,59 +509,59 @@ function SubmissionDosenPage() {
       const suratPengantarEntries =
         response.success && response.data
           ? response.data
-              .filter((item) => isAdminApprovedForDosenQueue(item))
-              .map((item) => {
-                const detail = getMahasiswaDetail(
-                  detailByNim,
-                  detailByName,
-                  item,
-                );
+            .filter((item) => isAdminApprovedForDosenQueue(item))
+            .map((item) => {
+              const detail = getMahasiswaDetail(
+                detailByNim,
+                detailByName,
+                item,
+              );
 
-                let teamInfo = teamInfoBySubmissionId.get(
-                  item.submissionId || item.id,
-                );
+              let teamInfo = teamInfoBySubmissionId.get(
+                item.submissionId || item.id,
+              );
 
-                if (!teamInfo) {
-                  teamInfo = extractTeamInfoFromRequestItem(item) || undefined;
-                }
+              if (!teamInfo) {
+                teamInfo = extractTeamInfoFromRequestItem(item) || undefined;
+              }
 
-                return {
-                  id: item.id,
-                  tanggal: formatTanggalForTable(
-                    item.tanggal || item.createdAt,
-                  ),
-                  nim: item.nim || "-",
-                  namaMahasiswa: item.namaMahasiswa || "-",
-                  programStudi: detail.programStudi || item.programStudi || "-",
-                  angkatan: detail.angkatan || undefined,
-                  semester: detail.semester || undefined,
-                  email: detail.email || undefined,
-                  jenisSurat: item.jenisSurat || "Surat Pengantar",
-                  status: normalizeStatus(item.status || "menunggu"),
-                  supervisor: teamInfo?.supervisor,
-                  teamMembers: teamInfo?.members,
-                  mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
-                    item as unknown as Record<string, unknown>,
-                  ),
-                  signedFileUrl: resolveSuratPengantarSignedFileUrl(item),
-                  approvedAt: item.approvedAt || item.approved_at,
-                  namaPerusahaan: item.companyName,
-                  tujuanSurat: resolveSuratPengantarTujuan(item),
-                  alamatPerusahaan: item.companyAddress,
-                  teleponPerusahaan: undefined,
-                  jenisProdukUsaha: undefined,
-                  divisi: item.division,
-                  tanggalMulai: item.startDate,
-                  tanggalSelesai: item.endDate,
-                  jumlahSks: undefined,
-                  tahunAjaran: undefined,
-                  dosenNama: dosenNama || "-",
-                  dosenNip: dosenNip || "-",
-                  dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
-                  dosenEsignatureUrl,
-                  nomorSurat: item.nomorSurat || item.letterNumber,
-                };
-              })
+              return {
+                id: item.id,
+                tanggal: formatTanggalForTable(
+                  item.tanggal || item.createdAt,
+                ),
+                nim: item.nim || "-",
+                namaMahasiswa: item.namaMahasiswa || "-",
+                programStudi: detail.programStudi || item.programStudi || "-",
+                angkatan: detail.angkatan || undefined,
+                semester: detail.semester || undefined,
+                email: detail.email || undefined,
+                jenisSurat: item.jenisSurat || "Surat Pengantar",
+                status: normalizeStatus(item.status || "menunggu"),
+                supervisor: teamInfo?.supervisor,
+                teamMembers: teamInfo?.members,
+                mahasiswaEsignatureUrl: resolveMahasiswaSignatureUrl(
+                  item as unknown as Record<string, unknown>,
+                ),
+                signedFileUrl: resolveSuratPengantarSignedFileUrl(item),
+                approvedAt: item.approvedAt || item.approved_at,
+                namaPerusahaan: item.companyName,
+                tujuanSurat: resolveSuratPengantarTujuan(item),
+                alamatPerusahaan: item.companyAddress,
+                teleponPerusahaan: undefined,
+                jenisProdukUsaha: undefined,
+                divisi: item.division,
+                tanggalMulai: item.startDate,
+                tanggalSelesai: item.endDate,
+                jumlahSks: undefined,
+                tahunAjaran: undefined,
+                dosenNama: dosenNama || "-",
+                dosenNip: dosenNip || "-",
+                dosenJabatan: dosenJabatan || "Wakil Dekan Bidang Akademik",
+                dosenEsignatureUrl,
+                nomorSurat: item.nomorSurat || item.letterNumber,
+              };
+            })
           : [];
 
       setEntries(suratPengantarEntries);
@@ -661,22 +661,22 @@ function SubmissionDosenPage() {
       prev.map((entry) =>
         entry.id === targetEntry.id
           ? {
-              ...entry,
-              status: "disetujui" as const,
-              approvedAt:
-                response.data?.approvedAt ||
-                response.data?.approved_at ||
-                entry.approvedAt,
-              signedFileUrl:
-                resolveAssetUrl(
-                  pickFirstNonEmptyString(
-                    response.data?.signedFileUrl,
-                    response.data?.signed_file_url,
-                    response.data?.finalSignedFileUrl,
-                    response.data?.final_signed_file_url,
-                  ),
-                ) || entry.signedFileUrl,
-            }
+            ...entry,
+            status: "disetujui" as const,
+            approvedAt:
+              response.data?.approvedAt ||
+              response.data?.approved_at ||
+              entry.approvedAt,
+            signedFileUrl:
+              resolveAssetUrl(
+                pickFirstNonEmptyString(
+                  response.data?.signedFileUrl,
+                  response.data?.signed_file_url,
+                  response.data?.finalSignedFileUrl,
+                  response.data?.final_signed_file_url,
+                ),
+              ) || entry.signedFileUrl,
+          }
           : entry,
       ),
     );
@@ -747,7 +747,7 @@ function SubmissionDosenPage() {
     <div className="p-4 sm:p-6 md:p-8 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
-          <div>
+          <div className="relative pb-2">
             <h1 className="text-xl sm:text-3xl font-bold text-foreground">
               Verifikasi Pengajuan Surat Pengantar
             </h1>
@@ -755,22 +755,42 @@ function SubmissionDosenPage() {
               Kelola dan verifikasi surat mahasiswa sebagai tahap tanda tangan
               dosen
             </p>
+            <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              title={stat.title}
-              value={stat.value}
-              icon={stat.icon}
-              iconBgColor={stat.iconBgColor}
-            />
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          <StatCard
+            title={stats[0].title}
+            value={stats[0].value}
+            icon={stats[0].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-sm"
+          />
+          <StatCard
+            title={stats[1].title}
+            value={stats[1].value}
+            icon={stats[1].icon}
+            iconBgColor="bg-yellow-50 dark:bg-yellow-900/20"
+            className="border-l-4 border-l-yellow-300 shadow-sm"
+          />
+          <StatCard
+            title={stats[2].title}
+            value={stats[2].value}
+            icon={stats[2].icon}
+            iconBgColor="bg-red-50 dark:bg-red-900/20"
+            className="border-l-4 border-l-red-500 shadow-sm"
+          />
+          <StatCard
+            title={stats[3].title}
+            value={stats[3].value}
+            icon={stats[3].icon}
+            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            className="border-l-4 border-l-blue-600 shadow-md"
+          />
         </div>
 
-        <Card>
+        <Card className="shadow-sm border-none bg-muted/20">
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
             <div className="flex-1 min-w-[250px] relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -783,7 +803,7 @@ function SubmissionDosenPage() {
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[200px] font-semibold">
                 <SelectValue placeholder="Pilih Status" />
               </SelectTrigger>
               <SelectContent>
@@ -793,20 +813,16 @@ function SubmissionDosenPage() {
                 <SelectItem value="ditolak">Ditolak</SelectItem>
               </SelectContent>
             </Select>
-            <Button type="button">
-              <Filter className="w-4 h-4 mr-2" />
-              Filter
-            </Button>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-md border-none overflow-hidden">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg font-semibold text-foreground">
               Daftar Pengajuan Surat untuk Verifikasi Dosen
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
+          <CardContent className="p-0">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <p className="text-muted-foreground">
@@ -822,68 +838,66 @@ function SubmissionDosenPage() {
                 </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="pl-6 whitespace-nowrap">
-                      Tanggal
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">NIM</TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Nama Mahasiswa
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">
-                      Jenis Surat
-                    </TableHead>
-                    <TableHead className="whitespace-nowrap">Status</TableHead>
-                    <TableHead className="pr-6 whitespace-nowrap">
-                      Aksi
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredEntries.map((entry) => {
-                    const members = entry.teamMembers || [];
-                    const leader =
-                      members.find((member) => member.role === "Ketua") ||
-                      members[0];
-                    return (
-                      <TableRow key={entry.id} className="hover:bg-muted/50">
-                        <TableCell className="text-foreground pl-6">
-                          {entry.tanggal}
-                        </TableCell>
-                        <TableCell className="text-primary font-medium">
-                          {entry.nim}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium text-foreground">
-                            {leader?.name || entry.namaMahasiswa || "Unknown"}
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {members.length > 1
-                              ? `+ ${members.length - 1} Anggota`
-                              : "Individu"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-foreground">
-                          {entry.jenisSurat || "Surat"}
-                        </TableCell>
-                        <TableCell>{getStatusBadge(entry.status)}</TableCell>
-                        <TableCell className="pr-6">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-primary border-primary/50 hover:bg-primary/5"
-                            onClick={() => handleReview(entry)}
-                          >
-                            {entry.status === "menunggu" ? "Review" : "Lihat"}
-                          </Button>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="pl-6 whitespace-nowrap">
+                          Tanggal
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Nama Mahasiswa
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Perusahaan
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                        <TableHead className="pr-6 whitespace-nowrap">
+                          Aksi
+                        </TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredEntries.map((entry) => {
+                        const members = entry.teamMembers || [];
+                        const leader =
+                          members.find((member) => member.role === "Ketua") ||
+                          members[0];
+                        return (
+                          <TableRow key={entry.id} className="hover:bg-muted/50">
+                            <TableCell className="pl-6 text-foreground">
+                              {entry.tanggal}
+                            </TableCell>
+                            <TableCell>
+                              <div className="font-medium text-foreground">
+                                {leader?.name || entry.namaMahasiswa || "Unknown"}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {members.length > 1
+                                  ? `+ ${members.length - 1} Anggota`
+                                  : "Individu"}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-foreground">
+                              {entry.namaPerusahaan || "-"}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                            <TableCell className="pr-6">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-primary border-primary/50 hover:bg-primary/5"
+                                onClick={() => handleReview(entry)}
+                              >
+                                {entry.status === "menunggu" ? "Review" : "Lihat"}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
             )}
           </CardContent>
         </Card>

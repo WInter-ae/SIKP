@@ -105,14 +105,16 @@ export default function Page() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-14 md:hidden shrink-0 items-center gap-2 border-b bg-background px-4 sticky top-0 z-10">
+        <header className="bg-yellow-300 fixed inset-x-0 top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4 md:hidden">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1" />
-          <span className="font-semibold text-sm text-primary">
-            SIKP Mobile
+          <span className="bg-white border-2 border-white px-2 py-0.5 font-bold text-xs tracking-widest text-black rounded uppercase shadow-[2px_4px_8px_rgba(0,0,0,0.15)]">
+            SIKP MI
           </span>
         </header>
-        <Outlet />
+        <div className="pt-14 md:pt-0">
+          <Outlet />
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

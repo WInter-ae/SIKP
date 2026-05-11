@@ -104,13 +104,14 @@ function CoverLetterVerificationDialog({
       open={isOpen}
       onOpenChange={(open) => !open && handleCloseMainDialog()}
     >
-      <DialogContent className="!w-[96vw] !max-w-[96vw] sm:!max-w-[1320px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Verifikasi Surat</DialogTitle>
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-5xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 border-b shrink-0">
+          <DialogTitle className="text-xl sm:text-2xl font-bold">Verifikasi Surat Pengantar</DialogTitle>
         </DialogHeader>
 
-        {/* Student Information */}
-        <div className="rounded-lg border border-border bg-muted/30 p-5 space-y-4">
+        <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {/* Student Information */}
+          <div className="rounded-lg border border-border bg-muted/30 p-4 sm:p-5 space-y-4">
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             <h3 className="font-semibold text-foreground">
@@ -158,89 +159,93 @@ function CoverLetterVerificationDialog({
           </div>
         </div>
 
-        <div className="rounded-lg border border-border p-4 flex items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Surat tidak ditampilkan otomatis. Klik tombol untuk langsung
-            mengunduh PDF surat.
-          </p>
-          <Button
-            type="button"
-            onClick={handleDownloadPdf}
-            disabled={isGeneratingPdf}
-          >
-            <Download className="w-4 h-4 mr-2" />
-            {isGeneratingPdf ? "Membuat PDF..." : "Preview Surat Pengantar"}
-          </Button>
+          <div className="rounded-lg border border-border p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground text-center sm:text-left">
+              Surat tidak ditampilkan otomatis. Klik tombol untuk langsung
+              mengunduh PDF surat.
+            </p>
+            <Button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf}
+              className="w-full sm:w-auto"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {isGeneratingPdf ? "Membuat PDF..." : "Preview Surat Pengantar"}
+            </Button>
+          </div>
         </div>
 
-        {/* Action Buttons */}
-        {entry.status === "menunggu" && !isRejectFormVisible && (
-          <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={handleCloseMainDialog}>
-              Tutup
-            </Button>
-            <Button variant="destructive" onClick={handleOpenRejectForm}>
-              <XCircle className="w-4 h-4 mr-2" />
-              Tolak Ajuan
-            </Button>
-            <Button
-              className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => {
-                onApprove(entry);
-                handleCloseMainDialog();
-              }}
-            >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Approve
-            </Button>
-          </div>
-        )}
-
-        {/* Rejection Reason Form */}
-        {entry.status === "menunggu" && isRejectFormVisible && (
-          <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <XCircle className="w-4 h-4 text-destructive" />
-              <h4 className="font-semibold text-destructive text-sm">
-                Konfirmasi Penolakan Ajuan
-              </h4>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="reject-reason" className="text-sm">
-                Alasan Penolakan <span className="text-destructive">*</span>
-              </Label>
-              <Textarea
-                id="reject-reason"
-                placeholder="Tuliskan alasan penolakan ajuan surat ini..."
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={3}
-                className="resize-none"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={handleCancelReject}>
-                Batal
+        <div className="p-4 sm:p-6 pt-2 sm:pt-4 border-t shrink-0">
+          {/* Action Buttons */}
+          {entry.status === "menunggu" && !isRejectFormVisible && (
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
+              <Button variant="outline" onClick={handleCloseMainDialog} className="w-full sm:w-auto order-3 sm:order-1">
+                Tutup
+              </Button>
+              <Button variant="destructive" onClick={handleOpenRejectForm} className="w-full sm:w-auto order-2 sm:order-2">
+                <XCircle className="w-4 h-4 mr-2" />
+                Tolak Ajuan
               </Button>
               <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleConfirmReject}
-                disabled={!rejectReason.trim()}
+                className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto order-1 sm:order-3"
+                onClick={() => {
+                  onApprove(entry);
+                  handleCloseMainDialog();
+                }}
               >
-                <XCircle className="w-4 h-4 mr-1.5" />
-                Konfirmasi Tolak
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Approve
               </Button>
             </div>
-          </div>
-        )}
-        {entry.status !== "menunggu" && (
-          <div className="flex justify-end pt-2">
-            <Button variant="outline" onClick={handleCloseMainDialog}>
-              Tutup
-            </Button>
-          </div>
-        )}
+          )}
+
+          {/* Rejection Reason Form */}
+          {entry.status === "menunggu" && isRejectFormVisible && (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <XCircle className="w-4 h-4 text-destructive" />
+                <h4 className="font-semibold text-destructive text-sm">
+                  Konfirmasi Penolakan Ajuan
+                </h4>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="reject-reason" className="text-sm">
+                  Alasan Penolakan <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="reject-reason"
+                  placeholder="Tuliskan alasan penolakan ajuan surat ini..."
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={3}
+                  className="resize-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={handleCancelReject}>
+                  Batal
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleConfirmReject}
+                  disabled={!rejectReason.trim()}
+                >
+                  <XCircle className="w-4 h-4 mr-1.5" />
+                  Konfirmasi Tolak
+                </Button>
+              </div>
+            </div>
+          )}
+          {entry.status !== "menunggu" && (
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={handleCloseMainDialog} className="w-full sm:w-auto">
+                Tutup
+              </Button>
+            </div>
+          )}
+        </div>
       </DialogContent>
     </Dialog>
   );

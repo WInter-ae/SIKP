@@ -62,7 +62,7 @@ function AdditionalInfoForm({
         );
         onDataChange(formData);
       }
-    }, 5000); // 5 detik delay
+    }, 3000); // 3 detik delay
 
     return () => {
       if (debounceTimerRef.current) {
@@ -124,6 +124,7 @@ function AdditionalInfoForm({
             onChange={handleInputChange}
             value={formData.tujuanSurat}
             disabled={!isEditable}
+            className="text-sm"
           />
         </div>
         <div className="space-y-2">
@@ -136,6 +137,7 @@ function AdditionalInfoForm({
             onChange={handleInputChange}
             value={formData.namaTempat}
             disabled={!isEditable}
+            className="text-sm"
           />
         </div>
         <div className="space-y-2">
@@ -148,6 +150,7 @@ function AdditionalInfoForm({
             value={formData.alamatTempat}
             rows={3}
             disabled={!isEditable}
+            className="text-sm"
           />
         </div>
         <div className="space-y-2">
@@ -160,6 +163,7 @@ function AdditionalInfoForm({
             onChange={handleInputChange}
             value={formData.teleponPerusahaan}
             disabled={!isEditable}
+            className="text-sm"
           />
         </div>
         <div className="space-y-2">
@@ -172,6 +176,7 @@ function AdditionalInfoForm({
             onChange={handleInputChange}
             value={formData.jenisProdukUsaha}
             disabled={!isEditable}
+            className="text-sm"
           />
         </div>
         <div className="space-y-2">
@@ -184,6 +189,7 @@ function AdditionalInfoForm({
             onChange={handleInputChange}
             value={formData.divisi}
             disabled={!isEditable}
+            className="text-sm"
           />
         </div>
         <div className="space-y-2">
@@ -196,8 +202,9 @@ function AdditionalInfoForm({
               onChange={handleInputChange}
               value={formData.tanggalMulai}
               ref={tanggalMulaiRef}
-              className="pr-10"
+              className="pr-10 text-sm"
               disabled={!isEditable}
+              
             />
             <CalendarIcon
               className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground cursor-pointer"
@@ -218,7 +225,7 @@ function AdditionalInfoForm({
               onChange={handleInputChange}
               value={formData.tanggalSelesai}
               ref={tanggalSelesaiRef}
-              className="pr-10"
+              className="pr-10 text-sm"
               disabled={!isEditable}
             />
             <CalendarIcon

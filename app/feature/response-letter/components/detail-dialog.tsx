@@ -61,9 +61,9 @@ function DetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="min-w-5xl max-h-[90vh] flex flex-col overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-4xl lg:max-w-5xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 border-b">
+          <DialogTitle className="text-xl sm:text-2xl font-bold">
             Verifikasi Surat Balasan
           </DialogTitle>
           <DialogDescription>
@@ -71,7 +71,7 @@ function DetailDialog({
           </DialogDescription>
         </DialogHeader>
         {student && (
-          <div className="space-y-8 py-4 flex-1 overflow-y-auto pr-1 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 flex-1 overflow-y-auto pr-1 scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center">
@@ -211,16 +211,16 @@ function DetailDialog({
             </Card>
           </div>
         )}
-        <DialogFooter className="gap-3 sm:gap-2">
+        <DialogFooter className="p-4 sm:p-6 pt-2 sm:pt-4 border-t flex flex-col-reverse sm:flex-row sm:justify-between gap-3 sm:gap-2">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="flex-1"
+            className="flex-none px-8"
           >
             Tutup
           </Button>
           {student && !student.adminApproved && (
-            <Button onClick={handleApproveClick} className="flex-1">
+            <Button onClick={handleApproveClick} className="flex-none px-18">
               Verifikasi
             </Button>
           )}

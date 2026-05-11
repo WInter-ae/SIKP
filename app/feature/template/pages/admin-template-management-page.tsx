@@ -61,13 +61,11 @@ import {
 } from "lucide-react";
 import { CreateTemplateDialog } from "../components/create-template-dialog";
 import { EditTemplateDialog } from "../components/edit-template-dialog";
-import { TEMPLATE_CATEGORIES } from "../types/template.types";
 import type { TemplateType } from "../types/template.types";
 import { toast } from "sonner";
 import {
   getAllTemplates,
   deleteTemplate,
-  toggleTemplateActive,
   downloadTemplate,
   type TemplateResponse,
 } from "~/lib/services/template.service";
@@ -77,7 +75,6 @@ export default function TemplateManagementPage() {
   const { user } = useUser();
   const [templates, setTemplates] = useState<TemplateResponse[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState<TemplateType | "all">("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
@@ -124,7 +121,6 @@ export default function TemplateManagementPage() {
     } catch (error: unknown) {
       console.error("Error fetching templates:", error);
 
-      // Handle authorization errors
       if (
         (error as Error).message?.includes("Unauthorized") ||
         (error as Error).message?.includes("Forbidden")
@@ -140,48 +136,37 @@ export default function TemplateManagementPage() {
     }
   };
 
-  // Show loading state while checking authorization
   if (!isAuthorized) {
     return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground">Memeriksa akses...</p>
-          </CardContent>
-        </Card>
+      <div className="p-4 sm:p-6 md:p-8 flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <p className="text-muted-foreground font-medium">Memeriksa akses keamanan...</p>
+        </div>
       </div>
     );
   }
 
-  // Filter templates
-  const filteredTemplates = templates.filter((template) => {
-    const matchesSearch =
-      template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      template.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || template.type === filterType;
-    return matchesSearch && matchesType;
-  });
+  const filteredTemplates = templates.filter((template) =>
+    template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    template.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-  // Create template - akan dipanggil dari CreateTemplateDialog
   const handleCreateTemplate = async () => {
-    // Dialog akan handle create dan refresh
     setCreateDialogOpen(false);
     await fetchTemplates();
-    toast.success("Template berhasil dibuat");
+    toast.success("Template berhasil ditambahkan");
   };
 
-  // Edit template - akan dipanggil dari EditTemplateDialog
   const handleEditTemplate = async () => {
     setEditDialogOpen(false);
     setSelectedTemplate(null);
     await fetchTemplates();
-    toast.success("Template berhasil diupdate");
+    toast.success("Perubahan berhasil disimpan");
   };
 
-  // Delete template
   const handleDeleteTemplate = async () => {
     if (!templateToDelete) return;
-
     setIsLoading(true);
     try {
       const response = await deleteTemplate(templateToDelete.id);
@@ -191,15 +176,7 @@ export default function TemplateManagementPage() {
       } else {
         toast.error(response.message || "Gagal menghapus template");
       }
-    } catch (error: unknown) {
-      console.error("Error deleting template:", error);
-
-      if ((error as Error).message?.includes("Forbidden")) {
-        toast.error("Anda tidak memiliki izin untuk menghapus template");
-        navigate("/login");
-        return;
-      }
-
+    } catch (error) {
       toast.error("Terjadi kesalahan saat menghapus template");
     } finally {
       setIsLoading(false);
@@ -208,283 +185,165 @@ export default function TemplateManagementPage() {
     }
   };
 
-  // Toggle active status
-  const handleToggleActive = async (id: string) => {
-    setIsLoading(true);
-    try {
-      const response = await toggleTemplateActive(id);
-      if (response.success) {
-        await fetchTemplates();
-        toast.success("Status template berhasil diubah");
-      } else {
-        toast.error(response.message || "Gagal mengubah status template");
-      }
-    } catch (error: unknown) {
-      console.error("Error toggling template status:", error);
-
-      if ((error as Error).message?.includes("Forbidden")) {
-        toast.error("Anda tidak memiliki izin untuk mengubah status template");
-        navigate("/login");
-        return;
-      }
-
-      toast.error("Terjadi kesalahan saat mengubah status");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Download template
   const handleDownloadTemplate = async (template: TemplateResponse) => {
     try {
       await downloadTemplate(template.id, template.originalName);
-      toast.success("Template berhasil didownload");
-    } catch (error: unknown) {
-      console.error("Error downloading template:", error);
-
-      if ((error as Error).message?.includes("Forbidden")) {
-        toast.error("Anda tidak memiliki akses untuk mendownload template");
-        return;
-      }
-
-      toast.error("Gagal mendownload template");
+      toast.success(`Template "${template.name}" berhasil diunduh`);
+    } catch (error) {
+      toast.error("Gagal mengunduh template");
     }
   };
 
-  // View template (placeholder - bisa dibuat dialog preview)
-  const handleViewTemplate = (template: TemplateResponse) => {
-    // TODO: Implement preview dialog
-    console.log("View template:", template);
-    toast.info("Fitur preview akan segera tersedia");
-  };
-
-  const getTypeLabel = (type: TemplateType) => {
-    return TEMPLATE_CATEGORIES.find((c) => c.value === type)?.label || type;
-  };
-
   return (
-    <div className="container mx-auto p-4 sm:p-6 space-y-6">
-      <div>
-        <h1 className="text-xl sm:text-3xl font-bold tracking-tight">
-          Template Management
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Kelola template dokumen untuk berbagai keperluan mahasiswa
-        </p>
-      </div>
-
-      {/* Statistics */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Template
-            </CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{templates.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Template Aktif
-            </CardTitle>
-            <FileText className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {templates.filter((t) => t.isActive).length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Content */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <CardTitle>Daftar Template</CardTitle>
-              <CardDescription>
-                Kelola semua template dokumen di sini
-              </CardDescription>
-            </div>
-            <Button
-              onClick={() => setCreateDialogOpen(true)}
-              className="w-full sm:w-auto"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Tambah Template
-            </Button>
+    <div className="p-4 sm:p-6 md:p-8 bg-background min-h-screen">
+      <div className="max-w-7xl mx-auto space-y-8">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="relative pb-2">
+            <h1 className="text-xl sm:text-3xl font-bold text-foreground">
+              Manajemen Template Dokumen
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Kelola format dokumen resmi untuk keperluan Kerja Praktik
+            </p>
+            <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
           </div>
-        </CardHeader>
-        <CardContent>
-          {/* Search and Filter */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Cari template..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <Select
-                value={filterType}
-                onValueChange={(value) =>
-                  setFilterType(value as TemplateType | "all")
-                }
-              >
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Jenis</SelectItem>
-                  {TEMPLATE_CATEGORIES.map((category) => (
-                    <SelectItem key={category.value} value={category.value}>
-                      {category.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Template
+          </Button>
+        </div>
 
-          {/* Table */}
-          <div className="border rounded-lg overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="whitespace-nowrap">
-                    Nama Template
-                  </TableHead>
-                  <TableHead className="whitespace-nowrap">Tipe</TableHead>
-                  <TableHead className="whitespace-nowrap">Status</TableHead>
-                  <TableHead className="whitespace-nowrap">
-                    Terakhir Diupdate
-                  </TableHead>
-                  <TableHead className="text-right whitespace-nowrap">
-                    Aksi
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTemplates.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      className="text-center py-8 text-muted-foreground"
-                    >
-                      {searchQuery || filterType !== "all"
-                        ? "Tidak ada template yang sesuai dengan filter"
-                        : "Belum ada template. Klik tombol 'Tambah Template' untuk membuat."}
-                    </TableCell>
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-l-4 border-l-blue-600 shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                Total Template
+              </CardTitle>
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <FileText className="h-4 w-4 text-blue-600" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{templates.length}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search and Table Section */}
+        <div className="space-y-4">
+          <Card className="shadow-sm">
+            <CardContent className="p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Cari nama atau deskripsi template..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-10"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 hover:bg-muted/50">
+                    <TableHead className="pl-6 py-4 font-semibold text-foreground">Nama Dokumen</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground">Deskripsi</TableHead>
+                    <TableHead className="py-4 font-semibold text-foreground">Terakhir Diupdate</TableHead>
+                    <TableHead className="pr-6 py-4 text-right font-semibold text-foreground">Aksi</TableHead>
                   </TableRow>
-                ) : (
-                  filteredTemplates.map((template) => (
-                    <TableRow key={template.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{template.name}</div>
-                          {template.description && (
-                            <div className="text-sm text-muted-foreground line-clamp-1">
-                              {template.description}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {getTypeLabel(template.type)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            template.isActive ? "default" : "destructive"
-                          }
-                        >
-                          {template.isActive ? "Aktif" : "Nonaktif"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(template.updatedAt).toLocaleDateString(
-                          "id-ID",
-                          {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          },
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedTemplate(template);
-                                setEditDialogOpen(true);
-                              }}
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleViewTemplate(template)}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              Lihat
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDownloadTemplate(template)}
-                            >
-                              <Download className="h-4 w-4 mr-2" />
-                              Download
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleToggleActive(template.id)}
-                            >
-                              {template.isActive ? (
-                                <ToggleLeft className="h-4 w-4 mr-2" />
-                              ) : (
-                                <ToggleRight className="h-4 w-4 mr-2" />
-                              )}
-                              {template.isActive ? "Nonaktifkan" : "Aktifkan"}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setTemplateToDelete(template);
-                                setDeleteDialogOpen(true);
-                              }}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Hapus
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-10">
+                        <p className="text-muted-foreground animate-pulse">Memuat data template...</p>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+                  ) : filteredTemplates.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-10">
+                        <p className="text-muted-foreground italic">
+                          {searchQuery ? "Tidak ditemukan template yang sesuai" : "Belum ada template tersedia"}
+                        </p>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredTemplates.map((template) => (
+                      <TableRow key={template.id} className="hover:bg-muted/50 transition-colors">
+                        <TableCell className="pl-6 py-4 font-medium text-foreground">
+                          {template.name}
+                        </TableCell>
+                        <TableCell className="py-4 text-sm text-muted-foreground max-w-xs truncate">
+                          {template.description || "-"}
+                        </TableCell>
+                        <TableCell className="py-4 text-sm text-muted-foreground">
+                          {new Date(template.updatedAt).toLocaleDateString("id-ID", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric"
+                          })}
+                        </TableCell>
+                        <TableCell className="pr-6 py-4 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-muted rounded-full">
+                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2">
+                                Navigasi
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedTemplate(template);
+                                  setEditDialogOpen(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Edit className="h-4 w-4 mr-2 text-blue-600" />
+                                <span>Edit Data</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDownloadTemplate(template)}
+                                className="cursor-pointer"
+                              >
+                                <Download className="h-4 w-4 mr-2 text-blue-600" />
+                                <span>Unduh Dokumen</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setTemplateToDelete(template);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-red-600 focus:text-red-600 cursor-pointer"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                <span>Hapus Permanen</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </div>
+      </div>
 
       {/* Dialogs */}
       <CreateTemplateDialog
@@ -503,21 +362,20 @@ export default function TemplateManagementPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Template</AlertDialogTitle>
-            <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus template &quot;
-              {templateToDelete?.name}&quot;? Tindakan ini tidak dapat
-              dibatalkan.
+            <AlertDialogTitle className="text-xl font-bold">Hapus Template</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground leading-relaxed">
+              Apakah Anda yakin ingin menghapus template <span className="font-bold text-foreground italic">&quot;{templateToDelete?.name}&quot;</span>? 
+              Tindakan ini akan menghapus file dari sistem dan tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogFooter className="mt-4">
+            <AlertDialogCancel className="font-semibold">Batalkan</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteTemplate}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold"
               disabled={isLoading}
             >
-              {isLoading ? "Menghapus..." : "Hapus"}
+              {isLoading ? "Menghapus..." : "Ya, Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
