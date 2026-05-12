@@ -21,11 +21,13 @@ interface ReportUploadFormProps {
     tanggalUpload: string;
     ukuranFile: string;
     status: "draft" | "disubmit" | "revisi" | "disetujui";
+    fileUrl?: string;
   };
   onUpload: (file: File) => void;
   onRemove?: () => void;
   disabled?: boolean;
   titleApproved?: boolean;
+  noCard?: boolean;
 }
 
 export default function ReportUploadForm({
@@ -34,6 +36,7 @@ export default function ReportUploadForm({
   onRemove,
   disabled = false,
   titleApproved = false,
+  noCard = false,
 }: ReportUploadFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -156,155 +159,169 @@ export default function ReportUploadForm({
     }
   };
 
+  const formContent = (
+    <div className="space-y-4">
+      {!titleApproved && (
+        <Alert className="mb-4 border-l-4 border-yellow-500 bg-yellow-50">
+          <AlertCircle className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800">
+            Judul laporan harus disetujui terlebih dahulu sebelum upload
+            laporan
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {currentReport && (
+        <div className="mb-4 p-4 bg-muted rounded-lg">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-3 flex-1">
+              <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-medium text-foreground truncate">
+                    {currentReport.namaFile}
+                  </p>
+                  {getStatusBadge(currentReport.status)}
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Ukuran: {currentReport.ukuranFile} • Diupload:{" "}
+                  {currentReport.tanggalUpload}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 flex-shrink-0 ml-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (currentReport.fileUrl) {
+                    window.open(currentReport.fileUrl, "_blank");
+                  } else {
+                    toast.error("URL file tidak tersedia");
+                  }
+                }}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+              {onRemove && currentReport.status !== "disetujui" && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={onRemove}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedFile && (
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start space-x-3 flex-1">
+              <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground truncate">
+                  {selectedFile.name}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {formatFileSize(selectedFile.size)}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 flex-shrink-0 ml-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handlePreview(selectedFile)}
+              >
+                <Eye className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleRemoveSelected}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        <div
+          className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+            dragActive
+              ? "border-primary bg-primary/5"
+              : "border-border hover:border-primary/50"
+          } ${disabled || !titleApproved ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+          onDragEnter={handleDrag}
+          onDragLeave={handleDrag}
+          onDragOver={handleDrag}
+          onDrop={handleDrop}
+          onClick={() =>
+            !disabled && titleApproved && fileInputRef.current?.click()
+          }
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept="application/pdf"
+            onChange={handleInputChange}
+            disabled={disabled || !titleApproved}
+          />
+          <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-foreground font-medium mb-1">
+            Klik untuk upload atau drag & drop file
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Format: PDF • Maksimal 10MB
+          </p>
+        </div>
+
+        {selectedFile && (
+          <Button
+            type="button"
+            onClick={handleUpload}
+            disabled={disabled || !titleApproved}
+            className="w-full"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Upload Laporan
+          </Button>
+        )}
+
+        <Alert className="border-l-4 border-blue-500 bg-blue-50">
+          <FileText className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>Catatan:</strong> Pastikan laporan sudah final dan sesuai
+            format sebelum diupload. Laporan yang sudah disubmit tidak dapat
+            diubah kecuali diminta revisi oleh dosen pembimbing.
+          </AlertDescription>
+        </Alert>
+      </div>
+    </div>
+  );
+
+  if (noCard) {
+    return formContent;
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Upload Laporan KP</CardTitle>
       </CardHeader>
       <CardContent>
-        {!titleApproved && (
-          <Alert className="mb-4 border-l-4 border-yellow-500 bg-yellow-50">
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800">
-              Judul laporan harus disetujui terlebih dahulu sebelum upload
-              laporan
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {currentReport && (
-          <div className="mb-4 p-4 bg-muted rounded-lg">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3 flex-1">
-                <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <p className="font-medium text-foreground truncate">
-                      {currentReport.namaFile}
-                    </p>
-                    {getStatusBadge(currentReport.status)}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Ukuran: {currentReport.ukuranFile} • Diupload:{" "}
-                    {currentReport.tanggalUpload}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-shrink-0 ml-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    toast.info("Preview file (implementasi backend diperlukan)")
-                  }
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-                {onRemove && currentReport.status !== "disetujui" && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={onRemove}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedFile && (
-          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start justify-between">
-              <div className="flex items-start space-x-3 flex-1">
-                <FileText className="w-8 h-8 text-blue-600 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">
-                    {selectedFile.name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatFileSize(selectedFile.size)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-shrink-0 ml-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePreview(selectedFile)}
-                >
-                  <Eye className="w-4 h-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveSelected}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-4">
-          <div
-            className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              dragActive
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/50"
-            } ${disabled || !titleApproved ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={() =>
-              !disabled && titleApproved && fileInputRef.current?.click()
-            }
-          >
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept="application/pdf"
-              onChange={handleInputChange}
-              disabled={disabled || !titleApproved}
-            />
-            <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-foreground font-medium mb-1">
-              Klik untuk upload atau drag & drop file
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Format: PDF • Maksimal 10MB
-            </p>
-          </div>
-
-          {selectedFile && (
-            <Button
-              type="button"
-              onClick={handleUpload}
-              disabled={disabled || !titleApproved}
-              className="w-full"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Laporan
-            </Button>
-          )}
-
-          <Alert className="border-l-4 border-blue-500 bg-blue-50">
-            <FileText className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
-              <strong>Catatan:</strong> Pastikan laporan sudah final dan sesuai
-              format sebelum diupload. Laporan yang sudah disubmit tidak dapat
-              diubah kecuali diminta revisi oleh dosen pembimbing.
-            </AlertDescription>
-          </Alert>
-        </div>
+        {formContent}
       </CardContent>
     </Card>
   );

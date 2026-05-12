@@ -168,7 +168,7 @@ export function NavUser({ user }: { user: User }) {
             <AlertDialogCancel>Kembali</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
-                window.open("https://sso-unsri.vercel.app/dashboard", "_blank")
+                window.open("https://sso-unsri.vercel.app/profile", "_blank")
               }
             >
               Lanjutkan ke SSO

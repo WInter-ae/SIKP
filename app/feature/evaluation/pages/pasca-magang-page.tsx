@@ -27,6 +27,7 @@ import {
   Download,
   History as HistoryIcon,
   Printer,
+  Award,
 } from "lucide-react";
 import { printFormNilai, type NilaiKPData } from "../utils/generate-form-nilai";
 import { getCompleteInternshipData } from "~/feature/during-intern/services/student-api";
@@ -195,10 +196,13 @@ export default function PascaMagangPage() {
           
           // Get assessment if internship is finished or has grade
           const evalRes = await getAssessmentRecap(id);
-          if (evalRes.success && evalRes.data) {
-            setEvaluation(evalRes.data);
-            setHasGradeFromDosen(true);
-          }
+            if (evalRes.success && evalRes.data) {
+              setEvaluation(evalRes.data);
+              // Check if academic score is > 0 to determine if dosen has graded
+              if (evalRes.data.summary.academicSupervisorTotal > 0) {
+                setHasGradeFromDosen(true);
+              }
+            }
         }
       } catch (error) {
         console.error("Failed to load pasca-magang data:", error);
@@ -597,6 +601,61 @@ export default function PascaMagangPage() {
                         })}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Preview Nilai dari Pembimbing Lapangan */}
+            {!hasGradeFromDosen && evaluation && evaluation.summary.fieldSupervisorTotal > 0 && (
+              <Card className="mb-6 bg-green-50 border-green-200">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-green-100 rounded-full">
+                      <Award className="h-6 w-6 text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-green-900 mb-2">
+                        Nilai dari Pembimbing Lapangan
+                      </h3>
+                      <p className="text-green-800 text-sm mb-4">
+                        Pembimbing Lapangan Anda ({evaluation.student.supervisor}) telah memberikan penilaian. 
+                        Nilai ini akan digabung dengan nilai dari Dosen Pembimbing nanti.
+                      </p>
+
+                      <div className="bg-white rounded-lg p-4 border border-green-200">
+                        <div className="space-y-4">
+                          {evaluation.fieldSupervisorGrades[0]?.components.map((comp, idx) => (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-600">{comp.name}</span>
+                                <span className="font-semibold">{comp.score} / {comp.maxScore}</span>
+                              </div>
+                              <div className="w-full bg-gray-100 rounded-full h-1.5">
+                                <div 
+                                  className="bg-green-500 h-1.5 rounded-full" 
+                                  style={{ width: `${(comp.score / comp.maxScore) * 100}%` }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                          
+                          <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
+                            <span className="font-semibold text-gray-900">Total Skor Lapangan:</span>
+                            <span className="text-2xl font-bold text-green-600">
+                              {evaluation.summary.fieldSupervisorTotal.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {evaluation.notes && (
+                          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Feedback Mentor:</p>
+                            <p className="text-sm text-gray-700 italic">"{evaluation.notes}"</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             )}

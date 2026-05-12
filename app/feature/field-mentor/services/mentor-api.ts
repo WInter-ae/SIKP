@@ -92,6 +92,7 @@ export interface AssessmentData {
     weightedScore: number;
     sortOrder?: number;
   }>;
+  isLocked?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -288,6 +289,7 @@ function normalizeAssessmentPayload(payload: unknown): AssessmentData | null {
         typeof row.updatedAt === "string"
           ? row.updatedAt
           : new Date().toISOString(),
+      isLocked: Boolean(row.isLocked ?? row.is_locked ?? false),
       components: parsedComponents || undefined,
     };
   }
@@ -558,6 +560,30 @@ export async function updateAssessment(
   const response = await internshipClient.put<unknown>(
     `/api/mentorship/assessments/${assessmentId}`,
     payload,
+  );
+
+  if (!response.success) {
+    return response as ApiResponse<AssessmentData>;
+  }
+
+  const normalized = normalizeAssessmentPayload(response.data);
+  return {
+    success: true,
+    message: response.message,
+    data: normalized ?? (response.data as AssessmentData),
+  };
+}
+
+/**
+ * Unlock assessment for editing
+ * POST /api/mentorship/assessments/:assessmentId/unlock
+ */
+export async function unlockAssessment(
+  assessmentId: string,
+): Promise<ApiResponse<AssessmentData>> {
+  const response = await internshipClient.post<unknown>(
+    `/api/mentorship/assessments/${assessmentId}/unlock`,
+    {},
   );
 
   if (!response.success) {

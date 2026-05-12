@@ -1,13 +1,14 @@
 export interface LaporanKPData {
   judul: string;
   dosenPembimbing?: string;
-  statusJudul: "draft" | "diajukan" | "disetujui" | "ditolak";
+  statusJudul: "draft" | "diajukan" | "disetujui" | "ditolak" | "revisi";
   alasanPerubahan?: string;
   judulBaru?: string;
   laporanFile?: File | null;
   tanggalPengajuan?: string;
   tanggalDisetujui?: string;
   keterangan?: string;
+  deskripsi?: string;
 }
 
 export interface DosenPembimbing {
@@ -20,7 +21,7 @@ export interface DosenPembimbing {
 export interface TitleSubmission {
   judul: string;
   tanggalPengajuan: string;
-  status: "menunggu" | "disetujui" | "ditolak";
+  status: "menunggu" | "disetujui" | "ditolak" | "revisi";
   keterangan?: string;
 }
 
@@ -29,7 +30,7 @@ export interface TitleChangeSubmission {
   judulBaru: string;
   alasanPerubahan: string;
   tanggalPengajuan: string;
-  status: "menunggu" | "disetujui" | "ditolak";
+  status: "menunggu" | "disetujui" | "ditolak" | "revisi";
   keterangan?: string;
 }
 

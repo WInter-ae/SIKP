@@ -195,7 +195,7 @@ function mapBackendToFrontend(
       : "") ||
     "";
 
-  return {
+  const mappedResult: CompleteInternshipData = {
     student: {
       id: student.id.toString(),
       userId: student.id.toString(),
@@ -264,6 +264,8 @@ function mapBackendToFrontend(
         }
       : undefined,
   };
+
+  return mappedResult;
 }
 
 // ==================== API FUNCTIONS ====================
@@ -462,6 +464,24 @@ async function getCompleteInternshipDataFallback(): Promise<
         endDate: "",
         status: "PENDING",
       },
+      lecturer: (studentData as any).lecturer || (studentData as any).pembimbing || (typeof window !== "undefined" ? (() => {
+        const userDataStr = localStorage.getItem("user_data");
+        if (userDataStr) {
+          try {
+            const userData = JSON.parse(userDataStr);
+            if (userData.pembimbing || userData.lecturer) {
+              const lec = userData.pembimbing || userData.lecturer;
+              return {
+                id: lec.id?.toString() || "sso-lec",
+                name: lec.name || lec.nama || "",
+                nip: lec.nip || "",
+                email: lec.email || "",
+              };
+            }
+          } catch {}
+        }
+        return undefined;
+      })() : undefined),
     };
 
     console.log("✅ Fallback data compiled:", completeData);

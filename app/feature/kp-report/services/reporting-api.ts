@@ -9,6 +9,28 @@ export interface TitleSubmission {
   submittedAt?: string;
   reviewedAt?: string;
   rejectionReason?: string;
+  // Reviewer / approver info (dosen PA)
+  reviewerId?: string;
+  reviewerName?: string;
+  reviewerNip?: string;
+  reviewerEmail?: string;
+  // Backend may use different field names
+  approvedBy?: string;
+  approvedByName?: string;
+  verifiedBy?: string;
+  verifiedByName?: string;
+  lecturer?: {
+    id: string;
+    name: string;
+    nip?: string;
+    email?: string;
+  };
+  supervisor?: {
+    id: string;
+    name: string;
+    nip?: string;
+    email?: string;
+  };
 }
 
 export interface ReportSubmission {
@@ -25,6 +47,7 @@ export interface ReportSubmission {
  * POST /api/reporting/title
  */
 export async function submitInternshipTitle(data: {
+  internshipId: string;
   title: string;
   description: string;
 }): Promise<ApiResponse<TitleSubmission>> {
@@ -44,12 +67,14 @@ export async function getTitleStatus(internshipId: string): Promise<ApiResponse<
  * POST /api/reporting/report
  */
 export async function submitInternshipReport(data: {
+  internshipId: string;
   file: File;
 }): Promise<ApiResponse<ReportSubmission>> {
   const formData = new FormData();
+  formData.append("internshipId", data.internshipId);
   formData.append("file", data.file);
   
-  return internshipClient.post<ReportSubmission>("/api/reporting/report", formData);
+  return internshipClient.upload<ReportSubmission>("/api/reporting/report", formData);
 }
 
 /**
@@ -57,16 +82,18 @@ export async function submitInternshipReport(data: {
  * POST /api/reporting/submit-fast
  */
 export async function submitFastTrack(data: {
+  internshipId: string;
   title: string;
   description: string;
   file: File;
 }): Promise<ApiResponse<any>> {
   const formData = new FormData();
+  formData.append("internshipId", data.internshipId);
   formData.append("title", data.title);
   formData.append("description", data.description);
   formData.append("file", data.file);
 
-  return internshipClient.post<any>("/api/reporting/submit-fast", formData);
+  return internshipClient.upload<any>("/api/reporting/submit-fast", formData);
 }
 
 /**

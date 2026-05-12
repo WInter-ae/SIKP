@@ -30,6 +30,7 @@ export interface StudentAssessmentData {
 
 const ASSESSMENT_ENDPOINTS = [
   "/api/mahasiswa/assessment/current",
+  "/api/mentorship/assessments/me",
   "/api/mahasiswa/penilaian/current",
   "/api/mahasiswa/assessment",
   "/api/mahasiswa/penilaian",

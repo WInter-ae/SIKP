@@ -23,6 +23,7 @@ export interface TitleSubmissionItem {
   notes?: string | null;
   rejectionReason?: string | null;
   revisedTitle?: string | null;
+  programStudi?: string | null;
 }
 
 export interface VerifyTitleRequest {
@@ -134,12 +135,12 @@ function mapRawToTitleSubmissionItem(
     studentName: getFirstString(
       student,
       ["name", "nama", "studentName"],
-      "Mahasiswa",
+      getFirstString(raw, ["studentName", "name", "nama"], "Mahasiswa"),
     ),
     studentNim: getFirstString(
       student,
       ["nim", "studentNim", "studentNumber"],
-      "-",
+      getFirstString(raw, ["nim", "studentNim", "studentNumber"], "-"),
     ),
     studentEmail:
       getFirstString(student, ["email", "studentEmail"], "") || null,
@@ -180,6 +181,7 @@ function mapRawToTitleSubmissionItem(
       getFirstString(raw, ["rejectionReason", "rejectedReason"], "") || null,
     revisedTitle:
       getFirstString(raw, ["revisedTitle", "judulRevisi"], "") || null,
+    programStudi: getFirstString(raw, ["programStudi", "prodi"], "") || null,
   };
 }
 
@@ -192,7 +194,7 @@ export function mapTitleSubmissionItemToPengajuanJudul(
       id: item.studentId,
       nama: item.studentName,
       nim: item.studentNim,
-      prodi: "-",
+      prodi: item.programStudi || "-",
       email: item.studentEmail || undefined,
     },
     tim: item.teamName

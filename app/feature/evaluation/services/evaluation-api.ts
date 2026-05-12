@@ -268,6 +268,9 @@ function mapRowToEvaluation(
     (row.penilaian && typeof row.penilaian === "object"
       ? (row.penilaian as Record<string, unknown>)
       : null) ||
+    (row.mentor && typeof row.mentor === "object"
+      ? (row.mentor as Record<string, unknown>)
+      : null) ||
     row;
 
   const studentId = normalizeText(
