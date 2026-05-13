@@ -413,3 +413,27 @@ export function del<T>(endpoint: string) {
 export function uploadFile<T>(endpoint: string, formData: FormData) {
   return sikpClient.upload<T>(endpoint, formData);
 }
+
+// ==================== INTERNSHIP LEGACY COMPAT EXPORTS ====================
+// Alias ke internshipClient untuk file-file yang masih menggunakan iget/ipost/iput.
+// Akan dihapus setelah semua service dimigrasi ke internshipClient.*
+
+/** @deprecated Gunakan internshipClient.get() */
+export function iget<T>(endpoint: string, params?: Record<string, string>) {
+  return internshipClient.get<T>(endpoint, params);
+}
+
+/** @deprecated Gunakan internshipClient.post() */
+export function ipost<T>(endpoint: string, body?: unknown) {
+  return internshipClient.post<T>(endpoint, body);
+}
+
+/** @deprecated Gunakan internshipClient.put() */
+export function iput<T>(endpoint: string, body?: unknown) {
+  return internshipClient.put<T>(endpoint, body);
+}
+
+/** @deprecated Gunakan internshipClient.del() */
+export function idel<T>(endpoint: string) {
+  return internshipClient.del<T>(endpoint);
+}

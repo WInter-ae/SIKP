@@ -1,6 +1,5 @@
 import { FileText, Download, Search, Eye, FileDown } from "lucide-react";
 import { Input } from "~/components/ui/input";
-import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
 import {
   getActiveTemplates,
