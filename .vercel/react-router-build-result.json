@@ -1,0 +1,1382 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "routes/detail-referensi.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/pembimbing-lapangan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/identity-chooser": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/unauthorized": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/referensi": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/callback": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/register": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.logbook-detail.$studentId": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.pengajuan-surat-pengantar": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.persetujuan-pembimbing": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.persetujuan-pembimbing": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.verifikasi-sidang": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.verifikasi-judul": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.verifikasi-surat": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.mentor-lapangan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.penilaian-kriteria": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.logbook-monitor": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.surat-pengantar": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.surat-balasan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.pasca-magang": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.saat-magang": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.pengajuan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.penilaian": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.buat-tim": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp._timeline.logbook": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.template._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp.template": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp.laporan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.repositori._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.repositori.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.logbook-reset": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.surat-balasan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.notifikasi": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.pengaturan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.penilaian": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.penilaian._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.penilaian.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.penilaian.beri-nilai.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.penilaian.detail.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.penilaian._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.logbook": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.mentee": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.mentee.$menteeId": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.profil": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mentor.arsip": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/tentang": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/kontak": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/login": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/home": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "app/root.tsx",
+        "path": "",
+        "config": {}
+      },
+      "routes/detail-referensi.$id": {
+        "id": "routes/detail-referensi.$id",
+        "parentId": "root",
+        "file": "app/routes/detail-referensi.$id.tsx",
+        "path": "detail-referensi/:id",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/pembimbing-lapangan": {
+        "id": "routes/pembimbing-lapangan",
+        "parentId": "root",
+        "file": "app/routes/pembimbing-lapangan.tsx",
+        "path": "pembimbing-lapangan",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/identity-chooser": {
+        "id": "routes/identity-chooser",
+        "parentId": "root",
+        "file": "app/routes/identity-chooser.tsx",
+        "path": "identity-chooser",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/unauthorized": {
+        "id": "routes/unauthorized",
+        "parentId": "root",
+        "file": "app/routes/unauthorized.tsx",
+        "path": "unauthorized",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/referensi": {
+        "id": "routes/referensi",
+        "parentId": "root",
+        "file": "app/routes/referensi.tsx",
+        "path": "referensi",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/callback": {
+        "id": "routes/callback",
+        "parentId": "root",
+        "file": "app/routes/callback.tsx",
+        "path": "callback",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/register": {
+        "id": "routes/register",
+        "parentId": "root",
+        "file": "app/routes/register.tsx",
+        "path": "register",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar": {
+        "id": "routes/_sidebar",
+        "parentId": "root",
+        "file": "app/routes/_sidebar.tsx",
+        "config": {}
+      },
+      "routes/_sidebar.mentor.logbook-detail.$studentId": {
+        "id": "routes/_sidebar.mentor.logbook-detail.$studentId",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor.logbook-detail.$studentId.tsx",
+        "path": "mentor/logbook-detail/:studentId",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.admin.pengajuan-surat-pengantar": {
+        "id": "routes/_sidebar.admin.pengajuan-surat-pengantar",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin.pengajuan-surat-pengantar.tsx",
+        "path": "admin/pengajuan-surat-pengantar",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.kp.persetujuan-pembimbing": {
+        "id": "routes/_sidebar.dosen.kp.persetujuan-pembimbing",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.persetujuan-pembimbing.tsx",
+        "path": "dosen/kp/persetujuan-pembimbing",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.admin.persetujuan-pembimbing": {
+        "id": "routes/_sidebar.admin.persetujuan-pembimbing",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin.persetujuan-pembimbing.tsx",
+        "path": "admin/persetujuan-pembimbing",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.kp.verifikasi-sidang": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-sidang",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.verifikasi-sidang.tsx",
+        "path": "dosen/kp/verifikasi-sidang",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.kp.verifikasi-judul": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-judul",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.verifikasi-judul.tsx",
+        "path": "dosen/kp/verifikasi-judul",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.kp.verifikasi-surat": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-surat",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.verifikasi-surat.tsx",
+        "path": "dosen/kp/verifikasi-surat",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mahasiswa.mentor-lapangan": {
+        "id": "routes/_sidebar.mahasiswa.mentor-lapangan",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mahasiswa.mentor-lapangan.tsx",
+        "path": "mahasiswa/mentor-lapangan",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.admin.penilaian-kriteria": {
+        "id": "routes/_sidebar.admin.penilaian-kriteria",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin.penilaian-kriteria.tsx",
+        "path": "admin/penilaian-kriteria",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.kp.logbook-monitor": {
+        "id": "routes/_sidebar.dosen.kp.logbook-monitor",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.logbook-monitor.tsx",
+        "path": "dosen/kp/logbook-monitor",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": {
+        "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
+        "parentId": "routes/_sidebar.dosen.kp.logbook-monitor",
+        "file": "app/routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
+        "path": ":studentId",
+        "config": {}
+      },
+      "routes/_sidebar.dosen.kp.surat-pengantar": {
+        "id": "routes/_sidebar.dosen.kp.surat-pengantar",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.surat-pengantar.tsx",
+        "path": "dosen/kp/surat-pengantar",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.tsx",
+        "path": "mahasiswa/kp",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang.tsx",
+        "path": "pengujian-sidang",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar.tsx",
+        "path": "surat-pengantar",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.surat-balasan": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.surat-balasan",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.surat-balasan.tsx",
+        "path": "surat-balasan",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.pasca-magang": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.pasca-magang",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.pasca-magang.tsx",
+        "path": "pasca-magang",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.saat-magang": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.saat-magang",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.saat-magang.tsx",
+        "path": "saat-magang",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.pengajuan": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.pengajuan",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.pengajuan.tsx",
+        "path": "pengajuan",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.penilaian": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.penilaian",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.penilaian.tsx",
+        "path": "penilaian",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.buat-tim": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.buat-tim",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.buat-tim.tsx",
+        "path": "buat-tim",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.logbook": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.logbook",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "app/routes/_sidebar.mahasiswa.kp._timeline.logbook.tsx",
+        "path": "logbook",
+        "config": {}
+      },
+      "routes/_sidebar.admin.template._index": {
+        "id": "routes/_sidebar.admin.template._index",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin.template._index.tsx",
+        "path": "admin/template",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mahasiswa.kp.template": {
+        "id": "routes/_sidebar.mahasiswa.kp.template",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mahasiswa.kp.template.tsx",
+        "path": "mahasiswa/kp/template",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mahasiswa.kp.laporan": {
+        "id": "routes/_sidebar.mahasiswa.kp.laporan",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mahasiswa.kp.laporan.tsx",
+        "path": "mahasiswa/kp/laporan",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mahasiswa.repositori": {
+        "id": "routes/_sidebar.mahasiswa.repositori",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mahasiswa.repositori.tsx",
+        "path": "mahasiswa/repositori",
+        "config": {}
+      },
+      "routes/_sidebar.mahasiswa.repositori._index": {
+        "id": "routes/_sidebar.mahasiswa.repositori._index",
+        "parentId": "routes/_sidebar.mahasiswa.repositori",
+        "file": "app/routes/_sidebar.mahasiswa.repositori._index.tsx",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mahasiswa.repositori.$id": {
+        "id": "routes/_sidebar.mahasiswa.repositori.$id",
+        "parentId": "routes/_sidebar.mahasiswa.repositori",
+        "file": "app/routes/_sidebar.mahasiswa.repositori.$id.tsx",
+        "path": ":id",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.admin.logbook-reset": {
+        "id": "routes/_sidebar.admin.logbook-reset",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin.logbook-reset.tsx",
+        "path": "admin/logbook-reset",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.admin.surat-balasan": {
+        "id": "routes/_sidebar.admin.surat-balasan",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin.surat-balasan.tsx",
+        "path": "admin/surat-balasan",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mentor.notifikasi": {
+        "id": "routes/_sidebar.mentor.notifikasi",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor.notifikasi.tsx",
+        "path": "mentor/notifikasi",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mentor.pengaturan": {
+        "id": "routes/_sidebar.mentor.pengaturan",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor.pengaturan.tsx",
+        "path": "mentor/pengaturan",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mahasiswa._index": {
+        "id": "routes/_sidebar.mahasiswa._index",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mahasiswa._index.tsx",
+        "path": "mahasiswa",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mentor.penilaian": {
+        "id": "routes/_sidebar.mentor.penilaian",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor.penilaian.tsx",
+        "path": "mentor/penilaian",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.admin.penilaian": {
+        "id": "routes/_sidebar.admin.penilaian",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin.penilaian.tsx",
+        "path": "admin/penilaian",
+        "config": {}
+      },
+      "routes/_sidebar.admin.penilaian._index": {
+        "id": "routes/_sidebar.admin.penilaian._index",
+        "parentId": "routes/_sidebar.admin.penilaian",
+        "file": "app/routes/_sidebar.admin.penilaian._index.tsx",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.admin.penilaian.$id": {
+        "id": "routes/_sidebar.admin.penilaian.$id",
+        "parentId": "routes/_sidebar.admin.penilaian",
+        "file": "app/routes/_sidebar.admin.penilaian.$id.tsx",
+        "path": ":id",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.penilaian": {
+        "id": "routes/_sidebar.dosen.penilaian",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.penilaian.tsx",
+        "path": "dosen/penilaian",
+        "config": {}
+      },
+      "routes/_sidebar.dosen.penilaian.beri-nilai.$id": {
+        "id": "routes/_sidebar.dosen.penilaian.beri-nilai.$id",
+        "parentId": "routes/_sidebar.dosen.penilaian",
+        "file": "app/routes/_sidebar.dosen.penilaian.beri-nilai.$id.tsx",
+        "path": "beri-nilai/:id",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.penilaian.detail.$id": {
+        "id": "routes/_sidebar.dosen.penilaian.detail.$id",
+        "parentId": "routes/_sidebar.dosen.penilaian",
+        "file": "app/routes/_sidebar.dosen.penilaian.detail.$id.tsx",
+        "path": "detail/:id",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.penilaian._index": {
+        "id": "routes/_sidebar.dosen.penilaian._index",
+        "parentId": "routes/_sidebar.dosen.penilaian",
+        "file": "app/routes/_sidebar.dosen.penilaian._index.tsx",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mentor.logbook": {
+        "id": "routes/_sidebar.mentor.logbook",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor.logbook.tsx",
+        "path": "mentor/logbook",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mentor.mentee": {
+        "id": "routes/_sidebar.mentor.mentee",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor.mentee.tsx",
+        "path": "mentor/mentee",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mentor.mentee.$menteeId": {
+        "id": "routes/_sidebar.mentor.mentee.$menteeId",
+        "parentId": "routes/_sidebar.mentor.mentee",
+        "file": "app/routes/_sidebar.mentor.mentee.$menteeId.tsx",
+        "path": ":menteeId",
+        "config": {}
+      },
+      "routes/_sidebar.mentor.profil": {
+        "id": "routes/_sidebar.mentor.profil",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor.profil.tsx",
+        "path": "mentor/profil",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mentor._index": {
+        "id": "routes/_sidebar.mentor._index",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor._index.tsx",
+        "path": "mentor",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.admin._index": {
+        "id": "routes/_sidebar.admin._index",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin._index.tsx",
+        "path": "admin",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen._index": {
+        "id": "routes/_sidebar.dosen._index",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen._index.tsx",
+        "path": "dosen",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.mentor.arsip": {
+        "id": "routes/_sidebar.mentor.arsip",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mentor.arsip.tsx",
+        "path": "mentor/arsip",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dashboard": {
+        "id": "routes/_sidebar.dashboard",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dashboard.tsx",
+        "path": "dashboard",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/tentang": {
+        "id": "routes/tentang",
+        "parentId": "root",
+        "file": "app/routes/tentang.tsx",
+        "path": "tentang",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/kontak": {
+        "id": "routes/kontak",
+        "parentId": "root",
+        "file": "app/routes/kontak.tsx",
+        "path": "kontak",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_index": {
+        "id": "routes/_index",
+        "parentId": "root",
+        "file": "app/routes/_index.tsx",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/login": {
+        "id": "routes/login",
+        "parentId": "root",
+        "file": "app/routes/login.tsx",
+        "path": "login",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/home": {
+        "id": "routes/home",
+        "parentId": "root",
+        "file": "app/routes/home.tsx",
+        "path": "home",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "C:/laragon/www/SIKP/app",
+    "basename": "/",
+    "buildDirectory": "C:/laragon/www/SIKP/build",
+    "future": {
+      "unstable_optimizeDeps": false,
+      "unstable_passThroughRequests": false,
+      "unstable_subResourceIntegrity": false,
+      "unstable_trailingSlashAwareDataRequests": false,
+      "unstable_previewServerPrerendering": false,
+      "v8_middleware": false,
+      "v8_splitRouteModules": false,
+      "v8_viteEnvironmentApi": false
+    },
+    "routes": {
+      "root": {
+        "id": "root",
+        "file": "root.tsx",
+        "path": ""
+      },
+      "routes/detail-referensi.$id": {
+        "id": "routes/detail-referensi.$id",
+        "parentId": "root",
+        "file": "routes/detail-referensi.$id.tsx",
+        "path": "detail-referensi/:id"
+      },
+      "routes/pembimbing-lapangan": {
+        "id": "routes/pembimbing-lapangan",
+        "parentId": "root",
+        "file": "routes/pembimbing-lapangan.tsx",
+        "path": "pembimbing-lapangan"
+      },
+      "routes/identity-chooser": {
+        "id": "routes/identity-chooser",
+        "parentId": "root",
+        "file": "routes/identity-chooser.tsx",
+        "path": "identity-chooser"
+      },
+      "routes/unauthorized": {
+        "id": "routes/unauthorized",
+        "parentId": "root",
+        "file": "routes/unauthorized.tsx",
+        "path": "unauthorized"
+      },
+      "routes/referensi": {
+        "id": "routes/referensi",
+        "parentId": "root",
+        "file": "routes/referensi.tsx",
+        "path": "referensi"
+      },
+      "routes/callback": {
+        "id": "routes/callback",
+        "parentId": "root",
+        "file": "routes/callback.tsx",
+        "path": "callback"
+      },
+      "routes/register": {
+        "id": "routes/register",
+        "parentId": "root",
+        "file": "routes/register.tsx",
+        "path": "register"
+      },
+      "routes/_sidebar": {
+        "id": "routes/_sidebar",
+        "parentId": "root",
+        "file": "routes/_sidebar.tsx"
+      },
+      "routes/_sidebar.mentor.logbook-detail.$studentId": {
+        "id": "routes/_sidebar.mentor.logbook-detail.$studentId",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor.logbook-detail.$studentId.tsx",
+        "path": "mentor/logbook-detail/:studentId"
+      },
+      "routes/_sidebar.admin.pengajuan-surat-pengantar": {
+        "id": "routes/_sidebar.admin.pengajuan-surat-pengantar",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin.pengajuan-surat-pengantar.tsx",
+        "path": "admin/pengajuan-surat-pengantar"
+      },
+      "routes/_sidebar.dosen.kp.persetujuan-pembimbing": {
+        "id": "routes/_sidebar.dosen.kp.persetujuan-pembimbing",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.persetujuan-pembimbing.tsx",
+        "path": "dosen/kp/persetujuan-pembimbing"
+      },
+      "routes/_sidebar.admin.persetujuan-pembimbing": {
+        "id": "routes/_sidebar.admin.persetujuan-pembimbing",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin.persetujuan-pembimbing.tsx",
+        "path": "admin/persetujuan-pembimbing"
+      },
+      "routes/_sidebar.dosen.kp.verifikasi-sidang": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-sidang",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.verifikasi-sidang.tsx",
+        "path": "dosen/kp/verifikasi-sidang"
+      },
+      "routes/_sidebar.dosen.kp.verifikasi-judul": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-judul",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.verifikasi-judul.tsx",
+        "path": "dosen/kp/verifikasi-judul"
+      },
+      "routes/_sidebar.dosen.kp.verifikasi-surat": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-surat",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.verifikasi-surat.tsx",
+        "path": "dosen/kp/verifikasi-surat"
+      },
+      "routes/_sidebar.mahasiswa.mentor-lapangan": {
+        "id": "routes/_sidebar.mahasiswa.mentor-lapangan",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mahasiswa.mentor-lapangan.tsx",
+        "path": "mahasiswa/mentor-lapangan"
+      },
+      "routes/_sidebar.admin.penilaian-kriteria": {
+        "id": "routes/_sidebar.admin.penilaian-kriteria",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin.penilaian-kriteria.tsx",
+        "path": "admin/penilaian-kriteria"
+      },
+      "routes/_sidebar.dosen.kp.logbook-monitor": {
+        "id": "routes/_sidebar.dosen.kp.logbook-monitor",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.logbook-monitor.tsx",
+        "path": "dosen/kp/logbook-monitor"
+      },
+      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": {
+        "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
+        "parentId": "routes/_sidebar.dosen.kp.logbook-monitor",
+        "file": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
+        "path": ":studentId"
+      },
+      "routes/_sidebar.dosen.kp.surat-pengantar": {
+        "id": "routes/_sidebar.dosen.kp.surat-pengantar",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.surat-pengantar.tsx",
+        "path": "dosen/kp/surat-pengantar"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.tsx",
+        "path": "mahasiswa/kp"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang.tsx",
+        "path": "pengujian-sidang"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar.tsx",
+        "path": "surat-pengantar"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.surat-balasan": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.surat-balasan",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.surat-balasan.tsx",
+        "path": "surat-balasan"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.pasca-magang": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.pasca-magang",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.pasca-magang.tsx",
+        "path": "pasca-magang"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.saat-magang": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.saat-magang",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.saat-magang.tsx",
+        "path": "saat-magang"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.pengajuan": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.pengajuan",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.pengajuan.tsx",
+        "path": "pengajuan"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.penilaian": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.penilaian",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.penilaian.tsx",
+        "path": "penilaian"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.buat-tim": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.buat-tim",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.buat-tim.tsx",
+        "path": "buat-tim"
+      },
+      "routes/_sidebar.mahasiswa.kp._timeline.logbook": {
+        "id": "routes/_sidebar.mahasiswa.kp._timeline.logbook",
+        "parentId": "routes/_sidebar.mahasiswa.kp._timeline",
+        "file": "routes/_sidebar.mahasiswa.kp._timeline.logbook.tsx",
+        "path": "logbook"
+      },
+      "routes/_sidebar.admin.template._index": {
+        "id": "routes/_sidebar.admin.template._index",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin.template._index.tsx",
+        "path": "admin/template",
+        "index": true
+      },
+      "routes/_sidebar.mahasiswa.kp.template": {
+        "id": "routes/_sidebar.mahasiswa.kp.template",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mahasiswa.kp.template.tsx",
+        "path": "mahasiswa/kp/template"
+      },
+      "routes/_sidebar.mahasiswa.kp.laporan": {
+        "id": "routes/_sidebar.mahasiswa.kp.laporan",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mahasiswa.kp.laporan.tsx",
+        "path": "mahasiswa/kp/laporan"
+      },
+      "routes/_sidebar.mahasiswa.repositori": {
+        "id": "routes/_sidebar.mahasiswa.repositori",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mahasiswa.repositori.tsx",
+        "path": "mahasiswa/repositori"
+      },
+      "routes/_sidebar.mahasiswa.repositori._index": {
+        "id": "routes/_sidebar.mahasiswa.repositori._index",
+        "parentId": "routes/_sidebar.mahasiswa.repositori",
+        "file": "routes/_sidebar.mahasiswa.repositori._index.tsx",
+        "index": true
+      },
+      "routes/_sidebar.mahasiswa.repositori.$id": {
+        "id": "routes/_sidebar.mahasiswa.repositori.$id",
+        "parentId": "routes/_sidebar.mahasiswa.repositori",
+        "file": "routes/_sidebar.mahasiswa.repositori.$id.tsx",
+        "path": ":id"
+      },
+      "routes/_sidebar.admin.logbook-reset": {
+        "id": "routes/_sidebar.admin.logbook-reset",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin.logbook-reset.tsx",
+        "path": "admin/logbook-reset"
+      },
+      "routes/_sidebar.admin.surat-balasan": {
+        "id": "routes/_sidebar.admin.surat-balasan",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin.surat-balasan.tsx",
+        "path": "admin/surat-balasan"
+      },
+      "routes/_sidebar.mentor.notifikasi": {
+        "id": "routes/_sidebar.mentor.notifikasi",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor.notifikasi.tsx",
+        "path": "mentor/notifikasi"
+      },
+      "routes/_sidebar.mentor.pengaturan": {
+        "id": "routes/_sidebar.mentor.pengaturan",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor.pengaturan.tsx",
+        "path": "mentor/pengaturan"
+      },
+      "routes/_sidebar.mahasiswa._index": {
+        "id": "routes/_sidebar.mahasiswa._index",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mahasiswa._index.tsx",
+        "path": "mahasiswa",
+        "index": true
+      },
+      "routes/_sidebar.mentor.penilaian": {
+        "id": "routes/_sidebar.mentor.penilaian",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor.penilaian.tsx",
+        "path": "mentor/penilaian"
+      },
+      "routes/_sidebar.admin.penilaian": {
+        "id": "routes/_sidebar.admin.penilaian",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin.penilaian.tsx",
+        "path": "admin/penilaian"
+      },
+      "routes/_sidebar.admin.penilaian._index": {
+        "id": "routes/_sidebar.admin.penilaian._index",
+        "parentId": "routes/_sidebar.admin.penilaian",
+        "file": "routes/_sidebar.admin.penilaian._index.tsx",
+        "index": true
+      },
+      "routes/_sidebar.admin.penilaian.$id": {
+        "id": "routes/_sidebar.admin.penilaian.$id",
+        "parentId": "routes/_sidebar.admin.penilaian",
+        "file": "routes/_sidebar.admin.penilaian.$id.tsx",
+        "path": ":id"
+      },
+      "routes/_sidebar.dosen.penilaian": {
+        "id": "routes/_sidebar.dosen.penilaian",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.penilaian.tsx",
+        "path": "dosen/penilaian"
+      },
+      "routes/_sidebar.dosen.penilaian.beri-nilai.$id": {
+        "id": "routes/_sidebar.dosen.penilaian.beri-nilai.$id",
+        "parentId": "routes/_sidebar.dosen.penilaian",
+        "file": "routes/_sidebar.dosen.penilaian.beri-nilai.$id.tsx",
+        "path": "beri-nilai/:id"
+      },
+      "routes/_sidebar.dosen.penilaian.detail.$id": {
+        "id": "routes/_sidebar.dosen.penilaian.detail.$id",
+        "parentId": "routes/_sidebar.dosen.penilaian",
+        "file": "routes/_sidebar.dosen.penilaian.detail.$id.tsx",
+        "path": "detail/:id"
+      },
+      "routes/_sidebar.dosen.penilaian._index": {
+        "id": "routes/_sidebar.dosen.penilaian._index",
+        "parentId": "routes/_sidebar.dosen.penilaian",
+        "file": "routes/_sidebar.dosen.penilaian._index.tsx",
+        "index": true
+      },
+      "routes/_sidebar.mentor.logbook": {
+        "id": "routes/_sidebar.mentor.logbook",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor.logbook.tsx",
+        "path": "mentor/logbook"
+      },
+      "routes/_sidebar.mentor.mentee": {
+        "id": "routes/_sidebar.mentor.mentee",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor.mentee.tsx",
+        "path": "mentor/mentee"
+      },
+      "routes/_sidebar.mentor.mentee.$menteeId": {
+        "id": "routes/_sidebar.mentor.mentee.$menteeId",
+        "parentId": "routes/_sidebar.mentor.mentee",
+        "file": "routes/_sidebar.mentor.mentee.$menteeId.tsx",
+        "path": ":menteeId"
+      },
+      "routes/_sidebar.mentor.profil": {
+        "id": "routes/_sidebar.mentor.profil",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor.profil.tsx",
+        "path": "mentor/profil"
+      },
+      "routes/_sidebar.mentor._index": {
+        "id": "routes/_sidebar.mentor._index",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor._index.tsx",
+        "path": "mentor",
+        "index": true
+      },
+      "routes/_sidebar.admin._index": {
+        "id": "routes/_sidebar.admin._index",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin._index.tsx",
+        "path": "admin",
+        "index": true
+      },
+      "routes/_sidebar.dosen._index": {
+        "id": "routes/_sidebar.dosen._index",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen._index.tsx",
+        "path": "dosen",
+        "index": true
+      },
+      "routes/_sidebar.mentor.arsip": {
+        "id": "routes/_sidebar.mentor.arsip",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mentor.arsip.tsx",
+        "path": "mentor/arsip"
+      },
+      "routes/_sidebar.dashboard": {
+        "id": "routes/_sidebar.dashboard",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dashboard.tsx",
+        "path": "dashboard"
+      },
+      "routes/tentang": {
+        "id": "routes/tentang",
+        "parentId": "root",
+        "file": "routes/tentang.tsx",
+        "path": "tentang"
+      },
+      "routes/kontak": {
+        "id": "routes/kontak",
+        "parentId": "root",
+        "file": "routes/kontak.tsx",
+        "path": "kontak"
+      },
+      "routes/_index": {
+        "id": "routes/_index",
+        "parentId": "root",
+        "file": "routes/_index.tsx",
+        "index": true
+      },
+      "routes/login": {
+        "id": "routes/login",
+        "parentId": "root",
+        "file": "routes/login.tsx",
+        "path": "login"
+      },
+      "routes/home": {
+        "id": "routes/home",
+        "parentId": "root",
+        "file": "routes/home.tsx",
+        "path": "home"
+      }
+    },
+    "routeDiscovery": {
+      "mode": "lazy",
+      "manifestPath": "/__manifest"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true,
+    "allowedActionOrigins": false,
+    "unstable_routeConfig": [
+      {
+        "id": "root",
+        "path": "",
+        "file": "root.tsx",
+        "children": [
+          {
+            "id": "routes/detail-referensi.$id",
+            "file": "routes/detail-referensi.$id.tsx",
+            "path": "detail-referensi/:id"
+          },
+          {
+            "id": "routes/pembimbing-lapangan",
+            "file": "routes/pembimbing-lapangan.tsx",
+            "path": "pembimbing-lapangan"
+          },
+          {
+            "id": "routes/identity-chooser",
+            "file": "routes/identity-chooser.tsx",
+            "path": "identity-chooser"
+          },
+          {
+            "id": "routes/unauthorized",
+            "file": "routes/unauthorized.tsx",
+            "path": "unauthorized"
+          },
+          {
+            "id": "routes/referensi",
+            "file": "routes/referensi.tsx",
+            "path": "referensi"
+          },
+          {
+            "id": "routes/callback",
+            "file": "routes/callback.tsx",
+            "path": "callback"
+          },
+          {
+            "id": "routes/register",
+            "file": "routes/register.tsx",
+            "path": "register"
+          },
+          {
+            "id": "routes/_sidebar",
+            "file": "routes/_sidebar.tsx",
+            "children": [
+              {
+                "id": "routes/_sidebar.mentor.logbook-detail.$studentId",
+                "file": "routes/_sidebar.mentor.logbook-detail.$studentId.tsx",
+                "path": "mentor/logbook-detail/:studentId"
+              },
+              {
+                "id": "routes/_sidebar.admin.pengajuan-surat-pengantar",
+                "file": "routes/_sidebar.admin.pengajuan-surat-pengantar.tsx",
+                "path": "admin/pengajuan-surat-pengantar"
+              },
+              {
+                "id": "routes/_sidebar.dosen.kp.persetujuan-pembimbing",
+                "file": "routes/_sidebar.dosen.kp.persetujuan-pembimbing.tsx",
+                "path": "dosen/kp/persetujuan-pembimbing"
+              },
+              {
+                "id": "routes/_sidebar.admin.persetujuan-pembimbing",
+                "file": "routes/_sidebar.admin.persetujuan-pembimbing.tsx",
+                "path": "admin/persetujuan-pembimbing"
+              },
+              {
+                "id": "routes/_sidebar.dosen.kp.verifikasi-sidang",
+                "file": "routes/_sidebar.dosen.kp.verifikasi-sidang.tsx",
+                "path": "dosen/kp/verifikasi-sidang"
+              },
+              {
+                "id": "routes/_sidebar.dosen.kp.verifikasi-judul",
+                "file": "routes/_sidebar.dosen.kp.verifikasi-judul.tsx",
+                "path": "dosen/kp/verifikasi-judul"
+              },
+              {
+                "id": "routes/_sidebar.dosen.kp.verifikasi-surat",
+                "file": "routes/_sidebar.dosen.kp.verifikasi-surat.tsx",
+                "path": "dosen/kp/verifikasi-surat"
+              },
+              {
+                "id": "routes/_sidebar.mahasiswa.mentor-lapangan",
+                "file": "routes/_sidebar.mahasiswa.mentor-lapangan.tsx",
+                "path": "mahasiswa/mentor-lapangan"
+              },
+              {
+                "id": "routes/_sidebar.admin.penilaian-kriteria",
+                "file": "routes/_sidebar.admin.penilaian-kriteria.tsx",
+                "path": "admin/penilaian-kriteria"
+              },
+              {
+                "id": "routes/_sidebar.dosen.kp.logbook-monitor",
+                "file": "routes/_sidebar.dosen.kp.logbook-monitor.tsx",
+                "path": "dosen/kp/logbook-monitor",
+                "children": [
+                  {
+                    "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
+                    "file": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
+                    "path": ":studentId"
+                  }
+                ]
+              },
+              {
+                "id": "routes/_sidebar.dosen.kp.surat-pengantar",
+                "file": "routes/_sidebar.dosen.kp.surat-pengantar.tsx",
+                "path": "dosen/kp/surat-pengantar"
+              },
+              {
+                "id": "routes/_sidebar.mahasiswa.kp._timeline",
+                "file": "routes/_sidebar.mahasiswa.kp._timeline.tsx",
+                "path": "mahasiswa/kp",
+                "children": [
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang.tsx",
+                    "path": "pengujian-sidang"
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.surat-pengantar.tsx",
+                    "path": "surat-pengantar"
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.surat-balasan",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.surat-balasan.tsx",
+                    "path": "surat-balasan"
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.pasca-magang",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.pasca-magang.tsx",
+                    "path": "pasca-magang"
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.saat-magang",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.saat-magang.tsx",
+                    "path": "saat-magang"
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.pengajuan",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.pengajuan.tsx",
+                    "path": "pengajuan"
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.penilaian",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.penilaian.tsx",
+                    "path": "penilaian"
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.buat-tim",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.buat-tim.tsx",
+                    "path": "buat-tim"
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.kp._timeline.logbook",
+                    "file": "routes/_sidebar.mahasiswa.kp._timeline.logbook.tsx",
+                    "path": "logbook"
+                  }
+                ]
+              },
+              {
+                "id": "routes/_sidebar.admin.template._index",
+                "file": "routes/_sidebar.admin.template._index.tsx",
+                "path": "admin/template",
+                "index": true
+              },
+              {
+                "id": "routes/_sidebar.mahasiswa.kp.template",
+                "file": "routes/_sidebar.mahasiswa.kp.template.tsx",
+                "path": "mahasiswa/kp/template"
+              },
+              {
+                "id": "routes/_sidebar.mahasiswa.kp.laporan",
+                "file": "routes/_sidebar.mahasiswa.kp.laporan.tsx",
+                "path": "mahasiswa/kp/laporan"
+              },
+              {
+                "id": "routes/_sidebar.mahasiswa.repositori",
+                "file": "routes/_sidebar.mahasiswa.repositori.tsx",
+                "path": "mahasiswa/repositori",
+                "children": [
+                  {
+                    "id": "routes/_sidebar.mahasiswa.repositori._index",
+                    "file": "routes/_sidebar.mahasiswa.repositori._index.tsx",
+                    "index": true
+                  },
+                  {
+                    "id": "routes/_sidebar.mahasiswa.repositori.$id",
+                    "file": "routes/_sidebar.mahasiswa.repositori.$id.tsx",
+                    "path": ":id"
+                  }
+                ]
+              },
+              {
+                "id": "routes/_sidebar.admin.logbook-reset",
+                "file": "routes/_sidebar.admin.logbook-reset.tsx",
+                "path": "admin/logbook-reset"
+              },
+              {
+                "id": "routes/_sidebar.admin.surat-balasan",
+                "file": "routes/_sidebar.admin.surat-balasan.tsx",
+                "path": "admin/surat-balasan"
+              },
+              {
+                "id": "routes/_sidebar.mentor.notifikasi",
+                "file": "routes/_sidebar.mentor.notifikasi.tsx",
+                "path": "mentor/notifikasi"
+              },
+              {
+                "id": "routes/_sidebar.mentor.pengaturan",
+                "file": "routes/_sidebar.mentor.pengaturan.tsx",
+                "path": "mentor/pengaturan"
+              },
+              {
+                "id": "routes/_sidebar.mahasiswa._index",
+                "file": "routes/_sidebar.mahasiswa._index.tsx",
+                "path": "mahasiswa",
+                "index": true
+              },
+              {
+                "id": "routes/_sidebar.mentor.penilaian",
+                "file": "routes/_sidebar.mentor.penilaian.tsx",
+                "path": "mentor/penilaian"
+              },
+              {
+                "id": "routes/_sidebar.admin.penilaian",
+                "file": "routes/_sidebar.admin.penilaian.tsx",
+                "path": "admin/penilaian",
+                "children": [
+                  {
+                    "id": "routes/_sidebar.admin.penilaian._index",
+                    "file": "routes/_sidebar.admin.penilaian._index.tsx",
+                    "index": true
+                  },
+                  {
+                    "id": "routes/_sidebar.admin.penilaian.$id",
+                    "file": "routes/_sidebar.admin.penilaian.$id.tsx",
+                    "path": ":id"
+                  }
+                ]
+              },
+              {
+                "id": "routes/_sidebar.dosen.penilaian",
+                "file": "routes/_sidebar.dosen.penilaian.tsx",
+                "path": "dosen/penilaian",
+                "children": [
+                  {
+                    "id": "routes/_sidebar.dosen.penilaian.beri-nilai.$id",
+                    "file": "routes/_sidebar.dosen.penilaian.beri-nilai.$id.tsx",
+                    "path": "beri-nilai/:id"
+                  },
+                  {
+                    "id": "routes/_sidebar.dosen.penilaian.detail.$id",
+                    "file": "routes/_sidebar.dosen.penilaian.detail.$id.tsx",
+                    "path": "detail/:id"
+                  },
+                  {
+                    "id": "routes/_sidebar.dosen.penilaian._index",
+                    "file": "routes/_sidebar.dosen.penilaian._index.tsx",
+                    "index": true
+                  }
+                ]
+              },
+              {
+                "id": "routes/_sidebar.mentor.logbook",
+                "file": "routes/_sidebar.mentor.logbook.tsx",
+                "path": "mentor/logbook"
+              },
+              {
+                "id": "routes/_sidebar.mentor.mentee",
+                "file": "routes/_sidebar.mentor.mentee.tsx",
+                "path": "mentor/mentee",
+                "children": [
+                  {
+                    "id": "routes/_sidebar.mentor.mentee.$menteeId",
+                    "file": "routes/_sidebar.mentor.mentee.$menteeId.tsx",
+                    "path": ":menteeId"
+                  }
+                ]
+              },
+              {
+                "id": "routes/_sidebar.mentor.profil",
+                "file": "routes/_sidebar.mentor.profil.tsx",
+                "path": "mentor/profil"
+              },
+              {
+                "id": "routes/_sidebar.mentor._index",
+                "file": "routes/_sidebar.mentor._index.tsx",
+                "path": "mentor",
+                "index": true
+              },
+              {
+                "id": "routes/_sidebar.admin._index",
+                "file": "routes/_sidebar.admin._index.tsx",
+                "path": "admin",
+                "index": true
+              },
+              {
+                "id": "routes/_sidebar.dosen._index",
+                "file": "routes/_sidebar.dosen._index.tsx",
+                "path": "dosen",
+                "index": true
+              },
+              {
+                "id": "routes/_sidebar.mentor.arsip",
+                "file": "routes/_sidebar.mentor.arsip.tsx",
+                "path": "mentor/arsip"
+              },
+              {
+                "id": "routes/_sidebar.dashboard",
+                "file": "routes/_sidebar.dashboard.tsx",
+                "path": "dashboard"
+              }
+            ]
+          },
+          {
+            "id": "routes/tentang",
+            "file": "routes/tentang.tsx",
+            "path": "tentang"
+          },
+          {
+            "id": "routes/kontak",
+            "file": "routes/kontak.tsx",
+            "path": "kontak"
+          },
+          {
+            "id": "routes/_index",
+            "file": "routes/_index.tsx",
+            "index": true
+          },
+          {
+            "id": "routes/login",
+            "file": "routes/login.tsx",
+            "path": "login"
+          },
+          {
+            "id": "routes/home",
+            "file": "routes/home.tsx",
+            "path": "home"
+          }
+        ]
+      }
+    ]
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}
