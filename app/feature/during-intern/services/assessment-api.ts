@@ -11,6 +11,10 @@ export interface StudentAssessmentData {
   sikapEtika: number;
   prestasiKerja: number;
   kreatifitas: number;
+  // Dosen PA specific fields
+  formatKesesuaian?: number;
+  penguasaanMateri?: number;
+  analisisPerancangan?: number;
   totalScore: number;
   components?: Array<{
     id?: string;
@@ -320,8 +324,14 @@ function normalizeAssessmentPayload(
       0,
   );
 
+  // Academic / Dosen PA specific fields
+  const formatKesesuaian = Number(row.formatKesesuaian ?? row.reportFormat ?? row.nilaiFormat ?? 0);
+  const penguasaanMateri = Number(row.penguasaanMateri ?? row.materialMastery ?? row.nilaiMateri ?? 0);
+  const analisisPerancangan = Number(row.analisisPerancangan ?? row.analysisDesign ?? row.nilaiAnalisis ?? 0);
+
   const hasScores = Boolean(
-    kehadiran || kerjasama || sikapEtika || prestasiKerja || kreatifitas,
+    kehadiran || kerjasama || sikapEtika || prestasiKerja || kreatifitas || 
+    formatKesesuaian || penguasaanMateri || analisisPerancangan
   );
 
   if (directId || hasScores) {
@@ -338,7 +348,11 @@ function normalizeAssessmentPayload(
       sikapEtika,
       prestasiKerja,
       kreatifitas,
-      totalScore: Number(row.totalScore ?? row.finalScore ?? 0),
+      // Include academic fields
+      formatKesesuaian,
+      penguasaanMateri,
+      analisisPerancangan,
+      totalScore: Number(row.totalScore ?? row.total_score ?? row.finalScore ?? row.total_points ?? 0),
       components: parsedComponents || undefined,
       feedback:
         typeof row.feedback === "string"

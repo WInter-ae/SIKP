@@ -28,6 +28,7 @@ export async function normalizeSignatureForDocument(
   try {
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
+      img.crossOrigin = "anonymous";
       img.onload = () => resolve(img);
       img.onerror = () =>
         reject(new Error("Gagal memuat gambar tanda tangan."));
@@ -412,8 +413,16 @@ export async function generateAssessmentForm(
       })
       .from(element)
       .save();
+  } catch {
+    if (wrapper.parentNode) {
+      document.body.removeChild(wrapper);
+    }
+    openPrintFallback(html);
+    return;
   } finally {
-    document.body.removeChild(wrapper);
+    if (wrapper.parentNode) {
+      document.body.removeChild(wrapper);
+    }
   }
 }
 

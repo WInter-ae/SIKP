@@ -32,14 +32,17 @@ import {
   TableRow,
 } from "~/components/ui/table";
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   getAssessmentCriteria,
   updateAssessmentCriteria,
   DEFAULT_CRITERIA,
+  DEFAULT_DOSEN_PA_CRITERIA,
   type AssessmentCriterion,
 } from "~/lib/assessment-criteria-api";
 
 export default function PenilaianKriteriaPage() {
+  const [activeRole, setActiveRole] = useState<"MENTOR" | "DOSEN_PA">("MENTOR");
   const [criteria, setCriteria] = useState<AssessmentCriterion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,11 +55,12 @@ export default function PenilaianKriteriaPage() {
   const weightDifference = 100 - totalWeight;
 
   useEffect(() => {
-    getAssessmentCriteria().then((data) => {
+    setIsLoading(true);
+    getAssessmentCriteria(activeRole).then((data) => {
       setCriteria(data);
       setIsLoading(false);
     });
-  }, []);
+  }, [activeRole]);
 
   function handleWeightChange(id: string, value: string) {
     const num = Math.max(0, Math.min(100, parseInt(value) || 0));
@@ -103,8 +107,8 @@ export default function PenilaianKriteriaPage() {
   }
 
   function handleReset() {
-    setCriteria(DEFAULT_CRITERIA);
-    toast.info("Kriteria direset ke nilai default");
+    setCriteria(activeRole === "DOSEN_PA" ? DEFAULT_DOSEN_PA_CRITERIA : DEFAULT_CRITERIA);
+    toast.info(`Kriteria ${activeRole} direset ke nilai default`);
   }
 
   async function handleSave() {
@@ -114,28 +118,20 @@ export default function PenilaianKriteriaPage() {
     }
 
     setIsSaving(true);
-    const result = await updateAssessmentCriteria(criteria);
+    const result = await updateAssessmentCriteria(criteria, activeRole);
     setIsSaving(false);
 
     if (result.success) {
-      toast.success("Kriteria penilaian berhasil disimpan");
+      toast.success(`Kriteria penilaian ${activeRole} berhasil disimpan`);
     } else {
       toast.error(result.message);
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-muted-foreground">Memuat kriteria penilaian...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary/10 p-2.5">
@@ -150,6 +146,16 @@ export default function PenilaianKriteriaPage() {
           </p>
         </div>
       </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center p-20 bg-white/50 rounded-2xl border border-dashed">
+          <div className="text-center space-y-3">
+             <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+             <p className="text-sm text-muted-foreground">Memuat data kriteria {activeRole}...</p>
+          </div>
+        </div>
+      ) : (
+        <>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -221,6 +227,18 @@ export default function PenilaianKriteriaPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Role Selection Tabs */}
+      <Tabs
+        value={activeRole}
+        onValueChange={(v) => setActiveRole(v as any)}
+        className="w-full"
+      >
+        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+          <TabsTrigger value="MENTOR">Mentor Lapangan</TabsTrigger>
+          <TabsTrigger value="DOSEN_PA">Dosen PA</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Kriteria Table */}
       <Card>
@@ -401,6 +419,8 @@ export default function PenilaianKriteriaPage() {
           yang sudah ada tidak terpengaruh kecuali dilakukan penilaian ulang.
         </AlertDescription>
       </Alert>
+        </>
+      )}
     </div>
   );
 }

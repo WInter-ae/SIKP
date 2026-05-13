@@ -68,6 +68,37 @@ export const DEFAULT_CRITERIA: AssessmentCriterion[] = [
   },
 ];
 
+export const DEFAULT_DOSEN_PA_CRITERIA: AssessmentCriterion[] = [
+  {
+    id: "pa-1",
+    category: "Kesesuaian Laporan dengan Format",
+    weight: 30,
+    description: "Kesesuaian laporan dengan pedoman format yang berlaku",
+    maxScore: 100,
+  },
+  {
+    id: "pa-2",
+    category: "Penguasaan Materi KP",
+    weight: 30,
+    description: "Kedalaman pemahaman mahasiswa terhadap topik magang",
+    maxScore: 100,
+  },
+  {
+    id: "pa-3",
+    category: "Analisis dan Perancangan",
+    weight: 30,
+    description: "Kualitas analisis masalah dan solusi perancangan sistem",
+    maxScore: 100,
+  },
+  {
+    id: "pa-4",
+    category: "Sikap dan Etika",
+    weight: 10,
+    description: "Etika dalam penulisan dan kejujuran akademik",
+    maxScore: 100,
+  },
+];
+
 // ==================== HELPERS ====================
 
 export function extractKriteria(raw: any): AssessmentCriterion[] {
@@ -87,60 +118,49 @@ function getAuthHeaders(): Record<string, string> {
   };
 }
 
+import { internshipClient } from "~/lib/api-client";
+
 // ==================== API FUNCTIONS ====================
 
 /**
  * Ambil daftar kriteria penilaian dari database.
  * Jika API gagal / belum ready, otomatis fallback ke DEFAULT_CRITERIA.
  */
-export async function getAssessmentCriteria(): Promise<AssessmentCriterion[]> {
+export async function getAssessmentCriteria(
+  type: "MENTOR" | "DOSEN_PA" = "MENTOR",
+): Promise<AssessmentCriterion[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/penilaian/kriteria`, {
-      headers: getAuthHeaders(),
-    });
+    const response = await internshipClient.get<any>("/api/penilaian/kriteria", { type });
 
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.success || !response.data) {
+      throw new Error(response.message || "Gagal mengambil kriteria");
+    }
 
-    const json = await response.json();
-
-    // Final contract supports: { data: { kriteria: [...] } } and wrapper variants.
-    const list = extractKriteria(json);
-    if (json.success && Array.isArray(list) && list.length > 0) {
+    const list = extractKriteria(response);
+    if (Array.isArray(list) && list.length > 0) {
       return list.map(
-        (c: {
-          id: string;
-          categoryId?: string;
-          category?: string;
-          categoryKey?: string;
-          label?: string;
-          description?: string;
-          weight: number;
-          maxScore: number;
-          sortOrder?: number;
-          isActive?: boolean;
-        }) => ({
-          id: c.id,
-          categoryId: c.categoryId || c.id,
+        (c: any) => ({
+          id: String(c.id),
+          categoryId: c.categoryId || String(c.id),
           category: c.label || c.category || c.categoryKey || "Kategori",
           categoryKey: c.categoryKey || c.category,
           label: c.label,
-          weight: c.weight,
+          weight: Number(c.weight || 0),
           description: c.description || "-",
-          maxScore: c.maxScore,
+          maxScore: Number(c.maxScore || 100),
           sortOrder: c.sortOrder,
           isActive: typeof c.isActive === "boolean" ? c.isActive : true,
         }),
       ) as AssessmentCriterion[];
     }
 
-    console.warn("[AssessmentCriteria] API response invalid, using defaults");
-    return DEFAULT_CRITERIA;
+    return type === "DOSEN_PA" ? DEFAULT_DOSEN_PA_CRITERIA : DEFAULT_CRITERIA;
   } catch (error) {
     console.warn(
-      "[AssessmentCriteria] API tidak tersedia, menggunakan default:",
+      "[AssessmentCriteria] Menggunakan default kriteria karena:",
       error,
     );
-    return DEFAULT_CRITERIA;
+    return type === "DOSEN_PA" ? DEFAULT_DOSEN_PA_CRITERIA : DEFAULT_CRITERIA;
   }
 }
 
@@ -149,9 +169,11 @@ export async function getAssessmentCriteria(): Promise<AssessmentCriterion[]> {
  * Hanya bisa dipanggil oleh admin (backend enforce via auth middleware).
  *
  * @param criteria - Array kriteria dengan bobot baru (total weight harus = 100)
+ * @param type - Tipe kriteria yang diupdate
  */
 export async function updateAssessmentCriteria(
   criteria: AssessmentCriterion[],
+  type: "MENTOR" | "DOSEN_PA" = "MENTOR",
 ): Promise<{ success: boolean; message: string }> {
   const totalWeight = criteria.reduce((sum, c) => sum + c.weight, 0);
   if (totalWeight !== 100) {
@@ -162,31 +184,24 @@ export async function updateAssessmentCriteria(
   }
 
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/admin/penilaian/kriteria`,
-      {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        // Docs request body: { kriteria: [...] }
-        body: JSON.stringify({
-          kriteria: criteria.map((c) => ({
-            categoryId: c.categoryId || c.id,
-            category:
-              c.categoryKey || c.category.toLowerCase().replace(/ /g, "_"),
-            label: c.category,
-            weight: c.weight,
-            maxScore: c.maxScore,
-          })),
-        }),
-      },
-    );
-
-    const data = await response.json();
+    const response = await internshipClient.put<any>(`/api/admin/penilaian/kriteria?type=${type}`, {
+      kriteria: criteria.map((c, index) => ({
+        id: c.id,
+        categoryId: c.categoryId || c.id,
+        category:
+          c.categoryKey || c.category.toLowerCase().replace(/ /g, "_"),
+        label: c.category,
+        description: c.description,
+        weight: c.weight,
+        maxScore: c.maxScore,
+        sortOrder: c.sortOrder ?? index + 1,
+        isActive: c.isActive ?? true,
+      })),
+    });
 
     return {
-      success: response.ok && data.success,
-      message:
-        data.message || (response.ok ? "Berhasil disimpan" : "Gagal menyimpan"),
+      success: response.success,
+      message: response.message || (response.success ? "Berhasil disimpan" : "Gagal menyimpan"),
     };
   } catch (error) {
     return {

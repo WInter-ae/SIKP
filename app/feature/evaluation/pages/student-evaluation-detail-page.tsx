@@ -431,10 +431,15 @@ export default function StudentEvaluationDetailPage() {
                     
                     setIsSubmitting(true);
                     const res = await submitFinalScore({
-                      studentId: id, // Assuming ID is studentId based on routing
-                      score,
-                      feedback
-                    });
+                      internshipId: id, // Assuming ID is internshipId or studentId
+                      scores: {
+                        formatKesesuaian: score,
+                        penguasaanMateri: score,
+                        analisisPerancangan: score,
+                        sikapEtika: score,
+                        feedback
+                      }
+                    } as any);
                     
                     if (res.success) {
                       toast.success("Penilaian berhasil disubmit!");

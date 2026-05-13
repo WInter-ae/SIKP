@@ -1,76 +1,88 @@
 import { useParams, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
-import { ArrowLeft, User, CheckCircle, Lock, FileText, Printer } from "lucide-react";
+import { ArrowLeft, User, FileText, Lock, Unlock, AlertCircle } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { Badge } from "~/components/ui/badge";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Card, CardContent } from "~/components/ui/card";
+import { Avatar, AvatarFallback } from "~/components/ui/avatar";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { GradingForm } from "../components/grading-form";
-import { RevisionReviewSection } from "../components/revision-review-section";
 import type { GradingFormData } from "../types";
-import { getMyProfile } from "~/lib/services/dosen.service";
-import { getActiveProfileSignature } from "~/lib/services/signature.service";
 import { 
   getDosenLogbookMonitorItems 
 } from "../services/logbook-monitor-api";
 import { 
-  getReportStatus,
-  getTitleStatus
-} from "~/feature/kp-report/services/reporting-api";
-import { 
   submitFinalScore,
-  getAssessmentPdfUrl 
+  getAssessmentRecap
 } from "~/feature/evaluation/services/evaluation-api";
+import { getAssessmentCriteria } from "~/lib/assessment-criteria-api";
 import { toast } from "sonner";
 
 export default function GiveGradePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState("revisi");
-  const [allRevisionsApproved, setAllRevisionsApproved] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [menteeData, setMenteeData] = useState<any>(null); // DosenLogbookMonitorItem
-  const [reportInfo, setReportInfo] = useState<any>(null); // ReportSubmission
+  const [menteeData, setMenteeData] = useState<any>(null);
   const [internshipId, setInternshipId] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [initialData, setInitialData] = useState<GradingFormData | undefined>(undefined);
 
-  // Load mentee data and report status
   useEffect(() => {
     async function loadData() {
       if (!id) return;
       setIsLoading(true);
       try {
-        // 1. Get student from mentees list
         const menteesRes = await getDosenLogbookMonitorItems();
         if (menteesRes.success && menteesRes.data) {
-          // id can be UUID (studentId), NIM, or internshipId
           const found = menteesRes.data.find(m => m.studentId === id || m.nim === id || m.id === id);
           if (found) {
             setMenteeData(found);
             const iid = found.id;
             setInternshipId(iid);
-            
-            // 2. Get title status using internshipId
-            const titleRes = await getTitleStatus(iid); 
-            if (titleRes.success && titleRes.data) {
-              // 3. Get report status using internshipId
-              const reportRes = await getReportStatus(iid);
-              if (reportRes.success && reportRes.data) {
-                setReportInfo(reportRes.data);
-              }
+ 
+            // Check for existing assessment
+            const recapRes = await getAssessmentRecap(iid);
+            const recapData = recapRes.data;
+            if (recapRes.success && recapData && recapData.summary && recapData.summary.academicSupervisorTotal > 0) {
+              const recap = recapData;
+              const academicGrades = recap.academicSupervisorGrades?.[0]?.components || [];
+              
+              // Map recap components back to GradingFormData
+              // This depends on the component names matching
+              // Map recap components back to GradingFormData with more robust matching
+              const existingData: GradingFormData = {
+                reportFormat: academicGrades.find(g => 
+                  g.name.toLowerCase().includes("format") || 
+                  g.name.toLowerCase().includes("kesesuaian")
+                )?.score || 0,
+                materialMastery: academicGrades.find(g => 
+                  g.name.toLowerCase().includes("materi") || 
+                  g.name.toLowerCase().includes("penguasaan")
+                )?.score || 0,
+                analysisDesign: academicGrades.find(g => 
+                  g.name.toLowerCase().includes("analisis") || 
+                  g.name.toLowerCase().includes("perancangan") ||
+                  g.name.toLowerCase().includes("analis")
+                )?.score || 0,
+                attitudeEthics: academicGrades.find(g => 
+                  g.name.toLowerCase().includes("sikap") || 
+                  g.name.toLowerCase().includes("etika")
+                )?.score || 0,
+                notes: recap.notes || (recap.academicSupervisorGrades[0] as any)?.feedback || ""
+              };
+              
+              setInitialData(existingData);
+              setIsLocked(true);
             }
           }
         }
       } catch (error) {
-        console.error("Error loading mentee data:", error);
+        console.error("Error loading data:", error);
         toast.error("Gagal memuat data mahasiswa");
       } finally {
         setIsLoading(false);
       }
     }
-
     loadData();
   }, [id]);
 
@@ -79,7 +91,7 @@ export default function GiveGradePage() {
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="text-center space-y-4">
           <div className="h-12 w-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground">Memuat data penilaian...</p>
+          <p className="text-muted-foreground font-medium">Memuat data penilaian...</p>
         </div>
       </div>
     );
@@ -87,17 +99,13 @@ export default function GiveGradePage() {
 
   if (!menteeData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="max-w-md w-full">
-          <CardContent className="p-6 text-center">
-            <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Data Tidak Ditemukan
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Data mahasiswa yang Anda cari tidak tersedia.
-            </p>
-            <Button onClick={() => navigate("/dosen/penilaian")}>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full border-none shadow-lg">
+          <CardContent className="p-8 text-center">
+            <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Data Tidak Ditemukan</h2>
+            <p className="text-gray-500 mb-6">Mahasiswa yang Anda cari tidak tersedia dalam daftar bimbingan.</p>
+            <Button onClick={() => navigate("/dosen/penilaian")} className="w-full">
               Kembali ke Daftar
             </Button>
           </CardContent>
@@ -114,182 +122,152 @@ export default function GiveGradePage() {
 
     setIsSubmitting(true);
     try {
-      // Calculate weighted score (Standard Flow: 30% + 30% + 30% + 10%)
-      const finalAcademicScore = 
-        data.reportFormat * 0.3 + 
-        data.materialMastery * 0.3 + 
-        data.analysisDesign * 0.3 + 
-        data.attitudeEthics * 0.1;
-
       const response = await submitFinalScore({
-        studentId: menteeData.studentId || id!,
-        score: finalAcademicScore,
-        feedback: data.notes
-      });
+        internshipId: internshipId,
+        scores: {
+          formatKesesuaian: data.reportFormat,
+          penguasaanMateri: data.materialMastery,
+          analisisPerancangan: data.analysisDesign,
+          sikapEtika: data.attitudeEthics,
+          feedback: data.notes
+        }
+      } as any);
 
       if (response.success) {
         toast.success("Penilaian berhasil disimpan!");
-        navigate("/dosen/penilaian");
+        
+        // Re-fetch data to update initialData and ensure 100% sync
+        const recapRes = await getAssessmentRecap(internshipId);
+        const recapData = recapRes.data;
+        if (recapRes.success && recapData && recapData.summary && recapData.summary.academicSupervisorTotal > 0) {
+          const academicGrades = recapData.academicSupervisorGrades?.[0]?.components || [];
+          const existingData: GradingFormData = {
+            reportFormat: academicGrades.find(g => 
+              g.name.toLowerCase().includes("format") || 
+              g.name.toLowerCase().includes("kesesuaian")
+            )?.score || 0,
+            materialMastery: academicGrades.find(g => 
+              g.name.toLowerCase().includes("materi") || 
+              g.name.toLowerCase().includes("penguasaan")
+            )?.score || 0,
+            analysisDesign: academicGrades.find(g => 
+              g.name.toLowerCase().includes("analisis") || 
+              g.name.toLowerCase().includes("perancangan") ||
+              g.name.toLowerCase().includes("analis")
+            )?.score || 0,
+            attitudeEthics: academicGrades.find(g => 
+              g.name.toLowerCase().includes("sikap") || 
+              g.name.toLowerCase().includes("etika")
+            )?.score || 0,
+            notes: recapData.notes || (recapData.academicSupervisorGrades?.[0] as any)?.feedback || ""
+          };
+          setInitialData(existingData);
+        }
+        
+        setIsLocked(true);
       } else {
         toast.error(response.message || "Gagal menyimpan penilaian");
       }
     } catch (error) {
-      toast.error("Terjadi kesalahan sistem saat menyimpan nilai");
+      toast.error("Terjadi kesalahan sistem");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCancel = () => {
-    navigate("/dosen/penilaian");
-  };
-
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* Left Pane: PDF Viewer (Split-Screen) */}
-      <div className="hidden lg:block w-1/2 h-full bg-gray-800 border-r border-gray-700 relative">
-        {reportInfo?.fileUrl ? (
-          <div className="h-full flex flex-col">
-            <div className="bg-gray-900 p-3 flex items-center justify-between">
-              <span className="text-white text-sm font-medium truncate">
-                Laporan: {reportInfo.fileName}
-              </span>
-              <Badge variant="secondary" className="bg-blue-600 text-white">PDF Viewer</Badge>
-            </div>
-            <iframe
-              src={`${reportInfo.fileUrl}#toolbar=0`}
-              className="w-full h-full border-none"
-              title="Laporan PDF"
-            />
-          </div>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400 p-8 text-center space-y-4">
-            <div className="p-6 bg-gray-700/50 rounded-full">
-              <FileText className="h-16 w-16 opacity-20" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-200">Laporan Belum Tersedia</h3>
-              <p className="text-sm max-w-xs mt-2">
-                Mahasiswa belum mengupload file laporan atau file tidak dapat dimuat.
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Right Pane: Grading Form */}
-      <div className="w-full lg:w-1/2 h-full overflow-y-auto">
-        <div className="max-w-3xl mx-auto p-4 sm:p-6 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-4 sticky top-0 bg-gray-100 py-2 z-10">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/dosen/penilaian")}
+    <div className="min-h-screen bg-gray-50 pb-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        {/* Header */}
+        <div className="flex flex-col gap-4 py-8">
+          <div className="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/dosen/penilaian")}
+              className="-ml-2 h-8 text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Kembali
+            </Button>
+            {isLocked && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsLocked(false)}
+                className="text-amber-600 border-amber-200 hover:bg-amber-50"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Kembali
+                <Unlock className="h-4 w-4 mr-2" />
+                Buka Kunci Nilai
               </Button>
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold truncate">Penilaian Mahasiswa</h1>
-            </div>
-            {internshipId && (
-              <div className="flex items-center gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-shrink-0 lg:hidden"
-                  disabled={!reportInfo?.fileUrl}
-                  onClick={() => reportInfo?.fileUrl && window.open(reportInfo.fileUrl, "_blank")}
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Lihat Laporan
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-shrink-0"
-                  onClick={() => window.open(getAssessmentPdfUrl(internshipId), "_blank")}
-                >
-                  <Printer className="h-4 w-4 mr-2" />
-                  Cetak Form
-                </Button>
-              </div>
             )}
           </div>
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Penilaian Laporan & Sidang</h1>
+            <p className="text-muted-foreground">Berikan evaluasi akademik akhir untuk mahasiswa bimbingan Anda</p>
+          </div>
+        </div>
 
-          {/* Student Info Slim */}
-          <Card className="border-none shadow-sm overflow-hidden">
-            <CardContent className="p-4 bg-white">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12 border">
-                  <AvatarFallback className="bg-blue-100 text-blue-700 font-bold">
-                    {menteeData.studentName[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-900 truncate">
+        {/* Student Card */}
+        <Card className="border-none shadow-sm overflow-hidden bg-white ring-1 ring-gray-200 mb-8">
+          <CardContent className="p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+              <Avatar className="h-20 w-20 border-4 border-gray-50 shadow-sm">
+                <AvatarFallback className="bg-blue-600 text-white font-bold text-2xl">
+                  {menteeData.studentName?.[0]}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0 space-y-2">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 tracking-tight">
                     {menteeData.studentName}
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                    <span className="font-medium">{menteeData.nim}</span>
-                    <span>•</span>
-                    <span className="truncate">{menteeData.company}</span>
+                  <p className="text-blue-600 font-mono font-semibold tracking-wider">
+                    {menteeData.nim}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-blue-500" />
+                    <span className="font-medium text-gray-700">{menteeData.company}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <User className="h-3.5 w-3.5" />
+                    <span>Mentor: {menteeData.mentorName || "-"}</span>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Tabs for Revisi and Penilaian */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="revisi">Review Revisi</TabsTrigger>
-              <TabsTrigger value="penilaian">Form Penilaian</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="revisi">
-              <RevisionReviewSection
-                studentId={id!}
-                onAllRevisionsApproved={setAllRevisionsApproved}
-                reportInfo={reportInfo}
+        {isLocked ? (
+          <div className="space-y-6">
+            <Alert className="bg-amber-50 border-amber-200 text-amber-800">
+              <Lock className="h-4 w-4" />
+              <AlertTitle className="font-bold">Penilaian Terkunci</AlertTitle>
+              <AlertDescription className="text-sm">
+                Mahasiswa ini sudah dinilai. Klik tombol "Buka Kunci Nilai" di bagian atas jika ingin mengubah penilaian.
+              </AlertDescription>
+            </Alert>
+            <div className="opacity-60 pointer-events-none">
+              <GradingForm
+                initialData={initialData}
+                onSubmit={() => {}}
+                isSubmitting={false}
               />
-            </TabsContent>
-
-            <TabsContent value="penilaian">
-              {allRevisionsApproved ? (
-                <div className="space-y-6">
-                  <Alert className="bg-blue-50 border-blue-200">
-                    <CheckCircle className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800 text-xs">
-                      Beri penilaian berdasarkan laporan yang tampil di sebelah kiri (khusus desktop).
-                    </AlertDescription>
-                  </Alert>
-                  <GradingForm
-                    initialData={undefined}
-                    onSubmit={handleSubmit}
-                    onCancel={handleCancel}
-                    isSubmitting={isSubmitting}
-                  />
-                </div>
-              ) : (
-                <Card className="border-dashed">
-                  <CardContent className="py-12 text-center space-y-4">
-                    <Lock className="h-12 w-12 text-gray-300 mx-auto" />
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">Penilaian Terkunci</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Selesaikan review revisi terlebih dahulu.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-200 p-6 sm:p-8">
+            <GradingForm
+              initialData={initialData}
+              onSubmit={handleSubmit}
+              onCancel={() => initialData ? setIsLocked(true) : navigate("/dosen/penilaian")}
+              isSubmitting={isSubmitting}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -290,8 +290,24 @@ function mapRowToEvaluation(
     totalScore,
   );
 
+  const academicNode =
+    (row.lecturer && typeof row.lecturer === "object"
+      ? (row.lecturer as Record<string, unknown>)
+      : null) ||
+    (row.lecturerAssessment && typeof row.lecturerAssessment === "object"
+      ? (row.lecturerAssessment as Record<string, unknown>)
+      : null) ||
+    row;
+
   const academicTotal = parseNumber(
-    row.academicScore ?? row.nilaiDosen ?? row.academicTotal ?? row.dosenTotal,
+    academicNode.totalScore ?? 
+    academicNode.total_score ?? 
+    academicNode.totalPoints ??
+    academicNode.total_points ??
+    academicNode.academicScore ?? 
+    academicNode.nilaiDosen ?? 
+    row.academicTotal ?? 
+    row.dosenTotal,
     0,
   );
 
@@ -308,18 +324,35 @@ function mapRowToEvaluation(
     },
   ];
 
+  const academicComponents: GradeComponent[] = [];
+  if (academicTotal > 0) {
+    const fKesesuaian = parseNumber(academicNode.formatKesesuaian ?? academicNode.format_kesesuaian ?? academicNode.reportFormat);
+    const pMateri = parseNumber(academicNode.penguasaanMateri ?? academicNode.penguasaan_materi ?? academicNode.materialMastery);
+    const aPerancangan = parseNumber(academicNode.analisisPerancangan ?? academicNode.analisis_perancangan ?? academicNode.analysisDesign);
+    const sEtika = parseNumber(academicNode.sikapEtika ?? academicNode.sikap_etika ?? academicNode.attitudeEthics);
+
+    if (fKesesuaian > 0 || pMateri > 0 || aPerancangan > 0 || sEtika > 0) {
+      academicComponents.push(
+        { name: "formatKesesuaian", score: fKesesuaian, maxScore: 100, weight: 30 },
+        { name: "penguasaanMateri", score: pMateri, maxScore: 100, weight: 30 },
+        { name: "analisisPerancangan", score: aPerancangan, maxScore: 100, weight: 30 },
+        { name: "sikapEtika", score: sEtika, maxScore: 100, weight: 10 }
+      );
+    } else {
+      academicComponents.push({
+        name: "Nilai Dosen Pembimbing",
+        score: academicTotal,
+        maxScore: 100,
+      });
+    }
+  }
+
   const academicSupervisorGrades: AcademicSupervisorGrade[] =
     academicTotal > 0
       ? [
           {
             category: "Penilaian Dosen Pembimbing",
-            components: [
-              {
-                name: "Nilai Dosen Pembimbing",
-                score: academicTotal,
-                maxScore: 100,
-              },
-            ],
+            components: academicComponents,
             totalScore: academicTotal,
             maxScore: 100,
             percentage: academicTotal,
@@ -454,9 +487,14 @@ export async function getAdminEvaluationByStudentId(
  * POST /api/reporting/score-fast
  */
 export async function submitFinalScore(data: {
-  studentId: string;
-  score: number;
-  feedback?: string;
+  internshipId: string;
+  scores: {
+    formatKesesuaian: number;
+    penguasaanMateri: number;
+    analisisPerancangan: number;
+    sikapEtika: number;
+    feedback?: string;
+  };
 }): Promise<ApiResponse<null>> {
   return internshipClient.post<null>(SCORE_FAST_ENDPOINT, data);
 }
