@@ -209,6 +209,14 @@ const dosenMenu: NavItem[] = [
         title: "Verifikasi Mentor",
         url: "/dosen/kp/persetujuan-pembimbing",
       },
+      {
+        title: "Verifikasi Judul",
+        url: "/dosen/kp/verifikasi-judul",
+      },
+      {
+        title: "Verifikasi Sidang",
+        url: "/dosen/kp/verifikasi-sidang",
+      },
     ],
   },
 ];

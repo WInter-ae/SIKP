@@ -51,20 +51,22 @@ interface StatCardProps {
   value: number;
   icon: LucideIcon;
   iconBgColor: string;
+  iconColor?: string;
+  className?: string;
 }
 
-function StatCard({ title, value, icon: Icon, iconBgColor }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, iconBgColor, iconColor, className }: StatCardProps) {
   return (
-    <Card>
+    <Card className={className}>
       <CardContent className="p-6 flex items-center">
         <div
-          className={`w-14 h-14 rounded-full flex items-center justify-center text-white mr-4 ${iconBgColor}`}
+          className={`w-14 h-14 rounded-full flex items-center justify-center mr-4 shadow-sm ${iconBgColor} ${iconColor || 'text-foreground'}`}
         >
           <Icon className="h-6 w-6" />
         </div>
         <div>
-          <h3 className="text-2xl font-bold text-foreground">{value}</h3>
-          <p className="text-muted-foreground text-md">{title}</p>
+          <h3 className="text-3xl font-extrabold tracking-tight text-foreground">{value}</h3>
+          <p className="text-muted-foreground text-sm uppercase tracking-wider font-medium mt-1">{title}</p>
         </div>
       </CardContent>
     </Card>
@@ -624,32 +626,36 @@ function MailVerificationDosenPage() {
             value={stats[0].value}
             icon={stats[0].icon}
             iconBgColor="bg-blue-50 dark:bg-blue-900/20"
-            className="border-l-4 border-l-blue-600 shadow-sm"
+            iconColor="text-blue-600 dark:text-blue-400"
+            className="border-l-4 border-l-blue-600 shadow-sm hover:shadow-md transition-shadow duration-200"
           />
           <StatCard
             title={stats[1].title}
             value={stats[1].value}
             icon={stats[1].icon}
-            iconBgColor="bg-yellow-50 dark:bg-yellow-900/20"
-            className="border-l-4 border-l-yellow-300 shadow-sm"
+            iconBgColor="bg-green-50 dark:bg-green-900/20"
+            iconColor="text-green-600 dark:text-green-400"
+            className="border-l-4 border-l-green-600 shadow-sm hover:shadow-md transition-shadow duration-200"
           />
           <StatCard
             title={stats[2].title}
             value={stats[2].value}
             icon={stats[2].icon}
             iconBgColor="bg-red-50 dark:bg-red-900/20"
-            className="border-l-4 border-l-red-500 shadow-sm"
+            iconColor="text-red-600 dark:text-red-400"
+            className="border-l-4 border-l-red-500 shadow-sm hover:shadow-md transition-shadow duration-200"
           />
           <StatCard
             title={stats[3].title}
             value={stats[3].value}
             icon={stats[3].icon}
-            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
-            className="border-l-4 border-l-blue-600 shadow-sm"
+            iconBgColor="bg-primary/10"
+            iconColor="text-primary"
+            className="border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow duration-200"
           />
         </div>
 
-        <Card className="border-t-4 border-t-blue-600">
+        <Card>
           <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
             <div className="relative flex-1 min-w-62.5">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

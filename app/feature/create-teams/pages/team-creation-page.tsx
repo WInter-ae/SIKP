@@ -329,7 +329,8 @@ export default function TeamCreationPage() {
         dosen_kp_name?: string;
         dosenKpId?: string;
         dosenKpName?: string;
-        leaderId: string;
+        leaderId?: string;              // legacy / optional
+        leaderMahasiswaId?: string;    // ✅ actual field returned by backend
         isLeader: boolean;
         status: string;
         members: TeamMember[];
@@ -523,14 +524,28 @@ export default function TeamCreationPage() {
         });
 
         // Split PENDING members for leader view:
-        // - pendingInvites: undangan yang dikirim oleh ketua (invitedBy = leaderId)
-        // - joinRequests: permintaan gabung masuk dari orang lain (invitedBy != leaderId)
+        // - pendingInvites: undangan yang dikirim oleh ketua (invitedBy = leaderMahasiswaId)
+        // - joinRequests: permintaan gabung masuk dari mahasiswa (invitedBy != leaderMahasiswaId / null)
+        //
+        // ✅ FIX: backend mengembalikan `leaderMahasiswaId` (bukan `leaderId`).
+        // `invitedBy` di setiap member record berisi mahasiswaId pengundang.
+        // Jika `invitedBy` === `leaderMahasiswaId` → undangan dikirim ketua.
+        // Jika `invitedBy` === null/undefined atau bukan leader → permintaan gabung dari mahasiswa.
+        const leaderMahasiswaId =
+          teamData.leaderMahasiswaId ||
+          teamData.leaderId ||
+          "";
+
         const pendingMembers = members.filter(
           (m: TeamMember) => m.status === "PENDING",
         );
 
         const pendingInvitesListRaw: Member[] = pendingMembers
-          .filter((m: TeamMember) => m.invitedBy === teamData.leaderId)
+          .filter(
+            (m: TeamMember) =>
+              !!leaderMahasiswaId &&
+              m.invitedBy === leaderMahasiswaId,
+          )
           .map((m: TeamMember) => {
             const memberIdentity = getTeamMemberIdentity(m);
             return {
@@ -549,7 +564,11 @@ export default function TeamCreationPage() {
         );
 
         const incomingJoinRequestsRaw: Member[] = pendingMembers
-          .filter((m: TeamMember) => m.invitedBy !== teamData.leaderId)
+          .filter(
+            (m: TeamMember) =>
+              !leaderMahasiswaId ||
+              m.invitedBy !== leaderMahasiswaId,
+          )
           .map((m: TeamMember) => {
             const memberIdentity = getTeamMemberIdentity(m);
             return {
@@ -3056,8 +3075,8 @@ export default function TeamCreationPage() {
                   <div
                     key={member.id}
                     className={`rounded-lg border p-4 ${member.isLeader
-                        ? "border-primary/30 bg-primary/5"
-                        : "border-border bg-muted/50"
+                      ? "border-primary/30 bg-primary/5"
+                      : "border-border bg-muted/50"
                       }`}
                   >
                     <div className="mb-2 flex items-start justify-between gap-2">
@@ -3179,27 +3198,25 @@ export default function TeamCreationPage() {
             </div>
           )}
 
-          {/* Team Info Alert - Show only if user has team
-          {team && (
-            <Alert className="mb-8 border-primary/20 bg-primary/5">
-              <Info className="h-5 w-5 text-primary" />
-              <AlertDescription className="text-foreground">
-                <div className="flex items-center gap-4">
-                  {team.isLeader ? (
-                    <span className="flex items-center gap-1">
-                      <Crown className="h-4 w-4 text-yellow-500" />
-                      Anda adalah Ketua tim
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <Users className="h-4 w-4 text-blue-500" />
-                      Anda adalah Anggota tim
-                    </span>
-                  )}
+          {/* Team Member Requirement Info */}
+          {team && team.isLeader && team.status !== "FIXED" && (
+            <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/50 dark:bg-blue-900/10 shadow-sm relative overflow-hidden">
+              <div className="absolute left-0 top-0 h-full w-1.5 bg-blue-500"></div>
+              <div className="flex items-start gap-4 pl-2">
+                <div className="mt-0.5 rounded-full bg-blue-100 p-2 dark:bg-blue-800">
+                  <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                 </div>
-              </AlertDescription>
-            </Alert>
-          )} */}
+                <div>
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1 text-base">
+                    Ketentuan Jumlah Anggota Tim
+                  </h4>
+                  <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+                    Sangat ditekankan agar setiap tim beranggotakan <strong className="text-blue-900 dark:text-blue-100">3 orang mahasiswa</strong>. Pembentukan tim dengan 1 atau 2 anggota <strong>hanya diperbolehkan sebagai kondisi akhir.</strong>
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Member Lists */}
           <div className="space-y-6">

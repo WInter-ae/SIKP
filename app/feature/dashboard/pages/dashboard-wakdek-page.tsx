@@ -5,7 +5,11 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card";
-import { ListOrdered, Inbox, Clock } from "lucide-react";
+import {
+  Clock,
+  Inbox,
+  ListOrdered,
+} from "lucide-react";
 
 export type WakdekActivityItem = {
   action: string;
@@ -15,6 +19,9 @@ export type WakdekActivityItem = {
 
 export interface DashboardWakdekData {
   totalAjuanSuratPengantarMasuk?: number;
+  menungguVerifikasi?: number;
+  disetujui?: number;
+  ditolak?: number;
   activities?: WakdekActivityItem[];
 }
 
@@ -32,11 +39,12 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
+
+
 export default function DashboardWakdekPage({
   data,
   title = "Dashboard Wakil Dekan",
 }: DashboardWakdekPageProps) {
-  const totalAjuanSuratPengantarMasuk = data?.totalAjuanSuratPengantarMasuk;
   const activities = data?.activities ?? [];
 
   return (
@@ -62,8 +70,8 @@ export default function DashboardWakdekPage({
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-extrabold tracking-tight">
-            {typeof totalAjuanSuratPengantarMasuk === "number"
-              ? totalAjuanSuratPengantarMasuk
+            {typeof data?.totalAjuanSuratPengantarMasuk === "number"
+              ? data?.totalAjuanSuratPengantarMasuk
               : "-"}
           </div>
           <p className="text-xs text-muted-foreground mt-1">
@@ -72,6 +80,7 @@ export default function DashboardWakdekPage({
         </CardContent>
       </Card>
 
+      {/* Activity Log */}
       <Card className="shadow-lg border-none bg-linear-to-b from-background to-yellow-50/20 dark:to-yellow-900/5 overflow-hidden">
         <div className="h-1.5 w-full bg-linear-to-r from-yellow-300 to-transparent" />
         <CardHeader>
@@ -99,8 +108,12 @@ export default function DashboardWakdekPage({
                     }`}
                   />
                   <div className="flex flex-col gap-1 flex-1">
-                    <span className="font-medium text-foreground group-hover:text-yellow-600 transition-colors">{activity.action}</span>
-                    <span className="text-muted-foreground text-xs">{activity.time}</span>
+                    <span className="font-medium text-foreground group-hover:text-yellow-600 transition-colors">
+                      {activity.action}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {activity.time}
+                    </span>
                   </div>
                 </div>
               ))}

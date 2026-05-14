@@ -9,6 +9,7 @@ function getImageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" {
 
 function toTitleCase(value: string): string {
   return value
+    .replace(/[_-]+/g, " ") // convert snake_case / kebab-case → spaces
     .split(/\s+/)
     .filter((token) => token.length > 0)
     .map((token) => token.charAt(0).toUpperCase() + token.slice(1).toLowerCase())
