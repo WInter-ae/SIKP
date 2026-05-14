@@ -209,14 +209,6 @@ const dosenMenu: NavItem[] = [
         title: "Verifikasi Mentor",
         url: "/dosen/kp/persetujuan-pembimbing",
       },
-      {
-        title: "Verifikasi Judul",
-        url: "/dosen/kp/verifikasi-judul",
-      },
-      {
-        title: "Verifikasi Sidang",
-        url: "/dosen/kp/verifikasi-sidang",
-      },
     ],
   },
 ];
@@ -331,22 +323,27 @@ export function getSidebarMenuByUrl(
     });
   };
 
-  const currentMahasiswaMenu = submissionStatus ? getMahasiswaMenu() : mahasiswaMenu;
+  const currentMahasiswaMenu = submissionStatus
+    ? getMahasiswaMenu()
+    : mahasiswaMenu;
 
   if (pathname.startsWith("/admin")) {
     return adminMenu;
   }
   if (pathname.startsWith("/dosen")) {
     const jabatanLower = userJabatanStruktural?.toLowerCase() || "";
-    const isWakdek = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
-    const isKaprodi = 
-      (jabatanLower.includes("ketua") && (jabatanLower.includes("prodi") || jabatanLower.includes("program studi"))) ||
-      jabatanLower.includes("kaprodi") || 
+    const isWakdek =
+      jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+    const isKaprodi =
+      (jabatanLower.includes("ketua") &&
+        (jabatanLower.includes("prodi") ||
+          jabatanLower.includes("program studi"))) ||
+      jabatanLower.includes("kaprodi") ||
       jabatanLower.includes("koordinator");
 
     if (isWakdek) return wakilDekanMenu;
     if (isKaprodi) return kaprodiMenu;
-    
+
     return dosenMenu;
   }
   if (pathname.startsWith("/mentor")) {
@@ -358,18 +355,22 @@ export function getSidebarMenuByUrl(
 
   const normalizedRole = userRole?.toString().toUpperCase();
   const jabatanLower = userJabatanStruktural?.toLowerCase() || "";
-  const isKaprodiByJabatan = 
-    (jabatanLower.includes("ketua") && (jabatanLower.includes("prodi") || jabatanLower.includes("program studi"))) ||
-    jabatanLower.includes("kaprodi") || 
+  const isKaprodiByJabatan =
+    (jabatanLower.includes("ketua") &&
+      (jabatanLower.includes("prodi") ||
+        jabatanLower.includes("program studi"))) ||
+    jabatanLower.includes("kaprodi") ||
     jabatanLower.includes("koordinator");
-  const isWakdekByJabatan = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+  const isWakdekByJabatan =
+    jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
 
   if (normalizedRole === "ADMIN") return adminMenu;
   if (normalizedRole === "MENTOR") return mentorMenu;
-  
+
   if (normalizedRole === "KAPRODI" || isKaprodiByJabatan) return kaprodiMenu;
-  
-  if (normalizedRole === "WAKIL_DEKAN" || isWakdekByJabatan) return wakilDekanMenu;
+
+  if (normalizedRole === "WAKIL_DEKAN" || isWakdekByJabatan)
+    return wakilDekanMenu;
 
   if (normalizedRole === "DOSEN") {
     return dosenMenu;

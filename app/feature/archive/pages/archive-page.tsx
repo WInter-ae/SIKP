@@ -1,30 +1,30 @@
 import { useEffect, useState } from "react";
-import { 
-  Archive, 
-  Search, 
-  Calendar, 
-  Building2, 
-  User, 
-  Download, 
+import {
+  Archive,
+  Search,
+  Calendar,
+  Building2,
+  User,
+  Download,
   ChevronRight,
   Filter,
-  FileText
+  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "~/components/ui/table";
-import { 
-  getStudentArchive, 
-  type ArchiveInternship 
+import {
+  getStudentArchive,
+  type ArchiveInternship,
 } from "../services/archive-api";
 import { toast } from "sonner";
 
@@ -47,10 +47,11 @@ export default function ArchivePage() {
     loadArchives();
   }, []);
 
-  const filteredArchives = archives.filter(item => 
-    item.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.nim?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredArchives = archives.filter(
+    (item) =>
+      item.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.studentName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.nim?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -77,27 +78,45 @@ export default function ArchivePage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-blue-50/50 border-blue-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-blue-800">Total Arsip</CardTitle>
+            <CardTitle className="text-sm font-medium text-blue-800">
+              Total Arsip
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-900">{archives.length}</div>
-            <p className="text-xs text-blue-600 mt-1">Data tersimpan di sistem</p>
+            <div className="text-2xl font-bold text-blue-900">
+              {archives.length}
+            </div>
+            <p className="text-xs text-blue-600 mt-1">
+              Data tersimpan di sistem
+            </p>
           </CardContent>
         </Card>
         <Card className="bg-green-50/50 border-green-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-green-800">Lulus</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-800">
+              Lulus
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-900">
-              {archives.filter(a => (a.finalGrade || "").startsWith("A") || (a.finalGrade || "").startsWith("B")).length}
+              {
+                archives.filter(
+                  (a) =>
+                    (a.finalGrade || "").startsWith("A") ||
+                    (a.finalGrade || "").startsWith("B"),
+                ).length
+              }
             </div>
-            <p className="text-xs text-green-600 mt-1">Mahasiswa dengan nilai memuaskan</p>
+            <p className="text-xs text-green-600 mt-1">
+              Mahasiswa dengan nilai memuaskan
+            </p>
           </CardContent>
         </Card>
         <Card className="bg-purple-50/50 border-purple-100">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-purple-800">Periode Terbaru</CardTitle>
+            <CardTitle className="text-sm font-medium text-purple-800">
+              Periode Terbaru
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-900">2023/2024</div>
@@ -112,8 +131,8 @@ export default function ArchivePage() {
             <CardTitle className="text-lg">Daftar Riwayat</CardTitle>
             <div className="relative max-w-sm w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input 
-                placeholder="Cari perusahaan, nama, atau NIM..." 
+              <Input
+                placeholder="Cari perusahaan, nama, atau NIM..."
                 className="pl-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -140,13 +159,18 @@ export default function ArchivePage() {
                     <TableCell colSpan={6} className="h-32 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                        <span className="text-sm text-muted-foreground">Memuat data arsip...</span>
+                        <span className="text-sm text-muted-foreground">
+                          Memuat data arsip...
+                        </span>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredArchives.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    <TableCell
+                      colSpan={6}
+                      className="h-32 text-center text-muted-foreground"
+                    >
                       <div className="flex flex-col items-center gap-2">
                         <Archive className="h-8 w-8 opacity-20" />
                         <span>Belum ada data arsip yang tersedia.</span>
@@ -171,51 +195,77 @@ export default function ArchivePage() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <p className="font-medium">{archive.studentName || "N/A"}</p>
-                          <p className="text-xs text-muted-foreground">{archive.nim || "N/A"}</p>
+                          <p className="font-medium">
+                            {archive.studentName || "N/A"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {archive.nim || "N/A"}
+                          </p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1 text-xs">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3 text-muted-foreground" />
-                            <span>{new Date(archive.startDate).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</span>
+                            <span>
+                              {new Date(archive.startDate).toLocaleDateString(
+                                "id-ID",
+                                { month: "short", year: "numeric" },
+                              )}
+                            </span>
                           </div>
                           <ChevronRight className="h-3 w-3 mx-auto text-muted-foreground rotate-90" />
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3 text-muted-foreground" />
-                            <span>{new Date(archive.endDate).toLocaleDateString('id-ID', { month: 'short', year: 'numeric' })}</span>
+                            <span>
+                              {new Date(archive.endDate).toLocaleDateString(
+                                "id-ID",
+                                { month: "short", year: "numeric" },
+                              )}
+                            </span>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs">{archive.academicSupervisor || "-"}</span>
+                          <span className="text-xs">
+                            {archive.academicSupervisor || "-"}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
                         {archive.finalGrade ? (
-                          <Badge 
+                          <Badge
                             className={
-                              archive.finalGrade.startsWith('A') 
-                                ? "bg-green-600" 
-                                : archive.finalGrade.startsWith('B') 
-                                  ? "bg-blue-600" 
+                              archive.finalGrade.startsWith("A")
+                                ? "bg-green-600"
+                                : archive.finalGrade.startsWith("B")
+                                  ? "bg-blue-600"
                                   : "bg-orange-600"
                             }
                           >
                             {archive.finalGrade}
                           </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground italic">Pending</span>
+                          <span className="text-xs text-muted-foreground italic">
+                            Pending
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" title="Lihat Laporan">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Lihat Laporan"
+                        >
                           <FileText className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" title="Unduh Sertifikat">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Unduh Sertifikat"
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
                       </TableCell>
