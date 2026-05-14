@@ -10,7 +10,7 @@
  *
  * @example Untuk layanan internship (logbook, mentor, penilaian):
  *   import { internshipClient } from "~/lib/api-client";
- *   const { data } = await internshipClient.get<Logbook[]>("/api/logbooks");
+ *   const { data } = await internshipClient.get<Logbook[]>("/api/logbook");
  */
 
 import { getAuthToken as getStoredToken } from "./auth-client";
@@ -31,8 +31,9 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:8789";
-const DEFAULT_PROD_API_BASE_URL = "http://localhost:8789";
+const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:3000";
+const DEFAULT_PROD_API_BASE_URL =
+  "https://backend-sikp.backend-sikp.workers.dev";
 
 /** Base URL untuk layanan pengajuan KP (submission, team, dll.) */
 export const API_BASE_URL =
@@ -46,7 +47,8 @@ export const API_BASE_URL =
 
 /** Base URL untuk layanan pelaksanaan magang (logbook, mentor, penilaian) */
 export const INTERNSHIP_API_BASE_URL =
-  import.meta.env.VITE_API_INTERNSHIP_URL || API_BASE_URL;
+  import.meta.env.VITE_API_INTERNSHIP_URL ||
+  "https://backend-sikp.mukarrobinujiantik.workers.dev";
 
 // ==================== TYPES ====================
 
@@ -128,7 +130,7 @@ function buildHeaders(
 
   // Browser app authenticates via httpOnly cookie session.
   // Only attach Bearer token in non-browser (SSR/server) contexts.
-  if (token) {
+  if (token && !isBrowser()) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
@@ -142,7 +144,7 @@ function buildHeaders(
 // ==================== CORE API CLIENT ====================
 
 /**
- * Low-level API client ‚Äî dipakai oleh factory `createApiClient`.
+ * Low-level API client G«ˆ dipakai oleh factory `createApiClient`.
  * Penanganan error (network, HTTP non-2xx, JSON parse) dilakukan secara
  * terpusat di sini sehingga setiap service tidak perlu try/catch sendiri.
  *
@@ -200,7 +202,7 @@ export async function apiClient<T>(
       if (payloadData !== null && payloadData !== undefined) {
         const validation = schema.safeParse(payloadData);
         if (!validation.success) {
-          console.error("‚ùå Zod Validation Error:", validation.error);
+          console.error("G•Ó Zod Validation Error:", validation.error);
           return {
             success: false,
             message:
@@ -231,7 +233,7 @@ export async function apiClient<T>(
     return data as ApiResponse<T>;
   } catch (error) {
     if (isNetworkError(error)) {
-      console.error("‚ùå Network Error:", error);
+      console.error("G•Ó Network Error:", error);
       return {
         success: false,
         message: API_ERROR_MESSAGES.NETWORK_ERROR,
@@ -241,7 +243,7 @@ export async function apiClient<T>(
 
     const errorMessage =
       error instanceof Error ? error.message : API_ERROR_MESSAGES.UNKNOWN_ERROR;
-    console.error("‚ùå API Client Error:", error);
+    console.error("G•Ó API Client Error:", error);
 
     return {
       success: false,
@@ -351,7 +353,7 @@ export function createApiClient(baseUrl: string) {
     },
 
     /**
-     * Custom fetch ‚Äî untuk kasus yang membutuhkan opsi RequestInit penuh
+     * Custom fetch G«ˆ untuk kasus yang membutuhkan opsi RequestInit penuh
      */
     request<T>(
       endpoint: string,
@@ -373,14 +375,14 @@ export const sikpClient = createApiClient(API_BASE_URL);
 
 /**
  * Client untuk layanan pelaksanaan magang (logbook, mentor, penilaian)
- * Menggunakan INTERNSHIP_API_BASE_URL (saat ini sama dengan API_BASE_URL ‚Äî monolith)
+ * Menggunakan INTERNSHIP_API_BASE_URL
  */
 export const internshipClient = createApiClient(INTERNSHIP_API_BASE_URL);
 
 // ==================== LEGACY COMPAT EXPORTS ====================
 // Fungsi-fungsi di bawah dipertahankan sementara untuk backward compatibility
 // dengan file-file service lama yang belum dimigrasi.
-// Akan dihapus setelah semua service dimigrasi ke sikpClient.* / internshipClient.*
+// Akan dihapus setelah semua service dimigrasi ke sikpClient.*
 
 /** @deprecated Gunakan sikpClient.get() */
 export function get<T>(endpoint: string, params?: Record<string, string>) {
@@ -412,9 +414,9 @@ export function uploadFile<T>(endpoint: string, formData: FormData) {
   return sikpClient.upload<T>(endpoint, formData);
 }
 
-// ==================== INTERNSHIP CLIENT HELPERS ====================
-// Alias untuk service-service pelaksanaan magang ‚Äî mengarah ke internshipClient
-// Menggunakan INTERNSHIP_API_BASE_URL yang saat ini = API_BASE_URL (monolith)
+// ==================== INTERNSHIP LEGACY COMPAT EXPORTS ====================
+// Alias ke internshipClient untuk file-file yang masih menggunakan iget/ipost/iput.
+// Akan dihapus setelah semua service dimigrasi ke internshipClient.*
 
 /** @deprecated Gunakan internshipClient.get() */
 export function iget<T>(endpoint: string, params?: Record<string, string>) {
