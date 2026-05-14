@@ -100,8 +100,8 @@ export function RegisterForm({
       }
 
       // Update user context
-      if (result.user) {
-        setUser(result.user);
+      if ((result as any).user) {
+        setUser((result as any).user);
       }
 
       // Tampilkan notifikasi sukses

@@ -301,9 +301,14 @@ function ReviewModal({
       setIsGeneratingPdf(true);
       const mailEntry = buildMailEntryFromApplication(application);
 
-      // ✅ Admin always gets a fresh preview to see signatures, 
+      // ✅ Admin and Wakil Dekan always get a fresh preview to see signatures,
       // even if there is a signedFileUrl (which might be a placeholder)
-      if (mailEntry.status === "disetujui" && mailEntry.signedFileUrl && user?.role !== "WAKIL_DEKAN") {
+      if (
+        mailEntry.status === "disetujui" &&
+        mailEntry.signedFileUrl &&
+        user?.role !== "ADMIN" &&
+        user?.role !== "WAKIL_DEKAN"
+      ) {
         window.open(mailEntry.signedFileUrl, "_blank", "noopener,noreferrer");
         toast.success("Membuka surat signed dari server.");
         return;

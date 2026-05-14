@@ -50,9 +50,8 @@ interface IdentitySelectionPayload {
   sessionToken?: unknown;
 }
 
-const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:3000";
-const DEFAULT_PROD_API_BASE_URL =
-  "https://backend-sikp.backend-sikp.workers.dev";
+const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:8789";
+const DEFAULT_PROD_API_BASE_URL = "http://localhost:8789";
 const DEFAULT_API_BASE_URL = import.meta.env.DEV
   ? DEFAULT_LOCAL_API_BASE_URL
   : DEFAULT_PROD_API_BASE_URL;

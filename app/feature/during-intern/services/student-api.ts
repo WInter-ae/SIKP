@@ -1,9 +1,11 @@
 /**
  * Student Data API Service
- * Handles student (mahasiswa) profile and information
+ * Handles student (mahasiswa) profile and internship information
+ *
+ * Menggunakan internshipClient & sikpClient dari api-client sesuai pola main.
  */
 
-import { get, put, iget, iput } from "~/lib/api-client";
+import { sikpClient, internshipClient, get } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 // ==================== TYPES ====================
@@ -49,7 +51,7 @@ export interface StudentDetailResponse {
 
 /**
  * Complete Internship Data Response from Backend
- * GET /api/mahasiswa/internship returns all context data
+ * GET /api/internships → data lengkap konteks magang mahasiswa
  */
 export interface CompleteInternshipData {
   student: {
@@ -97,7 +99,11 @@ export interface CompleteInternshipData {
     company: string;
     position: string;
     phone?: string;
+    status?: string;
+    companyAddress?: string;
+    rejectionReason?: string;
     signature?: string;
+    createdAt?: string;
   };
   lecturer?: {
     id: string;
@@ -105,49 +111,14 @@ export interface CompleteInternshipData {
     email: string;
     nip: string;
     phone?: string;
+    signature?: string;
   };
-}
-
-// ==================== API FUNCTIONS ====================
-
-/**
- * Get current student profile
- * GET /api/mahasiswa/profile
- */
-export async function getMyProfile(): Promise<ApiResponse<StudentProfile>> {
-  return iget<StudentProfile>("/api/mahasiswa/profile");
-}
-
-/**
- * Get student by ID (for dosen/mentor)
- * GET /api/mahasiswa/:studentId
- */
-export async function getStudentById(
-  studentId: string,
-): Promise<ApiResponse<StudentDetailResponse>> {
-  return iget<StudentDetailResponse>(`/api/mahasiswa/${studentId}`);
-}
-
-/**
- * Get student by NIM
- * GET /api/mahasiswa/nim/:nim
- */
-export async function getStudentByNim(
-  nim: string,
-): Promise<ApiResponse<StudentDetailResponse>> {
-  return iget<StudentDetailResponse>(`/api/mahasiswa/nim/${nim}`);
-}
-
-/**
- * Update student profile
- * PUT /api/mahasiswa/profile
- */
-export async function updateStudentProfile(
-  data: Partial<
-    Omit<StudentProfile, "id" | "userId" | "nim" | "createdAt" | "updatedAt">
-  >,
-): Promise<ApiResponse<StudentProfile>> {
-  return iput<StudentProfile>("/api/mahasiswa/profile", data);
+  coordinator?: {
+    id?: string;
+    name: string;
+    nip: string;
+    signature?: string;
+  };
 }
 
 /**
@@ -183,27 +154,32 @@ interface BackendInternshipResponse {
   internship: {
     id: number;
     status: string;
-    pembimbingLapanganId: number | null; // ← Backend uses different field names
+    pembimbingLapanganId: number | null;
     pembimbingDosenId: number | null;
     createdAt: string;
-  } | null; // ← Can be null if not created yet
+  } | null;
   mentor?: {
-    // ← NEW: Mentor data from backend
     id: number;
     name: string;
     email: string;
     company: string;
     position: string;
     phone?: string;
-    signature?: string | null; // ← Base64 Data URI for PDF paraf
+    signature?: string | null;
   } | null;
   lecturer?: {
-    // ← OPTIONAL: Lecturer/dosen data
     id: number;
     name: string;
     email: string;
     nip: string;
     phone?: string;
+    signature?: string | null;
+  } | null;
+  coordinator?: {
+    id?: string;
+    name: string;
+    nip: string;
+    signature?: string | null;
   } | null;
 }
 
@@ -216,7 +192,6 @@ function mapBackendToFrontend(
 ): CompleteInternshipData {
   const { student, submission, internship, mentor, lecturer } = backendData;
 
-  // Handle backend variants: companyName/company and companyAddress/address
   const submissionAny = submission as Record<string, unknown>;
   const company =
     (typeof submission.companyName === "string" && submission.companyName) ||
@@ -234,18 +209,18 @@ function mapBackendToFrontend(
       : "") ||
     "";
 
-  return {
+  const mappedResult: CompleteInternshipData = {
     student: {
       id: student.id.toString(),
-      userId: student.id.toString(), // Use student ID as userId
+      userId: student.id.toString(),
       nim: student.nim,
       name: student.name,
       email: student.email,
-      phone: "", // Backend doesn't return phone in this endpoint
+      phone: "",
       prodi: student.prodi,
       fakultas: student.fakultas,
       angkatan: student.angkatan,
-      semester: parseInt(student.semester) || 0, // Convert string to number
+      semester: parseInt(student.semester) || 0,
     },
     submission: {
       id: submission.id.toString(),
@@ -263,18 +238,13 @@ function mapBackendToFrontend(
           studentId: student.id.toString(),
           submissionId: submission.id.toString(),
           teamId: submission.teamId?.toString(),
-          status: internship.status as
-            | "PENDING"
-            | "AKTIF"
-            | "SELESAI"
-            | "BATAL",
+          status: internship.status as "PENDING" | "AKTIF" | "SELESAI" | "BATAL",
           mentorId: internship.pembimbingLapanganId?.toString(),
           dosenPembimbingId: internship.pembimbingDosenId?.toString(),
           createdAt: internship.createdAt,
-          updatedAt: internship.createdAt, // Backend doesn't return updatedAt
+          updatedAt: internship.createdAt,
         }
       : {
-          // Default internship object when backend returns null
           id: "pending",
           studentId: student.id.toString(),
           submissionId: submission.id.toString(),
@@ -283,7 +253,6 @@ function mapBackendToFrontend(
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
-    // ← NEW: Map mentor data (will be populated when backend implements it)
     mentor: mentor
       ? {
           id: mentor.id.toString(),
@@ -292,10 +261,13 @@ function mapBackendToFrontend(
           company: mentor.company,
           position: mentor.position,
           phone: mentor.phone,
-          signature: mentor.signature || undefined, // ← Base64 signature for PDF
+          status: (mentor as any).status,
+          companyAddress: (mentor as any).companyAddress,
+          rejectionReason: (mentor as any).rejectionReason,
+          createdAt: (mentor as any).createdAt,
+          signature: mentor.signature || undefined,
         }
       : undefined,
-    // ← OPTIONAL: Map lecturer data
     lecturer: lecturer
       ? {
           id: lecturer.id.toString(),
@@ -303,43 +275,83 @@ function mapBackendToFrontend(
           email: lecturer.email,
           nip: lecturer.nip,
           phone: lecturer.phone,
+          signature: (lecturer as any).signature || undefined,
+        }
+      : undefined,
+    coordinator: backendData.coordinator
+      ? {
+          id: backendData.coordinator.id,
+          name: backendData.coordinator.name,
+          nip: backendData.coordinator.nip,
+          signature: backendData.coordinator.signature || undefined,
         }
       : undefined,
   };
+
+  return mappedResult;
+}
+
+// ==================== API FUNCTIONS ====================
+
+/**
+ * Get current student profile
+ * GET /api/mahasiswa/me (via sikpClient — profil umum mahasiswa)
+ */
+export async function getMyProfile(): Promise<ApiResponse<StudentProfile>> {
+  return sikpClient.get<StudentProfile>("/api/mahasiswa/me");
+}
+
+/**
+ * Get student by ID (for dosen/mentor)
+ * GET /api/mahasiswa/:studentId
+ */
+export async function getStudentById(
+  studentId: string,
+): Promise<ApiResponse<StudentDetailResponse>> {
+  return sikpClient.get<StudentDetailResponse>(`/api/mahasiswa/${studentId}`);
+}
+
+/**
+ * Get student by NIM
+ * GET /api/mahasiswa/nim/:nim
+ */
+export async function getStudentByNim(
+  nim: string,
+): Promise<ApiResponse<StudentDetailResponse>> {
+  return sikpClient.get<StudentDetailResponse>(`/api/mahasiswa/nim/${nim}`);
+}
+
+/**
+ * Update student profile
+ * PUT /api/mahasiswa/me/profile
+ */
+export async function updateStudentProfile(
+  data: Partial<
+    Omit<StudentProfile, "id" | "userId" | "nim" | "createdAt" | "updatedAt">
+  >,
+): Promise<ApiResponse<StudentProfile>> {
+  return sikpClient.put<StudentProfile>("/api/mahasiswa/me/profile", data);
 }
 
 /**
  * Get current student's complete internship data (⭐ MOST IMPORTANT ENDPOINT)
- * This endpoint returns ALL context data needed for internship pages:
- * - Student profile
- * - Internship details
- * - Submission data (company, division from original submission)
- * - Team info (if applicable)
- * - Mentor info (if assigned)
- * - Lecturer info (if assigned)
+ * Menggabungkan data mahasiswa, submission, internship, mentor, dan dosen pembimbing.
  *
- * GET /api/mahasiswa/internship
- *
- * ✅ NOW USING REAL BACKEND ENDPOINT (18 Feb 2026)
- * Fallback mechanism kept for safety but should not be needed.
+ * GET /api/internships
  */
 export async function getCompleteInternshipData(): Promise<
   ApiResponse<CompleteInternshipData>
 > {
-  console.log("📡 Calling API: GET /api/mahasiswa/internship");
+  console.log("📡 Calling API: GET /api/internships");
 
   try {
-    // Call the real backend endpoint
-    const response = await iget<BackendInternshipResponse>(
-      "/api/mahasiswa/internship",
-    );
+    const response =
+      await internshipClient.get<BackendInternshipResponse>("/api/internships");
     console.log("✅ Backend response received:", response);
 
     if (response.success && response.data) {
-      // Map backend structure to frontend interface
       const mappedData = mapBackendToFrontend(response.data);
       console.log("✅ Data mapped to frontend structure:", mappedData);
-
       return {
         success: true,
         message: response.message || "Data loaded successfully",
@@ -347,7 +359,6 @@ export async function getCompleteInternshipData(): Promise<
       };
     }
 
-    // If response not successful, try fallback
     console.warn("⚠️ Backend response not successful, using fallback...");
     return await getCompleteInternshipDataFallback();
   } catch (error) {
@@ -358,8 +369,8 @@ export async function getCompleteInternshipData(): Promise<
 }
 
 /**
- * Fallback function: Combine data from multiple endpoints
- * Used when /api/mahasiswa/internship is not available
+ * Fallback: Combine data from multiple endpoints
+ * Used when /api/internships is not available
  */
 async function getCompleteInternshipDataFallback(): Promise<
   ApiResponse<CompleteInternshipData>
@@ -367,21 +378,18 @@ async function getCompleteInternshipDataFallback(): Promise<
   console.log("🔄 Using fallback: Combining multiple endpoints...");
 
   try {
-    // Try to get profile first
     let studentData = null;
 
     try {
       const profileResponse = await getMyProfile();
       console.log("📦 Profile response:", profileResponse);
-
       if (profileResponse.success && profileResponse.data) {
         studentData = profileResponse.data;
       }
-    } catch (profileError) {
+    } catch {
       console.warn("⚠️ Profile endpoint failed, using localStorage data");
     }
 
-    // If profile endpoint failed, try to get user data from localStorage
     if (!studentData) {
       const userDataStr =
         typeof window !== "undefined"
@@ -390,9 +398,6 @@ async function getCompleteInternshipDataFallback(): Promise<
       if (userDataStr) {
         try {
           const userData = JSON.parse(userDataStr);
-          console.log("📦 User data from localStorage:", userData);
-
-          // Map user data to student structure
           studentData = {
             id: userData.id || "",
             userId: userData.id || "",
@@ -405,19 +410,15 @@ async function getCompleteInternshipDataFallback(): Promise<
             angkatan: userData.angkatan || "",
             semester: userData.semester || 0,
           };
-        } catch (e) {
+        } catch {
           console.error("❌ Failed to parse user data from localStorage");
         }
       }
     }
 
-    // Get submissions data
-    const submissionsResponse = await get<any[]>(
-      "/api/submissions/my-submissions",
-    );
+    const submissionsResponse = await get<any[]>("/api/submissions/my-submissions");
     console.log("📦 Submissions response:", submissionsResponse);
 
-    // If we don't have student data at all, return error
     if (!studentData) {
       return {
         success: false,
@@ -426,7 +427,6 @@ async function getCompleteInternshipDataFallback(): Promise<
       };
     }
 
-    // Find the latest approved submission
     let submission = null;
     if (
       submissionsResponse.success &&
@@ -434,18 +434,16 @@ async function getCompleteInternshipDataFallback(): Promise<
       submissionsResponse.data.length > 0
     ) {
       const approved = submissionsResponse.data.find(
-        (s: any) => s.status === "APPROVED",
+        (s: any) => s.status === "APPROVED" || s.adminVerificationStatus === "APPROVED",
       );
       const submissionToUse = approved || submissionsResponse.data[0];
-
       if (submissionToUse) {
         submission = {
           id: submissionToUse.id,
           teamId: submissionToUse.teamId,
           company: submissionToUse.companyName || submissionToUse.company || "",
           division: submissionToUse.division || "",
-          address:
-            submissionToUse.companyAddress || submissionToUse.address || "",
+          address: submissionToUse.companyAddress || submissionToUse.address || "",
           startDate: submissionToUse.startDate || "",
           endDate: submissionToUse.endDate || "",
           status: submissionToUse.status,
@@ -453,7 +451,6 @@ async function getCompleteInternshipDataFallback(): Promise<
       }
     }
 
-    // Build complete data structure
     const completeData: CompleteInternshipData = {
       student: {
         id: studentData.id,
@@ -472,7 +469,12 @@ async function getCompleteInternshipDataFallback(): Promise<
         studentId: studentData.id,
         submissionId: submission?.id || "",
         teamId: submission?.teamId,
-        status: submission?.status === "APPROVED" ? "AKTIF" : "PENDING",
+        status:
+          submission?.status === "APPROVED" ||
+          submission?.status === "PENDING_DOSEN_VERIFICATION" ||
+          submission?.status === "COMPLETED"
+            ? "AKTIF"
+            : "PENDING",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       },
@@ -485,10 +487,27 @@ async function getCompleteInternshipDataFallback(): Promise<
         endDate: "",
         status: "PENDING",
       },
+      lecturer: (studentData as any).lecturer || (studentData as any).pembimbing || (typeof window !== "undefined" ? (() => {
+        const userDataStr = localStorage.getItem("user_data");
+        if (userDataStr) {
+          try {
+            const userData = JSON.parse(userDataStr);
+            if (userData.pembimbing || userData.lecturer) {
+              const lec = userData.pembimbing || userData.lecturer;
+              return {
+                id: lec.id?.toString() || "sso-lec",
+                name: lec.name || lec.nama || "",
+                nip: lec.nip || "",
+                email: lec.email || "",
+              };
+            }
+          } catch {}
+        }
+        return undefined;
+      })() : undefined),
     };
 
     console.log("✅ Fallback data compiled:", completeData);
-
     return {
       success: true,
       message: "Data loaded successfully (from fallback + localStorage)",
@@ -506,29 +525,29 @@ async function getCompleteInternshipDataFallback(): Promise<
 
 /**
  * Get current student's basic internship data
- * GET /api/mahasiswa/internship (legacy - use getCompleteInternshipData instead)
+ * GET /api/internships
  */
 export async function getMyInternship(): Promise<ApiResponse<InternshipData>> {
-  return iget<InternshipData>("/api/mahasiswa/internship");
+  return internshipClient.get<InternshipData>("/api/internships");
 }
 
 /**
  * Get internship data by student ID
- * GET /api/mahasiswa/:studentId/internship
+ * GET /api/internships/:studentId
  */
 export async function getStudentInternship(
   studentId: string,
 ): Promise<ApiResponse<InternshipData>> {
-  return iget<InternshipData>(`/api/mahasiswa/${studentId}/internship`);
+  return internshipClient.get<InternshipData>(`/api/internships/${studentId}`);
 }
 
 /**
  * Update internship period (periode magang)
- * PUT /api/mahasiswa/internship/period
+ * PUT /api/internships/period
  */
 export async function updateInternshipPeriod(data: {
   startDate: string;
   endDate: string;
 }): Promise<ApiResponse<InternshipData>> {
-  return iput<InternshipData>("/api/mahasiswa/internship/period", data);
+  return internshipClient.put<InternshipData>("/api/internships/period", data);
 }

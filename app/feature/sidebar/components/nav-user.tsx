@@ -108,7 +108,16 @@ export function NavUser({ user }: { user: User }) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => setShowSSODialog(true)}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (user.role === "MENTOR") {
+                      setShowSSODialog(true);
+                      return;
+                    }
+
+                    navigate(`/${user.role?.toLowerCase()}/profil`);
+                  }}
+                >
                   <BadgeCheck />
                   Profil
                 </DropdownMenuItem>
@@ -159,7 +168,7 @@ export function NavUser({ user }: { user: User }) {
             <AlertDialogCancel>Kembali</AlertDialogCancel>
             <AlertDialogAction
               onClick={() =>
-                window.open("https://sso-unsri.vercel.app/dashboard", "_blank")
+                window.open("https://sso-unsri.vercel.app/profile", "_blank")
               }
             >
               Lanjutkan ke SSO

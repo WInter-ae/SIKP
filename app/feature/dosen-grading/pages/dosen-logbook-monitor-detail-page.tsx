@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
-import { ArrowLeft, BookMarked, CalendarDays } from "lucide-react";
+import { ArrowLeft, BookMarked, CalendarDays, Camera, User } from "lucide-react";
 
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { Badge } from "~/components/ui/badge";
@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   getDosenLogbookMonitorByStudent,
   getDosenLogbookMonitorItems,
@@ -138,6 +139,29 @@ export default function DosenLogbookMonitorDetailPage() {
     };
   }, [studentId]);
 
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return "-";
+    try {
+      return new Date(dateString).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+  };
+
   const stats = useMemo(() => {
     const logbooks = detail?.logbooks || [];
     return {
@@ -188,32 +212,62 @@ export default function DosenLogbookMonitorDetailPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Informasi Mahasiswa</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Informasi Mahasiswa
+          </CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Nama
-            </p>
-            <p className="font-medium">{detail?.studentName || "-"}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              NIM
-            </p>
-            <p className="font-medium">{detail?.nim || "-"}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Perusahaan
-            </p>
-            <p className="font-medium">{detail?.company || "-"}</p>
-          </div>
-          <div className="space-y-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              Email
-            </p>
-            <p className="font-medium">{detail?.email || "-"}</p>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-shrink-0">
+              <Avatar className="h-24 w-24 rounded-lg border-2 border-muted">
+                <AvatarFallback className="rounded-lg text-2xl font-bold bg-muted">
+                  {getInitials(detail?.studentName)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+
+            {/* Grid Information */}
+            <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
+                <p className="font-medium text-lg">
+                  {detail?.studentName || "-"}
+                </p>
+              </div>
+              
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">NIM</p>
+                <p className="font-medium">{detail?.nim || "-"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Perusahaan</p>
+                <p className="font-medium">{detail?.company || "-"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Program Studi</p>
+                <p className="font-medium">{detail?.programStudi || "-"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Periode Magang</p>
+                <p className="font-medium">
+                  {detail?.startDate ? `${formatDate(detail.startDate)} - ${formatDate(detail.endDate)}` : "-"}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Bidang</p>
+                <p className="font-medium">{detail?.division || "-"}</p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Email</p>
+                <p className="font-medium break-all">{detail?.email || "-"}</p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -262,13 +316,15 @@ export default function DosenLogbookMonitorDetailPage() {
           <CardTitle>Riwayat Logbook</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
+          <div className="rounded-md border overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Aktivitas</TableHead>
-                  <TableHead>Jam</TableHead>
+                  <TableHead className="w-28">Jam Input</TableHead>
+                  <TableHead className="w-28 text-center">Jam Disetujui</TableHead>
+                  <TableHead className="w-32 text-center">Foto</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Catatan Revisi</TableHead>
                   <TableHead>Mentor</TableHead>
@@ -278,7 +334,7 @@ export default function DosenLogbookMonitorDetailPage() {
                 {(detail?.logbooks || []).length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={6}
+                      colSpan={7}
                       className="h-20 text-center text-muted-foreground"
                     >
                       Tidak ada data logbook untuk mahasiswa ini.
@@ -296,7 +352,29 @@ export default function DosenLogbookMonitorDetailPage() {
                       <TableCell className="max-w-[380px] truncate">
                         {item.activity}
                       </TableCell>
-                      <TableCell>{item.hours ?? "-"}</TableCell>
+                      <TableCell>{item.time || "-"}</TableCell>
+                      <TableCell className="text-center font-medium">
+                        {item.approvedTime || "-"}
+                      </TableCell>
+                      {/* Foto Kegiatan — Read Only */}
+                      <TableCell className="text-center">
+                        {item.photoUrl || item.photo_url ? (
+                          <a
+                            href={item.photoUrl || item.photo_url!}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Lihat foto kegiatan"
+                          >
+                            <img
+                              src={item.photoUrl || item.photo_url!}
+                              alt="Foto kegiatan"
+                              className="h-12 w-12 object-cover rounded-md border mx-auto hover:scale-110 transition-transform"
+                            />
+                          </a>
+                        ) : (
+                          <Camera className="h-4 w-4 text-muted-foreground/30 mx-auto" />
+                        )}
+                      </TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
                       <TableCell className="max-w-[320px] truncate">
                         {item.rejectionReason || "-"}

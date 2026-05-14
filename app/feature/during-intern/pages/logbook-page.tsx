@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { toast } from "sonner";
 import {
@@ -17,8 +17,12 @@ import {
   User,
   Building,
   File,
+  Camera,
+  ImageIcon,
+  AlertTriangle,
 } from "lucide-react";
 import { id as localeId } from "date-fns/locale";
+import { cn } from "~/lib/utils";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -74,6 +78,7 @@ import {
   updateLogbookEntry,
   deleteLogbookEntry,
   submitLogbookForApproval,
+  uploadLogbookPhoto,
 } from "~/feature/during-intern/services/logbook-api";
 
 // Utility Functions
@@ -88,6 +93,7 @@ interface LogbookEntry {
   date: string;
   description: string;
   hours?: number;
+  photoUrl?: string | null;
   status?: "DRAFT" | "PENDING" | "APPROVED" | "REJECTED";
   mentorSignature?: {
     status: "approved" | "revision" | "rejected";
@@ -95,6 +101,7 @@ interface LogbookEntry {
     mentorName: string;
     notes?: string;
   };
+  time?: string;
 }
 
 interface WorkPeriod {
@@ -121,6 +128,8 @@ function mapBackendLogbookEntry(entry: {
   description?: string;
   hours?: number;
   status?: string;
+  photoUrl?: string | null;
+  photo_url?: string | null;
   submittedAt?: string | null;
   submitted_at?: string | null;
   isSubmitted?: boolean;
@@ -176,7 +185,9 @@ function mapBackendLogbookEntry(entry: {
     date: entry.date,
     description: entry.description || entry.activity || "",
     hours: entry.hours,
+    photoUrl: entry.photoUrl || entry.photo_url || null,
     status: mappedStatus,
+    time: entry.createdAt ? new Date(entry.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : "-",
     mentorSignature: signatureStatus
       ? {
           status: signatureStatus,
@@ -193,6 +204,8 @@ function mapBackendLogbookEntry(entry: {
 }
 
 function LogbookPage() {
+  const entryFormRef = useRef<HTMLDivElement>(null);
+
   const [isPeriodSaved, setIsPeriodSaved] = useState(false);
   const [workPeriod, setWorkPeriod] = useState<WorkPeriod>({
     startDay: "senin",
@@ -209,6 +222,12 @@ function LogbookPage() {
   const [showSubmitConfirmDialog, setShowSubmitConfirmDialog] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
 
+  // Photo upload state
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [uploadingPhotoForId, setUploadingPhotoForId] = useState<string | null>(null);
+
   // Edit mode state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -224,6 +243,7 @@ function LogbookPage() {
   const [selectedExportFormat, setSelectedExportFormat] = useState<
     "docx" | "pdf" | null
   >(null);
+  const [showIncompleteLogbookDialog, setShowIncompleteLogbookDialog] = useState(false);
 
   // Fetch complete internship data (⭐ ONE API CALL FOR ALL DATA)
   useEffect(() => {
@@ -496,8 +516,6 @@ function LogbookPage() {
       return;
     }
 
-    const activityText = description.trim();
-
     const submitEntry = async () => {
       if (!completeData?.student?.userId) {
         toast.error("Data mahasiswa belum siap.");
@@ -506,6 +524,9 @@ function LogbookPage() {
 
       try {
         setIsSavingLogbook(true);
+
+        let finalEntryId = editingId;
+        const activityText = description.trim();
 
         if (editingId) {
           // Update existing entry
@@ -528,7 +549,6 @@ function LogbookPage() {
 
           setLogbookEntries(updatedEntries);
           setEditingId(null);
-          toast.success("Logbook berhasil diperbarui!");
         } else {
           // Create new entry
           const response = await createLogbookEntry({
@@ -543,15 +563,41 @@ function LogbookPage() {
             );
           }
 
+          finalEntryId = response.data.id;
           const createdEntry = mapBackendLogbookEntry(response.data);
           const updatedEntries = [...logbookEntries, createdEntry];
 
           setLogbookEntries(updatedEntries);
-          toast.success("Logbook berhasil disimpan ke backend!");
         }
 
+        // --- Photo Upload Logic ---
+        if (photoFile && finalEntryId) {
+          try {
+            setIsUploadingPhoto(true);
+            setUploadingPhotoForId(finalEntryId);
+            const photoRes = await uploadLogbookPhoto(finalEntryId, photoFile);
+            if (photoRes.success && photoRes.data) {
+              const photoUrl = photoRes.data.photoUrl;
+              setLogbookEntries((prev) =>
+                prev.map((e) =>
+                  e.id === finalEntryId ? { ...e, photoUrl } : e,
+                ),
+              );
+            }
+          } catch (photoError) {
+            console.error("Failed to upload photo:", photoError);
+            toast.error("Logbook disimpan, namun gagal mengupload foto.");
+          } finally {
+            setIsUploadingPhoto(false);
+            setUploadingPhotoForId(null);
+          }
+        }
+
+        toast.success(editingId ? "Logbook berhasil diperbarui!" : "Logbook berhasil disimpan!");
         setSelectedDate("");
         setDescription("");
+        setPhotoFile(null);
+        setPhotoPreview(null);
       } catch (error) {
         toast.error(
           error instanceof Error
@@ -567,56 +613,84 @@ function LogbookPage() {
   };
 
   const handleEditLogbook = (entry: LogbookEntry) => {
-    // Check if entry is approved - jangan bisa edit
-    if (entry.mentorSignature?.status === "approved") {
+    // Check if entry is approved or pending review - jangan bisa edit
+    if (entry.mentorSignature?.status === "approved" || entry.status === "PENDING") {
+      const reason = entry.status === "PENDING" ? "sedang ditinjau" : "sudah disetujui";
       toast.error(
-        "Tidak bisa mengedit logbook yang sudah disetujui. Hanya entri PENDING yang dapat diubah.",
+        `Tidak bisa mengedit logbook yang ${reason}. Hanya entri DRAFT atau REJECTED yang dapat diubah.`,
       );
       return;
     }
     setEditingId(entry.id);
     setSelectedDate(entry.date);
     setDescription(entry.description);
+    setPhotoPreview(entry.photoUrl || null);
+    setPhotoFile(null); // Reset file selection to current photo
+
+    // Scroll to entry form
+    entryFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const handleDeleteLogbook = (id: string) => {
-    if (isSavingLogbook) return;
 
-    const deleteEntry = async () => {
-      try {
-        setIsSavingLogbook(true);
-
-        const response = await deleteLogbookEntry(id);
-
-        if (!response.success) {
-          throw new Error(
-            response.message || "Gagal menghapus logbook dari backend.",
-          );
-        }
-
-        const updatedEntries = logbookEntries.filter(
-          (entry) => entry.id !== id,
-        );
-        setLogbookEntries(updatedEntries);
-        toast.success("Logbook berhasil dihapus!");
-      } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Gagal menghapus logbook dari backend.",
-        );
-      } finally {
-        setIsSavingLogbook(false);
-      }
-    };
-
-    void deleteEntry();
-  };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setSelectedDate("");
     setDescription("");
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
+  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side validation: max 2MB, JPEG/PNG/WebP
+    const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+    if (!ALLOWED.includes(file.type)) {
+      toast.error("Format foto tidak didukung. Gunakan JPEG, PNG, atau WebP.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ukuran foto maksimal 2MB.");
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const handleUploadPhotoForEntry = async (logbookId: string) => {
+    if (!photoFile) return;
+    try {
+      setIsUploadingPhoto(true);
+      setUploadingPhotoForId(logbookId);
+
+      const res = await uploadLogbookPhoto(logbookId, photoFile);
+      if (!res.success) {
+        throw new Error(res.message || "Gagal upload foto.");
+      }
+
+      // Update photoUrl on the entry in state
+      setLogbookEntries((prev) =>
+        prev.map((e) =>
+          e.id === logbookId
+            ? { ...e, photoUrl: res.data?.photoUrl ?? e.photoUrl }
+            : e,
+        ),
+      );
+
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      toast.success("Foto kegiatan berhasil diupload!");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Gagal upload foto kegiatan.",
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+      setUploadingPhotoForId(null);
+    }
   };
 
   const getWordCount = (text: string): number => {
@@ -637,14 +711,48 @@ function LogbookPage() {
     new Date(`${dateKey}T00:00:00`);
 
   const shiftSelectedDate = (deltaDays: number) => {
-    const baseDate = selectedDate
-      ? fromDateKey(selectedDate)
-      : generatedDates.length > 0
-        ? fromDateKey(generatedDates[0])
-        : new Date();
-    const nextDate = new Date(baseDate);
-    nextDate.setDate(nextDate.getDate() + deltaDays);
-    setSelectedDate(toDateKey(nextDate));
+    if (generatedDates.length === 0) return;
+
+    const currentIdx = selectedDate 
+      ? generatedDates.indexOf(selectedDate) 
+      : -1;
+    
+    let nextIdx: number;
+    
+    if (currentIdx === -1) {
+      // If no date selected, try to find the last interacted date from entries
+      // or pick first/last based on direction
+      if (logbookEntries.length > 0) {
+        // Sort entries by date to find the most recent one
+        const sortedEntries = [...logbookEntries].sort((a, b) => 
+          a.date.localeCompare(b.date)
+        );
+        const lastEntryDate = sortedEntries[sortedEntries.length - 1].date;
+        const lastEntryIdx = generatedDates.indexOf(lastEntryDate);
+        
+        if (lastEntryIdx !== -1) {
+          nextIdx = lastEntryIdx + deltaDays;
+        } else {
+          nextIdx = deltaDays > 0 ? 0 : generatedDates.length - 1;
+        }
+      } else {
+        nextIdx = deltaDays > 0 ? 0 : generatedDates.length - 1;
+      }
+    } else {
+      nextIdx = currentIdx + deltaDays;
+    }
+
+    // Boundary check
+    if (nextIdx < 0 || nextIdx >= generatedDates.length) {
+      const edge = deltaDays > 0 ? "akhir" : "awal";
+      toast.info(`Anda sudah berada di ${edge} periode kerja praktik.`);
+      return;
+    }
+
+    const nextDateKey = generatedDates[nextIdx];
+    const nextDate = fromDateKey(nextDateKey);
+
+    setSelectedDate(nextDateKey);
     setCalendarMonth(nextDate);
   };
 
@@ -669,7 +777,7 @@ function LogbookPage() {
     );
 
     if (pendingEntries.length === 0) {
-      toast.info("Semua logbook sudah diajukan atau disetujui mentor!");
+      toast.info("Semua logbook sudah diajukan atau disetujui pembimbing lapangan!");
       return;
     }
 
@@ -715,7 +823,7 @@ function LogbookPage() {
 
         if (successCount === pendingEntries.length) {
           toast.success(
-            `✅ Semua ${successCount} logbook berhasil diajukan ke mentor!`,
+            `✅ Semua ${successCount} logbook berhasil diajukan ke pembimbing lapangan!`,
           );
         } else {
           toast.warning(
@@ -737,7 +845,10 @@ function LogbookPage() {
   };
 
   const getLogbookForDate = (date: string) => {
-    return logbookEntries.find((entry) => entry.date === date);
+    return logbookEntries.find((entry) => {
+      const entryDate = entry.date.split(/[T ]/)[0];
+      return entryDate === date;
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -806,8 +917,8 @@ function LogbookPage() {
   const getMentorSignatureBadge = (entry: LogbookEntry | undefined) => {
     if (!entry) {
       return (
-        <Badge variant="outline" className="bg-gray-50">
-          <span className="text-muted-foreground">Belum diisi</span>
+        <Badge variant="outline" className="bg-amber-50 border-amber-200">
+          <span className="text-amber-700 font-medium">Belum diisi</span>
         </Badge>
       );
     }
@@ -872,12 +983,12 @@ function LogbookPage() {
     if (isDataMissing) {
       // Tampilkan dialog konfirmasi data kosong
       setShowEmptyDataDialog(true);
-    } else if (hasApprovedEntries()) {
-      // Data lengkap DAN ada entri yang approved - tampilkan format choice dialog
+    } else if (isLogbookFullyApproved()) {
+      // Data lengkap DAN SEMUA entri sudah approved - tampilkan format choice dialog
       setShowFormatChoiceDialog(true);
     } else {
-      // Data lengkap tapi belum ada entri approved - langsung generate DOCX
-      await generateDirectly("docx");
+      // Data lengkap tapi ada entri belum approved atau belum diisi - tampilkan peringatan
+      setShowIncompleteLogbookDialog(true);
     }
   };
 
@@ -925,6 +1036,22 @@ function LogbookPage() {
     if (entry.mentorSignature?.status === "rejected") return "Ditolak";
     if (entry.status === "DRAFT") return "Belum Diajukan";
     return "Menunggu";
+  };
+
+  const imageUrlToBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error("Error converting image to base64:", error);
+      return url; // fallback to original URL
+    }
   };
 
   const normalizeSignatureSrc = (signature?: string): string | null => {
@@ -1263,11 +1390,23 @@ function LogbookPage() {
       const logbookData = buildLogbookData();
 
       if (format === "pdf") {
+        // For PDF, we try to convert signature to base64 to ensure it renders correctly
+        if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
+          logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
+        }
+        
         openPdfPreviewTab(logbookData);
         toast.success(
           "Preview PDF dibuka. Gunakan Simpan sebagai PDF agar hasil 1:1 dengan preview.",
         );
       } else {
+        // For DOCX, we MUST convert signature to base64
+        if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
+          toast.loading("Menyiapkan tanda tangan mentor...", { id: "docx-gen" });
+          logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
+          toast.dismiss("docx-gen");
+        }
+        
         await generateLogbookDOCX(logbookData);
         toast.success("Logbook DOCX berhasil didownload!");
       }
@@ -1280,16 +1419,35 @@ function LogbookPage() {
     }
   };
 
-  const hasApprovedEntries = (): boolean => {
-    return logbookEntries.some(
-      (entry) => entry.mentorSignature?.status === "approved",
-    );
+  const isLogbookFullyApproved = (): boolean => {
+    if (generatedDates.length === 0) return false;
+    
+    // Check if every generated date has an approved entry
+    return generatedDates.every((date) => {
+      const entry = logbookEntries.find((e) => {
+        const entryDate = e.date.split(/[T ]/)[0];
+        return entryDate === date;
+      });
+      return entry?.mentorSignature?.status === "approved";
+    });
   };
 
   const performGenerate = async () => {
     if (!selectedExportFormat) return;
 
     const logbookData = buildLogbookData();
+
+    // Convert signature to base64 if needed for both PDF and DOCX
+    if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
+      try {
+        toast.loading("Menyiapkan tanda tangan mentor...", { id: "gen-prep" });
+        logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
+        toast.dismiss("gen-prep");
+      } catch (e) {
+        console.error("Failed to convert signature:", e);
+        toast.dismiss("gen-prep");
+      }
+    }
 
     try {
       if (selectedExportFormat === "pdf") {
@@ -1642,7 +1800,8 @@ function LogbookPage() {
       {isPeriodSaved && (
         <>
           {/* Section 2: Add Logbook Entry Form */}
-          <Card>
+          <div ref={entryFormRef} className="scroll-mt-20">
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {editingId ? (
@@ -1718,7 +1877,14 @@ function LogbookPage() {
                           }
                           onSelect={(date) => {
                             if (!date) return;
-                            setSelectedDate(toDateKey(date));
+                            const dateKey = toDateKey(date);
+                            if (!generatedDates.includes(dateKey)) {
+                              toast.error(
+                                "Tanggal tidak termasuk hari kerja pada periode yang sudah Anda set. Pilih tanggal sesuai periode kerja praktik.",
+                              );
+                              return;
+                            }
+                            setSelectedDate(dateKey);
                             setCalendarMonth(date);
                             setIsDatePickerOpen(false);
                           }}
@@ -1808,6 +1974,65 @@ function LogbookPage() {
                 </div>
               </div>
 
+              {/* Photo Upload Section (Opsional) */}
+              <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">
+                    Foto Kegiatan
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      (Opsional — Max 2MB, JPEG/PNG/WebP)
+                    </span>
+                  </Label>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-start gap-3">
+                  <label
+                    htmlFor="foto-kegiatan"
+                    className="flex items-center gap-2 cursor-pointer px-3 py-2 text-sm border rounded-md bg-background hover:bg-muted transition-colors"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    {photoFile ? photoFile.name : "Pilih Foto..."}
+                    <input
+                      id="foto-kegiatan"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={handlePhotoFileChange}
+                      disabled={isSavingLogbook}
+                    />
+                  </label>
+
+                  {photoPreview && (
+                    <div className="flex items-start gap-2">
+                      <img
+                        src={photoPreview}
+                        alt="Preview foto kegiatan"
+                        className="h-20 w-20 object-cover rounded-md border"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(null);
+                        }}
+                        title="Hapus foto"
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-xs text-muted-foreground">
+                  💡 Foto dapat ditambahkan setelah logbook disimpan. Foto akan
+                  ditampilkan ke mentor dan dosen pembimbing (read-only).
+                </p>
+              </div>
+
               <div className="flex justify-end gap-2">
                 {editingId && (
                   <Button
@@ -1829,6 +2054,7 @@ function LogbookPage() {
               </div>
             </CardContent>
           </Card>
+          </div>
 
           {/* Section 3: Generated Logbook Table */}
           <Card>
@@ -1866,7 +2092,7 @@ function LogbookPage() {
 
               {/* Logbook Table */}
               {generatedDates.length > 0 && (
-                <div className="rounded-md border w-full">
+                <div className="rounded-md border w-full overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -1876,8 +2102,14 @@ function LogbookPage() {
                         <TableHead className="w-24 text-xs">
                           Hari, Tanggal
                         </TableHead>
+                        <TableHead className="w-16 text-center text-xs">
+                          Jam
+                        </TableHead>
                         <TableHead className="text-xs">
                           Deskripsi Kegiatan
+                        </TableHead>
+                        <TableHead className="w-24 text-center text-xs">
+                          Foto
                         </TableHead>
                         <TableHead className="w-32 text-center text-xs">
                           Paraf Pembimbing
@@ -1895,7 +2127,10 @@ function LogbookPage() {
                         const showWeekNumber = weekNum !== prevWeekNum;
 
                         return (
-                          <TableRow key={index}>
+                          <TableRow 
+                            key={index}
+                            className={showWeekNumber && index > 0 ? "border-t-4 border-gray-300" : ""}
+                          >
                             {showWeekNumber && (
                               <TableCell
                                 className="text-center font-medium bg-muted/50"
@@ -1904,9 +2139,23 @@ function LogbookPage() {
                                 {weekNum}
                               </TableCell>
                             )}
-                            <TableCell>
+                            <TableCell
+                              className={cn(
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
+                              )}
+                              onClick={() => {
+                                if (!entry) {
+                                  setSelectedDate(date);
+                                  setCalendarMonth(fromDateKey(date));
+                                  entryFormRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }}
+                            >
                               <div className="flex flex-col">
-                                <span className="font-medium">
+                                <span className="font-medium group-hover:text-primary transition-colors">
                                   {getDayName(date)}
                                 </span>
                                 <span className="text-sm text-muted-foreground">
@@ -1914,7 +2163,42 @@ function LogbookPage() {
                                 </span>
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell 
+                              className={cn(
+                                "text-center font-medium",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
+                              )}
+                              onClick={() => {
+                                if (!entry) {
+                                  setSelectedDate(date);
+                                  setCalendarMonth(fromDateKey(date));
+                                  entryFormRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }}
+                            >
+                              <span className={cn(!entry && "group-hover:text-primary transition-colors")}>
+                                {entry?.time || "-"}
+                              </span>
+                            </TableCell>
+                            <TableCell 
+                              className={cn(
+                                "relative",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
+                              )}
+                              onClick={() => {
+                                if (!entry) {
+                                  setSelectedDate(date);
+                                  setCalendarMonth(fromDateKey(date));
+                                  entryFormRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }}
+                            >
                               <div className="space-y-2 break-words">
                                 {entry ? (
                                   <div className="space-y-2">
@@ -1930,30 +2214,18 @@ function LogbookPage() {
                                       <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => handleEditLogbook(entry)}
+                                        onClick={(e) => {
+                                          e.stopPropagation(); // Prevent cell click
+                                          handleEditLogbook(entry);
+                                        }}
                                         disabled={
                                           isSavingLogbook ||
-                                          entry?.mentorSignature?.status ===
-                                            "approved"
+                                          entry?.mentorSignature?.status === "approved" ||
+                                          entry?.status === "PENDING"
                                         }
                                       >
                                         <Edit className="h-3 w-3 mr-1" />
                                         Edit
-                                      </Button>
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() =>
-                                          handleDeleteLogbook(entry.id)
-                                        }
-                                        disabled={
-                                          isSavingLogbook ||
-                                          entry?.mentorSignature?.status ===
-                                            "approved"
-                                        }
-                                      >
-                                        <XCircle className="h-3 w-3 mr-1" />
-                                        Hapus
                                       </Button>
                                     </div>
                                     {entry?.mentorSignature?.status ===
@@ -1977,15 +2249,150 @@ function LogbookPage() {
                                     )}
                                   </div>
                                 ) : (
-                                  <span className="text-muted-foreground italic">
+                                  <span className="text-amber-600 italic group-hover:text-amber-700 transition-colors font-medium">
                                     Belum diisi
                                   </span>
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell className="text-center">
+                            {/* Foto Kegiatan Cell */}
+                            <TableCell className="text-center align-top">
+                              {entry?.photoUrl ? (
+                                <a
+                                  href={entry.photoUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title="Lihat foto kegiatan"
+                                >
+                                    <div className="relative group mx-auto h-14 w-14">
+                                      <img
+                                        src={entry.photoUrl}
+                                        alt="Foto kegiatan"
+                                        className="h-14 w-14 object-cover rounded-md border"
+                                      />
+                                      {/* Overlay for replacement (only for editable entries) */}
+                                      {entry.status !== "PENDING" && entry.mentorSignature?.status !== "approved" && (
+                                        <label
+                                          htmlFor={`foto-replace-${entry.id}`}
+                                          className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                                          title="Ganti foto kegiatan"
+                                        >
+                                          <Camera className="h-5 w-5 text-white" />
+                                          <input
+                                            id={`foto-replace-${entry.id}`}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="sr-only"
+                                            onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (file) {
+                                                const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+                                                if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
+                                                try {
+                                                  setIsUploadingPhoto(true);
+                                                  setUploadingPhotoForId(entry.id);
+                                                  const res = await uploadLogbookPhoto(entry.id, file);
+                                                  if (!res.success) throw new Error(res.message || "Gagal upload foto.");
+                                                  setLogbookEntries((prev) =>
+                                                    prev.map((en) =>
+                                                      en.id === entry.id ? { ...en, photoUrl: res.data?.photoUrl ?? en.photoUrl } : en,
+                                                    ),
+                                                  );
+                                                  toast.success("Foto berhasil diganti!");
+                                                } catch (err) {
+                                                  toast.error(err instanceof Error ? err.message : "Gagal ganti foto.");
+                                                } finally {
+                                                  setIsUploadingPhoto(false);
+                                                  setUploadingPhotoForId(null);
+                                                }
+                                              }
+                                            }}
+                                          />
+                                        </label>
+                                      )}
+                                    </div>
+                                </a>
+                              ) : entry ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <label
+                                    htmlFor={`foto-entry-${entry.id}`}
+                                    className={`flex flex-col items-center gap-1 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors ${isUploadingPhoto && uploadingPhotoForId === entry.id ? "opacity-50 pointer-events-none" : ""}`}
+                                    title="Upload foto kegiatan"
+                                  >
+                                    <Camera className="h-5 w-5" />
+                                    <span>
+                                      {isUploadingPhoto &&
+                                      uploadingPhotoForId === entry.id
+                                        ? "Uploading..."
+                                        : "Upload foto"}
+                                    </span>
+                                    <input
+                                      id={`foto-entry-${entry.id}`}
+                                      type="file"
+                                      accept="image/jpeg,image/png,image/webp"
+                                      className="sr-only"
+                                      onChange={async (e) => {
+                                        handlePhotoFileChange(e);
+                                        // Auto-upload when file selected from row button
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+                                          if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
+                                          setPhotoFile(file);
+                                          // Trigger upload immediately
+                                          try {
+                                            setIsUploadingPhoto(true);
+                                            setUploadingPhotoForId(entry.id);
+                                            const res = await uploadLogbookPhoto(entry.id, file);
+                                            if (!res.success) throw new Error(res.message || "Gagal upload foto.");
+                                            setLogbookEntries((prev) =>
+                                              prev.map((en) =>
+                                                en.id === entry.id ? { ...en, photoUrl: res.data?.photoUrl ?? en.photoUrl } : en,
+                                              ),
+                                            );
+                                            setPhotoFile(null);
+                                            setPhotoPreview(null);
+                                            toast.success("Foto berhasil diupload!");
+                                          } catch (err) {
+                                            toast.error(err instanceof Error ? err.message : "Gagal upload foto.");
+                                          } finally {
+                                            setIsUploadingPhoto(false);
+                                            setUploadingPhotoForId(null);
+                                          }
+                                        }
+                                      }}
+                                      disabled={isUploadingPhoto}
+                                    />
+                                  </label>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell 
+                              className={cn(
+                                "text-center",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
+                              )}
+                              onClick={() => {
+                                if (!entry) {
+                                  setSelectedDate(date);
+                                  setCalendarMonth(fromDateKey(date));
+                                  entryFormRef.current?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                }
+                              }}
+                            >
                               <div className="flex flex-col items-center gap-1 break-words">
-                                {getMentorSignatureBadge(entry)}
+                                {entry ? (
+                                  getMentorSignatureBadge(entry)
+                                ) : (
+                                  <Badge variant="outline" className="bg-amber-50 border-amber-200 text-amber-700 group-hover:text-amber-800 transition-colors font-medium">
+                                    Belum diisi
+                                  </Badge>
+                                )}
 
                                 {/* Notes dari mentor (untuk approved) */}
                                 {entry?.mentorSignature?.status ===
@@ -2001,7 +2408,10 @@ function LogbookPage() {
                                   "rejected" &&
                                   entry?.mentorSignature?.notes && (
                                     <div className="mt-2 w-full">
-                                      <div className="bg-red-50 border border-red-200 rounded-lg p-2 text-left">
+                                      <div 
+                                        onClick={() => handleEditLogbook(entry)}
+                                        className="bg-red-50 border border-red-200 rounded-lg p-2 text-left cursor-pointer hover:bg-red-100 transition-colors"
+                                      >
                                         <p className="text-xs font-semibold text-red-900 mb-1">
                                           📝 Catatan Revisi:
                                         </p>
@@ -2046,7 +2456,7 @@ function LogbookPage() {
                     </div>
                     <div className="space-y-2">
                       <h3 className="text-lg font-semibold text-foreground">
-                        Ajukan Logbook ke Mentor
+                        Ajukan Logbook ke Pembimbing Lapangan
                       </h3>
                       <p className="max-w-xl text-sm leading-6 text-muted-foreground">
                         Kumpulkan seluruh logbook untuk dikirim ke mentor dalam
@@ -2198,6 +2608,63 @@ function LogbookPage() {
                 >
                   <Download className="mr-2 h-4 w-4" />
                   Ya, Download Template
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Warning Dialog for Incomplete Logbook (missing approvals) */}
+          <AlertDialog
+            open={showIncompleteLogbookDialog}
+            onOpenChange={setShowIncompleteLogbookDialog}
+          >
+            <AlertDialogContent className="sm:max-w-[500px]">
+              <AlertDialogHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-3 bg-amber-100 rounded-full">
+                    <AlertTriangle className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <AlertDialogTitle className="text-xl">
+                    Logbook Belum Terverifikasi Penuh
+                  </AlertDialogTitle>
+                </div>
+                <AlertDialogDescription className="text-base space-y-4 pt-2">
+                  <p className="text-foreground">
+                    Beberapa entri logbook Anda belum disetujui oleh mentor atau
+                    belum diisi lengkap untuk seluruh periode kerja.
+                  </p>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <p className="text-sm text-amber-900 font-medium mb-2">
+                      ⚠️ Penting untuk Diketahui:
+                    </p>
+                    <p className="text-sm text-amber-800 leading-relaxed">
+                      Hasil generate berupa <strong>Docx</strong> dan hanya
+                      berisi data mahasiswa dan aktivitas{" "}
+                      <strong>tanpa tanda tangan/paraf mentor</strong>.
+                    </p>
+                  </div>
+
+                  <p className="text-sm text-muted-foreground">
+                    💡 <strong>Saran:</strong> Pastikan seluruh logbook sudah
+                    disetujui mentor jika Anda membutuhkan dokumen yang memiliki
+                    tanda tangan digital.
+                  </p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="mt-2 sm:mt-0">
+                  Batal
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    setShowIncompleteLogbookDialog(false);
+                    await generateDirectly("docx");
+                  }}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Lanjutkan Download
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

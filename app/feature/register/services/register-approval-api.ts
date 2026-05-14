@@ -1,4 +1,4 @@
-import { apiClient } from "~/lib/api-client";
+import { internshipClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 export interface PendingRegistration {
@@ -68,16 +68,19 @@ export interface MentorEmailChangeRequestItem {
 type RawObj = Record<string, unknown>;
 
 const MENTOR_REQUEST_LIST_ENDPOINTS = [
+  "/api/mentorship/requests",
   "/api/dosen/pembimbing-lapangan/requests",
   "/api/dosen/mentor-registration-requests",
 ] as const;
 
 const MENTOR_REQUEST_APPROVE_ENDPOINTS = [
+  (id: string) => `/api/mentorship/requests/${id}/approve`,
   (id: string) => `/api/dosen/pembimbing-lapangan/${id}/approve`,
   (id: string) => `/api/dosen/mentor-registration-requests/${id}/approve`,
 ] as const;
 
 const MENTOR_REQUEST_REJECT_ENDPOINTS = [
+  (id: string) => `/api/mentorship/requests/${id}/reject`,
   (id: string) => `/api/dosen/pembimbing-lapangan/${id}/reject`,
   (id: string) => `/api/dosen/mentor-registration-requests/${id}/reject`,
 ] as const;
@@ -143,7 +146,7 @@ function getArrayData(data: unknown): RawObj[] {
 
 function mapRegistration(raw: RawObj, index: number): PendingRegistration {
   const mentor = asRecord(raw.mentor) || asRecord(raw.pembimbing) || raw;
-  const student = asRecord(raw.student) || asRecord(raw.mahasiswa) || {};
+  const student = asRecord(raw.student) || asRecord(raw.mahasiswa) || raw;
 
   return {
     id: getFirstString(raw, ["id", "requestId"], `request-${index}`),
@@ -156,7 +159,7 @@ function mapRegistration(raw: RawObj, index: number): PendingRegistration {
       "-",
     ),
     position: getFirstString(mentor, ["position", "jabatan"], "-"),
-    phone: getFirstString(mentor, ["phone", "no_hp"], "-"),
+    phone: getFirstString(mentor, ["phone", "mentorPhone", "mentor_phone", "no_hp", "no_telp", "phone_number"], "-"),
     registeredAt: getFirstString(
       raw,
       ["registeredAt", "createdAt", "requestedAt"],
@@ -165,9 +168,9 @@ function mapRegistration(raw: RawObj, index: number): PendingRegistration {
     status: normalizeStatus(
       getFirstString(raw, ["status", "verificationStatus"], "pending"),
     ),
-    studentName: getFirstString(student, ["name", "nama", "studentName"], "-"),
-    studentNim: getFirstString(student, ["nim", "studentNim"], "-"),
-    studentEmail: getFirstString(student, ["email", "studentEmail"], "-"),
+    studentName: getFirstString(student, ["studentName", "name", "nama", "nama_lengkap", "fullName", "mahasiswa_nama", "student_name", "nama_mahasiswa", "user_name"], "-"),
+    studentNim: getFirstString(student, ["studentNim", "nim", "nim_mahasiswa", "student_nim"], "-"),
+    studentEmail: getFirstString(student, ["studentEmail", "email", "mahasiswa_email", "student_email"], "-"),
   };
 }
 
@@ -210,7 +213,7 @@ async function getFromEndpointList(
   let lastMessage = "Endpoint tidak tersedia";
 
   for (const endpoint of endpoints) {
-    const response = await apiClient<unknown>(endpoint);
+    const response = await internshipClient.get<unknown>(endpoint);
     if (response.success) {
       return {
         success: true,
@@ -238,10 +241,7 @@ async function performActionOnEndpointList(
   let lastMessage = "Endpoint tidak tersedia";
 
   for (const build of endpointBuilders) {
-    const response = await apiClient<null>(build(id), {
-      method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
-    });
+    const response = await internshipClient.post<null>(build(id), body);
 
     if (response.success) {
       return {

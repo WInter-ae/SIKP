@@ -36,19 +36,29 @@ function normalizeSignaturePayload(payload: unknown): SignatureAsset | null {
   const result = z.record(z.string(), z.unknown()).safeParse(payload);
   if (!result.success) return null;
 
-  const data = result.data;
-  const id = pickString(data.id);
+  const data = (result.data.activeSignature && typeof result.data.activeSignature === 'object') 
+    ? (result.data.activeSignature as Record<string, unknown>)
+    : result.data;
+
+  const id = pickString(data.id, data.signatureId);
   const signatureImage = pickString(
     data.signatureImage,
     data.signatureUrl,
     data.url,
+    data.svg,
   );
 
   if (!id || !signatureImage) return null;
 
+  let finalImage = signatureImage;
+  if (finalImage.trim().startsWith('<svg')) {
+    const encoded = btoa(finalImage);
+    finalImage = `data:image/svg+xml;base64,${encoded}`;
+  }
+
   return {
     id,
-    signatureImage,
+    signatureImage: finalImage,
     uploadedAt: pickString(data.uploadedAt, data.createdAt) || undefined,
     isActive: typeof data.isActive === "boolean" ? data.isActive : undefined,
   };

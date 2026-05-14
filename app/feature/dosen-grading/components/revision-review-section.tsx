@@ -18,6 +18,7 @@ import {
 interface RevisionReviewSectionProps {
   studentId: string;
   onAllRevisionsApproved: (approved: boolean) => void;
+  reportInfo?: any;
 }
 
 type RevisionDecision = "undecided" | "needs-revision" | "no-revision";
@@ -39,6 +40,7 @@ interface LaporanRevision {
 export function RevisionReviewSection({
   studentId,
   onAllRevisionsApproved,
+  reportInfo,
 }: RevisionReviewSectionProps) {
   const [decision, setDecision] = useState<RevisionDecision>("undecided");
   const [revisionMessage, setRevisionMessage] = useState("");
@@ -55,63 +57,32 @@ export function RevisionReviewSection({
     revisionHistory: [],
   });
 
-  // Load data when component mounts
+  // Initialize state from reportInfo prop
   useEffect(() => {
-    if (typeof window !== "undefined" && !isInitialized) {
-      const savedLaporan = localStorage.getItem("laporan-kp");
+    if (reportInfo) {
+      setHasLaporan(true);
+      const fileSize = reportInfo.fileSize
+        ? `${(reportInfo.fileSize / (1024 * 1024)).toFixed(2)} MB`
+        : "0 MB";
 
-      if (savedLaporan) {
-        const laporanData = JSON.parse(savedLaporan);
+      setLaporan({
+        fileName: reportInfo.fileName || "Laporan_KP.pdf",
+        fileSize: fileSize,
+        submittedAt: reportInfo.uploadedAt || new Date().toISOString(),
+        version: 1,
+        revisionHistory: [],
+      });
 
-        // Check if mahasiswa has uploaded a file
-        if (laporanData.fileName && laporanData.status !== "belum_upload") {
-          setHasLaporan(true);
-
-          // Convert to revision format
-          const fileSize = laporanData.fileSize
-            ? `${(laporanData.fileSize / (1024 * 1024)).toFixed(2)} MB`
-            : "0 MB";
-
-          setLaporan({
-            fileName: laporanData.fileName || "Laporan_KP.pdf",
-            fileSize: fileSize,
-            submittedAt: laporanData.uploadedAt || new Date().toISOString(),
-            version: 1,
-            revisionHistory: [],
-          });
-
-          // Check if dosen already made decision
-          const savedDecision = localStorage.getItem(
-            `revision-decision-${studentId}`,
-          );
-          if (savedDecision) {
-            setDecision(savedDecision as RevisionDecision);
-
-            // If decision is no-revision, immediately notify parent
-            if (savedDecision === "no-revision") {
-              onAllRevisionsApproved(true);
-            }
-          }
-
-          // Load revision message if exists
-          const savedRevisionMsg = localStorage.getItem(
-            `revision-message-${studentId}`,
-          );
-          if (savedRevisionMsg) {
-            setRevisionMessage(savedRevisionMsg);
-          }
-        } else {
-          // No laporan uploaded yet
-          setHasLaporan(false);
-        }
-      } else {
-        // No laporan data at all
-        setHasLaporan(false);
+      // If already approved by backend
+      if (reportInfo.status === "APPROVED") {
+        setDecision("no-revision");
+        onAllRevisionsApproved(true);
       }
-
-      setIsInitialized(true);
+    } else {
+      setHasLaporan(false);
     }
-  }, [studentId, onAllRevisionsApproved, isInitialized]);
+    setIsInitialized(true);
+  }, [reportInfo, onAllRevisionsApproved]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -146,39 +117,7 @@ export function RevisionReviewSection({
       )
     ) {
       setDecision("no-revision");
-
-      // Save decision to localStorage
-      localStorage.setItem(`revision-decision-${studentId}`, "no-revision");
-
-      // Update laporan status in mahasiswa's data
-      const savedLaporan = localStorage.getItem("laporan-kp");
-      if (savedLaporan) {
-        const laporanData = JSON.parse(savedLaporan);
-        laporanData.status = "disetujui";
-        laporanData.reviewedAt = new Date().toISOString();
-        laporanData.reviewedBy = "Dosen Pembimbing";
-        localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
-
-        // Update revision history - mark latest as approved
-        const savedHistory = localStorage.getItem("revision-history-kp");
-        if (savedHistory) {
-          const historyData = JSON.parse(savedHistory);
-          if (historyData.length > 0) {
-            // Update latest item in history
-            const latestIndex = historyData.length - 1;
-            historyData[latestIndex] = {
-              ...historyData[latestIndex],
-              status: "disetujui",
-              reviewedAt: new Date().toISOString(),
-              reviewedBy: "Dosen Pembimbing",
-            };
-            localStorage.setItem(
-              "revision-history-kp",
-              JSON.stringify(historyData),
-            );
-          }
-        }
-      }
+      // UI feedback will trigger onAllRevisionsApproved via useEffect
     }
   };
 
@@ -208,42 +147,6 @@ export function RevisionReviewSection({
       revisionMessage: revisionMessage,
     }));
 
-    // Save decision and message to localStorage
-    localStorage.setItem(`revision-decision-${studentId}`, "needs-revision");
-    localStorage.setItem(`revision-message-${studentId}`, revisionMessage);
-
-    // Update laporan status in mahasiswa's data
-    const savedLaporan = localStorage.getItem("laporan-kp");
-    if (savedLaporan) {
-      const laporanData = JSON.parse(savedLaporan);
-      laporanData.status = "perlu_revisi";
-      laporanData.revisionMessage = revisionMessage;
-      laporanData.reviewedAt = new Date().toISOString();
-      laporanData.reviewedBy = "Dosen Pembimbing";
-      localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
-
-      // Update revision history - add revision info to latest version
-      const savedHistory = localStorage.getItem("revision-history-kp");
-      if (savedHistory) {
-        const historyData = JSON.parse(savedHistory);
-        if (historyData.length > 0) {
-          // Update latest item in history with revision info
-          const latestIndex = historyData.length - 1;
-          historyData[latestIndex] = {
-            ...historyData[latestIndex],
-            status: "perlu_revisi",
-            revisionMessage: revisionMessage,
-            reviewedAt: new Date().toISOString(),
-            reviewedBy: "Dosen Pembimbing",
-          };
-          localStorage.setItem(
-            "revision-history-kp",
-            JSON.stringify(historyData),
-          );
-        }
-      }
-    }
-
     alert("Pesan revisi berhasil dikirim ke mahasiswa");
     setRevisionMessage("");
     setIsSubmitting(false);
@@ -257,24 +160,6 @@ export function RevisionReviewSection({
     ) {
       setDecision("undecided");
       setRevisionMessage("");
-
-      // Clear localStorage
-      localStorage.removeItem(`revision-decision-${studentId}`);
-      localStorage.removeItem(`revision-message-${studentId}`);
-
-      // Reset laporan status in mahasiswa's data
-      const savedLaporan = localStorage.getItem("laporan-kp");
-      if (savedLaporan) {
-        const laporanData = JSON.parse(savedLaporan);
-        laporanData.status = "belum_upload";
-        delete laporanData.revisionMessage;
-        delete laporanData.reviewedAt;
-        delete laporanData.reviewedBy;
-        localStorage.setItem("laporan-kp", JSON.stringify(laporanData));
-      }
-
-      // Clear revision history
-      localStorage.removeItem("revision-history-kp");
     }
   };
 

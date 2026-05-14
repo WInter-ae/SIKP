@@ -1,9 +1,11 @@
 /**
  * Student Logbook API Service
  * Handles logbook (catatan harian) CRUD operations
+ *
+ * Menggunakan internshipClient dari api-client sesuai pola main.
  */
 
-import { ipost, iget, iput, idel } from "~/lib/api-client";
+import { internshipClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 // ==================== TYPES ====================
@@ -19,6 +21,7 @@ export interface LogbookEntry {
   rejectionReason?: string | null;
   verifiedBy?: string | null;
   verifiedAt?: string | null;
+  photoUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,93 +50,107 @@ export interface LogbookStatsResponse {
   approvedHours: number;
 }
 
-// ==================== API FUNCTIONS ====================
-
-/**
- * Create new logbook entry
- * POST /api/mahasiswa/logbook
- */
-export async function createLogbookEntry(
-  data: CreateLogbookData,
-): Promise<ApiResponse<LogbookEntry>> {
-  return ipost<LogbookEntry>("/api/mahasiswa/logbook", data);
-}
-
-/**
- * Get all logbook entries for current student
- * GET /api/mahasiswa/logbook?startDate=...&endDate=...&status=...
- */
 export interface LogbookListResponse {
   internshipId: string;
   entries: LogbookEntry[];
 }
 
+// ==================== API FUNCTIONS ====================
+
+/**
+ * Create new logbook entry
+ * POST /api/logbooks
+ */
+export async function createLogbookEntry(
+  data: CreateLogbookData,
+): Promise<ApiResponse<LogbookEntry>> {
+  return internshipClient.post<LogbookEntry>("/api/logbooks", data);
+}
+
+/**
+ * Get all logbook entries for current student
+ * GET /api/logbooks?startDate=...&endDate=...&status=...
+ */
 export async function getLogbookEntries(params?: {
   startDate?: string;
   endDate?: string;
   status?: "PENDING" | "APPROVED" | "REJECTED";
 }): Promise<ApiResponse<LogbookListResponse>> {
-  const queryParams = new URLSearchParams();
-  if (params?.startDate) queryParams.append("startDate", params.startDate);
-  if (params?.endDate) queryParams.append("endDate", params.endDate);
-  if (params?.status) queryParams.append("status", params.status);
+  const queryParams: Record<string, string> = {};
+  if (params?.startDate) queryParams.startDate = params.startDate;
+  if (params?.endDate) queryParams.endDate = params.endDate;
+  if (params?.status) queryParams.status = params.status;
 
-  const query = queryParams.toString();
-  const url = query
-    ? `/api/mahasiswa/logbook?${query}`
-    : "/api/mahasiswa/logbook";
+  return internshipClient.get<LogbookListResponse>(
+    "/api/logbooks",
+    Object.keys(queryParams).length > 0 ? queryParams : undefined,
+  );
+}
 
-  return iget<LogbookListResponse>(url);
+/**
+ * Get logbook statistics
+ * GET /api/logbooks/stats
+ */
+export async function getLogbookStats(): Promise<
+  ApiResponse<LogbookStatsResponse>
+> {
+  return internshipClient.get<LogbookStatsResponse>("/api/logbooks/stats");
 }
 
 /**
  * Get single logbook entry by ID
- * GET /api/mahasiswa/logbook/:id
+ * GET /api/logbooks/:id
  */
 export async function getLogbookEntry(
   id: string,
 ): Promise<ApiResponse<LogbookEntry>> {
-  return iget<LogbookEntry>(`/api/mahasiswa/logbook/${id}`);
+  return internshipClient.get<LogbookEntry>(`/api/logbooks/${id}`);
 }
 
 /**
- * Update logbook entry
- * PUT /api/mahasiswa/logbook/:id
+ * Update logbook entry (only if PENDING)
+ * PUT /api/logbooks/:id
  */
 export async function updateLogbookEntry(
   id: string,
   data: UpdateLogbookData,
 ): Promise<ApiResponse<LogbookEntry>> {
-  return iput<LogbookEntry>(`/api/mahasiswa/logbook/${id}`, data);
+  return internshipClient.put<LogbookEntry>(`/api/logbooks/${id}`, data);
 }
 
 /**
  * Delete logbook entry (only if PENDING)
- * DELETE /api/mahasiswa/logbook/:id
+ * DELETE /api/logbooks/:id
  */
 export async function deleteLogbookEntry(
   id: string,
 ): Promise<ApiResponse<void>> {
-  return idel<void>(`/api/mahasiswa/logbook/${id}`);
+  return internshipClient.del<void>(`/api/logbooks/${id}`);
 }
 
 /**
- * Get logbook statistics
- * GET /api/mahasiswa/logbook/stats
- */
-export async function getLogbookStats(): Promise<
-  ApiResponse<LogbookStatsResponse>
-> {
-  return iget<LogbookStatsResponse>("/api/mahasiswa/logbook/stats");
-}
-
-/**
- * Submit logbook for mentor approval (if needed)
- * POST /api/mahasiswa/logbook/:id/submit
- * Note: According to backend docs, logbooks are auto-submitted when created
+ * Submit logbook for mentor approval
+ * POST /api/logbooks/:id/submit
  */
 export async function submitLogbookForApproval(
   id: string,
 ): Promise<ApiResponse<LogbookEntry>> {
-  return ipost<LogbookEntry>(`/api/mahasiswa/logbook/${id}/submit`, {});
+  return internshipClient.post<LogbookEntry>(`/api/logbooks/${id}/submit`, {});
+}
+
+/**
+ * Upload foto kegiatan logbook (Max 2MB, JPEG/PNG/WebP)
+ * POST /api/logbooks/:id/photo
+ * Field name: "file" (sesuai middleware validateFileUpload backend)
+ */
+export async function uploadLogbookPhoto(
+  id: string,
+  file: File,
+): Promise<ApiResponse<{ photoUrl: string }>> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return internshipClient.upload<{ photoUrl: string }>(
+    `/api/logbooks/${id}/photo`,
+    formData,
+  );
 }

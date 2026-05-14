@@ -47,6 +47,7 @@ export interface EvaluationSummary {
   finalScore: number;
   grade: string; // A, B, C, D, E
   status: "passed" | "failed" | "pending";
+  isVerifiedByKaprodi?: boolean;
 }
 
 // Complete student evaluation

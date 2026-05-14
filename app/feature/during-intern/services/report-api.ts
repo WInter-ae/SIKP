@@ -3,7 +3,7 @@
  * Handles internship report upload and management
  */
 
-import { post, get, put } from "~/lib/api-client";
+import { internshipClient, INTERNSHIP_API_BASE_URL } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 // ==================== TYPES ====================
@@ -53,42 +53,10 @@ export async function uploadKPReport(
     formData.append("notes", metadata.notes);
   }
 
-  // Use fetch directly for file upload with FormData
-  const API_BASE_URL =
-    import.meta.env.VITE_API_INTERNSHIP_URL ||
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    "https://backend-sikp.mukarrobinujiantik.workers.dev";
-
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/report/upload`, {
-      method: "POST",
-      body: formData,
-      credentials: "include",
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        message: errorData.message || `Upload failed: ${response.statusText}`,
-        data: null,
-      };
-    }
-
-    const result = await response.json();
-    return {
-      success: true,
-      message: result.message || "File uploaded successfully",
-      data: result.data,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Upload failed",
-      data: null,
-    };
-  }
+  return internshipClient.upload<UploadReportResponse>(
+    "/api/report/upload",
+    formData,
+  );
 }
 
 /**
@@ -96,7 +64,7 @@ export async function uploadKPReport(
  * GET /api/report
  */
 export async function getMyReport(): Promise<ApiResponse<KPReport>> {
-  return get<KPReport>("/api/report");
+  return internshipClient.get<KPReport>("/api/report");
 }
 
 /**
@@ -106,7 +74,7 @@ export async function getMyReport(): Promise<ApiResponse<KPReport>> {
 export async function getStudentReport(
   studentId: string,
 ): Promise<ApiResponse<KPReport>> {
-  return get<KPReport>(`/api/report/student/${studentId}`);
+  return internshipClient.get<KPReport>(`/api/report/student/${studentId}`);
 }
 
 /**
@@ -116,21 +84,18 @@ export async function getStudentReport(
 export async function submitReport(
   reportId: string,
 ): Promise<ApiResponse<KPReport>> {
-  return post<KPReport>(`/api/report/${reportId}/submit`, {});
+  return internshipClient.post<KPReport>(`/api/report/${reportId}/submit`, {});
 }
 
 /**
- * Update report metadata (not file)
+ * Update report metadata
  * PUT /api/report/:reportId
  */
-export async function updateReportMetadata(
+export async function updateReport(
   reportId: string,
-  data: {
-    description?: string;
-    notes?: string;
-  },
+  data: { description?: string; notes?: string },
 ): Promise<ApiResponse<KPReport>> {
-  return put<KPReport>(`/api/report/${reportId}`, data);
+  return internshipClient.put<KPReport>(`/api/report/${reportId}`, data);
 }
 
 /**
@@ -140,8 +105,7 @@ export async function updateReportMetadata(
 export async function deleteReport(
   reportId: string,
 ): Promise<ApiResponse<void>> {
-  // Using post with delete action since del might not be defined
-  return post<void>(`/api/report/${reportId}/delete`, {});
+  return internshipClient.post<void>(`/api/report/${reportId}/delete`, {});
 }
 
 /**
@@ -149,10 +113,5 @@ export async function deleteReport(
  * GET /api/report/:reportId/download
  */
 export function getReportDownloadUrl(reportId: string): string {
-  const API_BASE_URL =
-    import.meta.env.VITE_API_INTERNSHIP_URL ||
-    import.meta.env.VITE_API_URL ||
-    import.meta.env.VITE_API_BASE_URL ||
-    "https://backend-sikp.mukarrobinujiantik.workers.dev";
-  return `${API_BASE_URL}/api/report/${reportId}/download`;
+  return `${INTERNSHIP_API_BASE_URL}/api/report/${reportId}/download`;
 }

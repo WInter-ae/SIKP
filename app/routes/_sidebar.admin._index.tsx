@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { get } from "~/lib/api-client";
+import { internshipClient } from "~/lib/api-client";
 
 import DashboardAdminPage, {
   type DashboardAdminData,
@@ -11,6 +12,30 @@ export default function AdminDashboard() {
     null,
   );
   const [isLoading, setIsLoading] = useState(true);
+  const [backfillLoading, setBackfillLoading] = useState(false);
+  const [backfillResult, setBackfillResult] = useState<{ updated: number; skipped: number } | null>(null);
+  const [backfillError, setBackfillError] = useState<string | null>(null);
+
+  const handleBackfillDosen = async () => {
+    setBackfillLoading(true);
+    setBackfillResult(null);
+    setBackfillError(null);
+    try {
+      const res = await internshipClient.post<{ updated: number; skipped: number }>(
+        "/api/reporting/admin/backfill-dosen",
+        {}
+      );
+      if (res.success && res.data) {
+        setBackfillResult(res.data);
+      } else {
+        setBackfillError(res.message || "Backfill gagal.");
+      }
+    } catch (e: any) {
+      setBackfillError(e?.message || "Terjadi kesalahan.");
+    } finally {
+      setBackfillLoading(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -54,5 +79,13 @@ export default function AdminDashboard() {
     );
   }
 
-  return <DashboardAdminPage data={dashboardData} />;
+  return (
+    <DashboardAdminPage
+      data={dashboardData}
+      backfillLoading={backfillLoading}
+      backfillResult={backfillResult}
+      backfillError={backfillError}
+      onBackfillDosen={handleBackfillDosen}
+    />
+  );
 }

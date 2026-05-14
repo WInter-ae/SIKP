@@ -437,8 +437,13 @@ export default function TeamCreationPage() {
           members: acceptedMembers
             .map((m: TeamMember) => {
               const memberIdentity = getTeamMemberIdentity(m);
+              
+              // FALLBACK LOGIC: Identify if this member is the current user
               const isCurrentMember =
-                (memberIdentity.id || m.userId) === user?.id;
+                (memberIdentity.id || m.userId) === user?.id ||
+                (memberIdentity.nim && user?.nim && memberIdentity.nim === user.nim);
+              
+              // If name/nim is missing but it's the current user, use data from session
               const resolvedName =
                 memberIdentity.name ||
                 (isCurrentMember ? (user?.nama ?? "") : "");
@@ -449,7 +454,7 @@ export default function TeamCreationPage() {
               return {
                 id: m.id, // team member id (needed for backend mutations)
                 userId: memberIdentity.id || m.userId,
-                name: resolvedName || "-",
+                name: resolvedName || "Mahasiswa",
                 role: m.role === "KETUA" ? "Ketua" : "Anggota",
                 isLeader: m.role === "KETUA",
                 nim: resolvedNim || "-",
@@ -491,10 +496,10 @@ export default function TeamCreationPage() {
           transformedTeam.members.push({
             id: user.id,
             userId: user.id,
-            name: user.nama,
+            name: user.nama || "Mahasiswa (Ketua)",
             role: "Ketua",
             isLeader: true,
-            nim: user.nim || "",
+            nim: user.nim || "-",
             email: user.email,
           });
         }

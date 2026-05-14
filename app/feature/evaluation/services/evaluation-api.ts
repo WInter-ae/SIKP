@@ -1,4 +1,4 @@
-import { apiClient, INTERNSHIP_API_BASE_URL } from "~/lib/api-client";
+import { internshipClient, API_BASE_URL } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 import type {
   AcademicSupervisorGrade,
@@ -17,17 +17,18 @@ type CriterionKey =
   | "kreatifitas";
 
 const ADMIN_LIST_ENDPOINTS = [
+  "/api/archive/admin/internships",
+  "/api/penilaian/recap",
   "/api/admin/penilaian",
-  "/api/admin/assessment",
-  "/api/admin/evaluations",
-  "/api/admin/penilaian/mahasiswa",
 ] as const;
 
 const ADMIN_DETAIL_ENDPOINTS = [
+  "/api/penilaian/recap",
   "/api/admin/penilaian",
-  "/api/admin/assessment",
-  "/api/admin/evaluations",
 ] as const;
+
+const SCORE_FAST_ENDPOINT = "/api/reporting/score-fast";
+const PRINT_PDF_ENDPOINT = "/api/penilaian/print";
 
 function parseNumber(value: unknown, fallback = 0): number {
   if (typeof value === "number" && Number.isFinite(value)) return value;
@@ -267,6 +268,9 @@ function mapRowToEvaluation(
     (row.penilaian && typeof row.penilaian === "object"
       ? (row.penilaian as Record<string, unknown>)
       : null) ||
+    (row.mentor && typeof row.mentor === "object"
+      ? (row.mentor as Record<string, unknown>)
+      : null) ||
     row;
 
   const studentId = normalizeText(
@@ -286,8 +290,24 @@ function mapRowToEvaluation(
     totalScore,
   );
 
+  const academicNode =
+    (row.lecturer && typeof row.lecturer === "object"
+      ? (row.lecturer as Record<string, unknown>)
+      : null) ||
+    (row.lecturerAssessment && typeof row.lecturerAssessment === "object"
+      ? (row.lecturerAssessment as Record<string, unknown>)
+      : null) ||
+    row;
+
   const academicTotal = parseNumber(
-    row.academicScore ?? row.nilaiDosen ?? row.academicTotal ?? row.dosenTotal,
+    academicNode.totalScore ?? 
+    academicNode.total_score ?? 
+    academicNode.totalPoints ??
+    academicNode.total_points ??
+    academicNode.academicScore ?? 
+    academicNode.nilaiDosen ?? 
+    row.academicTotal ?? 
+    row.dosenTotal,
     0,
   );
 
@@ -304,24 +324,53 @@ function mapRowToEvaluation(
     },
   ];
 
-  const academicSupervisorGrades: AcademicSupervisorGrade[] =
-    academicTotal > 0
-      ? [
-          {
-            category: "Penilaian Dosen Pembimbing",
-            components: [
-              {
-                name: "Nilai Dosen Pembimbing",
-                score: academicTotal,
-                maxScore: 100,
-              },
-            ],
-            totalScore: academicTotal,
-            maxScore: 100,
-            percentage: academicTotal,
-          },
-        ]
-      : [];
+  const academicSupervisorGrades: AcademicSupervisorGrade[] = [];
+  if (academicTotal > 0) {
+    const academicComponents: GradeComponent[] = [];
+    
+    // 1. Try to load from components (Dynamic Criteria)
+    const rawComponents = academicNode.components || row.academicComponents || [];
+    if (Array.isArray(rawComponents) && rawComponents.length > 0) {
+      rawComponents.forEach((comp: any) => {
+        academicComponents.push({
+          name: comp.category || comp.name || "Kriteria",
+          score: parseNumber(comp.score),
+          maxScore: 100,
+          weight: parseNumber(comp.weight),
+          categoryId: comp.categoryId || comp.id
+        } as any);
+      });
+    } else {
+      // 2. Fallback to legacy fields
+      const fKesesuaian = parseNumber(academicNode.formatKesesuaian ?? academicNode.format_kesesuaian ?? academicNode.reportFormat);
+      const pMateri = parseNumber(academicNode.penguasaanMateri ?? academicNode.penguasaan_materi ?? academicNode.materialMastery);
+      const aPerancangan = parseNumber(academicNode.analisisPerancangan ?? academicNode.analisis_perancangan ?? academicNode.analysisDesign);
+      const sEtika = parseNumber(academicNode.sikapEtika ?? academicNode.sikap_etika ?? academicNode.attitudeEthics);
+
+      if (fKesesuaian > 0 || pMateri > 0 || aPerancangan > 0 || sEtika > 0) {
+        academicComponents.push(
+          { name: "Format & Kesesuaian", score: fKesesuaian, maxScore: 100, weight: 30 },
+          { name: "Penguasaan Materi", score: pMateri, maxScore: 100, weight: 30 },
+          { name: "Analisis & Perancangan", score: aPerancangan, maxScore: 100, weight: 30 },
+          { name: "Sikap & Etika", score: sEtika, maxScore: 100, weight: 10 }
+        );
+      } else {
+        academicComponents.push({
+          name: "Nilai Dosen Pembimbing",
+          score: academicTotal,
+          maxScore: 100,
+        });
+      }
+    }
+
+    academicSupervisorGrades.push({
+      category: "Penilaian Dosen Pembimbing",
+      components: academicComponents,
+      totalScore: academicTotal,
+      maxScore: 100,
+      percentage: academicTotal,
+    });
+  }
 
   return {
     student: {
@@ -365,6 +414,7 @@ function mapRowToEvaluation(
       finalScore,
       grade: gradeFromScore(finalScore),
       status: statusFromScore(finalScore),
+      isVerifiedByKaprodi: Boolean(row.isVerifiedByKaprodi || (row.combined as any)?.isVerifiedByKaprodi),
     },
     notes: normalizeText(assessmentNode.feedback || assessmentNode.catatan, ""),
     evaluatedAt: normalizeText(
@@ -382,10 +432,7 @@ export async function getAdminEvaluations(
   let lastMessage = "Gagal memuat data penilaian admin.";
 
   for (const endpoint of ADMIN_LIST_ENDPOINTS) {
-    const response = await apiClient<unknown>(endpoint, {
-      method: "GET",
-      _baseUrl: INTERNSHIP_API_BASE_URL,
-    } as RequestInit & { _baseUrl: string });
+    const response = await internshipClient.get<unknown>(endpoint);
 
     if (!response.success) {
       lastMessage = response.message || lastMessage;
@@ -411,6 +458,15 @@ export async function getAdminEvaluations(
   };
 }
 
+/**
+ * Check if there are any evaluations in the system
+ * Used to lock assessment criteria changes
+ */
+export async function hasAnyEvaluations(): Promise<boolean> {
+  const response = await getAdminEvaluations([]);
+  return Boolean(response.success && response.data && response.data.length > 0);
+}
+
 export async function getAdminEvaluationByStudentId(
   studentId: string,
   criteria: AssessmentCriterion[],
@@ -418,10 +474,7 @@ export async function getAdminEvaluationByStudentId(
   let lastMessage = "Gagal memuat detail penilaian mahasiswa.";
 
   for (const baseEndpoint of ADMIN_DETAIL_ENDPOINTS) {
-    const response = await apiClient<unknown>(`${baseEndpoint}/${studentId}`, {
-      method: "GET",
-      _baseUrl: INTERNSHIP_API_BASE_URL,
-    } as RequestInit & { _baseUrl: string });
+    const response = await internshipClient.get<unknown>(`${baseEndpoint}/${studentId}`);
 
     if (!response.success) {
       lastMessage = response.message || lastMessage;
@@ -450,4 +503,54 @@ export async function getAdminEvaluationByStudentId(
     message: lastMessage,
     data: null,
   };
+}
+/**
+ * Submit final score for a student (Dosen side)
+ * POST /api/reporting/score-fast
+ */
+export async function submitFinalScore(data: {
+  internshipId: string;
+  scores: {
+    formatKesesuaian: number;
+    penguasaanMateri: number;
+    analisisPerancangan: number;
+    sikapEtika: number;
+    components?: any[];
+    feedback?: string;
+  };
+}): Promise<ApiResponse<null>> {
+  return internshipClient.post<null>(SCORE_FAST_ENDPOINT, data);
+}
+
+/**
+ * Get assessment recap for a specific internship
+ * GET /api/penilaian/recap/:internshipId
+ */
+export async function getAssessmentRecap(
+  internshipId: string,
+): Promise<ApiResponse<StudentEvaluation>> {
+  const response = await internshipClient.get<unknown>(
+    `/api/penilaian/recap/${internshipId}`,
+  );
+
+  if (!response.success) {
+    return response as ApiResponse<StudentEvaluation>;
+  }
+
+  const objectRow = pickFirstObject(response.data);
+  const mapped = objectRow ? mapRowToEvaluation(objectRow, []) : null;
+
+  return {
+    success: true,
+    message: response.message,
+    data: mapped as StudentEvaluation,
+  };
+}
+
+/**
+ * Get the download URL for final assessment PDF
+ * GET /api/penilaian/print/:internshipId
+ */
+export function getAssessmentPdfUrl(internshipId: string): string {
+  return `${API_BASE_URL}${PRINT_PDF_ENDPOINT}/${internshipId}`;
 }

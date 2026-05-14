@@ -46,7 +46,7 @@ const mahasiswaMenu: NavItem[] = [
         url: "/mahasiswa/kp/surat-balasan",
       },
       {
-        title: "Saat Magang",
+        title: "Pelaksanaan",
         url: "/mahasiswa/kp/saat-magang",
       },
       {
@@ -54,14 +54,14 @@ const mahasiswaMenu: NavItem[] = [
         url: "/mahasiswa/kp/pengujian-sidang",
       },
       {
-        title: "Pasca Magang",
+        title: "Pasca KP",
         url: "#",
       },
     ],
   },
   {
-    title: "Arsip",
-    url: "#",
+    title: "Arsip KP",
+    url: "/mahasiswa/kp/arsip",
     icon: Archive,
   },
   {
@@ -109,19 +109,9 @@ const adminMenu: NavItem[] = [
     ],
   },
   {
-    title: "Arsip",
-    url: "#",
+    title: "Arsip Magang",
+    url: "/admin/arsip",
     icon: Archive,
-    items: [
-      {
-        title: "Mahasiswa",
-        url: "#",
-      },
-      {
-        title: "Dosen",
-        url: "#",
-      },
-    ],
   },
   {
     title: "Template",
@@ -158,6 +148,20 @@ const adminMenu: NavItem[] = [
   },
 ];
 
+// Menu untuk Kaprodi
+const kaprodiMenu: NavItem[] = [
+  {
+    title: "Dashboard",
+    url: "/dosen",
+    icon: Home,
+  },
+  {
+    title: "Verifikasi Nilai Akhir",
+    url: "/dosen/kp/verifikasi-nilai",
+    icon: FileCheck,
+  },
+];
+
 // Menu untuk Dosen
 const dosenMenu: NavItem[] = [
   {
@@ -171,12 +175,12 @@ const dosenMenu: NavItem[] = [
     icon: GraduationCap,
     items: [
       {
-        title: "Verifikasi Judul",
-        url: "/dosen/kp/verifikasi-judul",
+        title: "Monitoring Logbook",
+        url: "/dosen/kp/logbook-monitor",
       },
       {
-        title: "Verifikasi Sidang",
-        url: "/dosen/kp/verifikasi-sidang",
+        title: "Penilaian KP",
+        url: "/dosen/penilaian",
       },
     ],
   },
@@ -186,23 +190,26 @@ const dosenMenu: NavItem[] = [
     icon: FileCheck,
     items: [
       {
+        title: "Verifikasi Judul",
+        url: "/dosen/kp/verifikasi-judul",
+      },
+      {
+        title: "Verifikasi Laporan",
+        url: "/dosen/kp/verifikasi-laporan",
+      },
+      {
+        title: "Verifikasi Sidang",
+        url: "/dosen/kp/verifikasi-sidang",
+      },
+      {
         title: "Surat Ajuan Mahasiswa",
         url: "/dosen/kp/verifikasi-surat",
       },
       {
-        title: "Persetujuan Pembimbing",
+        title: "Verifikasi Mentor",
         url: "/dosen/kp/persetujuan-pembimbing",
       },
-      {
-        title: "Monitoring Logbook",
-        url: "/dosen/kp/logbook-monitor",
-      },
     ],
-  },
-  {
-    title: "Penilaian KP",
-    url: "/dosen/penilaian",
-    icon: Award,
   },
 ];
 
@@ -234,7 +241,7 @@ const mentorMenu: NavItem[] = [
     icon: Home,
   },
   {
-    title: "Mahasiswa Magang",
+    title: "Mahasiswa Bimbingan",
     url: "/mentor/mentee",
     icon: Users,
   },
@@ -260,7 +267,7 @@ const mentorMenu: NavItem[] = [
   },
   {
     title: "Profil",
-    url: "/mentor/profil",
+    url: "https://sso-unsri.vercel.app/profile",
     icon: UserCircle,
   },
   {
@@ -277,9 +284,11 @@ export function getSidebarMenuByRole(role: EffectiveRole): NavItem[] {
     case "ADMIN":
       return adminMenu;
     case "DOSEN":
-    case "KAPRODI":
-    case "WAKIL_DEKAN":
       return dosenMenu;
+    case "KAPRODI":
+      return kaprodiMenu;
+    case "WAKIL_DEKAN":
+      return wakilDekanMenu;
     case "MENTOR":
       return mentorMenu;
     default:
@@ -320,15 +329,16 @@ export function getSidebarMenuByUrl(
     return adminMenu;
   }
   if (pathname.startsWith("/dosen")) {
-    // Check if user is Wakil Dekan by checking jabatan (can contain "WAKIL_DEKAN", "wakil dekan", etc)
-    if (userJabatanStruktural) {
-      const jabatanLower = userJabatanStruktural.toLowerCase();
-      const isWakdek =
-        jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
-      if (isWakdek) {
-        return wakilDekanMenu;
-      }
-    }
+    const jabatanLower = userJabatanStruktural?.toLowerCase() || "";
+    const isWakdek = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+    const isKaprodi = 
+      (jabatanLower.includes("ketua") && (jabatanLower.includes("prodi") || jabatanLower.includes("program studi"))) ||
+      jabatanLower.includes("kaprodi") || 
+      jabatanLower.includes("koordinator");
+
+    if (isWakdek) return wakilDekanMenu;
+    if (isKaprodi) return kaprodiMenu;
+    
     return dosenMenu;
   }
   if (pathname.startsWith("/mentor")) {
@@ -338,23 +348,22 @@ export function getSidebarMenuByUrl(
     return currentMahasiswaMenu;
   }
 
-  const normalizedRole = userRole?.toUpperCase();
+  const normalizedRole = userRole?.toString().toUpperCase();
+  const jabatanLower = userJabatanStruktural?.toLowerCase() || "";
+  const isKaprodiByJabatan = 
+    (jabatanLower.includes("ketua") && (jabatanLower.includes("prodi") || jabatanLower.includes("program studi"))) ||
+    jabatanLower.includes("kaprodi") || 
+    jabatanLower.includes("koordinator");
+  const isWakdekByJabatan = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
 
   if (normalizedRole === "ADMIN") return adminMenu;
   if (normalizedRole === "MENTOR") return mentorMenu;
-  if (
-    normalizedRole === "DOSEN" ||
-    normalizedRole === "KAPRODI" ||
-    normalizedRole === "WAKIL_DEKAN"
-  ) {
-    if (userJabatanStruktural) {
-      const jabatanLower = userJabatanStruktural.toLowerCase();
-      const isWakdek =
-        jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
-      if (isWakdek) {
-        return wakilDekanMenu;
-      }
-    }
+  
+  if (normalizedRole === "KAPRODI" || isKaprodiByJabatan) return kaprodiMenu;
+  
+  if (normalizedRole === "WAKIL_DEKAN" || isWakdekByJabatan) return wakilDekanMenu;
+
+  if (normalizedRole === "DOSEN") {
     return dosenMenu;
   }
 

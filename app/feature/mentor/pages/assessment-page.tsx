@@ -38,6 +38,7 @@ import BackButton from "../components/back-button";
 import {
   submitAssessment,
   updateAssessment,
+  unlockAssessment,
   getMentees,
   getStudentAssessment,
   type MenteeData,
@@ -227,6 +228,7 @@ function AssessmentPage() {
     string | null
   >(null);
   const [criteriaLoadedAt, setCriteriaLoadedAt] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   // Load bobot kriteria dari database saat komponen mount
   useEffect(() => {
@@ -316,6 +318,7 @@ function AssessmentPage() {
         if (response.success && response.data) {
           const data = response.data;
           setExistingAssessmentId(data.id || null);
+          setIsEditing(!data.id || !data.isLocked); // Unlock if not locked in backend
 
           const componentScores = new Map<string, number>();
           if (Array.isArray(data.components)) {
@@ -355,6 +358,7 @@ function AssessmentPage() {
           setFeedback(data.feedback || "");
         } else {
           setExistingAssessmentId(null);
+          setIsEditing(true); // Izinkan input jika belum ada penilaian
           setFeedback("");
           setAssessments((prev) =>
             prev.map((assessment) => ({ ...assessment, score: 0 })),
@@ -363,6 +367,7 @@ function AssessmentPage() {
       } catch {
         if (!isMounted) return;
         setExistingAssessmentId(null);
+        setIsEditing(true);
         setFeedback("");
         setAssessments((prev) =>
           prev.map((assessment) => ({ ...assessment, score: 0 })),
@@ -399,6 +404,9 @@ function AssessmentPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Guard: Hanya izinkan simpan jika sedang dalam mode edit atau data baru
+    if (existingAssessmentId && !isEditing) return;
 
     if (!selectedMentee) {
       toast.error("Mohon pilih mahasiswa terlebih dahulu");
@@ -477,6 +485,7 @@ function AssessmentPage() {
           setExistingAssessmentId(response.data.id);
         }
 
+        setIsEditing(false); // Kunci kembali setelah berhasil simpan
         const menteeName = mentees.find((m) => m.id === selectedMentee)?.name;
         toast.success(
           `${existingAssessmentId ? "Penilaian berhasil diperbarui" : "Penilaian berhasil disimpan"}!\nMahasiswa: ${menteeName}\nNilai Rata-rata: ${totalScore.toFixed(1)}`,
@@ -575,6 +584,12 @@ function AssessmentPage() {
                     {totalScore.toFixed(1)}
                   </p>
                   <p className="text-muted-foreground mt-2">dari 100</p>
+                  {existingAssessmentId && !isEditing && (
+                    <div className="mt-4 flex items-center justify-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-1.5 rounded-full text-xs font-medium border border-amber-200 dark:border-amber-900/50">
+                      <Clock className="h-3.5 w-3.5" />
+                      Penilaian Terkunci (Read-only)
+                    </div>
+                  )}
                   {assessmentLoading && (
                     <p className="text-xs text-muted-foreground mt-2">
                       Memuat penilaian yang sudah ada...
@@ -632,6 +647,7 @@ function AssessmentPage() {
                             handleScoreChange(assessment.id, e.target.value)
                           }
                           placeholder="0"
+                          disabled={!isEditing}
                         />
                         <div className="w-full bg-muted rounded-full h-2">
                           <div
@@ -661,24 +677,78 @@ function AssessmentPage() {
                   rows={5}
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
+                  disabled={!isEditing}
                 />
               </CardContent>
             </Card>
 
-            <div className="flex justify-center mb-6">
-              <Button
-                type="submit"
-                size="lg"
-                className="px-8"
-                disabled={isSubmitting || assessmentLoading}
-              >
-                <Save className="mr-2 h-4 w-4" />
-                {isSubmitting
-                  ? "Menyimpan..."
-                  : assessmentLoading
-                    ? "Memuat..."
-                    : "Simpan Penilaian"}
-              </Button>
+            <div className="flex justify-center gap-4 mb-6">
+              {existingAssessmentId && !isEditing ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="lg"
+                  className="px-8 border-primary text-primary hover:bg-primary/5"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    if (!existingAssessmentId) return;
+
+                    setIsSubmitting(true);
+                    try {
+                      const res =
+                        await unlockAssessment(existingAssessmentId);
+                      if (res.success) {
+                        setIsEditing(true);
+                        toast.success("Penilaian dibuka. Silakan lakukan perubahan.");
+                      } else {
+                        toast.error(res.message || "Gagal membuka kunci penilaian.");
+                      }
+                    } catch (err) {
+                      toast.error("Terjadi kesalahan saat membuka kunci penilaian.");
+                    } finally {
+                      setIsSubmitting(false);
+                    }
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <Award className="mr-2 h-4 w-4" />
+                  Edit Penilaian
+                </Button>
+              ) : (
+                <div className="flex gap-3">
+                  {existingAssessmentId && isEditing && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="lg"
+                      className="px-8 text-muted-foreground hover:bg-muted"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsEditing(false);
+                        // Optional: Reset form to original values if needed
+                      }}
+                    >
+                      Batal
+                    </Button>
+                  )}
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="px-8"
+                    disabled={isSubmitting || assessmentLoading}
+                  >
+                    <Save className="mr-2 h-4 w-4" />
+                    {isSubmitting
+                      ? "Menyimpan..."
+                      : assessmentLoading
+                        ? "Memuat..."
+                        : existingAssessmentId
+                          ? "Simpan Perubahan"
+                          : "Simpan Penilaian"}
+                  </Button>
+                </div>
+              )}
             </div>
           </>
         )}

@@ -9,8 +9,10 @@ import {
   Search,
   Clock,
   CheckCircle,
-  XCircle,
   FileEdit,
+  GraduationCap,
+  Sparkles,
+  LayoutDashboard
 } from "lucide-react";
 import type { PengajuanJudul } from "../types/title";
 import TitleSubmissionCard from "../components/title-submission-card";
@@ -147,7 +149,6 @@ function LecturerTitleVerificationPage() {
     (p) => p.status === "disetujui",
   );
   const pengajuanRevisi = pengajuanList.filter((p) => p.status === "revisi");
-  const pengajuanDitolak = pengajuanList.filter((p) => p.status === "ditolak");
 
   // Filter berdasarkan search query
   const filterBySearch = (list: PengajuanJudul[]) => {
@@ -166,7 +167,6 @@ function LecturerTitleVerificationPage() {
   const filteredMenunggu = filterBySearch(pengajuanMenunggu);
   const filteredDisetujui = filterBySearch(pengajuanDisetujui);
   const filteredRevisi = filterBySearch(pengajuanRevisi);
-  const filteredDitolak = filterBySearch(pengajuanDitolak);
 
   if (isLoading) {
     return (
@@ -175,8 +175,8 @@ function LecturerTitleVerificationPage() {
           <div className="flex items-center justify-center py-20">
             <div className="text-center space-y-4">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-              <p className="text-muted-foreground">
-                Memuat data pengajuan judul...
+              <p className="text-muted-foreground font-medium">
+                Sinkronisasi data pengajuan...
               </p>
             </div>
           </div>
@@ -186,328 +186,201 @@ function LecturerTitleVerificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
-        {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            Verifikasi Judul Laporan KP
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Tinjau dan verifikasi judul laporan kerja praktek yang diajukan oleh
-            mahasiswa bimbingan Anda
-          </p>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <div className="container max-w-7xl mx-auto p-4 sm:p-8 space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-widest mb-1">
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Dosen Pembimbing Dashboard</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+              Verifikasi Judul Laporan
+            </h1>
+            <p className="text-slate-500 font-medium">
+              Kelola dan arahkan kualitas laporan kerja praktik mahasiswa bimbingan Anda.
+            </p>
+          </div>
+          <div className="flex items-center bg-white p-2 rounded-2xl shadow-sm border border-slate-200">
+            <div className="px-4 py-2 bg-primary/10 rounded-xl flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span className="text-xs font-bold text-primary uppercase">Sesi Aktif</span>
+            </div>
+            <span className="px-4 py-2 text-sm font-bold text-slate-700">2023/2024 Genap</span>
+          </div>
         </div>
 
         {/* Notification */}
         {notification && (
           <Alert
             variant={notification.variant || "default"}
-            className="border-l-4 border-l-primary"
+            className="border-none shadow-lg bg-white animate-in slide-in-from-top-4 duration-300 rounded-2xl"
           >
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              <strong>{notification.title}</strong>
-              <br />
-              {notification.description}
-            </AlertDescription>
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-full ${notification.variant === 'destructive' ? 'bg-red-100 text-red-600' : 'bg-primary/10 text-primary'}`}>
+                <Info className="h-5 w-5" />
+              </div>
+              <AlertDescription className="font-medium text-slate-700">
+                <strong className="block text-slate-900">{notification.title}</strong>
+                {notification.description}
+              </AlertDescription>
+            </div>
           </Alert>
         )}
 
-        {/* Info Card */}
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 dark:from-blue-950 dark:to-indigo-950">
-          <CardContent className="pt-6">
-            <div className="flex gap-3">
-              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="space-y-2 text-sm">
-                <p className="font-semibold text-blue-900 dark:text-blue-100">
-                  Panduan Verifikasi Judul:
-                </p>
-                <ul className="list-disc list-inside space-y-1 text-blue-800 dark:text-blue-200 leading-relaxed">
-                  <li>
-                    Pastikan judul mencerminkan isi dan ruang lingkup pekerjaan
-                    dengan jelas
-                  </li>
-                  <li>
-                    Judul harus spesifik, tidak terlalu umum atau terlalu teknis
-                  </li>
-                  <li>
-                    Perhatikan penggunaan teknologi dan metodologi yang
-                    disebutkan
-                  </li>
-                  <li>
-                    Berikan feedback konstruktif untuk membantu mahasiswa
-                    berkembang
-                  </li>
-                </ul>
+        {/* Stats Grid - Premium Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-none shadow-sm bg-white hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden group">
+            <div className="h-1.5 bg-yellow-500 w-full" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Menunggu</p>
+                  <p className="text-4xl font-black text-slate-900 tracking-tight">{pengajuanMenunggu.length}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-yellow-50 group-hover:bg-yellow-500 group-hover:rotate-6 transition-all duration-300">
+                  <Clock className="w-8 h-8 text-yellow-600 group-hover:text-white" />
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-          <Input
-            placeholder="Cari berdasarkan nama, NIM, judul, atau tempat magang..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+          <Card className="border-none shadow-sm bg-white hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden group">
+            <div className="h-1.5 bg-green-500 w-full" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Disetujui</p>
+                  <p className="text-4xl font-black text-slate-900 tracking-tight">{pengajuanDisetujui.length}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-green-50 group-hover:bg-green-500 group-hover:rotate-6 transition-all duration-300">
+                  <CheckCircle className="w-8 h-8 text-green-600 group-hover:text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-sm bg-white hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden group">
+            <div className="h-1.5 bg-blue-500 w-full" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">Revisi</p>
+                  <p className="text-4xl font-black text-slate-900 tracking-tight">{pengajuanRevisi.length}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-blue-50 group-hover:bg-blue-500 group-hover:rotate-6 transition-all duration-300">
+                  <FileEdit className="w-8 h-8 text-blue-600 group-hover:text-white" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                    Menunggu
-                  </p>
-                  <p className="text-xl sm:text-2xl font-bold">
+        {/* Content Section */}
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 sm:p-8 space-y-8">
+          {/* Search Bar - Stylized */}
+          <div className="relative group max-w-2xl">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5 group-focus-within:text-primary transition-colors" />
+            <Input
+              placeholder="Cari Mahasiswa, NIM, atau Judul..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-14 bg-slate-50 border-slate-200 rounded-2xl focus-visible:ring-primary focus-visible:bg-white transition-all text-base font-medium"
+            />
+          </div>
+
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="space-y-8"
+          >
+            <TabsList className="flex w-full sm:w-auto bg-slate-100/80 p-1.5 rounded-2xl">
+              <TabsTrigger
+                value="menunggu"
+                className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all font-bold text-sm"
+              >
+                Menunggu
+                {pengajuanMenunggu.length > 0 && (
+                  <Badge className="ml-2 bg-primary text-white border-none text-[10px] h-5 min-w-[20px]">
                     {pengajuanMenunggu.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="disetujui" className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all font-bold text-sm">
+                Disetujui
+              </TabsTrigger>
+              <TabsTrigger value="revisi" className="flex-1 sm:flex-none px-6 py-2.5 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all font-bold text-sm">
+                Revisi
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Menunggu Verifikasi */}
+            <TabsContent value="menunggu" className="space-y-6 animate-in fade-in duration-500">
+              {filteredMenunggu.length === 0 ? (
+                <div className="text-center py-24 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                  <div className="w-20 h-20 bg-white rounded-3xl shadow-sm flex items-center justify-center mx-auto mb-6">
+                    <Clock className="w-10 h-10 text-slate-300" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-1">
+                    {searchQuery ? "Pencarian Tidak Ditemukan" : "Antrian Bersih!"}
+                  </h3>
+                  <p className="text-slate-500 max-w-xs mx-auto">
+                    {searchQuery ? "Coba gunakan kata kunci yang lebih spesifik." : "Semua pengajuan judul mahasiswa sudah Anda periksa."}
                   </p>
                 </div>
-                <div className="p-2 sm:p-3 rounded-full bg-yellow-100 dark:bg-yellow-900">
-                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-300" />
+              ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {filteredMenunggu.map((pengajuan) => (
+                    <TitleSubmissionCard
+                      key={pengajuan.id}
+                      pengajuan={pengajuan}
+                      onVerifikasi={handleVerifikasi}
+                    />
+                  ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                    Disetujui
-                  </p>
-                  <p className="text-xl sm:text-2xl font-bold">
-                    {pengajuanDisetujui.length}
-                  </p>
+              )}
+            </TabsContent>
+
+            {/* Other Tabs handled similarly by TitleSubmissionCard mapping... */}
+            <TabsContent value="disetujui" className="space-y-6 animate-in fade-in duration-500">
+               {filteredDisetujui.length === 0 ? (
+                 <div className="text-center py-20 text-slate-400 font-medium">Belum ada pengajuan yang disetujui.</div>
+               ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {filteredDisetujui.map((pengajuan) => (
+                    <TitleSubmissionCard key={pengajuan.id} pengajuan={pengajuan} />
+                  ))}
                 </div>
-                <div className="p-2 sm:p-3 rounded-full bg-green-100 dark:bg-green-900">
-                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-300" />
+               )}
+            </TabsContent>
+
+            <TabsContent value="revisi" className="space-y-6 animate-in fade-in duration-500">
+               {filteredRevisi.length === 0 ? (
+                 <div className="text-center py-20 text-slate-400 font-medium">Belum ada pengajuan yang memerlukan revisi.</div>
+               ) : (
+                <div className="grid grid-cols-1 gap-6">
+                  {filteredRevisi.map((pengajuan) => (
+                    <TitleSubmissionCard key={pengajuan.id} pengajuan={pengajuan} />
+                  ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                    Revisi
-                  </p>
-                  <p className="text-xl sm:text-2xl font-bold">
-                    {pengajuanRevisi.length}
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                  <FileEdit className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-300" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                    Ditolak
-                  </p>
-                  <p className="text-xl sm:text-2xl font-bold">
-                    {pengajuanDitolak.length}
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 rounded-full bg-red-100 dark:bg-red-900">
-                  <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-300" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+               )}
+            </TabsContent>
+          </Tabs>
         </div>
 
-        {/* Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-4"
-        >
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
-            <TabsTrigger
-              value="menunggu"
-              className="relative text-xs sm:text-sm"
-            >
-              <span className="hidden sm:inline">Menunggu Verifikasi</span>
-              <span className="sm:hidden">Menunggu</span>
-              {pengajuanMenunggu.length > 0 && (
-                <Badge className="ml-1 sm:ml-2 bg-yellow-500 text-xs px-1.5">
-                  {pengajuanMenunggu.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="disetujui" className="text-xs sm:text-sm">
-              Disetujui
-              {pengajuanDisetujui.length > 0 && (
-                <Badge className="ml-1 sm:ml-2 bg-green-500 text-xs px-1.5">
-                  {pengajuanDisetujui.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="revisi" className="text-xs sm:text-sm">
-              <span className="hidden sm:inline">Perlu Revisi</span>
-              <span className="sm:hidden">Revisi</span>
-              {pengajuanRevisi.length > 0 && (
-                <Badge className="ml-1 sm:ml-2 bg-blue-500 text-xs px-1.5">
-                  {pengajuanRevisi.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="ditolak" className="text-xs sm:text-sm">
-              Ditolak
-              {pengajuanDitolak.length > 0 && (
-                <Badge className="ml-1 sm:ml-2 bg-red-500 text-xs px-1.5">
-                  {pengajuanDitolak.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Menunggu Verifikasi */}
-          <TabsContent value="menunggu" className="space-y-4 mt-6">
-            {filteredMenunggu.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-12 px-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center mx-auto mb-4">
-                      <Clock className="w-8 h-8 sm:w-10 sm:h-10 text-yellow-600 dark:text-yellow-300" />
-                    </div>
-                    <p className="text-base sm:text-lg font-medium text-muted-foreground">
-                      {searchQuery
-                        ? "Tidak ada pengajuan yang sesuai pencarian"
-                        : "Tidak ada pengajuan yang menunggu verifikasi"}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {searchQuery
-                        ? "Coba gunakan kata kunci yang berbeda"
-                        : "Semua pengajuan telah diverifikasi"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <div className="text-sm text-muted-foreground mb-2">
-                  Menampilkan {filteredMenunggu.length} pengajuan
-                </div>
-                {filteredMenunggu.map((pengajuan) => (
-                  <TitleSubmissionCard
-                    key={pengajuan.id}
-                    pengajuan={pengajuan}
-                    onVerifikasi={handleVerifikasi}
-                  />
-                ))}
-              </>
-            )}
-          </TabsContent>
-
-          {/* Disetujui */}
-          <TabsContent value="disetujui" className="space-y-4 mt-6">
-            {filteredDisetujui.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-12 px-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mx-auto mb-4">
-                      <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-green-600 dark:text-green-300" />
-                    </div>
-                    <p className="text-base sm:text-lg font-medium text-muted-foreground">
-                      {searchQuery
-                        ? "Tidak ada pengajuan yang sesuai pencarian"
-                        : "Belum ada judul yang disetujui"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <div className="text-sm text-muted-foreground mb-2">
-                  Menampilkan {filteredDisetujui.length} pengajuan
-                </div>
-                {filteredDisetujui.map((pengajuan) => (
-                  <TitleSubmissionCard
-                    key={pengajuan.id}
-                    pengajuan={pengajuan}
-                  />
-                ))}
-              </>
-            )}
-          </TabsContent>
-
-          {/* Perlu Revisi */}
-          <TabsContent value="revisi" className="space-y-4 mt-6">
-            {filteredRevisi.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-12 px-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mx-auto mb-4">
-                      <FileEdit className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600 dark:text-blue-300" />
-                    </div>
-                    <p className="text-base sm:text-lg font-medium text-muted-foreground">
-                      {searchQuery
-                        ? "Tidak ada pengajuan yang sesuai pencarian"
-                        : "Tidak ada judul yang perlu revisi"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <div className="text-sm text-muted-foreground mb-2">
-                  Menampilkan {filteredRevisi.length} pengajuan
-                </div>
-                {filteredRevisi.map((pengajuan) => (
-                  <TitleSubmissionCard
-                    key={pengajuan.id}
-                    pengajuan={pengajuan}
-                  />
-                ))}
-              </>
-            )}
-          </TabsContent>
-
-          {/* Ditolak */}
-          <TabsContent value="ditolak" className="space-y-4 mt-6">
-            {filteredDitolak.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="text-center py-12 px-4">
-                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center mx-auto mb-4">
-                      <XCircle className="w-8 h-8 sm:w-10 sm:h-10 text-red-600 dark:text-red-300" />
-                    </div>
-                    <p className="text-base sm:text-lg font-medium text-muted-foreground">
-                      {searchQuery
-                        ? "Tidak ada pengajuan yang sesuai pencarian"
-                        : "Tidak ada judul yang ditolak"}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <>
-                <div className="text-sm text-muted-foreground mb-2">
-                  Menampilkan {filteredDitolak.length} pengajuan
-                </div>
-                {filteredDitolak.map((pengajuan) => (
-                  <TitleSubmissionCard
-                    key={pengajuan.id}
-                    pengajuan={pengajuan}
-                  />
-                ))}
-              </>
-            )}
-          </TabsContent>
-        </Tabs>
+        {/* Footer Info */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-8 bg-slate-900 rounded-3xl text-white shadow-xl shadow-slate-200">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <GraduationCap className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-sm font-bold tracking-wide uppercase">Sistem Informasi Kerja Praktik</span>
+          </div>
+          <div className="text-xs font-medium text-slate-400">
+            © 2024 • Tim Pengembang SIKP
+          </div>
+        </div>
       </div>
     </div>
   );

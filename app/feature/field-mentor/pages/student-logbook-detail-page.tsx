@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { Button } from "~/components/ui/button";
@@ -19,13 +19,13 @@ import {
 } from "~/components/ui/table";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   CheckCircle,
   Clock,
   ArrowLeft,
   User,
   Calendar,
-  Download,
 } from "lucide-react";
 
 import {
@@ -44,6 +44,7 @@ type ViewLogbookEntry = {
   date: string;
   description: string;
   activity: string;
+  photoUrl?: string | null;
   status: "PENDING" | "APPROVED" | "REJECTED";
 };
 
@@ -53,8 +54,8 @@ function coerceText(value: unknown, fallback = "-") {
   return fallback;
 }
 
-function formatDate(dateString?: string) {
-  if (!dateString) return "-";
+function formatDate(dateString?: string, mounted = true) {
+  if (!dateString || !mounted) return dateString || "-";
   const parsed = new Date(dateString);
   if (Number.isNaN(parsed.getTime())) return "-";
   return parsed.toLocaleDateString("id-ID", {
@@ -100,6 +101,11 @@ function StudentLogbookDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isApprovingAll, setIsApprovingAll] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -134,10 +140,14 @@ function StudentLogbookDetailPage() {
         const studentUserId = studentRes.data?.userId || resolvedStudentId;
         let logbookRes = await getStudentLogbook(studentUserId);
 
-        let backendEntries: LogbookEntry[] =
-          logbookRes.success && logbookRes.data?.entries
-            ? logbookRes.data.entries
-            : [];
+        let backendEntries: LogbookEntry[] = [];
+        if (logbookRes.success && logbookRes.data) {
+          if (Array.isArray(logbookRes.data)) {
+            backendEntries = logbookRes.data;
+          } else if ((logbookRes.data as any).entries) {
+            backendEntries = (logbookRes.data as any).entries;
+          }
+        }
 
         const mentorVisibleEntries = backendEntries.filter(
           (
@@ -156,6 +166,7 @@ function StudentLogbookDetailPage() {
             date: coerceText(entry.date, ""),
             description: coerceText(entry.description || entry.activity, "-"),
             activity: coerceText(entry.activity || entry.description, "-"),
+            photoUrl: entry.photoUrl || entry.photo_url || null,
             status: entry.status,
           }))
           .sort(
@@ -255,11 +266,7 @@ function StudentLogbookDetailPage() {
     }
   }
 
-  function handleExportLogbook() {
-    toast.info(
-      "Fitur export logbook akan diaktifkan setelah endpoint tersedia.",
-    );
-  }
+
 
   function getStatusBadge(status: ViewLogbookEntry["status"]) {
     if (status === "APPROVED") {
@@ -341,10 +348,6 @@ function StudentLogbookDetailPage() {
               <CheckCircle className="mr-2 h-4 w-4" />
               {isApprovingAll ? "Memproses..." : "Paraf Semua"}
             </Button>
-            <Button onClick={handleExportLogbook} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export Logbook
-            </Button>
           </div>
         </div>
       </div>
@@ -357,13 +360,22 @@ function StudentLogbookDetailPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
-              <p className="font-medium">
-                {student.nama || student.name || "-"}
-              </p>
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex-shrink-0">
+              <Avatar className="h-24 w-24 rounded-lg border-2 border-muted">
+                <AvatarImage src={(student as any).photoUrl || (student as any).photo} alt={student.nama || student.name} />
+                <AvatarFallback className="rounded-lg text-2xl font-bold bg-muted">
+                  {(student.nama || student.name || "M").split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                </AvatarFallback>
+              </Avatar>
             </div>
+            <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
+                <p className="font-medium text-lg">
+                  {student.nama || student.name || "-"}
+                </p>
+              </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">NIM</p>
               <p className="font-medium">{student.nim}</p>
@@ -373,9 +385,9 @@ function StudentLogbookDetailPage() {
               <p className="font-medium">{student.prodi || "-"}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Perusahaan</p>
+              <p className="text-sm text-muted-foreground">Periode Magang</p>
               <p className="font-medium">
-                {student.companyName || student.company || "-"}
+                {formatDate(student.internshipStartDate || student.startDate, mounted)} - {formatDate(student.internshipEndDate || student.endDate, mounted)}
               </p>
             </div>
             <div className="space-y-1">
@@ -387,7 +399,8 @@ function StudentLogbookDetailPage() {
               <p className="font-medium">{student.email || "-"}</p>
             </div>
           </div>
-        </CardContent>
+        </div>
+      </CardContent>
       </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -435,11 +448,12 @@ function StudentLogbookDetailPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="border rounded-lg">
+          <div className="border rounded-lg overflow-x-auto">
             <Table className="table-fixed w-full">
               <colgroup>
                 <col className="w-28" />
                 <col />
+                <col className="w-24" />
                 <col className="w-36" />
                 <col className="w-40" />
               </colgroup>
@@ -450,6 +464,9 @@ function StudentLogbookDetailPage() {
                   </TableHead>
                   <TableHead className="text-left align-middle text-sm font-semibold">
                     Deskripsi Kegiatan
+                  </TableHead>
+                  <TableHead className="w-24 text-center text-sm font-semibold">
+                    Foto
                   </TableHead>
                   <TableHead className="w-36 text-sm font-semibold">
                     Status Paraf
@@ -463,7 +480,7 @@ function StudentLogbookDetailPage() {
                 {entries.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="text-center py-8 text-muted-foreground"
                     >
                       Belum ada logbook yang diajukan mahasiswa ini.
@@ -473,7 +490,7 @@ function StudentLogbookDetailPage() {
                   entries.map((entry) => (
                     <TableRow key={entry.id} className="align-top">
                       <TableCell className="align-middle text-left text-xs sm:text-sm border-r py-4 pr-3 whitespace-nowrap">
-                        {formatDate(entry.date)}
+                        {formatDate(entry.date, mounted)}
                       </TableCell>
                       <TableCell className="align-middle text-left py-4 min-w-0">
                         <div className="min-h-16 min-w-0 break-words flex flex-col justify-center gap-2">
@@ -488,6 +505,25 @@ function StudentLogbookDetailPage() {
                               </p>
                             )}
                         </div>
+                      </TableCell>
+                      {/* Foto Kegiatan — Read Only */}
+                      <TableCell className="align-middle text-center py-4">
+                        {entry.photoUrl ? (
+                          <a
+                            href={entry.photoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Lihat foto kegiatan"
+                          >
+                            <img
+                              src={entry.photoUrl}
+                              alt="Foto kegiatan"
+                              className="h-14 w-14 object-cover rounded-md border mx-auto hover:scale-110 transition-transform"
+                            />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell className="align-middle py-4">
                         {getStatusBadge(entry.status)}

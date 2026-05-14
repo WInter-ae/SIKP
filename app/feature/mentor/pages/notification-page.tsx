@@ -120,8 +120,8 @@ function NotificationPage() {
               ]);
 
               const logbookEntries =
-                logbookRes.success && logbookRes.data?.entries
-                  ? logbookRes.data.entries
+                logbookRes.success && Array.isArray(logbookRes.data)
+                  ? logbookRes.data
                   : [];
               const existingEntries = [...logbookEntries];
 

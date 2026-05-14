@@ -87,6 +87,7 @@ export interface SessionUser {
   jumlahSksLulus?: number;
   phone?: string;
   jabatan?: string;
+  instansi?: string;
   jabatanFungsional?: string;
   jabatanStruktural?: string[];
 }
@@ -146,9 +147,12 @@ export function normalizeRole(raw: unknown): EffectiveRole | null {
     normalized === "ADMIN" ||
     normalized === "DOSEN" ||
     normalized === "KAPRODI" ||
+    normalized === "KOORDINATOR" ||
+    normalized === "KORPRODI" ||
     normalized === "WAKIL_DEKAN" ||
     normalized === "MENTOR"
   ) {
+    if (normalized === "KOORDINATOR" || normalized === "KORPRODI") return "KAPRODI";
     return normalized;
   }
 
@@ -492,6 +496,7 @@ export function toSessionUser(
       activeIdentity?.profile.jumlahSksLulus,
     phone: pickString(record.phone) || activeIdentity?.profile.phone,
     jabatan: pickString(record.jabatan) || activeIdentity?.profile.jabatan,
+    instansi: pickString(record.instansi) || activeIdentity?.profile.instansi,
     jabatanFungsional:
       pickString(record.jabatanFungsional) ||
       activeIdentity?.profile.jabatanFungsional,

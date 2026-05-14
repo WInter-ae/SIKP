@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router";
 import {
   UserPlus,
@@ -14,6 +14,7 @@ import {
   Info,
   Clock,
   XCircle,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,12 +34,14 @@ import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 
 import { getCompleteInternshipData } from "~/feature/during-intern/services/student-api";
+import { requestMentor } from "../services";
 import type { FieldMentor, MentorRequest } from "../types";
 
 function FieldMentorPage() {
   const navigate = useNavigate();
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [isLoadingMentor, setIsLoadingMentor] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [mentorRequest, setMentorRequest] = useState<MentorRequest>({
     mentorName: "",
     mentorEmail: "",
@@ -49,55 +52,68 @@ function FieldMentorPage() {
   });
   const [currentMentor, setCurrentMentor] = useState<FieldMentor | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadMentorData = useCallback(async () => {
+    setIsLoadingMentor(true);
+    try {
+      const response = await getCompleteInternshipData();
 
-    async function loadMentorData() {
-      setIsLoadingMentor(true);
+      if (!response.success || !response.data) {
+        setIsLoadingMentor(false);
+        return;
+      }
 
-      try {
-        const response = await getCompleteInternshipData();
+      const internship = response.data.internship;
+      const mentor = response.data.mentor;
+      const submission = response.data.submission;
+      const internshipStatus = internship?.status;
 
-        if (!isMounted || !response.success || !response.data?.mentor) {
-          return;
-        }
+      // Pre-fill company and address from submission if available
+      if (submission) {
+        setMentorRequest((prev) => ({
+          ...prev,
+          company: submission.company || "",
+          address: submission.address || "",
+        }));
+      }
 
-        const mentor = response.data.mentor;
-        const internshipStatus = response.data.internship.status;
+      if (mentor) {
+        // Normalize status to lowercase to match UI switch logic
+        const rawStatus = (mentor.status || "pending").toLowerCase();
+        const status = (["pending", "registered", "approved", "rejected"].includes(rawStatus) 
+          ? rawStatus 
+          : (internshipStatus === "AKTIF" ? "approved" : "pending")) as FieldMentor["status"];
 
         setCurrentMentor({
           id: mentor.id,
-          code: `AUTO-${mentor.id}`,
-          name: mentor.name,
-          email: mentor.email,
-          company: mentor.company,
-          position: mentor.position,
+          code: (mentor as any).code || `REQ-${mentor.id.slice(0, 8)}`,
+          name: mentor.name || "-",
+          email: mentor.email || "-",
+          company: mentor.company || "-",
+          position: mentor.position || "-",
           phone: mentor.phone || "-",
-          status: internshipStatus === "AKTIF" ? "approved" : "registered",
-          createdAt: response.data.internship.createdAt,
-          registeredAt: response.data.internship.updatedAt,
-          approvedAt:
-            internshipStatus === "AKTIF"
-              ? response.data.internship.updatedAt
-              : undefined,
-          photo: undefined,
-          nip: "",
+          status: status,
+          createdAt: mentor.createdAt || internship.createdAt,
+          registeredAt: mentor.createdAt || internship.updatedAt,
+          approvedAt: status === "approved" ? internship.updatedAt : undefined,
+          photo: (mentor as any).photo || (mentor as any).photoUrl,
+          nip: (mentor as any).nip || "",
+          address: (mentor as any).address || (mentor as any).companyAddress || mentor.company || "-",
+          rejectionReason: mentor.rejectionReason,
         });
-      } catch {
-        // Keep empty state when backend data is unavailable or user is not authenticated.
-      } finally {
-        if (isMounted) {
-          setIsLoadingMentor(false);
-        }
+      } else {
+        setCurrentMentor(null);
       }
+    } catch (error) {
+      console.error("Error loading mentor data:", error);
+      toast.error("Gagal memuat data mentor.");
+    } finally {
+      setIsLoadingMentor(false);
     }
-
-    loadMentorData();
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    loadMentorData();
+  }, [loadMentorData]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -106,37 +122,43 @@ function FieldMentorPage() {
     setMentorRequest((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmitRequest = (e: React.FormEvent) => {
+  const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Simple validation
+    if (!mentorRequest.mentorEmail.includes('@')) {
+      toast.error("Email mentor tidak valid.");
+      return;
+    }
 
-    const newMentor: FieldMentor = {
-      id: Date.now().toString(),
-      code: `AUTO-${Date.now()}`,
-      name: mentorRequest.mentorName,
-      email: mentorRequest.mentorEmail,
-      company: mentorRequest.company,
-      position: mentorRequest.position,
-      phone: mentorRequest.mentorPhone,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      nip: "",
-    };
+    setIsSubmitting(true);
+    try {
+      const response = await requestMentor(mentorRequest);
 
-    setCurrentMentor(newMentor);
-    setShowRequestForm(false);
-
-    setMentorRequest({
-      mentorName: "",
-      mentorEmail: "",
-      mentorPhone: "",
-      company: "",
-      position: "",
-      address: "",
-    });
-
-    toast.success(
-      "Pengajuan mentor berhasil dikirim! Menunggu persetujuan dari Dosen PA.",
-    );
+      if (response.success) {
+        toast.success(
+          "Pengajuan mentor berhasil dikirim! Menunggu persetujuan dari Dosen PA.",
+        );
+        setShowRequestForm(false);
+        setMentorRequest({
+          mentorName: "",
+          mentorEmail: "",
+          mentorPhone: "",
+          company: "",
+          position: "",
+          address: "",
+        });
+        // Refresh data to show pending status
+        await loadMentorData();
+      } else {
+        toast.error(response.message || "Gagal mengirim pengajuan mentor.");
+      }
+    } catch (error) {
+      console.error("Error submitting mentor request:", error);
+      toast.error("Terjadi kesalahan saat mengirim pengajuan.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getStatusBadge = (status: FieldMentor["status"]) => {
@@ -144,10 +166,10 @@ function FieldMentorPage() {
       case "pending":
         return (
           <Badge
-            variant="secondary"
-            className="bg-amber-100 text-amber-800 hover:bg-amber-100"
+            variant="outline"
+            className="bg-amber-50 text-amber-700 border-amber-200 px-3 py-1 font-medium animate-pulse"
           >
-            <Clock className="mr-1 h-3 w-3" />
+            <Clock className="mr-2 h-3.5 w-3.5" />
             Menunggu Persetujuan Dosen PA
           </Badge>
         );
@@ -164,10 +186,10 @@ function FieldMentorPage() {
       case "approved":
         return (
           <Badge
-            variant="secondary"
-            className="bg-green-100 text-green-800 hover:bg-green-100"
+            variant="outline"
+            className="bg-green-50 text-green-700 border-green-200 px-3 py-1 font-medium"
           >
-            <CheckCircle className="mr-1 h-3 w-3" />
+            <CheckCircle className="mr-2 h-3.5 w-3.5" />
             Disetujui - Aktif
           </Badge>
         );
@@ -184,8 +206,10 @@ function FieldMentorPage() {
   };
 
   const getInitials = (name: string) => {
+    if (!name) return "??";
     return name
       .split(" ")
+      .filter(Boolean)
       .map((n) => n[0])
       .join("")
       .toUpperCase()
@@ -196,7 +220,7 @@ function FieldMentorPage() {
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       {/* Header Section */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Mentor Lapangan</h1>
+        <h1 className="text-3xl font-bold text-foreground">Pembimbing Lapangan</h1>
         <p className="text-muted-foreground">
           Kelola data mentor lapangan untuk kerja praktik Anda
         </p>
@@ -208,10 +232,33 @@ function FieldMentorPage() {
         Kembali
       </Button>
 
+      {/* Rejection Alert */}
+      {currentMentor?.status === "rejected" && (
+        <Alert variant="destructive" className="bg-red-50 border-red-200 text-red-900">
+          <AlertCircle className="h-5 w-5" />
+          <AlertTitle className="font-bold">Pengajuan Mentor Ditolak</AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="font-medium">Alasan: {currentMentor.rejectionReason || "Data mentor tidak sesuai kriteria."}</p>
+            <p className="mt-2 text-sm">Silakan ajukan kembali dengan data mentor yang baru atau hubungi Dosen PA Anda.</p>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="mt-4"
+              onClick={() => {
+                setCurrentMentor(null);
+                setShowRequestForm(true);
+              }}
+            >
+              Ajukan Ulang
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Info Section */}
       <Alert className="border-l-4 border-primary bg-primary/5">
         <UserPlus className="h-5 w-5" />
-        <AlertTitle>Informasi Mentor Lapangan</AlertTitle>
+        <AlertTitle>Informasi Pembimbing Lapangan (Mentor)</AlertTitle>
         <AlertDescription className="mt-2">
           <p className="mb-2">
             Halaman ini digunakan untuk mengajukan mentor lapangan Anda kepada
@@ -236,15 +283,15 @@ function FieldMentorPage() {
       </Alert>
 
       {/* Current Mentor Section */}
-      {currentMentor && (
+      {currentMentor && currentMentor.status !== "rejected" && (
         <Card className="border-l-4 border-green-500">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
-              Mentor Lapangan Terdaftar
+              Pembimbing Lapangan Terdaftar
             </CardTitle>
             <CardDescription>
-              Data mentor lapangan yang telah didaftarkan
+              Data pembimbing lapangan yang telah didaftarkan
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -328,6 +375,15 @@ function FieldMentorPage() {
                     {currentMentor.position}
                   </p>
                 </div>
+                <div className="md:col-span-2 space-y-1 pt-2 border-t border-slate-50">
+                  <Label className="text-muted-foreground text-sm flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5" />
+                    Alamat Perusahaan
+                  </Label>
+                  <p className="font-medium text-slate-700 leading-relaxed">
+                    {currentMentor.address || "-"}
+                  </p>
+                </div>
                 <div className="md:col-span-2 space-y-1">
                   <Label className="text-muted-foreground text-sm">
                     Status
@@ -338,24 +394,23 @@ function FieldMentorPage() {
             </div>
 
             {/* Approval Waiting Section */}
+            {/* Approval Waiting Section */}
             {currentMentor.status === "pending" && (
-              <Card className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
-                <CardContent className="pt-6">
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-amber-600 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-amber-900 dark:text-amber-200">
-                        Menunggu Persetujuan Dosen PA
-                      </p>
-                      <p className="text-sm text-amber-800 dark:text-amber-300 mt-1">
-                        Pengajuan sedang ditinjau oleh Dosen PA. Anda akan
-                        menerima notifikasi setelah ada keputusan. Mentor akan
-                        mendapat email aktivasi jika pengajuan disetujui.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="mt-4 p-5 bg-amber-50/80 border border-amber-200 rounded-xl flex items-start gap-4">
+                <div className="bg-amber-100 p-2 rounded-full">
+                  <Clock className="h-6 w-6 text-amber-600" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-amber-900 text-lg">
+                    Menunggu Persetujuan Dosen PA
+                  </h4>
+                  <p className="text-amber-800 mt-1 leading-relaxed">
+                    Pengajuan sedang ditinjau oleh Dosen PA. Anda akan
+                    menerima notifikasi setelah ada keputusan. Mentor akan
+                    mendapat email aktivasi jika pengajuan disetujui.
+                  </p>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -472,18 +527,17 @@ function FieldMentorPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company">
-                    Nama Perusahaan <span className="text-destructive">*</span>
+                    Nama Perusahaan <span className="text-muted-foreground text-xs font-normal">(Auto-fill dari Pengajuan)</span>
                   </Label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="company"
                       name="company"
-                      required
-                      className="pl-10"
+                      readOnly
+                      className="pl-10 bg-slate-50 cursor-not-allowed border-dashed"
                       placeholder="PT. Example Indonesia"
                       value={mentorRequest.company}
-                      onChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -507,19 +561,18 @@ function FieldMentorPage() {
                 <div className="md:col-span-2 space-y-2">
                   <Label htmlFor="address">
                     Alamat Perusahaan{" "}
-                    <span className="text-destructive">*</span>
+                    <span className="text-muted-foreground text-xs font-normal">(Auto-fill dari Pengajuan)</span>
                   </Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Textarea
                       id="address"
                       name="address"
-                      required
+                      readOnly
                       rows={3}
-                      className="pl-10"
+                      className="pl-10 bg-slate-50 cursor-not-allowed border-dashed"
                       placeholder="Alamat lengkap perusahaan"
                       value={mentorRequest.address}
-                      onChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -533,9 +586,9 @@ function FieldMentorPage() {
                 >
                   Batal
                 </Button>
-                <Button type="submit">
+                <Button type="submit" disabled={isSubmitting}>
                   <UserPlus className="mr-2 h-4 w-4" />
-                  Submit Request
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
                 </Button>
               </div>
             </form>
@@ -637,3 +690,4 @@ function FieldMentorPage() {
 }
 
 export default FieldMentorPage;
+

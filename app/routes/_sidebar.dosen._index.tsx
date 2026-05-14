@@ -11,6 +11,7 @@ import {
   getMyProfile,
   getWakdekDashboard,
 } from "~/lib/services/dosen.service";
+import { useIdentity } from "~/contexts/identity-context";
 
 export default function DosenDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardDosenData | null>(
@@ -19,7 +20,9 @@ export default function DosenDashboard() {
   const [wakdekDashboardData, setWakdekDashboardData] =
     useState<DashboardWakdekData | null>(null);
   const [isWakdek, setIsWakdek] = useState(false);
+  const [isKaprodi, setIsKaprodi] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { effectiveRoles } = useIdentity();
 
   useEffect(() => {
     let active = true;
@@ -28,20 +31,31 @@ export default function DosenDashboard() {
       try {
         const profileResponse = await getMyProfile();
 
-        // Check if user is wakil dekan by checking jabatanStruktural array
-        const wakdekByJabatan = Boolean(
+        // Check if user is wakil dekan or kaprodi
+        const wakdekByRole = effectiveRoles.includes("WAKIL_DEKAN");
+        const kaprodiByRole = effectiveRoles.includes("KAPRODI");
+
+        const wakdekByJabatan = wakdekByRole || Boolean(
           profileResponse.success &&
             Array.isArray(profileResponse.data?.jabatanStruktural) &&
             profileResponse.data.jabatanStruktural.some(
               (j) => j.toLowerCase().includes("wakil") && j.toLowerCase().includes("dekan")
             ),
         );
+        const kaprodiByJabatan = kaprodiByRole || Boolean(
+          profileResponse.success &&
+            Array.isArray(profileResponse.data?.jabatanStruktural) &&
+            profileResponse.data.jabatanStruktural.some(
+              (j) => j.toLowerCase().includes("ketua") && (j.toLowerCase().includes("prodi") || j.toLowerCase().includes("program studi"))
+            ),
+        );
 
         if (active) {
           setIsWakdek(wakdekByJabatan);
+          setIsKaprodi(kaprodiByJabatan);
         }
 
-        const response = wakdekByJabatan
+        const response = (wakdekByJabatan || kaprodiByJabatan)
           ? await getWakdekDashboard()
           : await getDosenDashboard();
 
@@ -84,8 +98,13 @@ export default function DosenDashboard() {
     );
   }
 
-  if (isWakdek) {
-    return <DashboardWakdekPage data={wakdekDashboardData} />;
+  if (isWakdek || isKaprodi) {
+    return (
+      <DashboardWakdekPage 
+        data={wakdekDashboardData} 
+        title={isKaprodi ? "Dashboard Kaprodi" : "Dashboard Wakil Dekan"} 
+      />
+    );
   }
 
   return <DashboardDosenPage data={dashboardData} />;

@@ -11,12 +11,25 @@ import { getAssessmentCriteria } from "~/lib/assessment-criteria-api";
 import { getAdminEvaluationByStudentId } from "../services/evaluation-api";
 import type { StudentEvaluation } from "../types";
 import { toast } from "sonner";
+import { useIdentity } from "~/contexts/identity-context";
+import { submitFinalScore } from "../services/evaluation-api";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 
 export default function StudentEvaluationDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [evaluation, setEvaluation] = useState<StudentEvaluation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dosenScore, setDosenScore] = useState<string>("");
+  const [feedback, setFeedback] = useState<string>("");
+  
+  const { effectiveRoles } = useIdentity();
+  const isDosen = effectiveRoles.includes("DOSEN");
+  const isEvaluated = evaluation?.summary && evaluation.summary.academicSupervisorTotal > 0;
 
   useEffect(() => {
     let isMounted = true;
@@ -363,6 +376,90 @@ export default function StudentEvaluationDetailPage() {
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                 {notes}
               </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Dosen Action Section: Submit Final Score */}
+        {isDosen && !isEvaluated && (
+          <Card className="border-2 border-primary/20 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary" />
+                Submit Penilaian Laporan & Sidang
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Berikan nilai akhir untuk laporan dan sidang mahasiswa. 
+                Nilai ini akan digabung dengan nilai mentor (Bobot: 70% Dosen, 30% Mentor).
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-4 items-end">
+                <div className="md:col-span-1 space-y-2">
+                  <Label htmlFor="dosen-score">Nilai Dosen (0-100)</Label>
+                  <Input 
+                    id="dosen-score"
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="Contoh: 85"
+                    value={dosenScore}
+                    onChange={(e) => setDosenScore(e.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-3 space-y-2">
+                  <Label htmlFor="feedback">Feedback / Catatan (Opsional)</Label>
+                  <Textarea 
+                    id="feedback"
+                    placeholder="Masukkan feedback untuk mahasiswa..."
+                    value={feedback}
+                    onChange={(e) => setFeedback(e.target.value)}
+                    className="min-h-[80px]"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end pt-2">
+                <Button 
+                  onClick={async () => {
+                    if (!id) return;
+                    const score = parseFloat(dosenScore);
+                    if (isNaN(score) || score < 0 || score > 100) {
+                      toast.error("Nilai harus antara 0 dan 100.");
+                      return;
+                    }
+                    
+                    setIsSubmitting(true);
+                    const res = await submitFinalScore({
+                      internshipId: id, // Assuming ID is internshipId or studentId
+                      scores: {
+                        formatKesesuaian: score,
+                        penguasaanMateri: score,
+                        analisisPerancangan: score,
+                        sikapEtika: score,
+                        feedback
+                      }
+                    } as any);
+                    
+                    if (res.success) {
+                      toast.success("Penilaian berhasil disubmit!");
+                      window.location.reload();
+                    } else {
+                      toast.error(res.message || "Gagal submit penilaian.");
+                    }
+                    setIsSubmitting(false);
+                  }}
+                  disabled={isSubmitting || !dosenScore}
+                  className="w-full md:w-auto"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : "Submit Penilaian Akhir"}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}

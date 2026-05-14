@@ -20,43 +20,60 @@ import {
 } from "~/components/ui/select";
 import { Button } from "~/components/ui/button";
 import { StudentGradingCard } from "../components/student-grading-card";
-import { MOCK_STUDENTS_FOR_GRADING } from "../data/mock-students";
+import type { StudentGradingInfo, GradingStatus } from "../types";
+import { getDosenLogbookMonitorItems } from "../services/logbook-monitor-api";
+import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 6;
 
 export default function DosenGradingListPage() {
   const navigate = useNavigate();
 
-  const [students, setStudents] = useState(MOCK_STUDENTS_FOR_GRADING);
+  const [students, setStudents] = useState<StudentGradingInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [revisionFilter, setRevisionFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Load students who have uploaded laporan from localStorage
+  // Load real data from API
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedLaporan = localStorage.getItem("laporan-kp");
-
-      if (savedLaporan) {
-        const laporanData = JSON.parse(savedLaporan);
-
-        // Only show students who have uploaded laporan
-        if (laporanData.fileName && laporanData.status !== "belum_upload") {
-          // Filter students to only show those who uploaded
-          const studentsWithLaporan = MOCK_STUDENTS_FOR_GRADING.filter(
-            (s) => s.student.id === "std-001", // Match with uploaded laporan's student
-          );
-          setStudents(studentsWithLaporan);
+    async function loadMentees() {
+      setIsLoading(true);
+      try {
+        const response = await getDosenLogbookMonitorItems();
+        if (response.success && response.data) {
+          // Map DosenLogbookMonitorItem to StudentGradingInfo
+          const mapped: StudentGradingInfo[] = response.data.map(item => ({
+            student: {
+              id: item.studentId || item.id,
+              name: item.studentName,
+              studentId: item.nim,
+              photo: "", // Optional in real API
+              company: item.company,
+              fieldSupervisor: item.mentorName || "Belum ditentukan",
+              internPeriod: {
+                start: item.date, // Using available date as fallback
+                end: item.date,
+              },
+            },
+            // Logic to determine status (mock logic if backend doesn't provide grading status yet)
+            gradingStatus: item.status === "APPROVED" ? "not-graded" as GradingStatus : "pending" as GradingStatus,
+            revisionStatus: "belum-direvisi",
+          }));
+          setStudents(mapped);
         } else {
-          // No laporan uploaded yet, show empty list
-          setStudents([]);
+          toast.error(response.message || "Gagal memuat data mahasiswa bimbingan");
         }
-      } else {
-        // No laporan data, show empty list
-        setStudents([]);
+      } catch (error) {
+        console.error("Error loading mentees:", error);
+        toast.error("Terjadi kesalahan sistem saat memuat data");
+      } finally {
+        setIsLoading(false);
       }
     }
+
+    loadMentees();
   }, []);
 
   // Filter students based on search and status
@@ -274,28 +291,31 @@ export default function DosenGradingListPage() {
           </h2>
 
           {students.length === 0 ? (
-            <Card className="p-12 dark:bg-gray-800 dark:border-gray-700">
-              <div className="text-center">
-                <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <Card className="p-12 border-dashed border-2 dark:bg-gray-800/50 dark:border-gray-700 bg-gray-50/50">
+              <div className="text-center max-w-md mx-auto">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <Users className="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
                   Belum Ada Mahasiswa yang Upload Laporan
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Daftar mahasiswa akan muncul setelah mereka mengupload Laporan
-                  Kerja Praktik di halaman Pasca Magang.
+                <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Daftar mahasiswa akan muncul secara otomatis di sini setelah mereka mengunggah Laporan
+                  Kerja Praktik pada halaman Pasca Magang.
                 </p>
               </div>
             </Card>
           ) : filteredStudents.length === 0 ? (
-            <Card className="p-12 dark:bg-gray-800 dark:border-gray-700">
-              <div className="text-center">
-                <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <Card className="p-12 border-dashed border-2 dark:bg-gray-800/50 dark:border-gray-700 bg-gray-50/50">
+              <div className="text-center max-w-md mx-auto">
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <Search className="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
                   Tidak Ada Hasil Pencarian
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Tidak ada mahasiswa yang sesuai dengan filter atau pencarian
-                  Anda.
+                <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                  Kami tidak menemukan mahasiswa yang sesuai dengan kata kunci "{searchQuery}" atau filter yang Anda pilih.
                 </p>
               </div>
             </Card>

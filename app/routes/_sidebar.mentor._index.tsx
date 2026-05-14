@@ -8,8 +8,19 @@ import {
   Clock,
   TrendingUp,
   Users,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Button } from "~/components/ui/button";
 
 import {
   Card,
@@ -23,6 +34,7 @@ import {
   getMentees,
   getStudentAssessment,
   getStudentLogbook,
+  getMentorSignature,
   type AssessmentData,
   type LogbookEntry,
   type MenteeData,
@@ -34,14 +46,14 @@ type DashboardMentee = {
   nim: string;
   progress: number;
   status: "active" | "warning" | "done";
-  lastActivity: string;
+  lastActivityDate: string; // Store raw date string
 };
 
 type PendingAction = {
   id: string;
   title: string;
   mentee: string;
-  deadline: string;
+  deadlineDate: string; // Store raw date string
   type: "logbook" | "assessment";
   studentId: string;
 };
@@ -106,7 +118,7 @@ function mapStatus(
   progress: number,
   logbookEntries: LogbookEntry[],
   assessment?: AssessmentData | null,
-) {
+): "done" | "active" | "warning" {
   const hasPendingLogbooks = logbookEntries.some(
     (entry) => entry.status === "PENDING",
   );
@@ -128,6 +140,12 @@ export default function MentorDashboard() {
   const [averageScore, setAverageScore] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -137,6 +155,12 @@ export default function MentorDashboard() {
       setErrorMessage(null);
 
       try {
+        // Check for signature
+        const sigRes = await getMentorSignature();
+        if (sigRes.success && (!sigRes.data || !sigRes.data.signature)) {
+          setShowSignatureDialog(true);
+        }
+
         const menteesRes = await getMentees();
 
         if (!isMounted) return;
@@ -154,9 +178,10 @@ export default function MentorDashboard() {
           return;
         }
 
-        const validMentees = menteesRes.data.filter((mentee) =>
-          Boolean(mentee.userId),
-        );
+        const validMentees = menteesRes.data.map(m => ({
+          ...m,
+          userId: m.userId || (m as any).studentId
+        })).filter((m) => m.userId);
 
         const rows = await Promise.all(
           validMentees.map(async (mentee) => {
@@ -166,10 +191,14 @@ export default function MentorDashboard() {
                 getStudentAssessment(mentee.userId),
               ]);
 
-              const logbookEntries =
-                logbookRes.success && logbookRes.data?.entries
-                  ? logbookRes.data.entries
-                  : [];
+              let logbookEntries: LogbookEntry[] = [];
+              if (logbookRes.success && logbookRes.data) {
+                if (Array.isArray(logbookRes.data)) {
+                  logbookEntries = logbookRes.data;
+                } else if ((logbookRes.data as any).entries) {
+                  logbookEntries = (logbookRes.data as any).entries;
+                }
+              }
               const assessment = assessmentRes.success
                 ? assessmentRes.data
                 : null;
@@ -191,13 +220,16 @@ export default function MentorDashboard() {
 
         if (!isMounted) return;
 
-        const dashboardMentees = rows
-          .map(({ mentee, logbookEntries, assessment }) => {
+        const dashboardMentees: DashboardMentee[] = rows
+          .map((row) => {
+            const { mentee, logbookEntries, assessment } = row;
             const progress = deriveProgress(mentee, logbookEntries, assessment);
-            const latestActivity =
+            const latestActivityDate = (
               getLatestActivity(logbookEntries) ||
               mentee.internshipEndDate ||
-              mentee.internshipStartDate;
+              mentee.internshipStartDate ||
+              ""
+            );
 
             return {
               id: mentee.userId,
@@ -205,8 +237,8 @@ export default function MentorDashboard() {
               nim: mentee.nim || "-",
               progress,
               status: mapStatus(progress, logbookEntries, assessment),
-              lastActivity: formatDateLabel(latestActivity),
-            } satisfies DashboardMentee;
+              lastActivityDate: latestActivityDate,
+            };
           })
           .sort((a, b) => b.progress - a.progress);
 
@@ -214,7 +246,8 @@ export default function MentorDashboard() {
         const scoreList: number[] = [];
         let unreadNotifications = 0;
 
-        rows.forEach(({ mentee, logbookEntries, assessment }) => {
+        rows.forEach((row) => {
+          const { mentee, logbookEntries, assessment } = row;
           const studentName = mentee.nama || mentee.name || "Mahasiswa";
           const pendingLogbooks = logbookEntries.filter(
             (entry) => entry.status === "PENDING",
@@ -231,7 +264,7 @@ export default function MentorDashboard() {
               id: `logbook-${mentee.userId}`,
               title: `${pendingLogbooks.length} logbook menunggu paraf`,
               mentee: studentName,
-              deadline: formatDateLabel(getLatestActivity(pendingLogbooks)),
+              deadlineDate: getLatestActivity(pendingLogbooks) || "",
               type: "logbook",
               studentId: mentee.userId,
             });
@@ -242,9 +275,7 @@ export default function MentorDashboard() {
               id: `assessment-${mentee.userId}`,
               title: "Penilaian belum diisi",
               mentee: studentName,
-              deadline: mentee.internshipEndDate
-                ? `Batas magang ${new Date(mentee.internshipEndDate).toLocaleDateString("id-ID")}`
-                : "Segera ditindaklanjuti",
+              deadlineDate: mentee.internshipEndDate || "",
               type: "assessment",
               studentId: mentee.userId,
             });
@@ -398,7 +429,7 @@ export default function MentorDashboard() {
                           {mentee.progress}%
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {mentee.lastActivity}
+                          {mounted ? formatDateLabel(mentee.lastActivityDate) : "..."}
                         </p>
                       </div>
                       <Link
@@ -458,7 +489,9 @@ export default function MentorDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">
-                        {assessment.deadline}
+                        {assessment.type === "assessment" && assessment.deadlineDate 
+                          ? `Batas: ${mounted ? new Date(assessment.deadlineDate).toLocaleDateString("id-ID") : "..."}`
+                          : mounted ? formatDateLabel(assessment.deadlineDate) : "..."}
                       </p>
                       <Link
                         to={
@@ -525,6 +558,60 @@ export default function MentorDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl">
+          <DialogHeader>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 mb-4 animate-pulse">
+              <Sparkles className="h-8 w-8 text-primary" />
+            </div>
+            <DialogTitle className="text-center text-2xl font-bold">Siapkan E-Signature Anda</DialogTitle>
+            <DialogDescription className="text-center pt-2 text-base">
+              Kami melihat Anda belum memiliki tanda tangan digital (E-Signature) di profil SSO Anda.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="rounded-2xl border border-primary/20 p-5 bg-primary/5 space-y-3">
+              <h4 className="font-bold flex items-center gap-2 text-primary">
+                <ClipboardCheck className="h-5 w-5" />
+                Kegunaan E-Signature:
+              </h4>
+              <ul className="text-sm space-y-3 text-foreground/80 font-medium list-none pl-1">
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  Menyetujui (Paraf) Logbook Harian mahasiswa bimbingan Anda.
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  Menandatangani Formulir Penilaian Akhir Kerja Praktik.
+                </li>
+                <li className="flex items-start gap-2">
+                  <div className="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary shrink-0" />
+                  Memvalidasi laporan dan dokumen resmi magang mahasiswa.
+                </li>
+              </ul>
+            </div>
+            <p className="text-sm text-center text-muted-foreground px-4">
+              Tanda tangan ini cukup disiapkan satu kali di sistem SSO dan akan digunakan otomatis untuk seluruh keperluan administrasi SIKP.
+            </p>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-3">
+            <Button 
+              variant="ghost" 
+              className="w-full sm:w-auto"
+              onClick={() => setShowSignatureDialog(false)}
+            >
+              Nanti Saja
+            </Button>
+            <Button 
+              className="w-full sm:w-auto bg-gradient-to-r from-primary to-secondary hover:shadow-lg transition-all"
+              onClick={() => window.location.href = "https://sso-unsri.vercel.app/profile"}
+            >
+              Siapkan Sekarang
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

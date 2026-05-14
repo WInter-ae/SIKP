@@ -1,4 +1,4 @@
-import { apiClient } from "~/lib/api-client";
+import { internshipClient } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 import type { PengajuanJudul } from "../types/title";
 
@@ -23,6 +23,7 @@ export interface TitleSubmissionItem {
   notes?: string | null;
   rejectionReason?: string | null;
   revisedTitle?: string | null;
+  programStudi?: string | null;
 }
 
 export interface VerifyTitleRequest {
@@ -41,15 +42,13 @@ export interface VerifyTitleResponse {
 }
 
 const LIST_ENDPOINTS = [
-  "/api/dosen/kp/verifikasi-judul",
-  "/api/dosen/kp/title-submissions",
-  "/api/dosen/title-submissions",
+  "/api/internship-monitoring/mentees", // Using mentees list as base for titles
+  "/api/reporting/title/pending", // Placeholder for specific pending titles if exists
 ] as const;
 
 const VERIFY_ENDPOINT_BUILDERS = [
-  (id: string) => `/api/dosen/kp/verifikasi-judul/${id}`,
-  (id: string) => `/api/dosen/kp/title-submissions/${id}/verify`,
-  (id: string) => `/api/dosen/title-submissions/${id}/verify`,
+  (id: string) => `/api/reporting/title/${id}/approve`,
+  (id: string) => `/api/reporting/title/${id}/reject`,
 ] as const;
 
 function asRecord(value: unknown): RawObject | null {
@@ -136,12 +135,12 @@ function mapRawToTitleSubmissionItem(
     studentName: getFirstString(
       student,
       ["name", "nama", "studentName"],
-      "Mahasiswa",
+      getFirstString(raw, ["studentName", "name", "nama"], "Mahasiswa"),
     ),
     studentNim: getFirstString(
       student,
       ["nim", "studentNim", "studentNumber"],
-      "-",
+      getFirstString(raw, ["nim", "studentNim", "studentNumber"], "-"),
     ),
     studentEmail:
       getFirstString(student, ["email", "studentEmail"], "") || null,
@@ -182,6 +181,7 @@ function mapRawToTitleSubmissionItem(
       getFirstString(raw, ["rejectionReason", "rejectedReason"], "") || null,
     revisedTitle:
       getFirstString(raw, ["revisedTitle", "judulRevisi"], "") || null,
+    programStudi: getFirstString(raw, ["programStudi", "prodi"], "") || null,
   };
 }
 
@@ -194,7 +194,7 @@ export function mapTitleSubmissionItemToPengajuanJudul(
       id: item.studentId,
       nama: item.studentName,
       nim: item.studentNim,
-      prodi: "-",
+      prodi: item.programStudi || "-",
       email: item.studentEmail || undefined,
     },
     tim: item.teamName
@@ -228,7 +228,7 @@ export function mapTitleSubmissionItemToPengajuanJudul(
 }
 
 async function tryGetList(endpoint: string): Promise<ApiResponse<RawObject[]>> {
-  const response = await apiClient<unknown>(endpoint);
+  const response = await internshipClient.request<unknown>(endpoint);
 
   if (!response.success) {
     return {
@@ -293,64 +293,68 @@ export async function getTitleSubmissionsForLecturer(): Promise<
   };
 }
 
+export async function approveTitle(id: string, notes?: string): Promise<ApiResponse<any>> {
+  return internshipClient.post(`/api/reporting/title/${id}/approve`, { notes });
+}
+
+export async function rejectTitle(id: string, reason: string): Promise<ApiResponse<any>> {
+  return internshipClient.post(`/api/reporting/title/${id}/reject`, { reason });
+}
+
 export async function verifyTitleSubmission(
   id: string,
   payload: VerifyTitleRequest,
 ): Promise<ApiResponse<VerifyTitleResponse>> {
-  let lastMessage = "Endpoint verifikasi judul belum tersedia";
+  const endpoint = payload.action === "APPROVE" 
+    ? `/api/reporting/title/${id}/approve` 
+    : `/api/reporting/title/${id}/reject`;
+    
+  const response = await internshipClient.post<unknown>(endpoint, {
+    notes: payload.notes,
+    reason: payload.notes // Some endpoints might use 'reason'
+  });
 
-  for (const build of VERIFY_ENDPOINT_BUILDERS) {
-    const endpoint = build(id);
-    const response = await apiClient<unknown>(endpoint, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    });
-
-    if (response.success) {
-      const verified = asRecord(response.data) || {};
-      return {
-        success: true,
-        message: response.message || "Berhasil memverifikasi judul",
-        data: {
-          id: getFirstString(verified, ["id", "requestId", "submissionId"], id),
-          status: normalizeStatus(
-            getFirstString(
-              verified,
-              ["status", "verificationStatus"],
-              payload.action,
-            ),
+  if (response.success) {
+    const verified = asRecord(response.data) || {};
+    return {
+      success: true,
+      message: response.message || "Berhasil memverifikasi judul",
+      data: {
+        id: getFirstString(verified, ["id", "requestId", "submissionId"], id),
+        status: normalizeStatus(
+          getFirstString(
+            verified,
+            ["status", "verificationStatus"],
+            payload.action,
           ),
-          notes:
-            getFirstString(
-              verified,
-              ["notes", "catatan", "feedback"],
-              payload.notes || "",
-            ) || null,
-          revisedTitle:
-            getFirstString(
-              verified,
-              ["revisedTitle", "judulRevisi"],
-              payload.revisedTitle || "",
-            ) || null,
-          verifiedAt:
-            getFirstString(
-              verified,
-              ["verifiedAt", "tanggalVerifikasi", "updatedAt"],
-              "",
-            ) || null,
-          verifiedBy:
-            getFirstString(verified, ["verifiedBy", "approvedBy"], "") || null,
-        },
-      };
-    }
-
-    lastMessage = response.message || lastMessage;
-    if (!canTryNextEndpoint(lastMessage)) break;
+        ),
+        notes:
+          getFirstString(
+            verified,
+            ["notes", "catatan", "feedback"],
+            payload.notes || "",
+          ) || null,
+        revisedTitle:
+          getFirstString(
+            verified,
+            ["revisedTitle", "judulRevisi"],
+            payload.revisedTitle || "",
+          ) || null,
+        verifiedAt:
+          getFirstString(
+            verified,
+            ["verifiedAt", "tanggalVerifikasi", "updatedAt"],
+            "",
+          ) || null,
+        verifiedBy:
+          getFirstString(verified, ["verifiedBy", "approvedBy"], "") || null,
+      },
+    };
   }
 
   return {
     success: false,
-    message: lastMessage,
+    message: response.message || "Gagal memverifikasi judul",
     data: null,
   };
 }

@@ -11,6 +11,10 @@ export interface StudentAssessmentData {
   sikapEtika: number;
   prestasiKerja: number;
   kreatifitas: number;
+  // Dosen PA specific fields
+  formatKesesuaian?: number;
+  penguasaanMateri?: number;
+  analisisPerancangan?: number;
   totalScore: number;
   components?: Array<{
     id?: string;
@@ -30,6 +34,7 @@ export interface StudentAssessmentData {
 
 const ASSESSMENT_ENDPOINTS = [
   "/api/mahasiswa/assessment/current",
+  "/api/mentorship/assessments/me",
   "/api/mahasiswa/penilaian/current",
   "/api/mahasiswa/assessment",
   "/api/mahasiswa/penilaian",
@@ -319,8 +324,14 @@ function normalizeAssessmentPayload(
       0,
   );
 
+  // Academic / Dosen PA specific fields
+  const formatKesesuaian = Number(row.formatKesesuaian ?? row.reportFormat ?? row.nilaiFormat ?? 0);
+  const penguasaanMateri = Number(row.penguasaanMateri ?? row.materialMastery ?? row.nilaiMateri ?? 0);
+  const analisisPerancangan = Number(row.analisisPerancangan ?? row.analysisDesign ?? row.nilaiAnalisis ?? 0);
+
   const hasScores = Boolean(
-    kehadiran || kerjasama || sikapEtika || prestasiKerja || kreatifitas,
+    kehadiran || kerjasama || sikapEtika || prestasiKerja || kreatifitas || 
+    formatKesesuaian || penguasaanMateri || analisisPerancangan
   );
 
   if (directId || hasScores) {
@@ -337,7 +348,11 @@ function normalizeAssessmentPayload(
       sikapEtika,
       prestasiKerja,
       kreatifitas,
-      totalScore: Number(row.totalScore ?? row.finalScore ?? 0),
+      // Include academic fields
+      formatKesesuaian,
+      penguasaanMateri,
+      analisisPerancangan,
+      totalScore: Number(row.totalScore ?? row.total_score ?? row.finalScore ?? row.total_points ?? 0),
       components: parsedComponents || undefined,
       feedback:
         typeof row.feedback === "string"
@@ -454,4 +469,49 @@ export async function getMyAssessment(): Promise<
     message: lastMessage,
     data: null,
   };
+}
+export interface KaprodiPendingVerification {
+  id: string;
+  internshipId: string;
+  studentId: string;
+  studentName: string;
+  nim: string;
+  companyName: string;
+  academicScore: number;
+  fieldScore: number;
+  finalScore: number;
+  letterGrade: string;
+  calculatedAt: string;
+  isVerified: boolean;
+}
+
+/**
+ * Get list of pending verifications for Kaprodi
+ */
+export async function getKaprodiPendingVerifications(): Promise<ApiResponse<KaprodiPendingVerification[]>> {
+  return iget<KaprodiPendingVerification[]>("/api/penilaian/kaprodi/pending");
+}
+
+/**
+ * Verify grade by Kaprodi
+ */
+export async function verifyGradeByKaprodi(gradeId: string): Promise<ApiResponse<{ success: boolean }>> {
+  const { ipost } = await import("~/lib/api-client");
+  return ipost<{ success: boolean }>(`/api/penilaian/kaprodi/verify/${gradeId}`);
+}
+
+/**
+ * Get pending grade verifications for Admin
+ */
+export async function getAdminPendingVerifications(): Promise<ApiResponse<any[]>> {
+  const { iget } = await import("~/lib/api-client");
+  return iget<any[]>("/api/penilaian/admin/pending");
+}
+
+/**
+ * Verify grade by Admin
+ */
+export async function verifyGradeByAdmin(gradeId: string): Promise<ApiResponse<any>> {
+  const { ipost } = await import("~/lib/api-client");
+  return ipost<any>(`/api/penilaian/admin/verify/${gradeId}`);
 }
