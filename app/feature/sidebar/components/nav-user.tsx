@@ -108,16 +108,7 @@ export function NavUser({ user }: { user: User }) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem
-                  onClick={() => {
-                    if (user.role === "MENTOR") {
-                      setShowSSODialog(true);
-                      return;
-                    }
-
-                    navigate(`/${user.role?.toLowerCase()}/profil`);
-                  }}
-                >
+                <DropdownMenuItem onClick={() => setShowSSODialog(true)}>
                   <BadgeCheck />
                   Profil
                 </DropdownMenuItem>
