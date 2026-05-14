@@ -63,32 +63,56 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
     [location.pathname],
   );
 
-  const contextRole = React.useMemo<EffectiveRole>(() => {
-    const hasRole = (role: EffectiveRole) => effectiveRoles.includes(role);
+  const userJabatanStruktural = React.useMemo(() => {
+    const jabatanStruktural =
+      contextUser?.jabatanStruktural ||
+      activeIdentity?.profile.jabatanStruktural;
 
+    return Array.isArray(jabatanStruktural)
+      ? jabatanStruktural.join(", ")
+      : undefined;
+  }, [
+    activeIdentity?.profile.jabatanStruktural,
+    contextUser?.jabatanStruktural,
+  ]);
+
+  const contextRole = React.useMemo<EffectiveRole>(() => {
+    const hasRole = (role: string) => effectiveRoles.some(r => r.toUpperCase() === role.toUpperCase());
+    const jabatanLower = userJabatanStruktural?.toLowerCase() || "";
+    const isWakdek = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+    const isKaprodi = (jabatanLower.includes("ketua") && (jabatanLower.includes("prodi") || jabatanLower.includes("program studi"))) || 
+                      jabatanLower.includes("kaprodi") || 
+                      jabatanLower.includes("koordinator");
+    
     if (hasRole("ADMIN")) return "ADMIN";
     if (hasRole("MENTOR")) return "MENTOR";
-    if (hasRole("DOSEN") || hasRole("KAPRODI") || hasRole("WAKIL_DEKAN")) {
-      return "DOSEN";
-    }
+    if (hasRole("WAKIL_DEKAN") || isWakdek) return "WAKIL_DEKAN";
+    if (hasRole("KAPRODI") || isKaprodi) return "KAPRODI";
+    if (hasRole("DOSEN")) return "DOSEN";
     if (hasRole("MAHASISWA")) return "MAHASISWA";
 
     return defaultUser.role;
-  }, [defaultUser.role, effectiveRoles]);
+  }, [defaultUser.role, effectiveRoles, userJabatanStruktural]);
 
   const primaryRole = React.useMemo(() => {
     if (effectiveRoles.length === 0) return undefined;
 
-    return (
-      effectiveRoles.find((role) => role === "ADMIN") ||
-      effectiveRoles.find((role) => role === "MENTOR") ||
-      effectiveRoles.find(
-        (role) =>
-          role === "DOSEN" || role === "KAPRODI" || role === "WAKIL_DEKAN",
-      ) ||
-      effectiveRoles[0]
-    );
-  }, [effectiveRoles]);
+    const has = (r: string) => effectiveRoles.some(role => role.toUpperCase() === r.toUpperCase());
+    const jabatanLower = userJabatanStruktural?.toLowerCase() || "";
+    const isWakdek = jabatanLower.includes("wakil") && jabatanLower.includes("dekan");
+    const isKaprodi = (jabatanLower.includes("ketua") && (jabatanLower.includes("prodi") || jabatanLower.includes("program studi"))) || 
+                      jabatanLower.includes("kaprodi") || 
+                      jabatanLower.includes("koordinator");
+
+    if (has("ADMIN")) return "ADMIN";
+    if (has("MENTOR")) return "MENTOR";
+    if (has("WAKIL_DEKAN") || isWakdek) return "WAKIL_DEKAN";
+    if (has("KAPRODI") || isKaprodi) return "KAPRODI";
+    if (has("DOSEN")) return "DOSEN";
+    if (has("MAHASISWA")) return "MAHASISWA";
+
+    return effectiveRoles[0];
+  }, [effectiveRoles, userJabatanStruktural]);
 
   React.useEffect(() => {
     if (contextRole !== "MAHASISWA") return;
@@ -125,19 +149,6 @@ export function AppSidebar({ user: userProp, ...props }: AppSidebarProps) {
 
     return userProp || defaultUser;
   }, [activeIdentity?.label, contextRole, contextUser, defaultUser, userProp]);
-
-  const userJabatanStruktural = React.useMemo(() => {
-    const jabatanStruktural =
-      contextUser?.jabatanStruktural ||
-      activeIdentity?.profile.jabatanStruktural;
-
-    return Array.isArray(jabatanStruktural)
-      ? jabatanStruktural.join(", ")
-      : undefined;
-  }, [
-    activeIdentity?.profile.jabatanStruktural,
-    contextUser?.jabatanStruktural,
-  ]);
 
   const navItems = React.useMemo(
     () =>

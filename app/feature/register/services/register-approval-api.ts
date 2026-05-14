@@ -159,7 +159,7 @@ function mapRegistration(raw: RawObj, index: number): PendingRegistration {
       "-",
     ),
     position: getFirstString(mentor, ["position", "jabatan"], "-"),
-    phone: getFirstString(mentor, ["phone", "no_hp"], "-"),
+    phone: getFirstString(mentor, ["phone", "mentorPhone", "mentor_phone", "no_hp", "no_telp", "phone_number"], "-"),
     registeredAt: getFirstString(
       raw,
       ["registeredAt", "createdAt", "requestedAt"],

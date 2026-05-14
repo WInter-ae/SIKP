@@ -7,6 +7,7 @@ import {
   User,
   Award,
   Edit,
+  Printer,
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -14,7 +15,7 @@ import { Badge } from "~/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
 import { GradeSection } from "~/feature/evaluation/components/grade-section";
-import { getAssessmentRecap } from "~/feature/evaluation/services/evaluation-api";
+import { getAssessmentRecap, getAssessmentPdfUrl } from "~/feature/evaluation/services/evaluation-api";
 import type { StudentEvaluation } from "~/feature/evaluation/types";
 import { toast } from "sonner";
 
@@ -43,6 +44,11 @@ export default function StudentGradeDetailPage() {
     }
     loadEvaluation();
   }, [id]);
+  const handlePrint = () => {
+    if (!id) return;
+    const url = getAssessmentPdfUrl(id);
+    window.open(url, "_blank");
+  };
 
   if (isLoading) {
     return (
@@ -259,7 +265,14 @@ export default function StudentGradeDetailPage() {
 
             <Separator />
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={handlePrint}
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Cetak Form Nilai
+              </Button>
               <Button
                 onClick={() => navigate(`/dosen/penilaian/beri-nilai/${id}`)}
               >

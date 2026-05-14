@@ -64,7 +64,17 @@ function FieldMentorPage() {
 
       const internship = response.data.internship;
       const mentor = response.data.mentor;
+      const submission = response.data.submission;
       const internshipStatus = internship?.status;
+
+      // Pre-fill company and address from submission if available
+      if (submission) {
+        setMentorRequest((prev) => ({
+          ...prev,
+          company: submission.company || "",
+          address: submission.address || "",
+        }));
+      }
 
       if (mentor) {
         // Normalize status to lowercase to match UI switch logic
@@ -517,18 +527,17 @@ function FieldMentorPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company">
-                    Nama Perusahaan <span className="text-destructive">*</span>
+                    Nama Perusahaan <span className="text-muted-foreground text-xs font-normal">(Auto-fill dari Pengajuan)</span>
                   </Label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="company"
                       name="company"
-                      required
-                      className="pl-10"
+                      readOnly
+                      className="pl-10 bg-slate-50 cursor-not-allowed border-dashed"
                       placeholder="PT. Example Indonesia"
                       value={mentorRequest.company}
-                      onChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -552,19 +561,18 @@ function FieldMentorPage() {
                 <div className="md:col-span-2 space-y-2">
                   <Label htmlFor="address">
                     Alamat Perusahaan{" "}
-                    <span className="text-destructive">*</span>
+                    <span className="text-muted-foreground text-xs font-normal">(Auto-fill dari Pengajuan)</span>
                   </Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Textarea
                       id="address"
                       name="address"
-                      required
+                      readOnly
                       rows={3}
-                      className="pl-10"
+                      className="pl-10 bg-slate-50 cursor-not-allowed border-dashed"
                       placeholder="Alamat lengkap perusahaan"
                       value={mentorRequest.address}
-                      onChange={handleInputChange}
                     />
                   </div>
                 </div>

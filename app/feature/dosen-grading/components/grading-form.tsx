@@ -53,8 +53,24 @@ export function GradingForm({
     getAssessmentCriteria("DOSEN_PA").then((data) => {
       setCriteria(data);
       const initialScores: Record<string, number> = {};
+      
       data.forEach((c) => {
         let value = 0;
+        
+        // 1. Prioritas: Cari di initialData.components (Data dinamis dari DB)
+        if (initialData?.components && Array.isArray(initialData.components)) {
+          const comp = initialData.components.find(item => 
+            item.categoryId === c.id || 
+            item.name === c.category || 
+            item.category === c.category
+          );
+          if (comp) {
+            initialScores[c.id] = Number(comp.score) || 0;
+            return;
+          }
+        }
+
+        // 2. Fallback: Cari di legacy fields (untuk kriteria standar)
         const cid = c.id.toLowerCase();
         const cat = (c.category || "").toLowerCase();
         
@@ -108,6 +124,12 @@ export function GradingForm({
         materialMastery: 0,
         analysisDesign: 0,
         attitudeEthics: 0,
+        components: criteria.map(c => ({
+          categoryId: c.id,
+          category: c.category,
+          score: scores[c.id] || 0,
+          weight: c.weight
+        }))
       };
 
       criteria.forEach((c) => {

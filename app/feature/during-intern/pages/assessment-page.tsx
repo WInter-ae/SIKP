@@ -32,7 +32,9 @@ import {
   BookOpen,
   PenTool,
   ShieldCheck,
-  GraduationCap
+  GraduationCap,
+  Printer,
+  AlertCircle
 } from "lucide-react";
 
 import { getAssessmentCriteria } from "~/lib/assessment-criteria-api";
@@ -50,6 +52,7 @@ import {
 } from "~/feature/during-intern/services/assessment-api";
 import {
   generateAssessmentForm,
+  generateDosenAssessmentForm,
   normalizeSignatureForDocument,
   printAssessmentForm,
 } from "~/feature/during-intern/utils/generate-assessment-form";
@@ -87,7 +90,9 @@ function AssessmentPage() {
   const [mentorData, setMentorData] = useState<any | null>(null);
   const [dosenData, setDosenData] = useState<any | null>(null);
   const [internshipContext, setInternshipContext] = useState<CompleteInternshipData | null>(null);
+  const [evaluationRecap, setEvaluationRecap] = useState<any | null>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isPrintingFinal, setIsPrintingFinal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -114,6 +119,7 @@ function AssessmentPage() {
           const recapRes = await getAssessmentRecap(internshipRes.data.internship.id);
           if (recapRes.success && recapRes.data) {
             const evaluation = recapRes.data;
+            setEvaluationRecap(evaluation);
             // Use the first grade group for each role
             mentorSource = evaluation.fieldSupervisorGrades?.[0] || backendData;
             dosenSource = evaluation.academicSupervisorGrades?.[0] || null;
@@ -224,45 +230,118 @@ function AssessmentPage() {
       year: "numeric",
     });
 
-  const handleDownloadAssessment = async () => {
-    // Legacy download for mentor assessment
-    if (!mentorData || !internshipContext) return;
-    setIsGeneratingPdf(true);
+  const handlePrintFormNilai = () => {
+    if (!internshipContext?.internship?.id) return;
+    const url = `${import.meta.env.VITE_API_URL || "https://sikp-backend.p-it-unsri.workers.dev"}/api/admin/penilaian/print/${internshipContext.internship.id}`;
+    window.open(url, "_blank");
+  };
+
+  const handlePrintMentorAssessment = async () => {
+    if (!mentorData || !internshipContext) {
+      toast.error("Data penilaian mentor belum lengkap.");
+      return;
+    }
+
     try {
-      const normalizedSignature = await normalizeSignatureForDocument(internshipContext.mentor?.signature);
-      const rows = mentorAssessments.map(item => ({
-        category: item.category,
-        weight: item.weight,
-        score: item.score,
-        weightedScore: (item.score * item.weight) / 100,
+      const student = internshipContext.student;
+      const mentor = internshipContext.mentor;
+      const submission = internshipContext.submission;
+
+      // Map rows from mentorAssessments state which contains both legacy and dynamic criteria
+      const rows = mentorAssessments.map(a => ({
+        category: a.category,
+        weight: a.weight,
+        score: a.score,
+        weightedScore: (a.score * a.weight) / 100
       }));
 
-      const periodStart = internshipContext.submission?.startDate;
-      const periodEnd = internshipContext.submission?.endDate;
-      const assessmentPeriod = periodStart && periodEnd
-        ? `${formatDateId(periodStart)} - ${formatDateId(periodEnd)}`
+      const period = submission?.startDate && submission?.endDate
+        ? `${new Date(submission.startDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })} – ${new Date(submission.endDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}`
         : "-";
 
-      const formData = {
-        studentName: internshipContext.student?.name || "-",
-        nim: internshipContext.student?.nim || "-",
-        programStudi: internshipContext.student?.prodi || "-",
-        fakultas: internshipContext.student?.fakultas || "-",
-        companyName: internshipContext.submission?.company || "-",
-        assessmentPeriod,
-        assessmentDate: formatDateId(new Date().toISOString()),
-        mentorName: internshipContext.mentor?.name || "-",
-        mentorPosition: internshipContext.mentor?.position || "-",
-        mentorSignature: normalizedSignature,
+      const signature = await normalizeSignatureForDocument(mentor?.signature);
+
+      await generateAssessmentForm({
+        studentName: student?.name || "-",
+        nim: student?.nim || "-",
+        programStudi: student?.prodi || "-",
+        fakultas: student?.fakultas || "Ilmu Komputer",
+        companyName: submission?.company || "-",
+        assessmentPeriod: period,
+        assessmentDate: mentorData.assessedAt ? new Date(mentorData.assessedAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }),
+        mentorName: mentor?.name || "-",
+        mentorPosition: mentor?.position || "-",
+        mentorSignature: signature,
         rows,
         totalWeightedScore: totalMentor,
-      };
-      await generateAssessmentForm(formData);
-      toast.success("Dokumen penilaian berhasil diunduh.");
+        title: "Formulir Penilaian Pembimbing Lapangan",
+        signerLabel: "Pembimbing Lapangan"
+      });
     } catch (error) {
-      toast.error("Gagal mengunduh penilaian.");
-    } finally {
-      setIsGeneratingPdf(false);
+      console.error("Gagal generate PDF:", error);
+      toast.error("Terjadi kesalahan saat membuat dokumen PDF.");
+    }
+  };
+
+  const handlePrintDosenAssessment = async () => {
+    if (!dosenData || !internshipContext) {
+      toast.error("Data penilaian dosen belum lengkap.");
+      return;
+    }
+
+    try {
+      const student = internshipContext.student;
+      const lecturer = internshipContext.lecturer;
+      const submission = internshipContext.submission;
+
+      const rows = dosenAssessments.map(a => ({
+        category: a.category,
+        weight: a.weight,
+        score: a.score,
+        weightedScore: (a.score * a.weight) / 100
+      }));
+
+      const period = submission?.startDate && submission?.endDate
+        ? `${new Date(submission.startDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })} – ${new Date(submission.endDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}`
+        : "-";
+
+      // Extract signatures and coordinator data from context
+      const signature = await normalizeSignatureForDocument(lecturer?.signature);
+      const coordinator = (internshipContext as any).coordinator;
+      
+      // ONLY use coordinator signature if verified by Kaprodi
+      const isVerified = evaluationRecap?.summary?.isVerifiedByKaprodi;
+      const coordinatorSignature = isVerified 
+        ? await normalizeSignatureForDocument(coordinator?.signature)
+        : undefined;
+
+      // Extract report title if available in context or evaluations
+      const reportTitle = (internshipContext as any).submission?.title || (internshipContext as any).report?.title || "-";
+      const mentorName = internshipContext.mentor?.name || "-";
+
+      await generateDosenAssessmentForm({
+        studentName: student?.name || "-",
+        nim: student?.nim || "-",
+        programStudi: student?.prodi || "-",
+        fakultas: student?.fakultas || "Ilmu Komputer",
+        companyName: submission?.company || "-",
+        assessmentPeriod: period,
+        assessmentDate: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }),
+        mentorName: lecturer?.name || "-",
+        mentorPosition: lecturer?.nip || "-", // Use NIP as position for lecturer signer
+        mentorSignature: signature,
+        rows,
+        totalWeightedScore: totalDosen,
+        title: "FORM PENILAIAN KERJA PRAKTEK (KP)",
+        signerLabel: mentorName, // This is used for "Pembimbing Lapangan" field in the metadata
+        reportTitle: reportTitle,
+        coordinatorName: coordinator?.name || "Dr. Abdiansah, S.Kom., M.Cs.",
+        coordinatorNip: coordinator?.nip || "198410012009121005",
+        coordinatorSignature: coordinatorSignature
+      });
+    } catch (error) {
+      console.error("Gagal generate PDF:", error);
+      toast.error("Terjadi kesalahan saat membuat dokumen PDF.");
     }
   };
 
@@ -296,217 +375,51 @@ function AssessmentPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 max-w-md bg-gray-100 p-1">
+          <TabsList className="grid w-full grid-cols-3 max-w-2xl bg-gray-100 p-1">
             <TabsTrigger value="mentor" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <User className="h-4 w-4 mr-2" />
-              Pembimbing Lapangan
+              <span className="hidden sm:inline">Pembimbing Lapangan</span>
+              <span className="sm:hidden">Mentor</span>
             </TabsTrigger>
             <TabsTrigger value="dosen" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
               <GraduationCap className="h-4 w-4 mr-2" />
-              Dosen Pembimbing
+              <span className="hidden sm:inline">Dosen Pembimbing</span>
+              <span className="sm:hidden">Dosen</span>
+            </TabsTrigger>
+            <TabsTrigger value="recap" className="data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Award className="h-4 w-4 mr-2" />
+              Nilai Gabungan
             </TabsTrigger>
           </TabsList>
 
-          <div className="mt-8 space-y-8">
-            <Alert className="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800 dark:text-blue-300">
-                {activeTab === "mentor" 
-                  ? "Penilaian ini diberikan oleh pembimbing lapangan berdasarkan kinerja Anda selama di perusahaan."
-                  : "Penilaian ini diberikan oleh dosen pembimbing berdasarkan laporan dan hasil sidang Anda."}
-              </AlertDescription>
-            </Alert>
+          <div className="mt-8">
+            <TabsContent value="mentor" className="mt-0 space-y-8">
+              <AssessmentContent 
+                type="mentor"
+                assessments={mentorAssessments}
+                total={totalMentor}
+                context={internshipContext}
+                evaluation={evaluationRecap}
+                showPrintButton={true}
+                onPrint={handlePrintMentorAssessment}
+              />
+            </TabsContent>
 
-            {/* Supervisor Card */}
-            <Card className="border-none shadow-sm ring-1 ring-gray-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  {activeTab === "mentor" ? <User className="h-5 w-5 text-primary" /> : <GraduationCap className="h-5 w-5 text-primary" />}
-                  {activeTab === "mentor" ? "Pembimbing Lapangan" : "Dosen Pembimbing Akademik"}
-                </CardTitle>
-                <CardDescription>
-                  Informasi pembimbing yang memberikan penilaian
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-5">
-                  <Avatar className="h-14 w-14 border-2 border-white shadow-sm ring-1 ring-gray-100">
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
-                      {activeTab === "mentor" 
-                        ? internshipContext?.mentor?.name?.[0] || "M"
-                        : internshipContext?.lecturer?.name?.[0] || "D"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-1">
-                    <p className="font-bold text-xl text-gray-900">
-                      {activeTab === "mentor" 
-                        ? internshipContext?.mentor?.name || "Belum Ditentukan"
-                        : internshipContext?.lecturer?.name || "Belum Ditentukan"}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <Briefcase className="h-3.5 w-3.5" />
-                        <span>{activeTab === "mentor" ? (internshipContext?.mentor?.position || "Mentor") : "Dosen Pembimbing"}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Building2 className="h-3.5 w-3.5" />
-                        <span>{activeTab === "mentor" ? (internshipContext?.submission?.company || "-") : "Universitas Sriwijaya"}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <TabsContent value="dosen" className="mt-0 space-y-8">
+              <AssessmentContent 
+                type="dosen"
+                assessments={dosenAssessments}
+                total={totalDosen}
+                context={internshipContext}
+                evaluation={evaluationRecap}
+                showPrintButton={true}
+                onPrint={handlePrintDosenAssessment}
+              />
+            </TabsContent>
 
-            {/* Overall Score Card */}
-            <Card className="overflow-hidden border-none shadow-sm ring-1 ring-gray-200">
-              <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent pt-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Award className="h-5 w-5 text-primary" />
-                    Nilai Keseluruhan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pb-8">
-                  <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div className="flex items-center gap-8">
-                      <div className="relative">
-                        <div className="w-36 h-36 rounded-full border-8 border-white bg-white shadow-xl flex items-center justify-center">
-                          <div className="text-center">
-                            <p className={`text-5xl font-black ${getAssessmentScoreTextClass(currentTotal)}`}>
-                              {hasAssessment ? currentTotal.toFixed(1) : "-"}
-                            </p>
-                            <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">dari 100</p>
-                          </div>
-                        </div>
-                        <div className="absolute -top-1 -right-1">
-                          <Badge className="text-xl font-black h-12 w-12 rounded-full flex items-center justify-center bg-primary border-4 border-white shadow-lg">
-                            {hasAssessment ? gradeInfo.grade : "-"}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className={`h-6 w-6 ${getAssessmentScoreTextClass(currentTotal)}`} />
-                          <span className={`text-2xl font-black tracking-tight ${getAssessmentScoreTextClass(currentTotal)}`}>
-                            {hasAssessment ? gradeInfo.label : "Belum Dinilai"}
-                          </span>
-                        </div>
-                        <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
-                          {hasAssessment 
-                            ? `Berdasarkan rata-rata dari ${currentAssessments.length} kategori penilaian yang telah diinput.`
-                            : "Hasil penilaian dari pembimbing terkait belum tersedia saat ini."}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-                      <div className="p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-white shadow-sm text-center min-w-[120px]">
-                        <p className="text-3xl font-black text-green-600">
-                          {hasAssessment ? currentAssessments.filter((a) => a.score >= 85).length : "-"}
-                        </p>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Sangat Baik</p>
-                      </div>
-                      <div className="p-4 bg-white/50 backdrop-blur-sm rounded-xl border border-white shadow-sm text-center min-w-[120px]">
-                        <p className="text-3xl font-black text-yellow-600">
-                          {hasAssessment ? currentAssessments.filter((a) => a.score >= 70 && a.score < 85).length : "-"}
-                        </p>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Baik</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
-            </Card>
-
-            {/* Detailed Criteria */}
-            <div className="space-y-6">
-              <h2 className="text-2xl font-black text-gray-900 tracking-tight">Detail Penilaian</h2>
-
-              {!hasAssessment && (
-                <Alert className="border-dashed">
-                  <Info className="h-4 w-4" />
-                  <AlertDescription>
-                    Rincian penilaian belum tersedia. Silakan hubungi pembimbing terkait jika ini adalah kesalahan.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {currentAssessments.map((assessment) => {
-                  const Icon = assessment.icon || Award;
-                  const percentage = (assessment.score / (assessment.maxScore || 100)) * 100;
-
-                  return (
-                    <Card key={assessment.id} className="hover:shadow-lg transition-all duration-300 border-none ring-1 ring-gray-200">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                              <Icon className="h-6 w-6" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <CardTitle className="text-lg font-bold">
-                                  {assessment.category}
-                                </CardTitle>
-                                <Badge variant="secondary" className="bg-primary/5 text-primary text-[10px] font-bold border-none px-2 py-0">
-                                  {assessment.weight}%
-                                </Badge>
-                              </div>
-                              <CardDescription className="text-xs line-clamp-1 mt-0.5">
-                                {assessment.description}
-                              </CardDescription>
-                            </div>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          <div className="flex justify-between items-end">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pencapaian Nilai</span>
-                            <span className={`text-lg font-black ${hasAssessment ? getAssessmentScoreTextClass(assessment.score) : "text-muted-foreground"}`}>
-                              {hasAssessment ? `${assessment.score} / ${assessment.maxScore || 100}` : `- / 100`}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden shadow-inner">
-                            <div
-                              className={`h-full rounded-full transition-all duration-700 ease-out ${getAssessmentScoreBarClass(assessment.score)}`}
-                              style={{ width: `${hasAssessment ? percentage : 0}%` }}
-                            />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Footer / Download */}
-            <Card className="border-none shadow-sm ring-1 ring-gray-200 bg-gray-50/50">
-              <CardContent className="py-6">
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      Terakhir diperbarui pada <span className="font-bold text-gray-700">
-                        {mentorData?.updatedAt ? formatDateId(mentorData.updatedAt) : "-"}
-                      </span>
-                    </p>
-                  </div>
-                  {activeTab === "mentor" && (
-                    <Button
-                      disabled={!hasAssessment || isGeneratingPdf}
-                      onClick={handleDownloadAssessment}
-                      className="w-full sm:w-auto font-bold px-8 shadow-sm"
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      {isGeneratingPdf ? "Menyiapkan..." : "Unduh Penilaian"}
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <TabsContent value="recap" className="mt-0 space-y-8">
+              <CombinedGradeContent evaluation={evaluationRecap} onPrint={handlePrintFormNilai} />
+            </TabsContent>
           </div>
         </Tabs>
       </div>
@@ -514,4 +427,297 @@ function AssessmentPage() {
   );
 }
 
+// --- Sub-components for better organization ---
+
+function AssessmentContent({ type, assessments, total, context, evaluation, showPrintButton, onPrint }: any) {
+  const hasAssessment = total > 0;
+  const gradeInfo = (score: number) => {
+    if (score >= 85) return { grade: "A", label: "Sangat Baik" };
+    if (score >= 75) return { grade: "B", label: "Baik" };
+    if (score >= 65) return { grade: "C", label: "Cukup" };
+    if (score >= 55) return { grade: "D", label: "Kurang" };
+    return { grade: "E", label: "Sangat Kurang" };
+  };
+  const info = gradeInfo(total);
+
+  const formatDateId = (value: string) =>
+    new Date(value).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+  return (
+    <div className="space-y-8">
+      <Alert className="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-blue-800 dark:text-blue-300">
+          {type === "mentor" 
+            ? "Penilaian ini diberikan oleh pembimbing lapangan berdasarkan kinerja Anda selama di perusahaan."
+            : "Penilaian ini diberikan oleh dosen pembimbing berdasarkan laporan dan hasil sidang Anda."}
+        </AlertDescription>
+      </Alert>
+
+      <Card className="border-none shadow-sm ring-1 ring-gray-200">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            {type === "mentor" ? <User className="h-5 w-5 text-primary" /> : <GraduationCap className="h-5 w-5 text-primary" />}
+            {type === "mentor" ? "Pembimbing Lapangan" : "Dosen Pembimbing Akademik"}
+          </CardTitle>
+          <CardDescription>
+            Informasi pembimbing yang memberikan penilaian
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-5">
+            <Avatar className="h-14 w-14 border-2 border-white shadow-sm ring-1 ring-gray-100">
+              <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">
+                {type === "mentor" 
+                  ? context?.mentor?.name?.[0] || "M"
+                  : context?.lecturer?.name?.[0] || "D"}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <p className="font-bold text-xl text-gray-900">
+                {type === "mentor" 
+                  ? context?.mentor?.name || "Belum Ditentukan"
+                  : context?.lecturer?.name || "Belum Ditentukan"}
+              </p>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Briefcase className="h-3.5 w-3.5" />
+                  <span>{type === "mentor" ? (context?.mentor?.position || "Mentor") : "Dosen Pembimbing"}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" />
+                  <span>{type === "mentor" ? (context?.submission?.company || "-") : "Universitas Sriwijaya"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden border-none shadow-sm ring-1 ring-gray-200">
+        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent pt-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Award className="h-5 w-5 text-primary" />
+              Nilai Keseluruhan
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pb-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+              <div className="flex items-center gap-8">
+                <div className="relative">
+                  <div className="w-36 h-36 rounded-full border-8 border-white bg-white shadow-xl flex items-center justify-center">
+                    <div className="text-center">
+                      <p className={`text-5xl font-black ${getAssessmentScoreTextClass(total)}`}>
+                        {hasAssessment ? total.toFixed(1) : "-"}
+                      </p>
+                      <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">dari 100</p>
+                    </div>
+                  </div>
+                  <div className="absolute -top-1 -right-1">
+                    <Badge className="text-xl font-black h-12 w-12 rounded-full flex items-center justify-center bg-primary border-4 border-white shadow-lg">
+                      {hasAssessment ? info.grade : "-"}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className={`h-6 w-6 ${getAssessmentScoreTextClass(total)}`} />
+                    <span className={`text-2xl font-black tracking-tight ${getAssessmentScoreTextClass(total)}`}>
+                      {hasAssessment ? info.label : "Belum Dinilai"}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+                    {hasAssessment 
+                      ? `Berdasarkan rata-rata dari ${assessments.length} kategori penilaian yang telah diinput.`
+                      : "Hasil penilaian dari pembimbing terkait belum tersedia saat ini."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </div>
+      </Card>
+
+      <div className="space-y-6">
+        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Detail Penilaian</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {assessments.map((assessment: any) => {
+            const Icon = assessment.icon || Award;
+            const percentage = (assessment.score / (assessment.maxScore || 100)) * 100;
+            return (
+              <Card key={assessment.id} className="hover:shadow-lg transition-all duration-300 border-none ring-1 ring-gray-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg font-bold">{assessment.category}</CardTitle>
+                          <Badge variant="secondary" className="bg-primary/5 text-primary text-[10px] font-bold border-none px-2 py-0">{assessment.weight}%</Badge>
+                        </div>
+                        <CardDescription className="text-xs line-clamp-1 mt-0.5">{assessment.description}</CardDescription>
+                      </div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pencapaian Nilai</span>
+                      <span className={`text-lg font-black ${hasAssessment ? getAssessmentScoreTextClass(assessment.score) : "text-muted-foreground"}`}>
+                        {hasAssessment ? `${assessment.score} / ${assessment.maxScore || 100}` : `- / 100`}
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden shadow-inner">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ease-out ${getAssessmentScoreBarClass(assessment.score)}`}
+                        style={{ width: `${hasAssessment ? percentage : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+
+      {showPrintButton && hasAssessment && (
+        <Card className="border-none shadow-sm ring-1 ring-gray-200 bg-blue-50/50">
+          <CardContent className="py-8 flex flex-col items-center text-center space-y-4">
+            <div className="p-3 bg-blue-100 rounded-full">
+              <Printer className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-bold text-lg text-blue-900">Cetak Hasil Penilaian</h3>
+              <p className="text-sm text-blue-700 max-w-sm">
+                {type === "mentor" 
+                  ? "Cetak lembar penilaian resmi dari pembimbing lapangan Anda."
+                  : type === "dosen"
+                  ? "Cetak lembar penilaian resmi dari dosen pembimbing akademik Anda."
+                  : "Anda dapat mengunduh rekapitulasi nilai resmi dalam format PDF."}
+              </p>
+            </div>
+            <Button 
+              onClick={onPrint} 
+              size="lg" 
+              className="bg-blue-600 hover:bg-blue-700 font-bold px-10"
+              disabled={type === "dosen" && !evaluation?.summary.isVerifiedByKaprodi}
+            >
+              <Printer className="mr-2 h-5 w-5" />
+              {type === "dosen" && !evaluation?.summary.isVerifiedByKaprodi ? "Menunggu Verifikasi Kaprodi" : "Cetak Form Nilai KP (PDF)"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function CombinedGradeContent({ evaluation, onPrint }: any) {
+  if (!evaluation || evaluation.summary.finalScore === 0) {
+    return (
+      <Card className="border-dashed py-12">
+        <CardContent className="flex flex-col items-center justify-center text-center space-y-4">
+          <div className="p-4 bg-muted rounded-full">
+            <Clock className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-bold text-xl">Nilai Gabungan Belum Tersedia</h3>
+            <p className="text-muted-foreground max-w-xs mx-auto">Nilai gabungan akan otomatis muncul setelah Pembimbing Lapangan dan Dosen Pembimbing memberikan penilaian.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <Card className="border-none shadow-lg ring-1 ring-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-white">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="space-y-4 text-center md:text-left">
+              <Badge className="bg-white/20 hover:bg-white/30 text-white border-none px-4 py-1">
+                Rekapitulasi Nilai Akhir
+              </Badge>
+              <h2 className="text-4xl font-black tracking-tight">Nilai Gabungan KP</h2>
+              <p className="text-blue-100 max-w-md">Perhitungan otomatis berdasarkan bobot 30% dari Pembimbing Lapangan dan 70% dari Dosen Pembimbing Akademik.</p>
+            </div>
+            <div className="relative">
+              <div className="w-48 h-48 rounded-full bg-white/10 backdrop-blur-md border-4 border-white/20 flex flex-col items-center justify-center shadow-2xl">
+                <span className="text-6xl font-black leading-none">{evaluation.summary.finalScore.toFixed(1)}</span>
+                <span className="text-sm font-bold uppercase tracking-widest mt-2 opacity-80">Final Score</span>
+              </div>
+              <div className="absolute -bottom-2 -right-2 bg-yellow-400 text-yellow-900 font-black text-2xl h-14 w-14 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+                {evaluation.summary.grade}
+              </div>
+            </div>
+          </div>
+        </div>
+        <CardContent className="p-8 bg-white">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                  <User className="h-5 w-5 text-gray-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Pembimbing Lapangan (30%)</p>
+                  <p className="text-2xl font-black text-gray-900">{evaluation.summary.fieldSupervisorTotal.toFixed(2)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-gray-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-500 uppercase tracking-wider">Dosen Pembimbing (70%)</p>
+                  <p className="text-2xl font-black text-gray-900">{evaluation.summary.academicSupervisorTotal.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col justify-center bg-gray-50 rounded-2xl p-6 border border-gray-100">
+               <div className="flex items-center gap-2 mb-4 text-gray-900">
+                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                  <span className="font-bold text-lg">Status Kelulusan</span>
+               </div>
+               <div className="space-y-2">
+                 <p className="text-sm text-gray-600">Berdasarkan hasil penilaian gabungan, Anda dinyatakan:</p>
+                 <Badge className="text-lg px-6 py-1 bg-green-600 hover:bg-green-700">LULUS (KOMPETEN)</Badge>
+               </div>
+            </div>
+          </div>
+          
+          <div className="mt-10 pt-8 border-t border-gray-100 flex flex-col items-center space-y-6">
+             <div className="text-center space-y-2">
+                <h3 className="font-bold text-xl">Dokumen Nilai Akhir</h3>
+                <p className="text-muted-foreground text-sm">Klik tombol di bawah untuk mencetak lembar penilaian resmi KP.</p>
+             </div>
+             {!evaluation.summary.isVerifiedByKaprodi ? (
+               <div className="flex flex-col items-center p-6 bg-amber-50 rounded-2xl border border-amber-100 text-amber-800">
+                 <AlertCircle className="h-8 w-8 mb-2" />
+                 <p className="font-bold">Menunggu Verifikasi Kaprodi</p>
+                 <p className="text-sm text-center">Dokumen nilai akhir hanya dapat diunduh setelah diverifikasi oleh Ketua Program Studi.</p>
+               </div>
+             ) : (
+               <Button onClick={onPrint} size="lg" className="w-full max-w-sm h-14 text-lg font-bold shadow-xl hover:scale-105 transition-transform">
+                 <Printer className="mr-3 h-6 w-6" />
+                 Cetak Form Nilai Akhir
+               </Button>
+             )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 export default AssessmentPage;
+

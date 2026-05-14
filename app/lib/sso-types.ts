@@ -147,9 +147,12 @@ export function normalizeRole(raw: unknown): EffectiveRole | null {
     normalized === "ADMIN" ||
     normalized === "DOSEN" ||
     normalized === "KAPRODI" ||
+    normalized === "KOORDINATOR" ||
+    normalized === "KORPRODI" ||
     normalized === "WAKIL_DEKAN" ||
     normalized === "MENTOR"
   ) {
+    if (normalized === "KOORDINATOR" || normalized === "KORPRODI") return "KAPRODI";
     return normalized;
   }
 

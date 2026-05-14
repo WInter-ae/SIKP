@@ -470,3 +470,48 @@ export async function getMyAssessment(): Promise<
     data: null,
   };
 }
+export interface KaprodiPendingVerification {
+  id: string;
+  internshipId: string;
+  studentId: string;
+  studentName: string;
+  nim: string;
+  companyName: string;
+  academicScore: number;
+  fieldScore: number;
+  finalScore: number;
+  letterGrade: string;
+  calculatedAt: string;
+  isVerified: boolean;
+}
+
+/**
+ * Get list of pending verifications for Kaprodi
+ */
+export async function getKaprodiPendingVerifications(): Promise<ApiResponse<KaprodiPendingVerification[]>> {
+  return iget<KaprodiPendingVerification[]>("/api/penilaian/kaprodi/pending");
+}
+
+/**
+ * Verify grade by Kaprodi
+ */
+export async function verifyGradeByKaprodi(gradeId: string): Promise<ApiResponse<{ success: boolean }>> {
+  const { ipost } = await import("~/lib/api-client");
+  return ipost<{ success: boolean }>(`/api/penilaian/kaprodi/verify/${gradeId}`);
+}
+
+/**
+ * Get pending grade verifications for Admin
+ */
+export async function getAdminPendingVerifications(): Promise<ApiResponse<any[]>> {
+  const { iget } = await import("~/lib/api-client");
+  return iget<any[]>("/api/penilaian/admin/pending");
+}
+
+/**
+ * Verify grade by Admin
+ */
+export async function verifyGradeByAdmin(gradeId: string): Promise<ApiResponse<any>> {
+  const { ipost } = await import("~/lib/api-client");
+  return ipost<any>(`/api/penilaian/admin/verify/${gradeId}`);
+}

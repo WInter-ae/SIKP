@@ -324,41 +324,53 @@ function mapRowToEvaluation(
     },
   ];
 
-  const academicComponents: GradeComponent[] = [];
+  const academicSupervisorGrades: AcademicSupervisorGrade[] = [];
   if (academicTotal > 0) {
-    const fKesesuaian = parseNumber(academicNode.formatKesesuaian ?? academicNode.format_kesesuaian ?? academicNode.reportFormat);
-    const pMateri = parseNumber(academicNode.penguasaanMateri ?? academicNode.penguasaan_materi ?? academicNode.materialMastery);
-    const aPerancangan = parseNumber(academicNode.analisisPerancangan ?? academicNode.analisis_perancangan ?? academicNode.analysisDesign);
-    const sEtika = parseNumber(academicNode.sikapEtika ?? academicNode.sikap_etika ?? academicNode.attitudeEthics);
-
-    if (fKesesuaian > 0 || pMateri > 0 || aPerancangan > 0 || sEtika > 0) {
-      academicComponents.push(
-        { name: "formatKesesuaian", score: fKesesuaian, maxScore: 100, weight: 30 },
-        { name: "penguasaanMateri", score: pMateri, maxScore: 100, weight: 30 },
-        { name: "analisisPerancangan", score: aPerancangan, maxScore: 100, weight: 30 },
-        { name: "sikapEtika", score: sEtika, maxScore: 100, weight: 10 }
-      );
-    } else {
-      academicComponents.push({
-        name: "Nilai Dosen Pembimbing",
-        score: academicTotal,
-        maxScore: 100,
+    const academicComponents: GradeComponent[] = [];
+    
+    // 1. Try to load from components (Dynamic Criteria)
+    const rawComponents = academicNode.components || row.academicComponents || [];
+    if (Array.isArray(rawComponents) && rawComponents.length > 0) {
+      rawComponents.forEach((comp: any) => {
+        academicComponents.push({
+          name: comp.category || comp.name || "Kriteria",
+          score: parseNumber(comp.score),
+          maxScore: 100,
+          weight: parseNumber(comp.weight),
+          categoryId: comp.categoryId || comp.id
+        } as any);
       });
-    }
-  }
+    } else {
+      // 2. Fallback to legacy fields
+      const fKesesuaian = parseNumber(academicNode.formatKesesuaian ?? academicNode.format_kesesuaian ?? academicNode.reportFormat);
+      const pMateri = parseNumber(academicNode.penguasaanMateri ?? academicNode.penguasaan_materi ?? academicNode.materialMastery);
+      const aPerancangan = parseNumber(academicNode.analisisPerancangan ?? academicNode.analisis_perancangan ?? academicNode.analysisDesign);
+      const sEtika = parseNumber(academicNode.sikapEtika ?? academicNode.sikap_etika ?? academicNode.attitudeEthics);
 
-  const academicSupervisorGrades: AcademicSupervisorGrade[] =
-    academicTotal > 0
-      ? [
-          {
-            category: "Penilaian Dosen Pembimbing",
-            components: academicComponents,
-            totalScore: academicTotal,
-            maxScore: 100,
-            percentage: academicTotal,
-          },
-        ]
-      : [];
+      if (fKesesuaian > 0 || pMateri > 0 || aPerancangan > 0 || sEtika > 0) {
+        academicComponents.push(
+          { name: "Format & Kesesuaian", score: fKesesuaian, maxScore: 100, weight: 30 },
+          { name: "Penguasaan Materi", score: pMateri, maxScore: 100, weight: 30 },
+          { name: "Analisis & Perancangan", score: aPerancangan, maxScore: 100, weight: 30 },
+          { name: "Sikap & Etika", score: sEtika, maxScore: 100, weight: 10 }
+        );
+      } else {
+        academicComponents.push({
+          name: "Nilai Dosen Pembimbing",
+          score: academicTotal,
+          maxScore: 100,
+        });
+      }
+    }
+
+    academicSupervisorGrades.push({
+      category: "Penilaian Dosen Pembimbing",
+      components: academicComponents,
+      totalScore: academicTotal,
+      maxScore: 100,
+      percentage: academicTotal,
+    });
+  }
 
   return {
     student: {
@@ -402,6 +414,7 @@ function mapRowToEvaluation(
       finalScore,
       grade: gradeFromScore(finalScore),
       status: statusFromScore(finalScore),
+      isVerifiedByKaprodi: Boolean(row.isVerifiedByKaprodi || (row.combined as any)?.isVerifiedByKaprodi),
     },
     notes: normalizeText(assessmentNode.feedback || assessmentNode.catatan, ""),
     evaluatedAt: normalizeText(
@@ -443,6 +456,15 @@ export async function getAdminEvaluations(
     message: lastMessage,
     data: [],
   };
+}
+
+/**
+ * Check if there are any evaluations in the system
+ * Used to lock assessment criteria changes
+ */
+export async function hasAnyEvaluations(): Promise<boolean> {
+  const response = await getAdminEvaluations([]);
+  return Boolean(response.success && response.data && response.data.length > 0);
 }
 
 export async function getAdminEvaluationByStudentId(
@@ -493,6 +515,7 @@ export async function submitFinalScore(data: {
     penguasaanMateri: number;
     analisisPerancangan: number;
     sikapEtika: number;
+    components?: any[];
     feedback?: string;
   };
 }): Promise<ApiResponse<null>> {

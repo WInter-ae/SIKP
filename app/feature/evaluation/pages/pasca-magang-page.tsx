@@ -605,162 +605,18 @@ export default function PascaMagangPage() {
               </Card>
             )}
 
-            {/* Preview Nilai dari Pembimbing Lapangan */}
-            {!hasGradeFromDosen && evaluation && evaluation.summary.fieldSupervisorTotal > 0 && (
-              <Card className="mb-6 bg-green-50 border-green-200">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-green-100 rounded-full">
-                      <Award className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-green-900 mb-2">
-                        Nilai dari Pembimbing Lapangan
-                      </h3>
-                      <p className="text-green-800 text-sm mb-4">
-                        Pembimbing Lapangan Anda ({evaluation.student.supervisor}) telah memberikan penilaian. 
-                        Nilai ini akan digabung dengan nilai dari Dosen Pembimbing nanti.
-                      </p>
-
-                      <div className="bg-white rounded-lg p-4 border border-green-200">
-                        <div className="space-y-4">
-                          {evaluation.fieldSupervisorGrades[0]?.components.map((comp, idx) => (
-                            <div key={idx} className="space-y-1">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">{comp.name}</span>
-                                <span className="font-semibold">{comp.score} / {comp.maxScore}</span>
-                              </div>
-                              <div className="w-full bg-gray-100 rounded-full h-1.5">
-                                <div 
-                                  className="bg-green-500 h-1.5 rounded-full" 
-                                  style={{ width: `${(comp.score / comp.maxScore) * 100}%` }}
-                                />
-                              </div>
-                            </div>
-                          ))}
-                          
-                          <div className="border-t border-gray-100 pt-3 flex justify-between items-center">
-                            <span className="font-semibold text-gray-900">Total Skor Lapangan:</span>
-                            <span className="text-2xl font-bold text-green-600">
-                              {evaluation.summary.fieldSupervisorTotal.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {evaluation.notes && (
-                          <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Feedback Mentor:</p>
-                            <p className="text-sm text-gray-700 italic">"{evaluation.notes}"</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Preview Nilai dari Dosen - Show if nilai available */}
-            {hasGradeFromDosen && evaluation && (
-              <Card className="mb-4 bg-blue-50 border-blue-200">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <CheckCircle2 className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                        Nilai KP Sudah Diberikan
-                      </h3>
-                      <p className="text-blue-800 text-sm mb-4">
-                        Dosen {evaluation.student.academicSupervisor} telah memberikan penilaian
-                        untuk Kerja Praktik Anda.
-                      </p>
-
-                      <div className="bg-white rounded-lg p-4 border border-blue-200">
-                        <h4 className="font-semibold text-gray-900 mb-3">
-                          Ringkasan Nilai:
-                        </h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              Nilai Pembimbing Lapangan (30%):
-                            </span>
-                            <span className="font-semibold">
-                              {evaluation.summary.fieldSupervisorTotal.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">
-                              Nilai Laporan & Sidang (70%):
-                            </span>
-                            <span className="font-semibold">
-                              {evaluation.summary.academicSupervisorTotal.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="border-t border-gray-200 pt-2 mt-2">
-                            <div className="flex justify-between text-base">
-                              <span className="font-semibold text-gray-900">
-                                Nilai Akhir:
-                              </span>
-                              <div className="text-right">
-                                <span className="font-bold text-blue-600 text-xl block">
-                                  {evaluation.summary.finalScore.toFixed(2)}
-                                </span>
-                                <Badge className="bg-green-600">Grade {evaluation.summary.grade}</Badge>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 pt-4 border-t border-blue-200 text-xs text-blue-700">
-                          <p>
-                            Dinilai oleh: {evaluation.student.academicSupervisor}
-                          </p>
-                          <p>
-                            Tanggal:{" "}
-                            {evaluation.evaluatedAt &&
-                              new Date(evaluation.evaluatedAt).toLocaleDateString("id-ID", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              })}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Tombol Cetak PDF - langsung tersedia */}
-                      <div className="mt-4">
-                        <Button
-                          onClick={handlePrintFormNilai}
-                          size="lg"
-                          className="w-full bg-blue-600 hover:bg-blue-700"
-                        >
-                          <Printer className="h-5 w-5 mr-2" />
-                          Cetak Form Nilai KP (PDF)
-                        </Button>
-
-                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-xs text-blue-800 font-medium mb-1">
-                            📝 Cara menyimpan sebagai PDF:
-                          </p>
-                          <ol className="text-xs text-blue-700 space-y-1 ml-4 list-decimal">
-                            <li>Klik tombol di atas</li>
-                            <li>
-                              Pilih "Save as PDF" atau "Microsoft Print to PDF"
-                            </li>
-                            <li>
-                              Di "More settings", hilangkan centang "Headers and
-                              footers"
-                            </li>
-                            <li>Klik Save</li>
-                          </ol>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Results moved to Evaluation Page */}
+            {(hasGradeFromDosen || (evaluation && evaluation.summary.fieldSupervisorTotal > 0)) && (
+              <Alert className="mb-6 bg-blue-50 border-blue-200">
+                <Info className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-blue-800">
+                  Hasil penilaian Anda sudah tersedia. Silakan cek di menu{" "}
+                  <Link to="/mahasiswa/kp/penilaian" className="font-bold underline">
+                    Penilaian
+                  </Link>{" "}
+                  untuk melihat detail skor dan mencetak form nilai.
+                </AlertDescription>
+              </Alert>
             )}
 
             {/* Upload Form */}

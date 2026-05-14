@@ -47,9 +47,6 @@ export default function GiveGradePage() {
               const recap = recapData;
               const academicGrades = recap.academicSupervisorGrades?.[0]?.components || [];
               
-              // Map recap components back to GradingFormData
-              // This depends on the component names matching
-              // Map recap components back to GradingFormData with more robust matching
               const existingData: GradingFormData = {
                 reportFormat: academicGrades.find(g => 
                   g.name.toLowerCase().includes("format") || 
@@ -68,6 +65,12 @@ export default function GiveGradePage() {
                   g.name.toLowerCase().includes("sikap") || 
                   g.name.toLowerCase().includes("etika")
                 )?.score || 0,
+                components: academicGrades.map(g => ({
+                  categoryId: (g as any).categoryId || g.name,
+                  category: g.name,
+                  score: g.score,
+                  weight: g.weight
+                })),
                 notes: recap.notes || (recap.academicSupervisorGrades[0] as any)?.feedback || ""
               };
               
@@ -129,6 +132,7 @@ export default function GiveGradePage() {
           penguasaanMateri: data.materialMastery,
           analisisPerancangan: data.analysisDesign,
           sikapEtika: data.attitudeEthics,
+          components: data.components,
           feedback: data.notes
         }
       } as any);
@@ -159,6 +163,12 @@ export default function GiveGradePage() {
               g.name.toLowerCase().includes("sikap") || 
               g.name.toLowerCase().includes("etika")
             )?.score || 0,
+            components: academicGrades.map(g => ({
+              categoryId: (g as any).categoryId || g.name,
+              category: g.name,
+              score: g.score,
+              weight: g.weight
+            })),
             notes: recapData.notes || (recapData.academicSupervisorGrades?.[0] as any)?.feedback || ""
           };
           setInitialData(existingData);

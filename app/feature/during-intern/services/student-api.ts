@@ -111,6 +111,13 @@ export interface CompleteInternshipData {
     email: string;
     nip: string;
     phone?: string;
+    signature?: string;
+  };
+  coordinator?: {
+    id?: string;
+    name: string;
+    nip: string;
+    signature?: string;
   };
 }
 
@@ -166,6 +173,13 @@ interface BackendInternshipResponse {
     email: string;
     nip: string;
     phone?: string;
+    signature?: string | null;
+  } | null;
+  coordinator?: {
+    id?: string;
+    name: string;
+    nip: string;
+    signature?: string | null;
   } | null;
 }
 
@@ -261,6 +275,15 @@ function mapBackendToFrontend(
           email: lecturer.email,
           nip: lecturer.nip,
           phone: lecturer.phone,
+          signature: (lecturer as any).signature || undefined,
+        }
+      : undefined,
+    coordinator: backendData.coordinator
+      ? {
+          id: backendData.coordinator.id,
+          name: backendData.coordinator.name,
+          nip: backendData.coordinator.nip,
+          signature: backendData.coordinator.signature || undefined,
         }
       : undefined,
   };

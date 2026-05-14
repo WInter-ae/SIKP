@@ -22,7 +22,7 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
-import { Alert, AlertDescription } from "~/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -40,12 +40,14 @@ import {
   DEFAULT_DOSEN_PA_CRITERIA,
   type AssessmentCriterion,
 } from "~/lib/assessment-criteria-api";
+import { hasAnyEvaluations } from "~/feature/evaluation/services/evaluation-api";
 
 export default function PenilaianKriteriaPage() {
   const [activeRole, setActiveRole] = useState<"MENTOR" | "DOSEN_PA">("MENTOR");
   const [criteria, setCriteria] = useState<AssessmentCriterion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
 
   const totalWeight = useMemo(
     () => criteria.reduce((sum, c) => sum + (Number(c.weight) || 0), 0),
@@ -55,11 +57,23 @@ export default function PenilaianKriteriaPage() {
   const weightDifference = 100 - totalWeight;
 
   useEffect(() => {
-    setIsLoading(true);
-    getAssessmentCriteria(activeRole).then((data) => {
-      setCriteria(data);
-      setIsLoading(false);
-    });
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const [criteriaData, evaluationStatus] = await Promise.all([
+          getAssessmentCriteria(activeRole),
+          hasAnyEvaluations(),
+        ]);
+        setCriteria(criteriaData);
+        setIsLocked(evaluationStatus);
+      } catch (error) {
+        console.error("Error loading criteria data:", error);
+        toast.error("Gagal memuat data kriteria.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadData();
   }, [activeRole]);
 
   function handleWeightChange(id: string, value: string) {
@@ -107,11 +121,19 @@ export default function PenilaianKriteriaPage() {
   }
 
   function handleReset() {
+    if (isLocked) {
+      toast.error("Kriteria tidak dapat direset karena sudah ada data penilaian.");
+      return;
+    }
     setCriteria(activeRole === "DOSEN_PA" ? DEFAULT_DOSEN_PA_CRITERIA : DEFAULT_CRITERIA);
     toast.info(`Kriteria ${activeRole} direset ke nilai default`);
   }
 
   async function handleSave() {
+    if (isLocked) {
+      toast.error("Perubahan tidak dapat disimpan karena sudah ada data penilaian.");
+      return;
+    }
     if (!isValid) {
       toast.error(`Total bobot harus 100%, saat ini ${totalWeight}%`);
       return;
@@ -250,7 +272,7 @@ export default function PenilaianKriteriaPage() {
         </CardHeader>
         <CardContent>
           <div className="mb-4">
-            <Button variant="outline" onClick={handleAddCategory}>
+            <Button variant="outline" onClick={handleAddCategory} disabled={isLocked}>
               <Plus className="mr-2 h-4 w-4" />
               Tambah Kategori
             </Button>
@@ -278,6 +300,7 @@ export default function PenilaianKriteriaPage() {
                         }
                         placeholder="Nama kategori"
                         className="text-sm h-8"
+                        disabled={isLocked}
                       />
                     </TableCell>
                     <TableCell>
@@ -288,6 +311,7 @@ export default function PenilaianKriteriaPage() {
                         }
                         placeholder="Tambahkan deskripsi..."
                         className="text-xs h-8"
+                        disabled={isLocked}
                       />
                     </TableCell>
                     <TableCell>
@@ -301,6 +325,7 @@ export default function PenilaianKriteriaPage() {
                             handleWeightChange(criterion.id, e.target.value)
                           }
                           className="h-8 pr-6 text-center font-medium"
+                          disabled={isLocked}
                         />
                         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
                           %
@@ -315,7 +340,7 @@ export default function PenilaianKriteriaPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleRemoveCategory(criterion.id)}
-                        disabled={criteria.length <= 1}
+                        disabled={isLocked || criteria.length <= 1}
                         className="text-destructive hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -368,23 +393,31 @@ export default function PenilaianKriteriaPage() {
         </CardContent>
       </Card>
 
-      {/* Validasi Alert */}
-      {!isValid && (
-        <Alert variant="destructive">
+      {/* Validasi Hint - Moved near action buttons or kept subtle */}
+      {!isValid && !isLocked && (
+        <div className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg bg-amber-50 border border-amber-100 text-amber-700 animate-in fade-in slide-in-from-top-1">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Total bobot saat ini <strong>{totalWeight}%</strong>. Harus tepat{" "}
-            <strong>100%</strong> sebelum disimpan. Sesuaikan bobot kriteria
-            untuk menambah <strong>{weightDifference}%</strong>.
-          </AlertDescription>
-        </Alert>
+          <span>
+            Total bobot saat ini <strong>{totalWeight}%</strong>. Harus tepat 100% untuk dapat disimpan. 
+            (Selisih <strong>{weightDifference}%</strong>)
+          </span>
+        </div>
       )}
 
-      {isValid && (
-        <Alert className="border-green-500/50 bg-green-50 dark:bg-green-950/20">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-700 dark:text-green-400">
-            Total bobot <strong>100%</strong> — Siap untuk disimpan.
+      {isValid && !isLocked && (
+        <div className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg bg-green-50 border border-green-100 text-green-700 animate-in fade-in">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>Total bobot 100% — Kriteria siap untuk disimpan.</span>
+        </div>
+      )}
+
+      {isLocked && (
+        <Alert variant="destructive" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="font-bold">Kriteria Terkunci</AlertTitle>
+          <AlertDescription>
+            Bobot penilaian tidak dapat diubah karena sudah terdapat mahasiswa yang telah dinilai pada periode ini. 
+            Hal ini untuk menjaga konsistensi dan keadilan hasil evaluasi.
           </AlertDescription>
         </Alert>
       )}
@@ -393,7 +426,7 @@ export default function PenilaianKriteriaPage() {
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         <Button
           onClick={handleSave}
-          disabled={!isValid || isSaving}
+          disabled={!isValid || isSaving || isLocked}
           size="lg"
           className="sm:flex-1"
         >
@@ -403,7 +436,7 @@ export default function PenilaianKriteriaPage() {
         <Button
           variant="outline"
           onClick={handleReset}
-          disabled={isSaving}
+          disabled={isSaving || isLocked}
           size="lg"
         >
           <RotateCcw className="mr-2 h-4 w-4" />

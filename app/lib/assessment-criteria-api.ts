@@ -184,20 +184,25 @@ export async function updateAssessmentCriteria(
   }
 
   try {
-    const response = await internshipClient.put<any>(`/api/admin/penilaian/kriteria?type=${type}`, {
+    // After reviewing backend code, it expects { kriteria: [...] } with camelCase fields
+    const payload = {
       kriteria: criteria.map((c, index) => ({
-        id: c.id,
+        id: c.id.startsWith("custom-") ? undefined : c.id,
         categoryId: c.categoryId || c.id,
-        category:
-          c.categoryKey || c.category.toLowerCase().replace(/ /g, "_"),
         label: c.category,
+        category: c.category,
         description: c.description,
-        weight: c.weight,
-        maxScore: c.maxScore,
-        sortOrder: c.sortOrder ?? index + 1,
+        weight: Number(c.weight),
+        maxScore: Number(c.maxScore),
+        sortOrder: Number(c.sortOrder ?? index + 1),
         isActive: c.isActive ?? true,
       })),
-    });
+    };
+
+    const response = await internshipClient.put<any>(
+      `/api/admin/penilaian/kriteria?type=${type}`,
+      payload,
+    );
 
     return {
       success: response.success,

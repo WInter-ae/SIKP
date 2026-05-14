@@ -46,6 +46,7 @@ export interface GradingFormData {
   analysisDesign: number; // Analisis dan Perancangan (30%)
   attitudeEthics: number; // Sikap dan Etika (10%)
 
+  components?: any[];
   notes?: string; // Catatan penilaian
 }
 

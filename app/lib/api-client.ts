@@ -128,7 +128,7 @@ function buildHeaders(
 
   // Browser app authenticates via httpOnly cookie session.
   // Only attach Bearer token in non-browser (SSR/server) contexts.
-  if (token && !isBrowser()) {
+  if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 

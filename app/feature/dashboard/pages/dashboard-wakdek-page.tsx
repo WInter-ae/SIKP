@@ -20,6 +20,7 @@ export interface DashboardWakdekData {
 
 interface DashboardWakdekPageProps {
   data?: DashboardWakdekData | null;
+  title?: string;
 }
 
 function EmptyState({ message }: { message: string }) {
@@ -33,6 +34,7 @@ function EmptyState({ message }: { message: string }) {
 
 export default function DashboardWakdekPage({
   data,
+  title = "Dashboard Wakil Dekan",
 }: DashboardWakdekPageProps) {
   const totalAjuanSuratPengantarMasuk = data?.totalAjuanSuratPengantarMasuk;
   const activities = data?.activities ?? [];
@@ -41,7 +43,7 @@ export default function DashboardWakdekPage({
     <div className="flex flex-col gap-4 sm:gap-6 p-4 sm:p-6">
       <div className="relative pb-2">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Dashboard Wakil Dekan
+          {title}
         </h1>
         <p className="text-sm sm:text-base text-muted-foreground">
           Ringkasan verifikasi surat pengantar mahasiswa
