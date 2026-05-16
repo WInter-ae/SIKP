@@ -115,12 +115,12 @@ export default function DashboardMahasiswaPage({
             <CardContent>
               <div className="flex min-h-55 flex-col items-center justify-center gap-3 rounded-lg border border-dashed px-6 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Tim belum dibentuk. Silakan buat tim terlebih dahulu.
+                  Tim belum dibentuk. Silakan bentuk tim terlebih dahulu.
                 </p>
                 <Button asChild className="bg-blue-600 hover:bg-blue-700">
                   <Link to="/mahasiswa/kp/buat-tim">
                     <Plus className="mr-2 h-4 w-4" />
-                    Buat Tim
+                    Bentuk Tim
                   </Link>
                 </Button>
               </div>

@@ -366,9 +366,9 @@ function DocumentDropdown({
                               })
                             }
                           ><a className="text-xs md:text-sm">
-                            {submittingMemberId === member.id
-                              ? "Mengajukan ulang..."
-                              : "Ditolak"} </a>
+                              {submittingMemberId === member.id
+                                ? "Mengajukan ulang..."
+                                : "Ditolak"} </a>
                           </Button>
                           {rejectionReasonByKey?.[requestKey] && (
                             <TooltipProvider>
@@ -390,7 +390,7 @@ function DocumentDropdown({
                                   </p>
                                   <div className="text-sm flex flex-col gap-1 leading-relaxed">
                                     <span className="font-bold text-foreground break-all">
-                                      {(dosenKpNameByKey?.[requestKey] || "Dosen") + " :"}
+                                      {(dosenKpNameByKey?.[requestKey] || "Dosen Pembimbing") + " :"}
                                     </span>
                                     <span className="font-medium text-muted-foreground break-words">
                                       {rejectionReasonByKey[requestKey]}
@@ -423,11 +423,11 @@ function DocumentDropdown({
                           }
                         >
                           <a className="text-xs md:text-sm">
-                          {submittingMemberId === member.id
-                            ? "Mengajukan..."
-                            : isRequestSubmitted
-                              ? getSubmittedButtonLabel(requestStatus)
-                              : "Ajukan"}</a>
+                            {submittingMemberId === member.id
+                              ? "Mengajukan..."
+                              : isRequestSubmitted
+                                ? getSubmittedButtonLabel(requestStatus)
+                                : "Ajukan"}</a>
                         </Button>
                       ) : null}
                       <Button
