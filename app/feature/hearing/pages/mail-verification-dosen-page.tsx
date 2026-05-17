@@ -31,7 +31,7 @@ import {
 } from "~/components/ui/table";
 import type { LucideIcon } from "lucide-react";
 import MainVerificationDosenDialog from "../components/mail-verification-dialog";
-import type { MailEntry } from "../../hearing-dosen/types/dosen";
+import type { MailEntry } from "../types/dosen";
 import {
   approveBulkDosenSuratKesediaanRequests,
   approveDosenSuratKesediaanRequest,

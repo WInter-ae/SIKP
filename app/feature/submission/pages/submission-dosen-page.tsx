@@ -30,8 +30,8 @@ import {
 } from "~/components/ui/table";
 
 import StatCard from "../components/stat-card";
-import CoverLetterVerificationDialog from "~/feature/hearing-dosen/components/cover-letter-verification-dialog";
-import type { MailEntry } from "~/feature/hearing-dosen/types/dosen";
+import CoverLetterVerificationDialog from "~/feature/hearing/components/cover-letter-verification-dialog";
+import type { MailEntry } from "~/feature/hearing/types/dosen";
 import {
   approveDosenSuratPengantarRequest,
   type DosenSuratPengantarRequestItem,
@@ -838,66 +838,66 @@ function SubmissionDosenPage() {
                 </p>
               </div>
             ) : (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/50">
-                        <TableHead className="pl-6 whitespace-nowrap">
-                          Tanggal
-                        </TableHead>
-                        <TableHead className="whitespace-nowrap">
-                          Nama Mahasiswa
-                        </TableHead>
-                        <TableHead className="whitespace-nowrap">
-                          Perusahaan
-                        </TableHead>
-                        <TableHead className="whitespace-nowrap">Status</TableHead>
-                        <TableHead className="pr-6 whitespace-nowrap">
-                          Aksi
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredEntries.map((entry) => {
-                        const members = entry.teamMembers || [];
-                        const leader =
-                          members.find((member) => member.role === "Ketua") ||
-                          members[0];
-                        return (
-                          <TableRow key={entry.id} className="hover:bg-muted/50">
-                            <TableCell className="pl-6 text-foreground">
-                              {entry.tanggal}
-                            </TableCell>
-                            <TableCell>
-                              <div className="font-medium text-foreground">
-                                {leader?.name || entry.namaMahasiswa || "Unknown"}
-                              </div>
-                              <span className="text-xs text-muted-foreground">
-                                {members.length > 1
-                                  ? `+ ${members.length - 1} Anggota`
-                                  : "Individu"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-foreground">
-                              {entry.namaPerusahaan || "-"}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(entry.status)}</TableCell>
-                            <TableCell className="pr-6">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-primary border-primary/50 hover:bg-primary/5"
-                                onClick={() => handleReview(entry)}
-                              >
-                                {entry.status === "menunggu" ? "Review" : "Lihat"}
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="pl-6 whitespace-nowrap">
+                        Tanggal
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        Nama Mahasiswa
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap">
+                        Perusahaan
+                      </TableHead>
+                      <TableHead className="whitespace-nowrap">Status</TableHead>
+                      <TableHead className="pr-6 whitespace-nowrap">
+                        Aksi
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredEntries.map((entry) => {
+                      const members = entry.teamMembers || [];
+                      const leader =
+                        members.find((member) => member.role === "Ketua") ||
+                        members[0];
+                      return (
+                        <TableRow key={entry.id} className="hover:bg-muted/50">
+                          <TableCell className="pl-6 text-foreground">
+                            {entry.tanggal}
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium text-foreground">
+                              {leader?.name || entry.namaMahasiswa || "Unknown"}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {members.length > 1
+                                ? `+ ${members.length - 1} Anggota`
+                                : "Individu"}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-foreground">
+                            {entry.namaPerusahaan || "-"}
+                          </TableCell>
+                          <TableCell>{getStatusBadge(entry.status)}</TableCell>
+                          <TableCell className="pr-6">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-primary border-primary/50 hover:bg-primary/5"
+                              onClick={() => handleReview(entry)}
+                            >
+                              {entry.status === "menunggu" ? "Review" : "Lihat"}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>

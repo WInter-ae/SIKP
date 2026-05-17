@@ -63,7 +63,7 @@ function DuringInternPage() {
               },
             );
             setTimeout(() => {
-              if (window.location.pathname !== "/login") {
+              if (window.location.pathname !== "/login" && window.location.pathname !== "/") {
                 window.location.href = "/login?reason=unauthorized";
               }
             }, 3000);

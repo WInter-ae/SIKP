@@ -438,12 +438,12 @@ export default function TeamCreationPage() {
           members: acceptedMembers
             .map((m: TeamMember) => {
               const memberIdentity = getTeamMemberIdentity(m);
-              
+
               // FALLBACK LOGIC: Identify if this member is the current user
               const isCurrentMember =
                 (memberIdentity.id || m.userId) === user?.id ||
                 (memberIdentity.nim && user?.nim && memberIdentity.nim === user.nim);
-              
+
               // If name/nim is missing but it's the current user, use data from session
               const resolvedName =
                 memberIdentity.name ||
@@ -3105,10 +3105,10 @@ export default function TeamCreationPage() {
       {/* Header Section */}
       <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
-          Halaman Pembuatan Tim
+          Halaman Pembentukan Tim
         </h1>
         <p className="text-sm text-muted-foreground">
-          Buat tim Anda untuk melaksanakan Kerja Praktik
+          Bentuk tim Anda untuk melaksanakan Kerja Praktik
         </p>
         <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>

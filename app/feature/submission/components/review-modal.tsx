@@ -37,8 +37,8 @@ import { StatusBadge } from "./status-badge";
 import { useUser } from "~/contexts/user-context";
 
 import type { Application, DocumentFile } from "../types";
-import type { MailEntry } from "~/feature/hearing-dosen/types/dosen";
-import { generateSuratPengantarPdf } from "~/feature/hearing-dosen/lib/generate-surat-pengantar-pdf";
+import type { MailEntry } from "~/feature/hearing/types/dosen";
+import { generateSuratPengantarPdf } from "~/feature/hearing/lib/generate-surat-pengantar-pdf";
 import {
   STANDARD_DOCUMENT_TITLES,
   isSuratPengantarDocument,

@@ -836,10 +836,10 @@ function SubmissionPage() {
       <>
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Halaman Pengajuan Syarat Kerja Praktik
+            Halaman Pengajuan Kerja Praktik
           </h1>
           <p className="text-muted-foreground">
-            Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
+            Lengkapi persyaratan yang diperlukan untuk melaksanakan Kerja
             Praktik
           </p>
         </div>
@@ -871,10 +871,10 @@ function SubmissionPage() {
       {/* Header Section */}
       <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
-          Halaman Pengajuan Syarat Kerja Praktik
+          Halaman Pengajuan Kerja Praktik
         </h1>
         <p className="text-sm text-muted-foreground">
-          Upload dokumen-dokumen yang diperlukan untuk melaksanakan Kerja
+          Lengkapi Peryaratan yang diperlukan untuk melaksanakan Kerja
           Praktik
         </p>
         <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />

@@ -1,4 +1,4 @@
-import MailVerificationDosenPage from "~/feature/hearing-dosen/pages/mail-verification-dosen-page";
+import MailVerificationDosenPage from "~/feature/hearing/pages/mail-verification-dosen-page";
 
 export function meta() {
   return [
