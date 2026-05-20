@@ -81,6 +81,7 @@ function SubmissionPage() {
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [isReadOnlyPreview, setIsReadOnlyPreview] = useState(false);
   const [teamId, setTeamId] = useState<string>("");
   const [isCurrentUserLeader, setIsCurrentUserLeader] =
     useState<boolean>(false);
@@ -256,9 +257,8 @@ function SubmissionPage() {
           );
 
           if (!fixedTeam) {
-            setLoadError(
-              "Tim tidak ditemukan. Silakan tetapkan tim terlebih dahulu.",
-            );
+            setLoadError(null);
+            setIsReadOnlyPreview(true);
             setTeamMembers([]);
             setSubmission(null);
             setSubmissionDocuments([]);
@@ -866,6 +866,13 @@ function SubmissionPage() {
     );
   }
 
+  const isSubmissionLocked = isReadOnlyPreview || isSubmissionSubmitted;
+  const canEditAdditionalInfo =
+    isCurrentUserLeader && !isSubmissionLocked;
+  const canUploadDocuments = !isSubmissionLocked;
+  const canUploadProposal = isCurrentUserLeader && !isSubmissionLocked;
+  const canSubmitSubmission = isCurrentUserLeader && !isSubmissionLocked;
+
   return (
     <div className="pb-10">
       {/* Header Section */}
@@ -880,8 +887,18 @@ function SubmissionPage() {
         <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
 
+      {isReadOnlyPreview && (
+        <Alert className="mb-8 border-l-4 border-amber-600 bg-amber-600/5">
+          <Info className="h-5 w-5 text-amber-600" />
+          <AlertDescription className="text-amber-700 dark:text-amber-400">
+            Tim belum ditetapkan. Halaman ini hanya dapat dilihat untuk
+            mengetahui syarat pengajuan.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Info Alert */}
-      {submission?.status === "DRAFT" && (
+      {submission?.status === "DRAFT" && !isReadOnlyPreview && (
         <Alert className="mb-8 border-l-4 border-primary bg-primary/5">
           <Info className="h-5 w-5 text-primary" />
           <AlertDescription className="text-foreground">
@@ -953,7 +970,7 @@ function SubmissionPage() {
             <AdditionalInfoForm
               initialData={additionalInfo}
               onDataChange={handleAdditionalInfoChange}
-              isEditable={isCurrentUserLeader && !isSubmissionSubmitted}
+              isEditable={canEditAdditionalInfo}
               autoSaveStatus={autoSaveStatus}
               autoSaveError={autoSaveError}
             />
@@ -973,7 +990,7 @@ function SubmissionPage() {
                   isCurrentUserLeader && !proposalDocument ? "grow" : ""
                 }
               >
-                {isCurrentUserLeader ? (
+                {canUploadProposal ? (
                   proposalDocument ? (
                     <div className="mb-2">
                       <p className="block font-medium mb-2">
@@ -984,7 +1001,7 @@ function SubmissionPage() {
                           size="sm"
                           className="w-full sm:w-auto"
                           onClick={() => setIsProposalReuploadConfirmOpen(true)}
-                          disabled={isSubmissionSubmitted}
+                          disabled={isSubmissionLocked}
                         >
                           Terupload
                         </Button>
@@ -1027,7 +1044,7 @@ function SubmissionPage() {
                     <FileUpload
                       label="Upload Surat Proposal"
                       onFileChange={handleProposalUpload}
-                      disabled={isSubmissionSubmitted}
+                      disabled={isSubmissionLocked}
                     />
                   )
                 ) : (
@@ -1066,7 +1083,9 @@ function SubmissionPage() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Proposal hanya bisa diupload oleh ketua tim.
+                      {isReadOnlyPreview
+                        ? "Tetapkan tim terlebih dahulu untuk mengunggah dokumen."
+                        : "Proposal hanya bisa diupload oleh ketua tim."}
                     </p>
                     {proposalDocument?.status &&
                       proposalDocument.status !== "PENDING" && (
@@ -1103,7 +1122,7 @@ function SubmissionPage() {
                 dosenKpNameByKey={dosenKpNameByKey}
                 onUpload={handleDocumentUpload}
                 onSubmitRequest={handleAjukanSurat}
-                disabled={isSubmissionSubmitted}
+                disabled={!canUploadDocuments}
                 signedUrlByKey={signedUrlByKey}
                 rejectionReasonByKey={rejectionReasonByKey}
               />
@@ -1125,7 +1144,7 @@ function SubmissionPage() {
               }}
               size="lg"
               className="w-full sm:w-auto px-10 py-3 font-medium text-lg"
-              disabled={!isCurrentUserLeader || isSubmissionSubmitted}
+              disabled={!canSubmitSubmission}
             >
               {isPendingReviewStage || isRejectedBeforeReapply
                 ? "Telah Diajukan"

@@ -166,7 +166,7 @@ export default function DashboardAdminPage({
             "text-red-600 dark:text-red-400",
             "text-blue-600 dark:text-blue-400"
           ];
-          
+
           return (
             <Card key={card.title} className={`py-3 border-l-4 ${borderColors[index % borderColors.length]} ${bgColors[index % bgColors.length]} shadow-sm hover:shadow-md transition-shadow duration-200`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-4">
@@ -274,11 +274,10 @@ export default function DashboardAdminPage({
                   className="flex items-start gap-3 text-sm"
                 >
                   <div
-                    className={`h-2 w-2 rounded-full shrink-0 mt-1.5 ${
-                      activity.status === "success"
+                    className={`h-2 w-2 rounded-full shrink-0 mt-1.5 ${activity.status === "success"
                         ? "bg-green-500"
                         : "bg-blue-500"
-                    }`}
+                      }`}
                   />
                   <span className="flex-1 min-w-0 break-words">{activity.action}</span>
                   <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap">{activity.time}</span>
@@ -287,66 +286,6 @@ export default function DashboardAdminPage({
             </div>
           ) : (
             <EmptyState message="Belum ada aktivitas terbaru." />
-          )}
-        </CardContent>
-      </Card>
-      {/* ── Utilitas Sistem ─────────────────────────────────────────── */}
-      <Card className="shadow-lg border-l-4 border-l-orange-500 bg-orange-50/20 dark:bg-orange-900/5">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Wrench className="h-4 w-4 text-orange-600" />
-            Utilitas Sistem
-          </CardTitle>
-          <CardDescription>
-            Alat perbaikan data internal. Jalankan hanya jika diperlukan.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-orange-200 dark:border-orange-800 bg-background">
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold">Repair Data Dosen Pembimbing</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Mengisi kolom <code className="bg-muted px-1 rounded text-[11px]">dosenPembimbingId</code> pada internship
-                yang masih kosong berdasarkan data persetujuan judul.
-              </p>
-            </div>
-            <Button
-              id="btn-backfill-dosen"
-              variant="outline"
-              size="sm"
-              disabled={backfillLoading}
-              onClick={onBackfillDosen}
-              className="shrink-0 border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-            >
-              {backfillLoading ? (
-                <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Memproses...</>
-              ) : (
-                <><Wrench className="h-3.5 w-3.5 mr-1.5" /> Jalankan Repair</>
-              )}
-            </Button>
-          </div>
-
-          {/* Result */}
-          {backfillResult && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-sm">
-              <CheckIcon className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-green-800 dark:text-green-300">Repair selesai</p>
-                <p className="text-green-700 dark:text-green-400">
-                  {backfillResult.updated} internship diperbarui &bull; {backfillResult.skipped} dilewati
-                </p>
-              </div>
-            </div>
-          )}
-
-          {backfillError && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm">
-              <AlertCircle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-red-800 dark:text-red-300">Gagal</p>
-                <p className="text-red-700 dark:text-red-400">{backfillError}</p>
-              </div>
-            </div>
           )}
         </CardContent>
       </Card>
