@@ -82,12 +82,7 @@ import {
 } from "~/feature/during-intern/services/logbook-api";
 
 // Utility Functions
-import {
-  createLogbookDOCXBlob,
-  generateLogbookDOCX,
-  getLogbookDocxFileName,
-} from "~/feature/during-intern/utils/generate-logbook-docx";
-
+// (DOCX generation moved to backend)
 interface LogbookEntry {
   id: string;
   date: string;
@@ -216,6 +211,7 @@ function LogbookPage() {
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [isSavingLogbook, setIsSavingLogbook] = useState(false);
   const [generatedDates, setGeneratedDates] = useState<string[]>([]);
+  const [holidays, setHolidays] = useState<string[]>([]);
   const [periodSource, setPeriodSource] = useState<"auto" | "manual" | null>(
     null,
   ); // Track sumber periode
@@ -245,148 +241,117 @@ function LogbookPage() {
   >(null);
   const [showIncompleteLogbookDialog, setShowIncompleteLogbookDialog] = useState(false);
 
-  // Fetch complete internship data (⭐ ONE API CALL FOR ALL DATA)
+  // Fetch holidays on mount
+  useEffect(() => {
+    async function fetchHolidays() {
+      try {
+        const response = await fetch("https://dayoffapi.vercel.app/api/v1/holidays");
+        if (!response.ok) throw new Error("API response not ok");
+        const data = await response.json();
+        if (data && Array.isArray(data)) {
+          const dates = data.map((h: any) => h.holiday_date);
+          setHolidays(dates);
+        }
+      } catch (error) {
+        console.warn("⚠️ Failed to fetch holidays from API, using fallback list:", error);
+        setHolidays([
+          "2026-01-01", // Tahun Baru 2026
+          "2026-02-17", // Isra Mikraj
+          "2026-02-24", // Tahun Baru Imlek
+          "2026-03-20", // Hari Suci Nyepi
+          "2026-03-26", "2026-03-27", // Idul Fitri
+          "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", // Cuti Bersama Idul Fitri
+          "2026-04-03", // Wafat Yesus Kristus
+          "2026-05-01", // Hari Buruh
+          "2026-05-14", // Kenaikan Yesus Kristus
+          "2026-05-15", // Cuti Bersama Kenaikan
+          "2026-05-22", // Hari Raya Waisak
+          "2026-05-27", // Idul Adha
+          "2026-05-28", // Cuti Bersama Idul Adha
+          "2026-06-01", // Hari Lahir Pancasila
+          "2026-07-17", // Tahun Baru Islam
+          "2026-08-17", // Hari Kemerdekaan RI
+          "2026-09-25", // Maulid Nabi
+          "2026-12-25", // Hari Raya Natal
+          "2026-12-26", // Cuti Bersama Natal
+        ]);
+      }
+    }
+    fetchHolidays();
+  }, []);
+
+  // Fetch complete internship data
   useEffect(() => {
     async function fetchInternshipData() {
       try {
         const response = await getCompleteInternshipData();
-
         if (response.success && response.data) {
           setCompleteData(response.data);
-
-          // ✅ AUTO-POPULATE periode dari data submission (per mahasiswa)
           const submission = response.data.submission;
           if (submission?.startDate && submission?.endDate) {
-            // Periode tersedia dari submission - auto-populate!
             const autoWorkPeriod = {
               startDate: submission.startDate,
               endDate: submission.endDate,
               startDay: "senin",
               endDay: "jumat",
             };
-
             setWorkPeriod(autoWorkPeriod);
-            setPeriodSource("auto"); // Mark sebagai auto-populate
+            setPeriodSource("auto");
 
-            // Cek localStorage untuk dates yang sudah digenerate
-            const savedPeriodState = localStorage.getItem(
-              "logbook_period_saved",
-            );
+            const savedPeriodState = localStorage.getItem("logbook_period_saved");
             const savedDates = localStorage.getItem("logbook_generated_dates");
             const savedWorkPeriod = localStorage.getItem("logbook_work_period");
-            // Jika sudah pernah generate dengan periode yang sama, restore dari localStorage
+            
             if (savedPeriodState === "true" && savedDates && savedWorkPeriod) {
               const saved = JSON.parse(savedWorkPeriod);
-              if (
-                saved.startDate === submission.startDate &&
-                saved.endDate === submission.endDate
-              ) {
+              if (saved.startDate === submission.startDate && saved.endDate === submission.endDate) {
+                setWorkPeriod(saved);
                 setIsPeriodSaved(true);
-                setGeneratedDates(JSON.parse(savedDates));
-                toast.success("Periode magang dan logbook berhasil dimuat!");
-                return; // Exit early karena sudah restore dari localStorage
+                // RE-GENERATE dates dynamically so latest holidays are ALWAYS applied
+                const refreshedDates = generateDatesFromPeriod(
+                  saved.startDate,
+                  saved.endDate,
+                  saved.startDay || "senin",
+                  saved.endDay || "jumat"
+                );
+                setGeneratedDates(refreshedDates);
+                return;
               }
             }
 
-            // Jika belum pernah generate atau periode berbeda, auto-generate sekarang!
             const dates = generateDatesFromPeriod(
               autoWorkPeriod.startDate,
               autoWorkPeriod.endDate,
               autoWorkPeriod.startDay,
               autoWorkPeriod.endDay,
             );
-
             setGeneratedDates(dates);
             setIsPeriodSaved(true);
-
-            // Save ke localStorage
             localStorage.setItem("logbook_period_saved", "true");
-            localStorage.setItem(
-              "logbook_generated_dates",
-              JSON.stringify(dates),
-            );
-            localStorage.setItem(
-              "logbook_work_period",
-              JSON.stringify(autoWorkPeriod),
-            );
-
-            toast.success(
-              `Periode otomatis dari pengajuan! ${dates.length} hari kerja telah digenerate.`,
-            );
-          } else {
-            // Tidak ada data submission - coba restore dari localStorage (input manual sebelumnya)
-            const savedPeriodState = localStorage.getItem(
-              "logbook_period_saved",
-            );
-            const savedDates = localStorage.getItem("logbook_generated_dates");
-            const savedWorkPeriod = localStorage.getItem("logbook_work_period");
-            if (savedPeriodState === "true" && savedDates && savedWorkPeriod) {
-              // Restore input manual sebelumnya
-              setIsPeriodSaved(true);
-              setGeneratedDates(JSON.parse(savedDates));
-              setWorkPeriod(JSON.parse(savedWorkPeriod));
-              setPeriodSource("manual"); // Mark sebagai manual input
-              toast.success("Periode logbook manual berhasil dimuat!");
-            } else {
-              // Belum ada data submission DAN belum pernah input manual
-              setPeriodSource(null);
-              toast.info(
-                "Silakan input periode kerja Anda secara manual di Step 1",
-              );
-            }
-          }
-        } else {
-          // Check if it's an authentication error
-          if (
-            response.message?.toLowerCase().includes("unauthorized") ||
-            response.message?.toLowerCase().includes("token")
-          ) {
-            toast.error(
-              "Session expired. Anda akan diarahkan ke halaman login...",
-              {
-                duration: 3000,
-              },
-            );
-            // Redirect to login after 3 seconds if not already redirected
-            setTimeout(() => {
-              if (window.location.pathname !== "/login") {
-                window.location.href = "/login?reason=unauthorized";
-              }
-            }, 3000);
-          } else {
-            toast.error(response.message || "Gagal memuat data magang");
+            localStorage.setItem("logbook_work_period", JSON.stringify(autoWorkPeriod));
           }
         }
-      } catch {
-        toast.error("Gagal memuat data magang");
+      } catch (error) {
+        console.error("Failed to fetch internship data:", error);
       } finally {
         setIsLoadingProfile(false);
       }
     }
-
     fetchInternshipData();
-  }, []);
+  }, [holidays]); // Dependency on holidays to ensure generation uses them
 
   useEffect(() => {
     async function fetchLogbookFromBackend() {
       if (!completeData?.student?.userId) return;
-
       try {
         const response = await getLogbookEntries();
-        if (!response.success || !response.data) {
-          return;
+        if (response.success && response.data) {
+          setLogbookEntries(response.data.entries.map(mapBackendLogbookEntry));
         }
-
-        const backendEntries = response.data.entries.map(
-          mapBackendLogbookEntry,
-        );
-
-        setLogbookEntries(backendEntries);
-      } catch {
-        // keep current UI state when fetch fails
+      } catch (error) {
+        console.error("Failed to fetch logbook:", error);
       }
     }
-
     fetchLogbookFromBackend();
   }, [completeData?.student?.userId]);
 
@@ -420,15 +385,25 @@ function LogbookPage() {
       d <= end;
       d = new Date(d.getTime() + MS_PER_DAY)
     ) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const dateStr = `${year}-${month}-${day}`;
+
+      // ❌ SKIP TANGGAL MERAH (Holidays)
+      if (holidays.includes(dateStr)) {
+        continue;
+      }
+
       const currentDay = d.getDay();
 
       if (startDayNum <= endDayNum) {
         if (currentDay >= startDayNum && currentDay <= endDayNum) {
-          dates.push(d.toISOString().split("T")[0]);
+          dates.push(dateStr);
         }
       } else {
         if (currentDay >= startDayNum || currentDay <= endDayNum) {
-          dates.push(d.toISOString().split("T")[0]);
+          dates.push(dateStr);
         }
       }
     }
@@ -1038,384 +1013,19 @@ function LogbookPage() {
     return "Menunggu";
   };
 
-  const imageUrlToBase64 = async (url: string): Promise<string> => {
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error("Error converting image to base64:", error);
-      return url; // fallback to original URL
-    }
-  };
-
-  const normalizeSignatureSrc = (signature?: string): string | null => {
-    if (!signature) return null;
-
-    const value = signature.trim();
-    if (!value) return null;
-    if (value.startsWith("data:image/")) return value;
-
-    // Some APIs send raw base64 without data URI prefix.
-    if (/^[A-Za-z0-9+/=\r\n]+$/.test(value)) {
-      return `data:image/png;base64,${value.replace(/\s+/g, "")}`;
-    }
-
-    return value;
-  };
-
-  const buildPrintStyleHtml = (
-    data: ReturnType<typeof buildLogbookData>,
-    options: {
-      title: string;
-      autoOpenPrint?: boolean;
-      downloadUrl?: string;
-      downloadFileName?: string;
-    },
-  ): string => {
-    const mentorSignatureSrc = normalizeSignatureSrc(
-      data.internship?.mentorSignature,
-    );
-
-    const rowsHtml = data.generatedDates
-      .map((date, index) => {
-        const entry = data.entries.find((item) => item.date === date);
-        const weekNum = getWeekNumber(date);
-        const prevWeekNum =
-          index > 0 ? getWeekNumber(data.generatedDates[index - 1]) : 0;
-        const showWeekNumber = weekNum !== prevWeekNum;
-        const weekCell = showWeekNumber
-          ? `<td class="col-week" rowspan="${getWeekRowSpan(data.generatedDates, index)}">${escapeHtml(String(weekNum))}</td>`
-          : "";
-        const parafCell =
-          entry?.mentorSignature?.status === "approved" && mentorSignatureSrc
-            ? `<img class="paraf-image" src="${mentorSignatureSrc}" alt="Paraf Pembimbing" />`
-            : escapeHtml(getParafText(entry));
-        return `
-          <tr>
-            ${weekCell}
-            <td class="col-date">${escapeHtml(formatDate(date))}</td>
-            <td class="col-activity">${escapeHtml(entry?.description || "-")}</td>
-            <td class="col-paraf">${parafCell}</td>
-          </tr>
-        `;
-      })
-      .join("");
-
-    const mentorSignatureBlock = mentorSignatureSrc
-      ? `<img class="signature-image" src="${mentorSignatureSrc}" alt="Paraf Pembimbing" />`
-      : `<div class="signature-placeholder"></div>`;
-
-    const printScript = options.autoOpenPrint
-      ? `<script>window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 180); });</script>`
-      : "";
-
-    const downloadScript = options.downloadUrl
-      ? `
-      <script>
-        async function downloadDocument(url, filename) {
-          if (window.opener && typeof window.opener.__downloadLogbookDocx === 'function') {
-            try {
-              await window.opener.__downloadLogbookDocx();
-              return;
-            } catch (error) {
-              // fallback to blob URL download below
-            }
-          }
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = filename;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        }
-      </script>
-    `
-      : "";
-
-    return `
-      <!DOCTYPE html>
-      <html lang="id">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>${escapeHtml(options.title)}</title>
-        <style>
-          :root { color-scheme: light; }
-          * { box-sizing: border-box; }
-          body { margin: 0; background: #ffffff; color: #111827; font-family: "Times New Roman", serif; }
-          .page {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 0 auto;
-            padding: 18mm;
-            background: #fff;
-            box-shadow: none;
-          }
-          h1 {
-            margin: 0 0 14px;
-            text-align: center;
-            font-size: 21px;
-            font-weight: 700;
-            letter-spacing: 0.2px;
-          }
-          .meta {
-            width: 67%;
-            margin: 0 auto 14px;
-            transform: translateX(40px);
-            font-size: 16px;
-            line-height: 1.45;
-          }
-          .meta-row { display: grid; grid-template-columns: 170px 16px 1fr; }
-          table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 16px; }
-          th, td {
-            border: 1px solid #374151;
-            padding: 6px 8px;
-            vertical-align: middle;
-          }
-          tr {
-            height: 40px;
-            page-break-inside: avoid;
-          }
-          th { text-align: center; background: #f3f4f6; }
-          th { line-height: 1.15; font-weight: 700; }
-          .col-week,
-          .col-date,
-          .col-paraf {
-            text-align: center;
-            white-space: nowrap;
-          }
-          .col-week {
-            vertical-align: middle;
-            font-weight: 700;
-          }
-          .col-activity {
-            text-align: left;
-            white-space: pre-wrap;
-            word-break: break-word;
-            line-height: 1.25;
-          }
-          .paraf-image {
-            display: block;
-            max-width: 100px;
-            max-height: 75px;
-            margin: 0 auto;
-            object-fit: contain;
-          }
-          .footer-sign {
-            margin-top: 8px;
-            display: flex;
-            justify-content: flex-end;
-            padding-right: 2px;
-            margin-right: -50px;
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .signature-box {
-            width: 230px;
-            text-align: left;
-            font-size: 16px;
-            break-inside: avoid;
-            page-break-inside: avoid;
-          }
-          .signature-image {
-            display: block;
-            width: 150px;
-            height: 100px;
-            margin: 10px 0 8px 0;
-            object-fit: contain;
-          }
-          .signature-placeholder { height: 100px; }
-          .mentor-name { margin-top: 6px; font-weight: 700; text-decoration: underline; }
-          .toolbar { 
-            position: fixed; 
-            top: 10px; 
-            left: 10px; 
-            z-index: 1000; 
-            display: flex; 
-            gap: 8px;
-          }
-          .btn-download {
-            padding: 8px 16px;
-            background-color: #3b82f6;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: background-color 0.2s;
-          }
-          .btn-download:hover {
-            background-color: #2563eb;
-          }
-          .btn-download:active {
-            background-color: #1d4ed8;
-          }
-          @media print {
-            body { background: #fff; }
-            thead { display: table-row-group; }
-            .page { margin: 0; box-shadow: none; width: 100%; min-height: auto; }
-            .toolbar { display: none; }
-          }
-        </style>
-      </head>
-      <body>
-        ${
-          options.downloadUrl
-            ? `
-        <div class="toolbar">
-          <button class="btn-download" onclick="downloadDocument('${options.downloadUrl}', '${escapeHtml(options.downloadFileName || "logbook.docx")}')">
-            ⬇ Download Word
-          </button>
-        </div>
-        `
-            : ""
-        }
-        <div class="page">
-          <h1>FORMULIR KEGIATAN HARIAN MAHASISWA</h1>
-
-          <div class="meta">
-            <div class="meta-row"><span>Nama</span><span>:</span><span>${escapeHtml(data.student?.name || "-")}</span></div>
-            <div class="meta-row"><span>NIM</span><span>:</span><span>${escapeHtml(data.student?.nim || "-")}</span></div>
-            <div class="meta-row"><span>Program Studi</span><span>:</span><span>${escapeHtml(data.student?.prodi || "-")}</span></div>
-            <div class="meta-row"><span>Tempat KP</span><span>:</span><span>${escapeHtml(data.internship?.company || "-")}</span></div>
-            <div class="meta-row"><span>Bagian/Bidang</span><span>:</span><span>${escapeHtml(data.internship?.position || "-")}</span></div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 14.3%;">Minggu<br/>Ke</th>
-                <th style="width: 18%;">Tanggal</th>
-                <th style="width: 49%;">Jenis Kegiatan</th>
-                <th style="width: 18.7%;">Paraf<br/>Pembimbing<br/>Lapangan</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
-
-          <div class="footer-sign">
-            <div class="signature-box">
-              <div>Palembang, ${escapeHtml(formatDate(data.workPeriod.endDate))}</div>
-              <div>Pembimbing Lapangan,</div>
-              ${mentorSignatureBlock}
-              <div class="mentor-name">${escapeHtml(data.internship?.mentorName || "-")}</div>
-              <div>${escapeHtml(data.internship?.position || "-")}</div>
-            </div>
-          </div>
-        </div>
-        ${printScript}
-        ${downloadScript}
-      </body>
-      </html>
-    `;
-  };
-
-  const openDocxPreviewTab = async (
-    blob: Blob,
-    fileName: string,
-    data: ReturnType<typeof buildLogbookData>,
-  ): Promise<{ converted: boolean; error?: string }> => {
-    const url = URL.createObjectURL(blob);
-
-    (
-      window as unknown as { __downloadLogbookDocx?: () => Promise<void> }
-    ).__downloadLogbookDocx = async () => {
-      const [{ saveAs }, freshBlob] = await Promise.all([
-        import("file-saver"),
-        createLogbookDOCXBlob(data),
-      ]);
-      saveAs(freshBlob, fileName);
-    };
-
-    const previewWindow = window.open("", "_blank");
-
-    if (!previewWindow) {
-      URL.revokeObjectURL(url);
-      throw new Error(
-        "Gagal membuka tab preview. Pastikan pop-up tidak diblokir browser.",
-      );
-    }
-
-    previewWindow.document.write(
-      buildPrintStyleHtml(data, {
-        title: "Preview DOCX Logbook",
-        autoOpenPrint: false,
-        downloadUrl: url,
-        downloadFileName: fileName,
-      }),
-    );
-    previewWindow.document.close();
-    previewWindow?.addEventListener("beforeunload", () => {
-      URL.revokeObjectURL(url);
-      const win = window as unknown as {
-        __downloadLogbookDocx?: () => Promise<void>;
-      };
-      if (win.__downloadLogbookDocx) {
-        delete win.__downloadLogbookDocx;
-      }
-    });
-    return { converted: true };
-  };
-
-  const openPdfPreviewTab = (data: ReturnType<typeof buildLogbookData>) => {
-    const previewWindow = window.open("", "_blank");
-
-    if (!previewWindow) {
-      throw new Error(
-        "Gagal membuka tab preview. Pastikan pop-up tidak diblokir browser.",
-      );
-    }
-
-    previewWindow.document.write(
-      buildPrintStyleHtml(data, {
-        title: "FORMULIR KEGIATAN HARIAN MAHASISWA",
-        autoOpenPrint: true,
-      }),
-    );
-    previewWindow.document.close();
-  };
 
   const generateDirectly = async (format: "docx" | "pdf") => {
     try {
-      const logbookData = buildLogbookData();
-
-      if (format === "pdf") {
-        // For PDF, we try to convert signature to base64 to ensure it renders correctly
-        if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
-          logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
-        }
+      const baseUrl = window.location.origin.includes('localhost') 
+        ? 'http://localhost:8787' 
+        : 'https://backend-sikp.pusing.me'; 
         
-        openPdfPreviewTab(logbookData);
-        toast.success(
-          "Preview PDF dibuka. Gunakan Simpan sebagai PDF agar hasil 1:1 dengan preview.",
-        );
-      } else {
-        // For DOCX, we MUST convert signature to base64
-        if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
-          toast.loading("Menyiapkan tanda tangan mentor...", { id: "docx-gen" });
-          logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
-          toast.dismiss("docx-gen");
-        }
-        
-        await generateLogbookDOCX(logbookData);
-        toast.success("Logbook DOCX berhasil didownload!");
-      }
+      const url = `${baseUrl}/api/internships/generate/logbook?format=${format}`;
+      window.open(url, "_blank");
+      toast.success(`Sedang menyiapkan dokumen logbook (${format.toUpperCase()})...`);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Gagal generate logbook. Silakan coba lagi.";
-      toast.error(message);
+      console.error("Gagal generate dokumen:", error);
+      toast.error("Gagal generate logbook. Silakan coba lagi.");
     }
   };
 
@@ -1435,47 +1045,17 @@ function LogbookPage() {
   const performGenerate = async () => {
     if (!selectedExportFormat) return;
 
-    const logbookData = buildLogbookData();
-
-    // Convert signature to base64 if needed for both PDF and DOCX
-    if (logbookData.internship?.mentorSignature && !logbookData.internship.mentorSignature.startsWith("data:")) {
-      try {
-        toast.loading("Menyiapkan tanda tangan mentor...", { id: "gen-prep" });
-        logbookData.internship.mentorSignature = await imageUrlToBase64(logbookData.internship.mentorSignature);
-        toast.dismiss("gen-prep");
-      } catch (e) {
-        console.error("Failed to convert signature:", e);
-        toast.dismiss("gen-prep");
-      }
-    }
-
     try {
-      if (selectedExportFormat === "pdf") {
-        openPdfPreviewTab(logbookData);
-        toast.success("Preview PDF siap cetak dibuka di tab baru.");
-      } else {
-        const blob = await createLogbookDOCXBlob(logbookData);
-        const fileName = getLogbookDocxFileName();
-        const previewResult = await openDocxPreviewTab(
-          blob,
-          fileName,
-          logbookData,
-        );
-
-        if (previewResult.converted) {
-          toast.success("Preview DOCX dibuka di tab baru.");
-        } else {
-          toast.warning(
-            "Preview DOCX tidak bisa dirender otomatis. Silakan gunakan tombol Download DOCX pada tab preview.",
-          );
-        }
-      }
+      const baseUrl = window.location.origin.includes('localhost') 
+        ? 'http://localhost:8787' 
+        : 'https://backend-sikp.pusing.me'; 
+        
+      const url = `${baseUrl}/api/internships/generate/logbook?format=${selectedExportFormat}`;
+      window.open(url, "_blank");
+      toast.success(`Sedang menyiapkan dokumen logbook (${selectedExportFormat.toUpperCase()})...`);
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Terjadi kesalahan saat membuka preview logbook.";
-      toast.error(message);
+      console.error("Gagal generate dokumen:", error);
+      toast.error("Terjadi kesalahan saat mengunduh dokumen logbook.");
     } finally {
       setSelectedExportFormat(null);
     }

@@ -156,9 +156,14 @@ const kaprodiMenu: NavItem[] = [
     icon: Home,
   },
   {
+    title: "Verifikasi Nilai Sidang",
+    url: "/dosen/kp/verifikasi-nilai-sidang",
+    icon: FileCheck,
+  },
+  {
     title: "Verifikasi Nilai Akhir",
     url: "/dosen/kp/verifikasi-nilai",
-    icon: FileCheck,
+    icon: GraduationCap,
   },
 ];
 
@@ -259,21 +264,6 @@ const mentorMenu: NavItem[] = [
     title: "Notifikasi",
     url: "/mentor/notifikasi",
     icon: Bell,
-  },
-  {
-    title: "Arsip",
-    url: "/mentor/arsip",
-    icon: Archive,
-  },
-  {
-    title: "Profil",
-    url: "https://sso-unsri.vercel.app/profile",
-    icon: UserCircle,
-  },
-  {
-    title: "Pengaturan",
-    url: "/mentor/pengaturan",
-    icon: Settings,
   },
 ];
 

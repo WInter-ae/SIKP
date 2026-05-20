@@ -13,6 +13,7 @@ import {
   MapPin,
   Info,
   Clock,
+  UserCircle,
   XCircle,
   AlertCircle,
 } from "lucide-react";
@@ -32,16 +33,60 @@ import { Textarea } from "~/components/ui/textarea";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 
-import { getCompleteInternshipData } from "~/feature/during-intern/services/student-api";
-import { requestMentor } from "../services";
-import type { FieldMentor, MentorRequest } from "../types";
+import { 
+  getCompleteInternshipData, 
+  requestMentor, 
+  joinLeaderMentor,
+  type CompleteInternshipData,
+  type MentorRequestPayload 
+} from "~/feature/during-intern/services/student-api";
+
+// Local types for the page
+export interface FieldMentor {
+  id: string;
+  code: string;
+  name: string;
+  email: string;
+  company: string;
+  position: string;
+  phone: string;
+  status: "pending" | "registered" | "approved" | "rejected";
+  createdAt: string;
+  registeredAt?: string;
+  approvedAt?: string;
+  photo?: string;
+  nip?: string;
+  address?: string;
+  rejectionReason?: string;
+}
+
+export interface MentorRequest {
+  mentorName: string;
+  mentorEmail: string;
+  mentorPhone: string;
+  company: string;
+  position: string;
+  address: string;
+}
 
 function FieldMentorPage() {
   const navigate = useNavigate();
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [isLoadingMentor, setIsLoadingMentor] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
+  const [completeData, setCompleteData] = useState<CompleteInternshipData | null>(null);
   const [mentorRequest, setMentorRequest] = useState<MentorRequest>({
     mentorName: "",
     mentorEmail: "",
@@ -62,6 +107,7 @@ function FieldMentorPage() {
         return;
       }
 
+      setCompleteData(response.data);
       const internship = response.data.internship;
       const mentor = response.data.mentor;
       const submission = response.data.submission;
@@ -122,6 +168,25 @@ function FieldMentorPage() {
     setMentorRequest((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleJoinLeaderMentor = async () => {
+    setShowJoinDialog(false);
+    setIsSubmitting(true);
+    try {
+      const response = await joinLeaderMentor();
+      if (response.success) {
+        toast.success("Berhasil mengikuti pembimbing lapangan ketua tim!");
+        await loadMentorData();
+      } else {
+        toast.error(response.message || "Gagal mengikuti mentor ketua tim.");
+      }
+    } catch (error) {
+      console.error("Error joining leader mentor:", error);
+      toast.error("Terjadi kesalahan sistem.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -133,7 +198,16 @@ function FieldMentorPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await requestMentor(mentorRequest);
+      const payload: MentorRequestPayload = {
+        mentorName: mentorRequest.mentorName,
+        mentorEmail: mentorRequest.mentorEmail,
+        mentorPhone: mentorRequest.mentorPhone,
+        companyName: mentorRequest.company,
+        position: mentorRequest.position,
+        companyAddress: mentorRequest.address,
+      };
+
+      const response = await requestMentor(payload);
 
       if (response.success) {
         toast.success(
@@ -144,9 +218,9 @@ function FieldMentorPage() {
           mentorName: "",
           mentorEmail: "",
           mentorPhone: "",
-          company: "",
+          company: mentorRequest.company, // Keep company info
           position: "",
-          address: "",
+          address: mentorRequest.address, // Keep address info
         });
         // Refresh data to show pending status
         await loadMentorData();
@@ -394,7 +468,6 @@ function FieldMentorPage() {
             </div>
 
             {/* Approval Waiting Section */}
-            {/* Approval Waiting Section */}
             {currentMentor.status === "pending" && (
               <div className="mt-4 p-5 bg-amber-50/80 border border-amber-200 rounded-xl flex items-start gap-4">
                 <div className="bg-amber-100 p-2 rounded-full">
@@ -416,28 +489,72 @@ function FieldMentorPage() {
         </Card>
       )}
 
-      {/* Empty State / Request Button */}
+      {/* Empty State / Join Leader / Request Button */}
       {!currentMentor && !showRequestForm && !isLoadingMentor && (
-        <Card className="text-center py-12">
-          <CardContent className="space-y-6">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
-              <UserPlus className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-lg font-semibold">
-                Belum Ada Mentor Terdaftar
-              </h3>
-              <p className="text-muted-foreground">
-                Anda belum memiliki mentor lapangan terdaftar. Klik tombol di
-                bawah untuk mendaftarkan mentor.
-              </p>
-            </div>
-            <Button size="lg" onClick={() => setShowRequestForm(true)}>
-              <UserPlus className="mr-2 h-5 w-5" />
-              Request Mentor Lapangan
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          {/* Join Leader Mentor Option */}
+          {completeData?.team?.leaderMentor && (
+            <Card className="border-2 border-primary/20 bg-primary/5">
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2 text-primary">
+                  <UserCircle className="h-6 w-6" />
+                  Gunakan Mentor Ketua Tim?
+                </CardTitle>
+                <CardDescription>
+                  Ketua tim Anda ({completeData.team.leaderMentor.name}) sudah memiliki mentor lapangan yang disetujui.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1 space-y-2">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <span className="text-muted-foreground">Nama Mentor:</span>
+                    <span className="font-medium">{completeData.team.leaderMentor.name}</span>
+                    <span className="text-muted-foreground">Perusahaan:</span>
+                    <span className="font-medium">{completeData.team.leaderMentor.company}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    * Jika Anda memilih ini, Anda tidak perlu mengisi formulir pengajuan lagi.
+                  </p>
+                </div>
+                <Button 
+                  size="lg" 
+                  className="w-full md:w-auto shadow-lg"
+                  onClick={() => setShowJoinDialog(true)}
+                  disabled={isSubmitting}
+                >
+                  <Copy className="mr-2 h-5 w-5" />
+                  {isSubmitting ? "Memproses..." : "Ya, Ikuti Mentor Ketua"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="text-center py-12">
+            <CardContent className="space-y-6">
+              <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto">
+                <UserPlus className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">
+                  {completeData?.team?.leaderMentor ? "Atau Ajukan Mentor Berbeda" : "Belum Ada Mentor Terdaftar"}
+                </h3>
+                <p className="text-muted-foreground">
+                  {completeData?.team?.leaderMentor 
+                    ? "Jika mentor Anda berbeda dengan ketua tim, silakan isi formulir pengajuan baru."
+                    : "Anda belum memiliki mentor lapangan terdaftar. Klik tombol di bawah untuk mendaftarkan mentor."}
+                </p>
+              </div>
+              <Button 
+                size="lg" 
+                variant={completeData?.team?.leaderMentor ? "outline" : "default"}
+                onClick={() => setShowRequestForm(true)}
+              >
+                <UserPlus className="mr-2 h-5 w-5" />
+                {completeData?.team?.leaderMentor ? "Ajukan Mentor Sendiri" : "Request Mentor Lapangan"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {!currentMentor && !showRequestForm && isLoadingMentor && (
@@ -685,9 +802,45 @@ function FieldMentorPage() {
           </Alert>
         </CardContent>
       </Card>
+      {/* AlertDialog for Join Leader Confirmation */}
+      <AlertDialog open={showJoinDialog} onOpenChange={setShowJoinDialog}>
+        <AlertDialogContent className="max-w-[500px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-xl">
+              <UserCircle className="h-6 w-6 text-primary" />
+              Konfirmasi Sinkronisasi Mentor
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-base pt-2">
+              Apakah Anda yakin ingin menggunakan pembimbing lapangan yang sama dengan 
+              <span className="font-bold text-foreground"> Ketua Tim ({completeData?.team?.leaderMentor?.name})</span>?
+            </AlertDialogDescription>
+            <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Nama Mentor:</span>
+                <span className="font-medium text-foreground">{completeData?.team?.leaderMentor?.name}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Perusahaan:</span>
+                <span className="font-medium text-foreground">{completeData?.team?.leaderMentor?.company}</span>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground mt-4 italic">
+              * Anda tidak perlu lagi mengisi formulir pendaftaran mentor secara manual.
+            </p>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleJoinLeaderMentor}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Ya, Gunakan Mentor Ini
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
 
 export default FieldMentorPage;
-

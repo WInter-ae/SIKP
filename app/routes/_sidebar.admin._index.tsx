@@ -16,6 +16,10 @@ export default function AdminDashboard() {
   const [backfillResult, setBackfillResult] = useState<{ updated: number; skipped: number } | null>(null);
   const [backfillError, setBackfillError] = useState<string | null>(null);
 
+  const [repairLoading, setRepairLoading] = useState(false);
+  const [repairResult, setRepairResult] = useState<{ updated: number; synced: number; skipped: number } | null>(null);
+  const [repairError, setRepairError] = useState<string | null>(null);
+
   const handleBackfillDosen = async () => {
     setBackfillLoading(true);
     setBackfillResult(null);
@@ -34,6 +38,27 @@ export default function AdminDashboard() {
       setBackfillError(e?.message || "Terjadi kesalahan.");
     } finally {
       setBackfillLoading(false);
+    }
+  };
+
+  const handleRepairKaprodi = async () => {
+    setRepairLoading(true);
+    setRepairResult(null);
+    setRepairError(null);
+    try {
+      const res = await internshipClient.post<{ updated: number; synced: number; skipped: number }>(
+        "/api/reporting/admin/repair-kaprodi",
+        {}
+      );
+      if (res.success && res.data) {
+        setRepairResult(res.data);
+      } else {
+        setRepairError(res.message || "Repair Kaprodi gagal.");
+      }
+    } catch (e: any) {
+      setRepairError(e?.message || "Terjadi kesalahan.");
+    } finally {
+      setRepairLoading(false);
     }
   };
 
@@ -86,6 +111,10 @@ export default function AdminDashboard() {
       backfillResult={backfillResult}
       backfillError={backfillError}
       onBackfillDosen={handleBackfillDosen}
+      repairLoading={repairLoading}
+      repairResult={repairResult}
+      repairError={repairError}
+      onRepairKaprodi={handleRepairKaprodi}
     />
   );
 }

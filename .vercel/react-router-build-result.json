@@ -17,17 +17,19 @@
       "routes/referensi": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/callback": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/register": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mentor.logbook-detail.$studentId": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.admin.pengajuan-surat-pengantar": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.logbook-monitor._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.dosen.kp.persetujuan-pembimbing": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.admin.persetujuan-pembimbing": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.verifikasi-laporan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.dosen.kp.verifikasi-sidang": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.dosen.kp.verifikasi-judul": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.dosen.kp.verifikasi-nilai": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.dosen.kp.verifikasi-surat": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mahasiswa.mentor-lapangan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.admin.penilaian-kriteria": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
-      "routes/_sidebar.dosen.kp.logbook-monitor": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
-      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.dosen.kp.surat-pengantar": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mahasiswa.kp._timeline": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mahasiswa.kp._timeline.pengujian-sidang": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
@@ -46,10 +48,12 @@
       "routes/_sidebar.mahasiswa.repositori.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.admin.logbook-reset": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.admin.surat-balasan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.mahasiswa.kp.arsip": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mentor.notifikasi": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mentor.pengaturan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mahasiswa._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mentor.penilaian": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.penilaian.verifikasi-gabungan": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.admin.penilaian._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.admin.penilaian.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.dosen.penilaian.beri-nilai.$id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
@@ -63,6 +67,7 @@
       "routes/_sidebar.admin._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.dosen._index": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.mentor.arsip": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "routes/_sidebar.admin.arsip": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/_sidebar.dashboard": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/tentang": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
       "routes/kontak": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
@@ -146,6 +151,15 @@
         "file": "app/routes/_sidebar.tsx",
         "config": {}
       },
+      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": {
+        "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
+        "path": "dosen/kp/logbook-monitor/:studentId",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
       "routes/_sidebar.mentor.logbook-detail.$studentId": {
         "id": "routes/_sidebar.mentor.logbook-detail.$studentId",
         "parentId": "routes/_sidebar",
@@ -160,6 +174,16 @@
         "parentId": "routes/_sidebar",
         "file": "app/routes/_sidebar.admin.pengajuan-surat-pengantar.tsx",
         "path": "admin/pengajuan-surat-pengantar",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.kp.logbook-monitor._index": {
+        "id": "routes/_sidebar.dosen.kp.logbook-monitor._index",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.logbook-monitor._index.tsx",
+        "path": "dosen/kp/logbook-monitor",
+        "index": true,
         "config": {
           "runtime": "nodejs"
         }
@@ -182,6 +206,15 @@
           "runtime": "nodejs"
         }
       },
+      "routes/_sidebar.dosen.kp.verifikasi-laporan": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-laporan",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.verifikasi-laporan.tsx",
+        "path": "dosen/kp/verifikasi-laporan",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
       "routes/_sidebar.dosen.kp.verifikasi-sidang": {
         "id": "routes/_sidebar.dosen.kp.verifikasi-sidang",
         "parentId": "routes/_sidebar",
@@ -196,6 +229,15 @@
         "parentId": "routes/_sidebar",
         "file": "app/routes/_sidebar.dosen.kp.verifikasi-judul.tsx",
         "path": "dosen/kp/verifikasi-judul",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "routes/_sidebar.dosen.kp.verifikasi-nilai": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-nilai",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.dosen.kp.verifikasi-nilai.tsx",
+        "path": "dosen/kp/verifikasi-nilai",
         "config": {
           "runtime": "nodejs"
         }
@@ -226,22 +268,6 @@
         "config": {
           "runtime": "nodejs"
         }
-      },
-      "routes/_sidebar.dosen.kp.logbook-monitor": {
-        "id": "routes/_sidebar.dosen.kp.logbook-monitor",
-        "parentId": "routes/_sidebar",
-        "file": "app/routes/_sidebar.dosen.kp.logbook-monitor.tsx",
-        "path": "dosen/kp/logbook-monitor",
-        "config": {
-          "runtime": "nodejs"
-        }
-      },
-      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": {
-        "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
-        "parentId": "routes/_sidebar.dosen.kp.logbook-monitor",
-        "file": "app/routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
-        "path": ":studentId",
-        "config": {}
       },
       "routes/_sidebar.dosen.kp.surat-pengantar": {
         "id": "routes/_sidebar.dosen.kp.surat-pengantar",
@@ -395,6 +421,15 @@
           "runtime": "nodejs"
         }
       },
+      "routes/_sidebar.mahasiswa.kp.arsip": {
+        "id": "routes/_sidebar.mahasiswa.kp.arsip",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.mahasiswa.kp.arsip.tsx",
+        "path": "mahasiswa/kp/arsip",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
       "routes/_sidebar.mentor.notifikasi": {
         "id": "routes/_sidebar.mentor.notifikasi",
         "parentId": "routes/_sidebar",
@@ -438,6 +473,15 @@
         "file": "app/routes/_sidebar.admin.penilaian.tsx",
         "path": "admin/penilaian",
         "config": {}
+      },
+      "routes/_sidebar.admin.penilaian.verifikasi-gabungan": {
+        "id": "routes/_sidebar.admin.penilaian.verifikasi-gabungan",
+        "parentId": "routes/_sidebar.admin.penilaian",
+        "file": "app/routes/_sidebar.admin.penilaian.verifikasi-gabungan.tsx",
+        "path": "verifikasi-gabungan",
+        "config": {
+          "runtime": "nodejs"
+        }
       },
       "routes/_sidebar.admin.penilaian._index": {
         "id": "routes/_sidebar.admin.penilaian._index",
@@ -564,6 +608,15 @@
           "runtime": "nodejs"
         }
       },
+      "routes/_sidebar.admin.arsip": {
+        "id": "routes/_sidebar.admin.arsip",
+        "parentId": "routes/_sidebar",
+        "file": "app/routes/_sidebar.admin.arsip.tsx",
+        "path": "admin/arsip",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
       "routes/_sidebar.dashboard": {
         "id": "routes/_sidebar.dashboard",
         "parentId": "routes/_sidebar",
@@ -621,9 +674,9 @@
     }
   },
   "reactRouterConfig": {
-    "appDirectory": "C:/laragon/www/SIKP/app",
+    "appDirectory": "D:/laragon/www/TA/SIKP/app",
     "basename": "/",
-    "buildDirectory": "C:/laragon/www/SIKP/build",
+    "buildDirectory": "D:/laragon/www/TA/SIKP/build",
     "future": {
       "unstable_optimizeDeps": false,
       "unstable_passThroughRequests": false,
@@ -687,6 +740,12 @@
         "parentId": "root",
         "file": "routes/_sidebar.tsx"
       },
+      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": {
+        "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
+        "path": "dosen/kp/logbook-monitor/:studentId"
+      },
       "routes/_sidebar.mentor.logbook-detail.$studentId": {
         "id": "routes/_sidebar.mentor.logbook-detail.$studentId",
         "parentId": "routes/_sidebar",
@@ -698,6 +757,13 @@
         "parentId": "routes/_sidebar",
         "file": "routes/_sidebar.admin.pengajuan-surat-pengantar.tsx",
         "path": "admin/pengajuan-surat-pengantar"
+      },
+      "routes/_sidebar.dosen.kp.logbook-monitor._index": {
+        "id": "routes/_sidebar.dosen.kp.logbook-monitor._index",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.logbook-monitor._index.tsx",
+        "path": "dosen/kp/logbook-monitor",
+        "index": true
       },
       "routes/_sidebar.dosen.kp.persetujuan-pembimbing": {
         "id": "routes/_sidebar.dosen.kp.persetujuan-pembimbing",
@@ -711,6 +777,12 @@
         "file": "routes/_sidebar.admin.persetujuan-pembimbing.tsx",
         "path": "admin/persetujuan-pembimbing"
       },
+      "routes/_sidebar.dosen.kp.verifikasi-laporan": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-laporan",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.verifikasi-laporan.tsx",
+        "path": "dosen/kp/verifikasi-laporan"
+      },
       "routes/_sidebar.dosen.kp.verifikasi-sidang": {
         "id": "routes/_sidebar.dosen.kp.verifikasi-sidang",
         "parentId": "routes/_sidebar",
@@ -722,6 +794,12 @@
         "parentId": "routes/_sidebar",
         "file": "routes/_sidebar.dosen.kp.verifikasi-judul.tsx",
         "path": "dosen/kp/verifikasi-judul"
+      },
+      "routes/_sidebar.dosen.kp.verifikasi-nilai": {
+        "id": "routes/_sidebar.dosen.kp.verifikasi-nilai",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.dosen.kp.verifikasi-nilai.tsx",
+        "path": "dosen/kp/verifikasi-nilai"
       },
       "routes/_sidebar.dosen.kp.verifikasi-surat": {
         "id": "routes/_sidebar.dosen.kp.verifikasi-surat",
@@ -740,18 +818,6 @@
         "parentId": "routes/_sidebar",
         "file": "routes/_sidebar.admin.penilaian-kriteria.tsx",
         "path": "admin/penilaian-kriteria"
-      },
-      "routes/_sidebar.dosen.kp.logbook-monitor": {
-        "id": "routes/_sidebar.dosen.kp.logbook-monitor",
-        "parentId": "routes/_sidebar",
-        "file": "routes/_sidebar.dosen.kp.logbook-monitor.tsx",
-        "path": "dosen/kp/logbook-monitor"
-      },
-      "routes/_sidebar.dosen.kp.logbook-monitor.$studentId": {
-        "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
-        "parentId": "routes/_sidebar.dosen.kp.logbook-monitor",
-        "file": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
-        "path": ":studentId"
       },
       "routes/_sidebar.dosen.kp.surat-pengantar": {
         "id": "routes/_sidebar.dosen.kp.surat-pengantar",
@@ -868,6 +934,12 @@
         "file": "routes/_sidebar.admin.surat-balasan.tsx",
         "path": "admin/surat-balasan"
       },
+      "routes/_sidebar.mahasiswa.kp.arsip": {
+        "id": "routes/_sidebar.mahasiswa.kp.arsip",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.mahasiswa.kp.arsip.tsx",
+        "path": "mahasiswa/kp/arsip"
+      },
       "routes/_sidebar.mentor.notifikasi": {
         "id": "routes/_sidebar.mentor.notifikasi",
         "parentId": "routes/_sidebar",
@@ -898,6 +970,12 @@
         "parentId": "routes/_sidebar",
         "file": "routes/_sidebar.admin.penilaian.tsx",
         "path": "admin/penilaian"
+      },
+      "routes/_sidebar.admin.penilaian.verifikasi-gabungan": {
+        "id": "routes/_sidebar.admin.penilaian.verifikasi-gabungan",
+        "parentId": "routes/_sidebar.admin.penilaian",
+        "file": "routes/_sidebar.admin.penilaian.verifikasi-gabungan.tsx",
+        "path": "verifikasi-gabungan"
       },
       "routes/_sidebar.admin.penilaian._index": {
         "id": "routes/_sidebar.admin.penilaian._index",
@@ -985,6 +1063,12 @@
         "parentId": "routes/_sidebar",
         "file": "routes/_sidebar.mentor.arsip.tsx",
         "path": "mentor/arsip"
+      },
+      "routes/_sidebar.admin.arsip": {
+        "id": "routes/_sidebar.admin.arsip",
+        "parentId": "routes/_sidebar",
+        "file": "routes/_sidebar.admin.arsip.tsx",
+        "path": "admin/arsip"
       },
       "routes/_sidebar.dashboard": {
         "id": "routes/_sidebar.dashboard",
@@ -1077,6 +1161,11 @@
             "file": "routes/_sidebar.tsx",
             "children": [
               {
+                "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
+                "file": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
+                "path": "dosen/kp/logbook-monitor/:studentId"
+              },
+              {
                 "id": "routes/_sidebar.mentor.logbook-detail.$studentId",
                 "file": "routes/_sidebar.mentor.logbook-detail.$studentId.tsx",
                 "path": "mentor/logbook-detail/:studentId"
@@ -1085,6 +1174,12 @@
                 "id": "routes/_sidebar.admin.pengajuan-surat-pengantar",
                 "file": "routes/_sidebar.admin.pengajuan-surat-pengantar.tsx",
                 "path": "admin/pengajuan-surat-pengantar"
+              },
+              {
+                "id": "routes/_sidebar.dosen.kp.logbook-monitor._index",
+                "file": "routes/_sidebar.dosen.kp.logbook-monitor._index.tsx",
+                "path": "dosen/kp/logbook-monitor",
+                "index": true
               },
               {
                 "id": "routes/_sidebar.dosen.kp.persetujuan-pembimbing",
@@ -1097,6 +1192,11 @@
                 "path": "admin/persetujuan-pembimbing"
               },
               {
+                "id": "routes/_sidebar.dosen.kp.verifikasi-laporan",
+                "file": "routes/_sidebar.dosen.kp.verifikasi-laporan.tsx",
+                "path": "dosen/kp/verifikasi-laporan"
+              },
+              {
                 "id": "routes/_sidebar.dosen.kp.verifikasi-sidang",
                 "file": "routes/_sidebar.dosen.kp.verifikasi-sidang.tsx",
                 "path": "dosen/kp/verifikasi-sidang"
@@ -1105,6 +1205,11 @@
                 "id": "routes/_sidebar.dosen.kp.verifikasi-judul",
                 "file": "routes/_sidebar.dosen.kp.verifikasi-judul.tsx",
                 "path": "dosen/kp/verifikasi-judul"
+              },
+              {
+                "id": "routes/_sidebar.dosen.kp.verifikasi-nilai",
+                "file": "routes/_sidebar.dosen.kp.verifikasi-nilai.tsx",
+                "path": "dosen/kp/verifikasi-nilai"
               },
               {
                 "id": "routes/_sidebar.dosen.kp.verifikasi-surat",
@@ -1120,18 +1225,6 @@
                 "id": "routes/_sidebar.admin.penilaian-kriteria",
                 "file": "routes/_sidebar.admin.penilaian-kriteria.tsx",
                 "path": "admin/penilaian-kriteria"
-              },
-              {
-                "id": "routes/_sidebar.dosen.kp.logbook-monitor",
-                "file": "routes/_sidebar.dosen.kp.logbook-monitor.tsx",
-                "path": "dosen/kp/logbook-monitor",
-                "children": [
-                  {
-                    "id": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId",
-                    "file": "routes/_sidebar.dosen.kp.logbook-monitor.$studentId.tsx",
-                    "path": ":studentId"
-                  }
-                ]
               },
               {
                 "id": "routes/_sidebar.dosen.kp.surat-pengantar",
@@ -1234,6 +1327,11 @@
                 "path": "admin/surat-balasan"
               },
               {
+                "id": "routes/_sidebar.mahasiswa.kp.arsip",
+                "file": "routes/_sidebar.mahasiswa.kp.arsip.tsx",
+                "path": "mahasiswa/kp/arsip"
+              },
+              {
                 "id": "routes/_sidebar.mentor.notifikasi",
                 "file": "routes/_sidebar.mentor.notifikasi.tsx",
                 "path": "mentor/notifikasi"
@@ -1259,6 +1357,11 @@
                 "file": "routes/_sidebar.admin.penilaian.tsx",
                 "path": "admin/penilaian",
                 "children": [
+                  {
+                    "id": "routes/_sidebar.admin.penilaian.verifikasi-gabungan",
+                    "file": "routes/_sidebar.admin.penilaian.verifikasi-gabungan.tsx",
+                    "path": "verifikasi-gabungan"
+                  },
                   {
                     "id": "routes/_sidebar.admin.penilaian._index",
                     "file": "routes/_sidebar.admin.penilaian._index.tsx",
@@ -1337,6 +1440,11 @@
                 "id": "routes/_sidebar.mentor.arsip",
                 "file": "routes/_sidebar.mentor.arsip.tsx",
                 "path": "mentor/arsip"
+              },
+              {
+                "id": "routes/_sidebar.admin.arsip",
+                "file": "routes/_sidebar.admin.arsip.tsx",
+                "path": "admin/arsip"
               },
               {
                 "id": "routes/_sidebar.dashboard",

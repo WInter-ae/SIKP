@@ -29,7 +29,7 @@ import {
   Printer,
   Award,
 } from "lucide-react";
-import { printFormNilai, type NilaiKPData } from "../utils/generate-form-nilai";
+
 import { getCompleteInternshipData } from "~/feature/during-intern/services/student-api";
 import { getAssessmentRecap, getAssessmentPdfUrl } from "~/feature/evaluation/services/evaluation-api";
 import { toast } from "sonner";

@@ -21,6 +21,30 @@ function mapBackendMentee(mentee: MenteeData): Mentee | null {
 
   if (!mentee.userId) return null;
 
+  // Calculate time-based progress if status is active
+  let calculatedProgress = 0;
+  if (typeof mentee.progress === "number") {
+    calculatedProgress = mentee.progress;
+  } else if (status === "AKTIF" && mentee.internshipStartDate && mentee.internshipEndDate) {
+    const start = new Date(mentee.internshipStartDate).getTime();
+    const end = new Date(mentee.internshipEndDate).getTime();
+    const now = new Date().getTime();
+
+    if (now < start) {
+      calculatedProgress = 0;
+    } else if (now > end) {
+      calculatedProgress = 100;
+    } else {
+      const totalDuration = end - start;
+      const elapsed = now - start;
+      calculatedProgress = Math.round((elapsed / totalDuration) * 100);
+    }
+  } else if (status === "SELESAI") {
+    calculatedProgress = 100;
+  } else if (status === "PENDING") {
+    calculatedProgress = 0;
+  }
+
   return {
     id: mentee.userId,
     name: mentee.nama || mentee.name || "-",
@@ -28,14 +52,7 @@ function mapBackendMentee(mentee: MenteeData): Mentee | null {
     email: mentee.email,
     phone: mentee.phone || "-",
     company: mentee.companyName || mentee.company || "-",
-    progress:
-      typeof mentee.progress === "number"
-        ? mentee.progress
-        : status === "AKTIF"
-          ? 100
-          : status === "PENDING"
-            ? 25
-            : 0,
+    progress: calculatedProgress,
     status:
       status === "AKTIF"
         ? "Aktif"

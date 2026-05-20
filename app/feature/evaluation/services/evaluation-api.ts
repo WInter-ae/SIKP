@@ -291,7 +291,10 @@ function mapRowToEvaluation(
   );
 
   const academicNode =
-    (row.lecturer && typeof row.lecturer === "object"
+    (row.lecturerScore && typeof row.lecturerScore === "object"
+      ? (row.lecturerScore as Record<string, unknown>)
+      : null) ||
+    (row.lecturer && typeof row.lecturer === "object" && (row.lecturer as any).totalScore !== undefined
       ? (row.lecturer as Record<string, unknown>)
       : null) ||
     (row.lecturerAssessment && typeof row.lecturerAssessment === "object"
@@ -311,8 +314,10 @@ function mapRowToEvaluation(
     0,
   );
 
-  const finalScore =
-    academicTotal > 0 ? (mentorTotal + academicTotal) / 2 : mentorTotal;
+  const finalScore = parseNumber(
+    row.finalScore ?? (row.combined as any)?.finalScore ?? row.nilaiAkhir,
+    academicTotal > 0 ? (mentorTotal + academicTotal) / 2 : mentorTotal,
+  );
 
   const fieldSupervisorGrades: FieldSupervisorGrade[] = [
     {
@@ -376,7 +381,7 @@ function mapRowToEvaluation(
     student: {
       id: studentId,
       name: normalizeText(
-        studentNode.name || studentNode.nama || row.studentName,
+        row.student?.name || studentNode.name || studentNode.nama || row.studentName,
         "Mahasiswa",
       ),
       studentId: normalizeText(
@@ -414,7 +419,7 @@ function mapRowToEvaluation(
       finalScore,
       grade: gradeFromScore(finalScore),
       status: statusFromScore(finalScore),
-      isVerifiedByKaprodi: Boolean(row.isVerifiedByKaprodi || (row.combined as any)?.isVerifiedByKaprodi),
+      isVerifiedByKaprodi: Boolean(row.isVerifiedByKaprodi || (row.combined as any)?.isVerifiedByKaprodi || (row.summary as any)?.isVerifiedByKaprodi),
     },
     notes: normalizeText(assessmentNode.feedback || assessmentNode.catatan, ""),
     evaluatedAt: normalizeText(
@@ -423,6 +428,11 @@ function mapRowToEvaluation(
         assessmentNode.createdAt,
       "",
     ),
+    report: row.report || null,
+    // CAPTURE NEW FIELDS
+    lecturer: row.lecturer as any,
+    coordinator: row.coordinator as any,
+    mentor: row.mentor as any,
   } satisfies StudentEvaluation;
 }
 

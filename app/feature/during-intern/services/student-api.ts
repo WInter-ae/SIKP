@@ -89,8 +89,15 @@ export interface CompleteInternshipData {
   };
   team?: {
     id: string;
-    name: string;
-    totalMembers: number;
+    name?: string;
+    totalMembers?: number;
+    leaderId?: string | null;
+    leaderMentor?: {
+      id: string;
+      name: string;
+      company: string;
+      status: string;
+    } | null;
   };
   mentor?: {
     id: string;
@@ -181,6 +188,16 @@ interface BackendInternshipResponse {
     nip: string;
     signature?: string | null;
   } | null;
+  team?: {
+    id: string;
+    leaderId: string | null;
+    leaderMentor?: {
+      id: string;
+      name: string;
+      company: string;
+      status: string;
+    } | null;
+  } | null;
 }
 
 /**
@@ -190,23 +207,19 @@ interface BackendInternshipResponse {
 function mapBackendToFrontend(
   backendData: BackendInternshipResponse,
 ): CompleteInternshipData {
-  const { student, submission, internship, mentor, lecturer } = backendData;
+  const { student, submission, internship, mentor, lecturer, coordinator, team } = backendData;
 
-  const submissionAny = submission as Record<string, unknown>;
+  const submissionAny = (submission || {}) as Record<string, any>;
   const company =
-    (typeof submission.companyName === "string" && submission.companyName) ||
-    (typeof submission.company === "string" && submission.company) ||
-    (typeof submissionAny.namaPerusahaan === "string"
-      ? (submissionAny.namaPerusahaan as string)
-      : "") ||
+    (typeof submissionAny.companyName === "string" && submissionAny.companyName) ||
+    (typeof submissionAny.company === "string" && submissionAny.company) ||
+    (typeof submissionAny.namaPerusahaan === "string" ? submissionAny.namaPerusahaan : "") ||
     "";
+    
   const address =
-    (typeof submission.companyAddress === "string" &&
-      submission.companyAddress) ||
-    (typeof submission.address === "string" && submission.address) ||
-    (typeof submissionAny.alamatPerusahaan === "string"
-      ? (submissionAny.alamatPerusahaan as string)
-      : "") ||
+    (typeof submissionAny.companyAddress === "string" && submissionAny.companyAddress) ||
+    (typeof submissionAny.address === "string" && submissionAny.address) ||
+    (typeof submissionAny.alamatPerusahaan === "string" ? submissionAny.alamatPerusahaan : "") ||
     "";
 
   const mappedResult: CompleteInternshipData = {
@@ -226,7 +239,7 @@ function mapBackendToFrontend(
       id: submission.id.toString(),
       teamId: submission.teamId?.toString(),
       company,
-      division: submission.division || "",
+      division: submissionAny.division || "",
       address,
       startDate: submission.startDate,
       endDate: submission.endDate,
@@ -278,12 +291,19 @@ function mapBackendToFrontend(
           signature: (lecturer as any).signature || undefined,
         }
       : undefined,
-    coordinator: backendData.coordinator
+    coordinator: coordinator
       ? {
-          id: backendData.coordinator.id,
-          name: backendData.coordinator.name,
-          nip: backendData.coordinator.nip,
-          signature: backendData.coordinator.signature || undefined,
+          id: coordinator.id,
+          name: coordinator.name,
+          nip: coordinator.nip,
+          signature: coordinator.signature || undefined,
+        }
+      : undefined,
+    team: team
+      ? {
+          id: team.id,
+          leaderId: team.leaderId,
+          leaderMentor: team.leaderMentor,
         }
       : undefined,
   };
@@ -550,4 +570,31 @@ export async function updateInternshipPeriod(data: {
   endDate: string;
 }): Promise<ApiResponse<InternshipData>> {
   return internshipClient.put<InternshipData>("/api/internships/period", data);
+}
+
+/**
+ * Ajukan pembimbing lapangan baru (Mahasiswa side)
+ * POST /api/mentorship/requests
+ */
+export interface MentorRequestPayload {
+  mentorName: string;
+  mentorEmail: string;
+  mentorPhone?: string;
+  companyName: string;
+  position?: string;
+  companyAddress?: string;
+}
+
+export async function requestMentor(
+  data: MentorRequestPayload,
+): Promise<ApiResponse<null>> {
+  return internshipClient.post<null>("/api/mentorship/requests", data);
+}
+
+/**
+ * Join the team leader's mentor (Mahasiswa side)
+ * POST /api/mentorship/requests/join-leader
+ */
+export async function joinLeaderMentor(): Promise<ApiResponse<any>> {
+  return internshipClient.post<any>("/api/mentorship/requests/join-leader", {});
 }

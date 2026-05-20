@@ -693,24 +693,4 @@ export async function deleteMentorSignature(): Promise<
   };
 }
 
-/**
- * Ajukan pembimbing lapangan baru (Mahasiswa side)
- * POST /api/mentorship/requests
- */
-export interface MentorRequestPayload {
-  company: string;
-  address: string;
-  [key: string]: any;
-}
-
-export async function requestMentor(
-  data: MentorRequestPayload,
-): Promise<ApiResponse<null>> {
-  const payload = {
-    ...data,
-    companyName: data.company,
-    companyAddress: data.address,
-  };
-  return internshipClient.post<null>("/api/mentorship/requests", payload);
-}
 

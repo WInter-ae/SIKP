@@ -8,6 +8,8 @@ import {
   Users,
   CheckCircle2,
   Lightbulb,
+  Search,
+  ChevronLeft,
 } from "lucide-react";
 import { useSearchParams } from "react-router";
 
@@ -32,7 +34,7 @@ import {
 } from "~/components/ui/select";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import PageHeader from "../components/page-header";
-import BackButton from "../components/back-button";
+import { MenteeAssessmentCard, type MenteeGradingInfo } from "../components/mentee-assessment-card";
 
 // API Services
 import {
@@ -41,6 +43,7 @@ import {
   unlockAssessment,
   getMentees,
   getStudentAssessment,
+  getMentorProfile,
   type MenteeData,
 } from "~/feature/field-mentor/services";
 import {
@@ -70,7 +73,7 @@ const CATEGORY_ICONS: Record<CriterionKey, React.ElementType> = {
   kreatifitas: Lightbulb,
 };
 
-function mapBackendMentee(mentee: MenteeData): MenteeOption | null {
+function mapBackendMentee(mentee: any): MenteeOption | null {
   if (!mentee.userId) return null;
 
   return {
@@ -213,7 +216,7 @@ function getCategoryIcon(category: string): React.ElementType {
 }
 
 function AssessmentPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedMentee, setSelectedMentee] = useState("");
   const [feedback, setFeedback] = useState("");
   const [assessments, setAssessments] = useState<AssessmentCriteria[]>(
@@ -221,7 +224,7 @@ function AssessmentPage() {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [criteriaLoading, setCriteriaLoading] = useState(true);
-  const [mentees, setMentees] = useState<MenteeOption[]>([]);
+  const [mentees, setMentees] = useState<any[]>([]);
   const [menteesLoading, setMenteesLoading] = useState(true);
   const [assessmentLoading, setAssessmentLoading] = useState(false);
   const [existingAssessmentId, setExistingAssessmentId] = useState<
@@ -229,6 +232,11 @@ function AssessmentPage() {
   >(null);
   const [criteriaLoadedAt, setCriteriaLoadedAt] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [mentorName, setMentorName] = useState("");
 
   // Load bobot kriteria dari database saat komponen mount
   useEffect(() => {
@@ -237,6 +245,13 @@ function AssessmentPage() {
       setCriteriaLoadedAt(new Date().toISOString());
       setCriteriaLoading(false);
     });
+  }, []);
+
+  // Fetch mentor profile
+  useEffect(() => {
+    getMentorProfile().then(response => {
+      if (response.success && response.data) setMentorName(response.data.name);
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -251,10 +266,21 @@ function AssessmentPage() {
         if (!isMounted) return;
 
         if (response.success && response.data) {
-          const options = response.data
-            .map(mapBackendMentee)
-            .filter((option): option is MenteeOption => Boolean(option));
-          setMentees(options);
+          // Fetch existing assessment status for each mentee
+          const enriched = await Promise.all(response.data.map(async (m: any) => {
+            try {
+              const assessmentRes = await getStudentAssessment(m.userId);
+              return {
+                ...m,
+                hasAssessment: assessmentRes.success && assessmentRes.data?.id,
+                gradingStatus: (assessmentRes.success && assessmentRes.data?.id) ? "graded" : "not-graded"
+              };
+            } catch {
+              return { ...m, hasAssessment: false, gradingStatus: "not-graded" };
+            }
+          }));
+          
+          setMentees(enriched);
 
           const preselected = searchParams.get("mentee");
           if (preselected) {
@@ -264,7 +290,7 @@ function AssessmentPage() {
             );
             if (
               resolvedStudentUserId &&
-              options.some((option) => option.id === resolvedStudentUserId)
+              response.data.some((m: any) => m.userId === resolvedStudentUserId)
             ) {
               setSelectedMentee(resolvedStudentUserId);
             }
@@ -486,7 +512,7 @@ function AssessmentPage() {
         }
 
         setIsEditing(false); // Kunci kembali setelah berhasil simpan
-        const menteeName = mentees.find((m) => m.id === selectedMentee)?.name;
+        const menteeName = mentees.find((m) => m.userId === selectedMentee)?.nama;
         toast.success(
           `${existingAssessmentId ? "Penilaian berhasil diperbarui" : "Penilaian berhasil disimpan"}!\nMahasiswa: ${menteeName}\nNilai Rata-rata: ${totalScore.toFixed(1)}`,
         );
@@ -500,6 +526,33 @@ function AssessmentPage() {
       setIsSubmitting(false);
     }
   }
+
+  const filteredMentees = useMemo(() => {
+    return mentees.filter(m => {
+      const matchesSearch = 
+        (m.nama || m.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (m.nim || "").toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || m.gradingStatus === statusFilter;
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [mentees, searchQuery, statusFilter]);
+
+  const averageScore = useMemo(() => {
+    const graded = mentees.filter(m => m.gradingStatus === "graded");
+    if (graded.length === 0) return 0;
+    // This is just a placeholder average since we don't have all scores fetched in the list
+    return 0; 
+  }, [mentees]);
+
+  const stats = useMemo(() => {
+    return {
+      total: mentees.length,
+      graded: mentees.filter(m => m.gradingStatus === "graded").length,
+      notGraded: mentees.filter(m => m.gradingStatus === "not-graded").length,
+    };
+  }, [mentees]);
 
   if (criteriaLoading) {
     return (
@@ -515,246 +568,286 @@ function AssessmentPage() {
     );
   }
 
-  return (
-    <div className="p-6">
-      <PageHeader
-        title="Penilaian Mahasiswa Magang"
-        description="Berikan penilaian untuk mahasiswa yang magang di perusahaan Anda"
-      />
+  // --- LIST VIEW ---
+  if (!selectedMentee) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+              Penilaian Mahasiswa Magang
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Kelola penilaian mahasiswa bimbingan di perusahaan Anda
+            </p>
+          </div>
 
-      <Alert className="mb-6 border-blue-500/40 bg-blue-50 dark:bg-blue-950/20">
-        <AlertDescription className="text-blue-800 dark:text-blue-300 text-sm">
-          Bobot dan nama kategori di halaman ini mengikuti konfigurasi admin
-          terbaru saat data dimuat. Jika admin mengubah bobot, refresh halaman
-          agar bobot baru terlihat. Penilaian lama akan memakai bobot baru
-          setelah mentor membuka data mahasiswa dan menyimpan ulang penilaian.
-          {criteriaLoadedAt
-            ? ` (Dimuat: ${new Date(criteriaLoadedAt).toLocaleString("id-ID")})`
-            : ""}
-        </AlertDescription>
-      </Alert>
-
-      <form onSubmit={handleSubmit}>
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Pilih Mahasiswa</CardTitle>
-            <CardDescription>Pilih mahasiswa yang akan dinilai</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="mentee">Mahasiswa</Label>
-              <Select
-                value={selectedMentee}
-                onValueChange={setSelectedMentee}
-                disabled={menteesLoading}
-              >
-                <SelectTrigger id="mentee">
-                  <SelectValue
-                    placeholder={
-                      menteesLoading ? "Memuat mahasiswa..." : "Pilih mahasiswa"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {mentees.map((mentee) => (
-                    <SelectItem key={mentee.id} value={mentee.id}>
-                      {mentee.name} - {mentee.nim}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {menteesLoading && (
-                <p className="text-xs text-muted-foreground">
-                  Memuat daftar mahasiswa dari backend...
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {selectedMentee && (
-          <>
-            <Card className="mb-6 bg-primary/5 border-primary/20">
-              <CardContent className="pt-6">
-                <div className="text-center">
-                  <p className="text-muted-foreground mb-2">
-                    Nilai Rata-rata Sementara
-                  </p>
-                  <p className="text-5xl font-bold text-primary">
-                    {totalScore.toFixed(1)}
-                  </p>
-                  <p className="text-muted-foreground mt-2">dari 100</p>
-                  {existingAssessmentId && !isEditing && (
-                    <div className="mt-4 flex items-center justify-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-1.5 rounded-full text-xs font-medium border border-amber-200 dark:border-amber-900/50">
-                      <Clock className="h-3.5 w-3.5" />
-                      Penilaian Terkunci (Read-only)
-                    </div>
-                  )}
-                  {assessmentLoading && (
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Memuat penilaian yang sudah ada...
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {assessments.map((assessment) => {
-                const Icon = getCategoryIcon(assessment.category);
-
-                return (
-                  <Card key={assessment.id}>
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Icon className="h-5 w-5 text-primary" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-base">
-                              {assessment.category}
-                            </CardTitle>
-                            <CardDescription>
-                              {assessment.description}
-                            </CardDescription>
-                          </div>
-                        </div>
-                        <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
-                          {assessment.weight}%
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor={`score-${assessment.id}`}>
-                            Nilai
-                          </Label>
-                          <span
-                            className={`text-sm font-semibold ${getAssessmentScoreTextClass(assessment.score)}`}
-                          >
-                            {assessment.score} / {assessment.maxScore}
-                          </span>
-                        </div>
-                        <Input
-                          id={`score-${assessment.id}`}
-                          type="number"
-                          min="0"
-                          max={assessment.maxScore}
-                          value={assessment.score || ""}
-                          onChange={(e) =>
-                            handleScoreChange(assessment.id, e.target.value)
-                          }
-                          placeholder="0"
-                          disabled={!isEditing}
-                        />
-                        <div className="w-full bg-muted rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all ${getAssessmentScoreBarClass(assessment.score)}`}
-                            style={{
-                              width: `${(assessment.score / assessment.maxScore) * 100}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            <Card className="mb-6">
-              <CardHeader>
-                <CardTitle>Catatan & Feedback</CardTitle>
-                <CardDescription>
-                  Berikan catatan atau saran untuk mentee (opsional)
-                </CardDescription>
+          {/* Statistics Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Total Mahasiswa
+                </CardTitle>
+                <Users className="h-5 w-5 text-gray-500 dark:text-gray-400" />
               </CardHeader>
               <CardContent>
-                <Textarea
-                  placeholder="Tulis catatan atau feedback untuk mentee..."
-                  rows={5}
-                  value={feedback}
-                  onChange={(e) => setFeedback(e.target.value)}
-                  disabled={!isEditing}
-                />
+                <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  {stats.total}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Mahasiswa bimbingan
+                </p>
               </CardContent>
             </Card>
 
-            <div className="flex justify-center gap-4 mb-6">
-              {existingAssessmentId && !isEditing ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="lg"
-                  className="px-8 border-primary text-primary hover:bg-primary/5"
-                  onClick={async (e) => {
-                    e.preventDefault();
-                    if (!existingAssessmentId) return;
-
-                    setIsSubmitting(true);
-                    try {
-                      const res =
-                        await unlockAssessment(existingAssessmentId);
-                      if (res.success) {
-                        setIsEditing(true);
-                        toast.success("Penilaian dibuka. Silakan lakukan perubahan.");
-                      } else {
-                        toast.error(res.message || "Gagal membuka kunci penilaian.");
-                      }
-                    } catch (err) {
-                      toast.error("Terjadi kesalahan saat membuka kunci penilaian.");
-                    } finally {
-                      setIsSubmitting(false);
-                    }
-                  }}
-                  disabled={isSubmitting}
-                >
-                  <Award className="mr-2 h-4 w-4" />
-                  Edit Penilaian
-                </Button>
-              ) : (
-                <div className="flex gap-3">
-                  {existingAssessmentId && isEditing && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="lg"
-                      className="px-8 text-muted-foreground hover:bg-muted"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setIsEditing(false);
-                        // Optional: Reset form to original values if needed
-                      }}
-                    >
-                      Batal
-                    </Button>
-                  )}
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="px-8"
-                    disabled={isSubmitting || assessmentLoading}
-                  >
-                    <Save className="mr-2 h-4 w-4" />
-                    {isSubmitting
-                      ? "Menyimpan..."
-                      : assessmentLoading
-                        ? "Memuat..."
-                        : existingAssessmentId
-                          ? "Simpan Perubahan"
-                          : "Simpan Penilaian"}
-                  </Button>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Sudah Dinilai
+                </CardTitle>
+                <CheckCircle2 className="h-5 w-5 text-green-500 dark:text-green-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  {stats.graded}
                 </div>
-              )}
-            </div>
-          </>
-        )}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {stats.total > 0 ? ((stats.graded / stats.total) * 100).toFixed(0) : 0}% dari total
+                </p>
+              </CardContent>
+            </Card>
 
-        <BackButton />
-      </form>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Belum Dinilai
+                </CardTitle>
+                <Clock className="h-5 w-5 text-orange-500 dark:text-orange-400" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                  {stats.notGraded}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Menunggu penilaian
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Cari nama atau NIM mahasiswa..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                  />
+                </div>
+
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full md:w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                    <SelectValue placeholder="Status Penilaian" />
+                  </SelectTrigger>
+                  <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="graded">Sudah Dinilai</SelectItem>
+                    <SelectItem value="not-graded">Belum Dinilai</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                Menampilkan {filteredMentees.length} dari {mentees.length} mahasiswa
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {menteesLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="animate-pulse h-64 bg-gray-200 dark:bg-gray-800" />
+              ))
+            ) : filteredMentees.length > 0 ? (
+              filteredMentees.map((m) => (
+                <MenteeAssessmentCard
+                  key={m.userId}
+                  mentee={{
+                    id: m.userId,
+                    name: m.nama || m.name || "-",
+                    nim: m.nim,
+                    photoUrl: m.photoUrl,
+                    division: m.division || m.unit || "-",
+                    prodi: m.prodi || "-",
+                    internshipStartDate: m.internshipStartDate,
+                    internshipEndDate: m.internshipEndDate,
+                    gradingStatus: m.gradingStatus,
+                  }}
+                  onGiveGrade={(id) => setSelectedMentee(id)}
+                  onViewDetail={(id) => setSelectedMentee(id)}
+                />
+              ))
+            ) : (
+              <div className="col-span-full py-12 text-center text-muted-foreground">
+                Tidak ada mahasiswa yang ditemukan.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- FORM VIEW ---
+  const currentMentee = mentees.find(m => m.userId === selectedMentee);
+
+  return (
+    <div className="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6 flex items-center gap-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setSelectedMentee("")}
+            className="text-gray-600 dark:text-gray-400"
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Kembali ke Daftar
+          </Button>
+        </div>
+
+        <PageHeader
+          title={`Penilaian: ${currentMentee?.nama || currentMentee?.name || "Mahasiswa"}`}
+          description={`Berikan nilai untuk ${currentMentee?.nama} (${currentMentee?.nim})`}
+        />
+
+        <Alert className="mb-6 border-blue-500/40 bg-blue-50 dark:bg-blue-950/20">
+          <AlertDescription className="text-blue-800 dark:text-blue-300 text-sm">
+            Bobot kriteria penilaian sesuai konfigurasi terbaru. 
+            {criteriaLoadedAt && ` (Dimuat: ${new Date(criteriaLoadedAt).toLocaleString("id-ID")})`}
+          </AlertDescription>
+        </Alert>
+
+        <form onSubmit={handleSubmit}>
+          <Card className="mb-6 bg-primary/5 border-primary/20">
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <p className="text-muted-foreground mb-2">Nilai Rata-rata Sementara</p>
+                <p className="text-5xl font-bold text-primary">{totalScore.toFixed(1)}</p>
+                <p className="text-muted-foreground mt-2">dari 100</p>
+                {existingAssessmentId && !isEditing && (
+                  <div className="mt-4 flex items-center justify-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-1.5 rounded-full text-xs font-medium border border-amber-200 dark:border-amber-900/50">
+                    <Clock className="h-3.5 w-3.5" />
+                    Penilaian Terkunci (Read-only)
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {assessments.map((assessment) => {
+              const Icon = getCategoryIcon(assessment.category);
+              return (
+                <Card key={assessment.id}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Icon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">{assessment.category}</CardTitle>
+                          <CardDescription className="text-xs">{assessment.description}</CardDescription>
+                        </div>
+                      </div>
+                      <span className="text-xs font-medium px-2 py-1 rounded-full bg-primary/10 text-primary">
+                        {assessment.weight}%
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor={`score-${assessment.id}`}>Nilai</Label>
+                        <span className={`text-sm font-semibold ${getAssessmentScoreTextClass(assessment.score)}`}>
+                          {assessment.score} / {assessment.maxScore}
+                        </span>
+                      </div>
+                      <Input
+                        id={`score-${assessment.id}`}
+                        type="number"
+                        min="0"
+                        max={assessment.maxScore}
+                        value={assessment.score || ""}
+                        onChange={(e) => handleScoreChange(assessment.id, e.target.value)}
+                        disabled={!isEditing}
+                      />
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full transition-all ${getAssessmentScoreBarClass(assessment.score)}`}
+                          style={{ width: `${(assessment.score / assessment.maxScore) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Catatan & Feedback</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Tulis catatan atau feedback untuk mahasiswa..."
+                rows={5}
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                disabled={!isEditing}
+              />
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-center gap-4 mb-6">
+            {existingAssessmentId && !isEditing ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={async () => {
+                  setIsSubmitting(true);
+                  try {
+                    const res = await unlockAssessment(existingAssessmentId);
+                    if (res.success) {
+                      setIsEditing(true);
+                      toast.success("Penilaian dibuka untuk diedit.");
+                    }
+                  } catch {
+                    toast.error("Gagal membuka penilaian.");
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+              >
+                Edit Penilaian
+              </Button>
+            ) : (
+              <Button type="submit" size="lg" disabled={isSubmitting}>
+                <Save className="mr-2 h-4 w-4" />
+                {isSubmitting ? "Menyimpan..." : "Simpan Penilaian"}
+              </Button>
+            )}
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
