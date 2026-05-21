@@ -111,6 +111,7 @@ export interface CompleteInternshipData {
     rejectionReason?: string;
     signature?: string;
     createdAt?: string;
+    nip?: string;
   };
   lecturer?: {
     id: string;
@@ -279,6 +280,7 @@ function mapBackendToFrontend(
           rejectionReason: (mentor as any).rejectionReason,
           createdAt: (mentor as any).createdAt,
           signature: mentor.signature || undefined,
+          nip: (mentor as any).nip || "",
         }
       : undefined,
     lecturer: lecturer
@@ -580,6 +582,7 @@ export interface MentorRequestPayload {
   mentorName: string;
   mentorEmail: string;
   mentorPhone?: string;
+  mentorNip?: string;
   companyName: string;
   position?: string;
   companyAddress?: string;
@@ -589,6 +592,27 @@ export async function requestMentor(
   data: MentorRequestPayload,
 ): Promise<ApiResponse<null>> {
   return internshipClient.post<null>("/api/mentorship/requests", data);
+}
+
+/**
+ * Edit a pending mentor request
+ * PUT /api/mentorship/requests/:id
+ */
+export async function editMentorRequest(
+  requestId: string,
+  data: MentorRequestPayload,
+): Promise<ApiResponse<any>> {
+  return internshipClient.put<any>(`/api/mentorship/requests/${requestId}`, data);
+}
+
+/**
+ * Delete a pending mentor request
+ * DELETE /api/mentorship/requests/:id
+ */
+export async function deleteMentorRequest(
+  requestId: string,
+): Promise<ApiResponse<any>> {
+  return internshipClient.del<any>(`/api/mentorship/requests/${requestId}`);
 }
 
 /**
