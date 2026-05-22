@@ -394,20 +394,27 @@ function LogbookPage() {
       const day = String(d.getDate()).padStart(2, "0");
       const dateStr = `${year}-${month}-${day}`;
 
-      // ❌ SKIP TANGGAL MERAH (Holidays)
-      if (holidays.includes(dateStr)) {
-        continue;
-      }
+      // Always include the exact start date to make sure the student's first day of KP is never skipped
+      const isStartDate = dateStr === startDate;
 
-      const currentDay = d.getDay();
-
-      if (startDayNum <= endDayNum) {
-        if (currentDay >= startDayNum && currentDay <= endDayNum) {
-          dates.push(dateStr);
-        }
+      if (isStartDate) {
+        dates.push(dateStr);
       } else {
-        if (currentDay >= startDayNum || currentDay <= endDayNum) {
-          dates.push(dateStr);
+        // ❌ SKIP TANGGAL MERAH (Holidays)
+        if (holidays.includes(dateStr)) {
+          continue;
+        }
+
+        const currentDay = d.getDay();
+
+        if (startDayNum <= endDayNum) {
+          if (currentDay >= startDayNum && currentDay <= endDayNum) {
+            dates.push(dateStr);
+          }
+        } else {
+          if (currentDay >= startDayNum || currentDay <= endDayNum) {
+            dates.push(dateStr);
+          }
         }
       }
     }
