@@ -103,19 +103,32 @@ const parseSignatureDataUri = (
   signature?: string,
 ): {
   base64: string;
-  extension: "png" | "jpg" | "jpeg";
+  extension: "png" | "jpg" | "jpeg" | "svg";
   contentType: string;
 } | null => {
   if (!signature) return null;
 
   const trimmed = signature.trim();
-  const match = trimmed.match(/^data:image\/(png|jpe?g);base64,(.+)$/i);
+  const match = trimmed.match(
+    /^data:image\/(png|jpe?g|svg\+xml);base64,(.+)$/i,
+  );
   if (!match) return null;
 
   const rawExt = match[1].toLowerCase();
   const extension =
-    rawExt === "png" ? "png" : rawExt === "jpg" ? "jpg" : "jpeg";
-  const contentType = extension === "png" ? "image/png" : "image/jpeg";
+    rawExt === "png"
+      ? "png"
+      : rawExt === "jpg"
+        ? "jpg"
+        : rawExt === "svg+xml"
+          ? "svg"
+          : "jpeg";
+  const contentType =
+    extension === "png"
+      ? "image/png"
+      : extension === "svg"
+        ? "image/svg+xml"
+        : "image/jpeg";
 
   return {
     base64: match[2],

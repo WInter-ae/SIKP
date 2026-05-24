@@ -20,9 +20,6 @@ import {
   Camera,
   ImageIcon,
   AlertTriangle,
-  Info,
-  Briefcase,
-  UserCircle,
 } from "lucide-react";
 import { id as localeId } from "date-fns/locale";
 import { cn } from "~/lib/utils";
@@ -39,7 +36,6 @@ import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
 import { Badge } from "~/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
 import {
   Select,
   SelectContent,
@@ -86,7 +82,12 @@ import {
 } from "~/feature/during-intern/services/logbook-api";
 
 // Utility Functions
-// (DOCX generation moved to backend)
+import {
+  createLogbookDOCXBlob,
+  generateLogbookDOCX,
+  getLogbookDocxFileName,
+} from "~/feature/during-intern/utils/generate-logbook-docx";
+
 interface LogbookEntry {
   id: string;
   date: string;
@@ -215,7 +216,6 @@ function LogbookPage() {
   const [logbookEntries, setLogbookEntries] = useState<LogbookEntry[]>([]);
   const [isSavingLogbook, setIsSavingLogbook] = useState(false);
   const [generatedDates, setGeneratedDates] = useState<string[]>([]);
-  const [holidays, setHolidays] = useState<string[]>([]);
   const [periodSource, setPeriodSource] = useState<"auto" | "manual" | null>(
     null,
   ); // Track sumber periode
@@ -245,117 +245,148 @@ function LogbookPage() {
   >(null);
   const [showIncompleteLogbookDialog, setShowIncompleteLogbookDialog] = useState(false);
 
-  // Fetch holidays on mount
-  useEffect(() => {
-    async function fetchHolidays() {
-      try {
-        const response = await fetch("https://dayoffapi.vercel.app/api/v1/holidays");
-        if (!response.ok) throw new Error("API response not ok");
-        const data = await response.json();
-        if (data && Array.isArray(data)) {
-          const dates = data.map((h: any) => h.holiday_date);
-          setHolidays(dates);
-        }
-      } catch (error) {
-        console.warn("⚠️ Failed to fetch holidays from API, using fallback list:", error);
-        setHolidays([
-          "2026-01-01", // Tahun Baru 2026
-          "2026-02-17", // Isra Mikraj
-          "2026-02-24", // Tahun Baru Imlek
-          "2026-03-20", // Hari Suci Nyepi
-          "2026-03-26", "2026-03-27", // Idul Fitri
-          "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31", // Cuti Bersama Idul Fitri
-          "2026-04-03", // Wafat Yesus Kristus
-          "2026-05-01", // Hari Buruh
-          "2026-05-14", // Kenaikan Yesus Kristus
-          "2026-05-15", // Cuti Bersama Kenaikan
-          "2026-05-22", // Hari Raya Waisak
-          "2026-05-27", // Idul Adha
-          "2026-05-28", // Cuti Bersama Idul Adha
-          "2026-06-01", // Hari Lahir Pancasila
-          "2026-07-17", // Tahun Baru Islam
-          "2026-08-17", // Hari Kemerdekaan RI
-          "2026-09-25", // Maulid Nabi
-          "2026-12-25", // Hari Raya Natal
-          "2026-12-26", // Cuti Bersama Natal
-        ]);
-      }
-    }
-    fetchHolidays();
-  }, []);
-
-  // Fetch complete internship data
+  // Fetch complete internship data (⭐ ONE API CALL FOR ALL DATA)
   useEffect(() => {
     async function fetchInternshipData() {
       try {
         const response = await getCompleteInternshipData();
+
         if (response.success && response.data) {
           setCompleteData(response.data);
+
+          // ✅ AUTO-POPULATE periode dari data submission (per mahasiswa)
           const submission = response.data.submission;
           if (submission?.startDate && submission?.endDate) {
+            // Periode tersedia dari submission - auto-populate!
             const autoWorkPeriod = {
               startDate: submission.startDate,
               endDate: submission.endDate,
               startDay: "senin",
               endDay: "jumat",
             };
-            setWorkPeriod(autoWorkPeriod);
-            setPeriodSource("auto");
 
-            const savedPeriodState = localStorage.getItem("logbook_period_saved");
+            setWorkPeriod(autoWorkPeriod);
+            setPeriodSource("auto"); // Mark sebagai auto-populate
+
+            // Cek localStorage untuk dates yang sudah digenerate
+            const savedPeriodState = localStorage.getItem(
+              "logbook_period_saved",
+            );
             const savedDates = localStorage.getItem("logbook_generated_dates");
             const savedWorkPeriod = localStorage.getItem("logbook_work_period");
-            
+            // Jika sudah pernah generate dengan periode yang sama, restore dari localStorage
             if (savedPeriodState === "true" && savedDates && savedWorkPeriod) {
               const saved = JSON.parse(savedWorkPeriod);
-              if (saved.startDate === submission.startDate && saved.endDate === submission.endDate) {
-                setWorkPeriod(saved);
+              if (
+                saved.startDate === submission.startDate &&
+                saved.endDate === submission.endDate
+              ) {
                 setIsPeriodSaved(true);
-                // RE-GENERATE dates dynamically so latest holidays are ALWAYS applied
-                const refreshedDates = generateDatesFromPeriod(
-                  saved.startDate,
-                  saved.endDate,
-                  saved.startDay || "senin",
-                  saved.endDay || "jumat"
-                );
-                setGeneratedDates(refreshedDates);
-                return;
+                setGeneratedDates(JSON.parse(savedDates));
+                toast.success("Periode magang dan logbook berhasil dimuat!");
+                return; // Exit early karena sudah restore dari localStorage
               }
             }
 
+            // Jika belum pernah generate atau periode berbeda, auto-generate sekarang!
             const dates = generateDatesFromPeriod(
               autoWorkPeriod.startDate,
               autoWorkPeriod.endDate,
               autoWorkPeriod.startDay,
               autoWorkPeriod.endDay,
             );
+
             setGeneratedDates(dates);
             setIsPeriodSaved(true);
+
+            // Save ke localStorage
             localStorage.setItem("logbook_period_saved", "true");
-            localStorage.setItem("logbook_work_period", JSON.stringify(autoWorkPeriod));
+            localStorage.setItem(
+              "logbook_generated_dates",
+              JSON.stringify(dates),
+            );
+            localStorage.setItem(
+              "logbook_work_period",
+              JSON.stringify(autoWorkPeriod),
+            );
+
+            toast.success(
+              `Periode otomatis dari pengajuan! ${dates.length} hari kerja telah digenerate.`,
+            );
+          } else {
+            // Tidak ada data submission - coba restore dari localStorage (input manual sebelumnya)
+            const savedPeriodState = localStorage.getItem(
+              "logbook_period_saved",
+            );
+            const savedDates = localStorage.getItem("logbook_generated_dates");
+            const savedWorkPeriod = localStorage.getItem("logbook_work_period");
+            if (savedPeriodState === "true" && savedDates && savedWorkPeriod) {
+              // Restore input manual sebelumnya
+              setIsPeriodSaved(true);
+              setGeneratedDates(JSON.parse(savedDates));
+              setWorkPeriod(JSON.parse(savedWorkPeriod));
+              setPeriodSource("manual"); // Mark sebagai manual input
+              toast.success("Periode logbook manual berhasil dimuat!");
+            } else {
+              // Belum ada data submission DAN belum pernah input manual
+              setPeriodSource(null);
+              toast.info(
+                "Silakan input periode kerja Anda secara manual di Step 1",
+              );
+            }
+          }
+        } else {
+          // Check if it's an authentication error
+          if (
+            response.message?.toLowerCase().includes("unauthorized") ||
+            response.message?.toLowerCase().includes("token")
+          ) {
+            toast.error(
+              "Session expired. Anda akan diarahkan ke halaman login...",
+              {
+                duration: 3000,
+              },
+            );
+            // Redirect to login after 3 seconds if not already redirected
+            setTimeout(() => {
+              if (window.location.pathname !== "/login") {
+                window.location.href = "/login?reason=unauthorized";
+              }
+            }, 3000);
+          } else {
+            toast.error(response.message || "Gagal memuat data magang");
           }
         }
-      } catch (error) {
-        console.error("Failed to fetch internship data:", error);
+      } catch {
+        toast.error("Gagal memuat data magang");
       } finally {
         setIsLoadingProfile(false);
       }
     }
+
     fetchInternshipData();
-  }, [holidays]); // Dependency on holidays to ensure generation uses them
+  }, []);
 
   useEffect(() => {
     async function fetchLogbookFromBackend() {
       if (!completeData?.student?.userId) return;
+
       try {
         const response = await getLogbookEntries();
-        if (response.success && response.data) {
-          setLogbookEntries(response.data.entries.map(mapBackendLogbookEntry));
+        if (!response.success || !response.data) {
+          return;
         }
-      } catch (error) {
-        console.error("Failed to fetch logbook:", error);
+
+        const backendEntries = response.data.entries.map(
+          mapBackendLogbookEntry,
+        );
+
+        setLogbookEntries(backendEntries);
+      } catch {
+        // keep current UI state when fetch fails
       }
     }
+
     fetchLogbookFromBackend();
   }, [completeData?.student?.userId]);
 
@@ -389,32 +420,15 @@ function LogbookPage() {
       d <= end;
       d = new Date(d.getTime() + MS_PER_DAY)
     ) {
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const dateStr = `${year}-${month}-${day}`;
+      const currentDay = d.getDay();
 
-      // Always include the exact start date to make sure the student's first day of KP is never skipped
-      const isStartDate = dateStr === startDate;
-
-      if (isStartDate) {
-        dates.push(dateStr);
-      } else {
-        // ❌ SKIP TANGGAL MERAH (Holidays)
-        if (holidays.includes(dateStr)) {
-          continue;
+      if (startDayNum <= endDayNum) {
+        if (currentDay >= startDayNum && currentDay <= endDayNum) {
+          dates.push(d.toISOString().split("T")[0]);
         }
-
-        const currentDay = d.getDay();
-
-        if (startDayNum <= endDayNum) {
-          if (currentDay >= startDayNum && currentDay <= endDayNum) {
-            dates.push(dateStr);
-          }
-        } else {
-          if (currentDay >= startDayNum || currentDay <= endDayNum) {
-            dates.push(dateStr);
-          }
+      } else {
+        if (currentDay >= startDayNum || currentDay <= endDayNum) {
+          dates.push(d.toISOString().split("T")[0]);
         }
       }
     }
@@ -1024,19 +1038,413 @@ function LogbookPage() {
     return "Menunggu";
   };
 
+  const imageUrlToBase64 = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error("Error converting image to base64:", error);
+      return url; // fallback to original URL
+    }
+  };
+
+  const encodeSvgToDataUri = (svgText: string): string => {
+    const utf8 = encodeURIComponent(svgText)
+      .replace(/%([0-9A-F]{2})/g, (_, p1) =>
+        String.fromCharCode(parseInt(p1, 16)),
+      );
+    const base64 = btoa(utf8);
+    return `data:image/svg+xml;base64,${base64}`;
+  };
+
+  const normalizeSignatureSrc = (signature?: string): string | null => {
+    if (!signature) return null;
+
+    const value = signature.trim();
+    if (!value) return null;
+    if (value.startsWith("data:image/")) return value;
+
+    if (value.startsWith("<svg") || value.includes("<svg")) {
+      return encodeSvgToDataUri(value);
+    }
+
+    // Some APIs send raw base64 without data URI prefix.
+    if (/^[A-Za-z0-9+/=\r\n]+$/.test(value)) {
+      return `data:image/png;base64,${value.replace(/\s+/g, "")}`;
+    }
+
+    return value;
+  };
+
+  const ensureSignatureDataUri = async (
+    signature?: string,
+  ): Promise<string | undefined> => {
+    const normalized = normalizeSignatureSrc(signature);
+    if (!normalized) return undefined;
+    if (normalized.startsWith("data:image/")) return normalized;
+    if (/^https?:\/\//i.test(normalized)) {
+      return await imageUrlToBase64(normalized);
+    }
+    return normalized;
+  };
+
+  const buildPrintStyleHtml = (
+    data: ReturnType<typeof buildLogbookData>,
+    options: {
+      title: string;
+      autoOpenPrint?: boolean;
+      downloadUrl?: string;
+      downloadFileName?: string;
+    },
+  ): string => {
+    const mentorSignatureSrc = normalizeSignatureSrc(
+      data.internship?.mentorSignature,
+    );
+
+    const rowsHtml = data.generatedDates
+      .map((date, index) => {
+        const entry = data.entries.find((item) => item.date === date);
+        const weekNum = getWeekNumber(date);
+        const prevWeekNum =
+          index > 0 ? getWeekNumber(data.generatedDates[index - 1]) : 0;
+        const showWeekNumber = weekNum !== prevWeekNum;
+        const weekCell = showWeekNumber
+          ? `<td class="col-week" rowspan="${getWeekRowSpan(data.generatedDates, index)}">${escapeHtml(String(weekNum))}</td>`
+          : "";
+        const parafCell =
+          entry?.mentorSignature?.status === "approved" && mentorSignatureSrc
+            ? `<img class="paraf-image" src="${mentorSignatureSrc}" alt="Paraf Pembimbing" />`
+            : escapeHtml(getParafText(entry));
+        return `
+          <tr>
+            ${weekCell}
+            <td class="col-date">${escapeHtml(formatDate(date))}</td>
+            <td class="col-activity">${escapeHtml(entry?.description || "-")}</td>
+            <td class="col-paraf">${parafCell}</td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const mentorSignatureBlock = mentorSignatureSrc
+      ? `<img class="signature-image" src="${mentorSignatureSrc}" alt="Paraf Pembimbing" />`
+      : `<div class="signature-placeholder"></div>`;
+
+    const printScript = options.autoOpenPrint
+      ? `<script>window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 180); });</script>`
+      : "";
+
+    const downloadScript = options.downloadUrl
+      ? `
+      <script>
+        async function downloadDocument(url, filename) {
+          if (window.opener && typeof window.opener.__downloadLogbookDocx === 'function') {
+            try {
+              await window.opener.__downloadLogbookDocx();
+              return;
+            } catch (error) {
+              // fallback to blob URL download below
+            }
+          }
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      </script>
+    `
+      : "";
+
+    return `
+      <!DOCTYPE html>
+      <html lang="id">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>${escapeHtml(options.title)}</title>
+        <style>
+          :root { color-scheme: light; }
+          * { box-sizing: border-box; }
+          body { margin: 0; background: #ffffff; color: #111827; font-family: "Times New Roman", serif; }
+          .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 18mm;
+            background: #fff;
+            box-shadow: none;
+          }
+          h1 {
+            margin: 0 0 14px;
+            text-align: center;
+            font-size: 21px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+          }
+          .meta {
+            width: 67%;
+            margin: 0 auto 14px;
+            transform: translateX(40px);
+            font-size: 16px;
+            line-height: 1.45;
+          }
+          .meta-row { display: grid; grid-template-columns: 170px 16px 1fr; }
+          table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 16px; }
+          th, td {
+            border: 1px solid #374151;
+            padding: 6px 8px;
+            vertical-align: middle;
+          }
+          tr {
+            height: 40px;
+            page-break-inside: avoid;
+          }
+          th { text-align: center; background: #f3f4f6; }
+          th { line-height: 1.15; font-weight: 700; }
+          .col-week,
+          .col-date,
+          .col-paraf {
+            text-align: center;
+            white-space: nowrap;
+          }
+          .col-week {
+            vertical-align: middle;
+            font-weight: 700;
+          }
+          .col-activity {
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-word;
+            line-height: 1.25;
+          }
+          .paraf-image {
+            display: block;
+            max-width: 100px;
+            max-height: 75px;
+            margin: 0 auto;
+            object-fit: contain;
+          }
+          .footer-sign {
+            margin-top: 8px;
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 2px;
+            margin-right: -50px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          .signature-box {
+            width: 230px;
+            text-align: left;
+            font-size: 16px;
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+          .signature-image {
+            display: block;
+            width: 150px;
+            height: 100px;
+            margin: 10px 0 8px 0;
+            object-fit: contain;
+          }
+          .signature-placeholder { height: 100px; }
+          .mentor-name { margin-top: 6px; font-weight: 700; text-decoration: underline; }
+          .toolbar { 
+            position: fixed; 
+            top: 10px; 
+            left: 10px; 
+            z-index: 1000; 
+            display: flex; 
+            gap: 8px;
+          }
+          .btn-download {
+            padding: 8px 16px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.2s;
+          }
+          .btn-download:hover {
+            background-color: #2563eb;
+          }
+          .btn-download:active {
+            background-color: #1d4ed8;
+          }
+          @media print {
+            body { background: #fff; }
+            thead { display: table-row-group; }
+            .page { margin: 0; box-shadow: none; width: 100%; min-height: auto; }
+            .toolbar { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        ${
+          options.downloadUrl
+            ? `
+        <div class="toolbar">
+          <button class="btn-download" onclick="downloadDocument('${options.downloadUrl}', '${escapeHtml(options.downloadFileName || "logbook.docx")}')">
+            ⬇ Download Word
+          </button>
+        </div>
+        `
+            : ""
+        }
+        <div class="page">
+          <h1>FORMULIR KEGIATAN HARIAN MAHASISWA</h1>
+
+          <div class="meta">
+            <div class="meta-row"><span>Nama</span><span>:</span><span>${escapeHtml(data.student?.name || "-")}</span></div>
+            <div class="meta-row"><span>NIM</span><span>:</span><span>${escapeHtml(data.student?.nim || "-")}</span></div>
+            <div class="meta-row"><span>Program Studi</span><span>:</span><span>${escapeHtml(data.student?.prodi || "-")}</span></div>
+            <div class="meta-row"><span>Tempat KP</span><span>:</span><span>${escapeHtml(data.internship?.company || "-")}</span></div>
+            <div class="meta-row"><span>Bagian/Bidang</span><span>:</span><span>${escapeHtml(data.internship?.position || "-")}</span></div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 14.3%;">Minggu<br/>Ke</th>
+                <th style="width: 18%;">Tanggal</th>
+                <th style="width: 49%;">Jenis Kegiatan</th>
+                <th style="width: 18.7%;">Paraf<br/>Pembimbing<br/>Lapangan</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <div class="footer-sign">
+            <div class="signature-box">
+              <div>Palembang, ${escapeHtml(formatDate(data.workPeriod.endDate))}</div>
+              <div>Pembimbing Lapangan,</div>
+              ${mentorSignatureBlock}
+              <div class="mentor-name">${escapeHtml(data.internship?.mentorName || "-")}</div>
+              <div>${escapeHtml(data.internship?.position || "-")}</div>
+            </div>
+          </div>
+        </div>
+        ${printScript}
+        ${downloadScript}
+      </body>
+      </html>
+    `;
+  };
+
+  const openDocxPreviewTab = async (
+    blob: Blob,
+    fileName: string,
+    data: ReturnType<typeof buildLogbookData>,
+  ): Promise<{ converted: boolean; error?: string }> => {
+    const url = URL.createObjectURL(blob);
+
+    (
+      window as unknown as { __downloadLogbookDocx?: () => Promise<void> }
+    ).__downloadLogbookDocx = async () => {
+      const [{ saveAs }, freshBlob] = await Promise.all([
+        import("file-saver"),
+        createLogbookDOCXBlob(data),
+      ]);
+      saveAs(freshBlob, fileName);
+    };
+
+    const previewWindow = window.open("", "_blank");
+
+    if (!previewWindow) {
+      URL.revokeObjectURL(url);
+      throw new Error(
+        "Gagal membuka tab preview. Pastikan pop-up tidak diblokir browser.",
+      );
+    }
+
+    previewWindow.document.write(
+      buildPrintStyleHtml(data, {
+        title: "Preview DOCX Logbook",
+        autoOpenPrint: false,
+        downloadUrl: url,
+        downloadFileName: fileName,
+      }),
+    );
+    previewWindow.document.close();
+    previewWindow?.addEventListener("beforeunload", () => {
+      URL.revokeObjectURL(url);
+      const win = window as unknown as {
+        __downloadLogbookDocx?: () => Promise<void>;
+      };
+      if (win.__downloadLogbookDocx) {
+        delete win.__downloadLogbookDocx;
+      }
+    });
+    return { converted: true };
+  };
+
+  const openPdfPreviewTab = (data: ReturnType<typeof buildLogbookData>) => {
+    const previewWindow = window.open("", "_blank");
+
+    if (!previewWindow) {
+      throw new Error(
+        "Gagal membuka tab preview. Pastikan pop-up tidak diblokir browser.",
+      );
+    }
+
+    previewWindow.document.write(
+      buildPrintStyleHtml(data, {
+        title: "FORMULIR KEGIATAN HARIAN MAHASISWA",
+        autoOpenPrint: true,
+      }),
+    );
+    previewWindow.document.close();
+  };
 
   const generateDirectly = async (format: "docx" | "pdf") => {
     try {
-      const baseUrl = window.location.origin.includes('localhost') 
-        ? 'http://localhost:8787' 
-        : 'https://backend-sikp.pusing.me'; 
+      const logbookData = buildLogbookData();
+
+      if (format === "pdf") {
+        if (logbookData.internship?.mentorSignature) {
+          logbookData.internship.mentorSignature =
+            await ensureSignatureDataUri(
+              logbookData.internship.mentorSignature,
+            );
+        }
         
-      const url = `${baseUrl}/api/internships/generate/logbook?format=${format}`;
-      window.open(url, "_blank");
-      toast.success(`Sedang menyiapkan dokumen logbook (${format.toUpperCase()})...`);
+        openPdfPreviewTab(logbookData);
+        toast.success(
+          "Preview PDF dibuka. Gunakan Simpan sebagai PDF agar hasil 1:1 dengan preview.",
+        );
+      } else {
+        if (logbookData.internship?.mentorSignature) {
+          toast.loading("Menyiapkan tanda tangan mentor...", { id: "docx-gen" });
+          logbookData.internship.mentorSignature =
+            await ensureSignatureDataUri(
+              logbookData.internship.mentorSignature,
+            );
+          toast.dismiss("docx-gen");
+        }
+        
+        await generateLogbookDOCX(logbookData);
+        toast.success("Logbook DOCX berhasil didownload!");
+      }
     } catch (error) {
-      console.error("Gagal generate dokumen:", error);
-      toast.error("Gagal generate logbook. Silakan coba lagi.");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Gagal generate logbook. Silakan coba lagi.";
+      toast.error(message);
     }
   };
 
@@ -1056,481 +1464,279 @@ function LogbookPage() {
   const performGenerate = async () => {
     if (!selectedExportFormat) return;
 
+    const logbookData = buildLogbookData();
+
+    // Convert signature to base64 if needed for both PDF and DOCX
+    if (logbookData.internship?.mentorSignature) {
+      try {
+        toast.loading("Menyiapkan tanda tangan mentor...", { id: "gen-prep" });
+        logbookData.internship.mentorSignature =
+          await ensureSignatureDataUri(logbookData.internship.mentorSignature);
+        toast.dismiss("gen-prep");
+      } catch (e) {
+        console.error("Failed to convert signature:", e);
+        toast.dismiss("gen-prep");
+      }
+    }
+
     try {
-      const baseUrl = window.location.origin.includes('localhost') 
-        ? 'http://localhost:8787' 
-        : 'https://backend-sikp.pusing.me'; 
-        
-      const url = `${baseUrl}/api/internships/generate/logbook?format=${selectedExportFormat}`;
-      window.open(url, "_blank");
-      toast.success(`Sedang menyiapkan dokumen logbook (${selectedExportFormat.toUpperCase()})...`);
+      if (selectedExportFormat === "pdf") {
+        openPdfPreviewTab(logbookData);
+        toast.success("Preview PDF siap cetak dibuka di tab baru.");
+      } else {
+        const blob = await createLogbookDOCXBlob(logbookData);
+        const fileName = getLogbookDocxFileName();
+        const previewResult = await openDocxPreviewTab(
+          blob,
+          fileName,
+          logbookData,
+        );
+
+        if (previewResult.converted) {
+          toast.success("Preview DOCX dibuka di tab baru.");
+        } else {
+          toast.warning(
+            "Preview DOCX tidak bisa dirender otomatis. Silakan gunakan tombol Download DOCX pada tab preview.",
+          );
+        }
+      }
     } catch (error) {
-      console.error("Gagal generate dokumen:", error);
-      toast.error("Terjadi kesalahan saat mengunduh dokumen logbook.");
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat membuka preview logbook.";
+      toast.error(message);
     } finally {
       setSelectedExportFormat(null);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-8 bg-slate-50/10 dark:bg-slate-950/10 min-h-[calc(100svh-3.5rem)]">
-      {/* Premium Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-r from-blue-600 via-indigo-600 to-indigo-700 p-6 sm:p-8 text-white shadow-xl">
-        {/* Decorative glows */}
-        <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 rounded-full bg-indigo-500/30 blur-3xl" />
-
-        <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold uppercase tracking-wider text-blue-200">
-              <Sparkles className="h-3.5 w-3.5" />
-              Fase Saat Magang — Logbook
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Catatan Logbook Harian
-            </h1>
-            <p className="text-sm sm:text-base text-blue-100/90 max-w-xl font-medium">
-              Dokumentasikan setiap aktivitas, capaian pembelajaran, dan koordinasi harian Anda secara teratur untuk verifikasi Pembimbing Lapangan.
-            </p>
-          </div>
-          
-          <Button 
-            variant="outline" 
-            asChild
-            className="border-white/20 bg-white/10 text-white hover:bg-white hover:text-indigo-950 font-bold rounded-xl backdrop-blur-xs transition-all shadow-sm shrink-0"
-          >
-            <Link to="/mahasiswa/kp/saat-magang">
-              <ArrowLeft className="mr-2 h-4.5 w-4.5" />
-              Kembali ke Menu Utama
-            </Link>
-          </Button>
-        </div>
-
-        {/* Stats Grid */}
-        {generatedDates.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10">
-            <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-              <span className="text-xs text-blue-200 font-semibold uppercase tracking-wider block">Total Hari Kerja</span>
-              <span className="text-2xl sm:text-3xl font-extrabold mt-1 block">{generatedDates.length} Hari</span>
-            </div>
-            <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-              <span className="text-xs text-blue-200 font-semibold uppercase tracking-wider block">Logbook Terisi</span>
-              <span className="text-2xl sm:text-3xl font-extrabold mt-1 block">{logbookEntries.length} Entri</span>
-            </div>
-            <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-              <span className="text-xs text-blue-200 font-semibold uppercase tracking-wider block">Menunggu Paraf</span>
-              <span className="text-2xl sm:text-3xl font-extrabold mt-1 block text-amber-300">
-                {logbookEntries.filter(e => e.status === "PENDING" && e.mentorSignature?.status !== "approved").length} Entri
-              </span>
-            </div>
-            <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10">
-              <span className="text-xs text-blue-200 font-semibold uppercase tracking-wider block">Telah Disetujui</span>
-              <span className="text-2xl sm:text-3xl font-extrabold mt-1 block text-emerald-300">
-                {logbookEntries.filter(e => e.mentorSignature?.status === "approved").length} Entri
-              </span>
-            </div>
-          </div>
-        )}
+    <div className="w-full p-6 space-y-8">
+      {/* Header Section */}
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold text-foreground">Halaman Logbook</h1>
+        <p className="text-muted-foreground">
+          Catat aktivitas harian selama masa kerja praktik
+        </p>
       </div>
 
-      {/* Panduan Penggunaan & Alur Status Logbook */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="relative overflow-hidden rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/80 dark:bg-slate-900/80 shadow-md backdrop-blur-xl">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-linear-to-b from-indigo-500 to-blue-600" />
-            <CardHeader className="pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <CardTitle className="text-base font-extrabold flex items-center gap-2 text-indigo-950 dark:text-indigo-300">
-                <Info className="h-5 w-5 text-indigo-500" />
-                Panduan Pengisian & Alur Logbook Kerja Praktik
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-5">
-              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-semibold">
-                Setiap mahasiswa wajib mencatat kegiatan harian selama masa magang industri untuk divalidasi oleh Pembimbing Lapangan. Silakan ikuti tahapan pengisian berikut:
-              </p>
-              
-              <div className="space-y-4">
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 flex items-center justify-center font-extrabold text-xs border border-indigo-100/50">
-                    1
-                  </div>
-                  <div>
-                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs">Set Periode Kerja Praktik</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
-                      Sistem akan memuat otomatis periode magang dari pengajuan Anda. Hari kerja yang digenerate otomatis menyaring hari libur/tanggal merah.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 flex items-center justify-center font-extrabold text-xs border border-indigo-100/50">
-                    2
-                  </div>
-                  <div>
-                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs">Isi Detail Kegiatan Harian & Foto</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
-                      Pilih tanggal hari kerja, tuliskan rincian deskripsi tugas/kegiatan Anda secara jelas, serta lampirkan foto dokumentasi kegiatan (opsional) sebagai bukti dukung.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-650 dark:text-indigo-400 flex items-center justify-center font-extrabold text-xs border border-indigo-100/50">
-                    3
-                  </div>
-                  <div>
-                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs">Ajukan & Tunggu Paraf Pembimbing</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mt-0.5">
-                      Klik tombol <strong className="text-amber-600 dark:text-amber-400 font-bold">"Ajukan Logbook"</strong> di bagian bawah untuk mengirim seluruh draft catatan ke akun pembimbing lapangan untuk disetujui atau direvisi.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Status Legends / Arti Status */}
-        <div>
-          <Card className="relative overflow-hidden rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-linear-to-br from-indigo-50/40 to-blue-50/40 dark:from-slate-950/40 dark:to-slate-900/40 p-5 shadow-md h-full flex flex-col justify-between">
-            <div>
-              <h4 className="font-extrabold text-indigo-950 dark:text-indigo-300 text-sm flex items-center gap-1.5 mb-3">
-                <Sparkles className="h-4 w-4 text-indigo-500" />
-                Legenda Status Paraf
-              </h4>
-              
-              <div className="space-y-3.5">
-                <div className="flex items-start gap-2">
-                  <Badge variant="outline" className="bg-slate-100 shrink-0 text-[10px] font-bold">DRAFT</Badge>
-                  <p className="text-[10px] text-slate-655 dark:text-slate-400 leading-relaxed">
-                    Belum diajukan. Catatan masih disimpan secara lokal di draft Anda dan dapat diedit/dihapus kapan saja.
-                  </p>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <Badge variant="outline" className="bg-yellow-50 shrink-0 text-[10px] font-bold text-yellow-750 border-yellow-200">PENDING</Badge>
-                  <p className="text-[10px] text-slate-655 dark:text-slate-400 leading-relaxed">
-                    Menunggu review pembimbing lapangan. Entri dikunci sementara selama peninjauan berlangsung.
-                  </p>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <Badge className="bg-green-500 shrink-0 text-[10px] font-bold text-white">DISETUJUI</Badge>
-                  <p className="text-[10px] text-slate-655 dark:text-slate-400 leading-relaxed">
-                    Disetujui & diparaf secara sah oleh pembimbing lapangan. Catatan ini resmi dikunci dan siap di-export.
-                  </p>
-                </div>
-
-                <div className="flex items-start gap-2">
-                  <Badge variant="destructive" className="shrink-0 text-[10px] font-bold">REJECTED</Badge>
-                  <p className="text-[10px] text-slate-655 dark:text-slate-400 leading-relaxed">
-                    Ditolak/perlu revisi. Silakan klik tombol Edit untuk membenahi deskripsi sesuai catatan feedback pembimbing.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <p className="text-[9.5px] text-slate-400 dark:text-slate-500 italic leading-relaxed mt-4 pt-3 border-t border-slate-200/50 dark:border-slate-800/50">
-              💡 Tip: Seluruh logbook dapat diunduh sebagai file PDF atau Word jika semua hari kerja sudah disetujui mentor.
-            </p>
-          </Card>
-        </div>
-      </div>
+      {/* Back Button */}
+      <Button variant="secondary" asChild>
+        <Link to="/mahasiswa/kp/saat-magang">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Kembali ke Saat Magang
+        </Link>
+      </Button>
 
       {/* Student Profile Card */}
-      <Card className="relative overflow-hidden rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-white/85 dark:bg-slate-900/85 shadow-md backdrop-blur-xl mb-8">
-        <div className="absolute top-0 left-0 w-1.5 h-full bg-linear-to-b from-blue-400 to-indigo-600" />
-        <CardContent className="p-6 sm:p-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Data Mahasiswa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           {isLoadingProfile ? (
-            <div className="flex min-h-[160px] items-center justify-center text-sm text-slate-500 font-medium animate-pulse">
-              Memuat data profil magang...
+            <div className="text-center py-4 text-muted-foreground">
+              Memuat data mahasiswa...
             </div>
           ) : (
-            <TooltipProvider delayDuration={200}>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Block 1: Nama Mahasiswa */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-4 rounded-xl border border-slate-100 dark:border-slate-850 p-4 bg-slate-50/50 dark:bg-slate-950/40 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/60 shadow-xs cursor-help">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
-                        <User className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nama Mahasiswa</Label>
-                        <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate">
-                          {completeData?.student?.name || "-"}
-                        </p>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="font-semibold shadow-md">
-                    <p>{completeData?.student?.name || "-"}</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Block 2: NIM */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-4 rounded-xl border border-slate-100 dark:border-slate-850 p-4 bg-slate-50/50 dark:bg-slate-950/40 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/60 shadow-xs cursor-help">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
-                        <span className="font-black text-sm font-mono">#</span>
-                      </div>
-                      <div className="min-w-0">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">NIM</Label>
-                        <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate">
-                          {completeData?.student?.nim || "-"}
-                        </p>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="font-semibold shadow-md">
-                    <p>{completeData?.student?.nim || "-"}</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Block 3: Dosen Pembimbing */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-4 rounded-xl border border-slate-100 dark:border-slate-850 p-4 bg-slate-50/50 dark:bg-slate-950/40 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/60 shadow-xs cursor-help">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
-                        <UserCircle className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dosen Pembimbing</Label>
-                        <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate">
-                          {completeData?.lecturer?.name || "-"}
-                        </p>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="font-semibold shadow-md">
-                    <p>{completeData?.lecturer?.name || "-"}</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Block 4: Tempat KP */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-4 rounded-xl border border-slate-100 dark:border-slate-850 p-4 bg-slate-50/50 dark:bg-slate-950/40 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/60 shadow-xs cursor-help">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
-                        <Building className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tempat KP</Label>
-                        <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate" title={completeData?.submission?.company}>
-                          {completeData?.submission?.company || "Belum tersedia"}
-                        </p>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="font-semibold shadow-md max-w-[320px]">
-                    <p>{completeData?.submission?.company || "Belum tersedia"}</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Block 5: Unit / Divisi */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-4 rounded-xl border border-slate-100 dark:border-slate-850 p-4 bg-slate-50/50 dark:bg-slate-950/40 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/60 shadow-xs cursor-help">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
-                        <Briefcase className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Unit / Divisi</Label>
-                        <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate">
-                          {completeData?.submission?.division || "Belum tersedia"}
-                        </p>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="font-semibold shadow-md max-w-[300px]">
-                    <p>{completeData?.submission?.division || "Belum tersedia"}</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                {/* Block 6: Periode */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center gap-4 rounded-xl border border-slate-100 dark:border-slate-850 p-4 bg-slate-50/50 dark:bg-slate-950/40 transition-all hover:bg-slate-50 dark:hover:bg-slate-950/60 shadow-xs cursor-help">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
-                        <Calendar className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0 w-full">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">Periode</Label>
-                          <Badge
-                            variant={
-                              completeData?.internship?.status === "AKTIF"
-                                ? "default"
-                                : "secondary"
-                            }
-                            className={
-                              completeData?.internship?.status === "AKTIF"
-                                ? "bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-md shadow-xs px-2 py-0.5 text-[9px] sm:text-[10px]"
-                                : "font-semibold rounded-md text-[9px] sm:text-[10px]"
-                            }
-                          >
-                            {completeData?.internship?.status || "PENDING"}
-                          </Badge>
-                        </div>
-                        <p className="font-extrabold text-slate-800 dark:text-slate-100 text-xs sm:text-sm mt-0.5 leading-tight truncate">
-                          {workPeriod.startDate && workPeriod.endDate
-                            ? `${new Date(workPeriod.startDate).toLocaleDateString("id-ID", {
-                                day: "2-digit",
-                                month: "short",
-                              })} - ${new Date(workPeriod.endDate).toLocaleDateString("id-ID", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              })}`
-                            : completeData?.submission?.startDate && completeData?.submission?.endDate
-                            ? `${new Date(completeData.submission.startDate).toLocaleDateString("id-ID", {
-                                day: "2-digit",
-                                month: "short",
-                              })} - ${new Date(completeData.submission.endDate).toLocaleDateString("id-ID", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric",
-                              })}`
-                            : "Belum tersedia"}
-                        </p>
-                      </div>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="font-semibold shadow-md">
-                    <p>
-                      {workPeriod.startDate && workPeriod.endDate
-                        ? `${new Date(workPeriod.startDate).toLocaleDateString("id-ID", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          })} s/d ${new Date(workPeriod.endDate).toLocaleDateString("id-ID", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          })}`
-                        : completeData?.submission?.startDate && completeData?.submission?.endDate
-                        ? `${new Date(completeData.submission.startDate).toLocaleDateString("id-ID", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          })} s/d ${new Date(completeData.submission.endDate).toLocaleDateString("id-ID", {
-                            day: "2-digit",
-                            month: "long",
-                            year: "numeric",
-                          })}`
-                        : "Belum tersedia"}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-muted-foreground">Nama</Label>
+                  <p className="font-medium">
+                    {completeData?.student.name || "-"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">NIM</Label>
+                  <p className="font-medium">
+                    {completeData?.student.nim || "-"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Program Studi</Label>
+                  <p className="font-medium">
+                    {completeData?.student.prodi || "Manajemen Informatika"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Fakultas</Label>
+                  <p className="font-medium">
+                    {completeData?.student.fakultas || "Ilmu Komputer"}
+                  </p>
+                </div>
               </div>
-            </TooltipProvider>
+              <div className="space-y-4">
+                <div>
+                  <Label className="text-muted-foreground">Tempat KP</Label>
+                  <p className="font-medium flex items-center gap-2">
+                    <Building className="h-4 w-4" />
+                    {completeData?.submission.company || "-"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Bagian/Bidang</Label>
+                  <p className="font-medium">
+                    {completeData?.submission.division || "-"}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Periode KP</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="font-medium flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      {workPeriod.startDate && workPeriod.endDate
+                        ? `${new Date(workPeriod.startDate).toLocaleDateString(
+                            "id-ID",
+                            {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            },
+                          )} - ${new Date(
+                            workPeriod.endDate,
+                          ).toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "long",
+                            year: "numeric",
+                          })}`
+                        : "Belum diisi"}
+                    </p>
+                    {periodSource === "auto" && workPeriod.startDate && (
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-green-50 text-green-700 border-green-300"
+                      >
+                        Auto
+                      </Badge>
+                    )}
+                    {periodSource === "manual" && workPeriod.startDate && (
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-gray-50 text-gray-700 border-gray-300"
+                      >
+                        Manual
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <div className="mt-1">
+                    <Badge
+                      variant={
+                        completeData?.internship.status === "AKTIF"
+                          ? "default"
+                          : "secondary"
+                      }
+                      className={
+                        completeData?.internship.status === "AKTIF"
+                          ? "bg-green-500"
+                          : ""
+                      }
+                    >
+                      {completeData?.internship.status || "PENDING"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Step Indicator */}
-      <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/60 p-4 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-12">
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center font-black text-sm border shadow-sm transition-all",
-              isPeriodSaved 
-                ? "bg-emerald-500 border-emerald-500 text-white" 
-                : "bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-950/30 dark:border-indigo-900"
-            )}>
-              {isPeriodSaved ? <CheckCircle className="w-5 h-5" /> : "1"}
-            </div>
-            <div>
-              <span className="font-extrabold text-xs block text-slate-800 dark:text-slate-200">LANGKAH 1</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">Set Periode Kerja Praktik</span>
-            </div>
+      <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+        <div
+          className={`flex items-center gap-2 ${isPeriodSaved ? "text-green-600" : "text-blue-600"}`}
+        >
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${isPeriodSaved ? "bg-green-100" : "bg-blue-100"}`}
+          >
+            {isPeriodSaved ? <CheckCircle className="w-5 h-5" /> : "1"}
           </div>
-          
-          <div className="hidden sm:block h-px w-20 bg-slate-200 dark:bg-slate-800" />
-
-          <div className="flex items-center gap-3">
-            <div className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center font-black text-sm border shadow-sm transition-all",
-              isPeriodSaved 
-                ? "bg-indigo-650 border-indigo-600 text-white shadow-indigo-100 dark:shadow-none" 
-                : "bg-slate-50 border-slate-200 text-slate-400 dark:bg-slate-900 dark:border-slate-800"
-            )}>
-              2
-            </div>
-            <div>
-              <span className="font-extrabold text-xs block text-slate-800 dark:text-slate-200">LANGKAH 2</span>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">Catat Entri & Ajukan Logbook</span>
-            </div>
+          <span className="font-medium">Set Periode</span>
+        </div>
+        <div
+          className={`h-0.5 flex-1 ${isPeriodSaved ? "bg-green-600" : "bg-gray-300"}`}
+        ></div>
+        <div
+          className={`flex items-center gap-2 ${isPeriodSaved ? "text-blue-600" : "text-gray-400"}`}
+        >
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${isPeriodSaved ? "bg-blue-100" : "bg-gray-100"}`}
+          >
+            2
           </div>
+          <span className="font-medium">Isi Logbook</span>
         </div>
       </div>
 
       {/* Section 1: Work Period Form */}
-      <Card className="border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white dark:bg-slate-900/80 shadow-md overflow-hidden">
-        <CardHeader className="bg-slate-50/50 dark:bg-slate-950/20 px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center justify-between flex-wrap gap-4">
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base font-extrabold flex items-center gap-2 text-indigo-950 dark:text-indigo-300">
-                <Calendar className="h-5 w-5 text-indigo-500" />
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5" />
                 Periode Kerja Praktik
                 {periodSource === "auto" && (
-                  <Badge variant="default" className="ml-2 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-0.5">
+                  <Badge variant="default" className="ml-2 bg-green-500">
                     <Sparkles className="h-3 w-3 mr-1" />
                     Auto dari Pengajuan
                   </Badge>
                 )}
                 {periodSource === "manual" && (
-                  <Badge variant="secondary" className="ml-2 text-xs font-bold py-0.5">
+                  <Badge variant="secondary" className="ml-2">
                     <Edit className="h-3 w-3 mr-1" />
                     Input Manual
                   </Badge>
                 )}
               </CardTitle>
-              <CardDescription className="text-xs text-slate-500 mt-1">
+              <CardDescription>
                 {periodSource === "auto"
                   ? "Periode otomatis dimuat dari data pengajuan KP Anda"
                   : "Tentukan periode dan hari kerja praktik Anda"}
               </CardDescription>
             </div>
             {isPeriodSaved && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleEditPeriod}
-                className="border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl font-bold text-xs"
-              >
+              <Button variant="outline" size="sm" onClick={handleEditPeriod}>
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Periode
               </Button>
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-6 space-y-6">
+        <CardContent className="space-y-6">
           {/* Info Alert berdasarkan sumber periode */}
           {periodSource === "auto" && (
-            <Alert className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900 rounded-xl">
-              <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-              <AlertDescription className="text-xs text-emerald-800 dark:text-emerald-350 leading-relaxed font-semibold">
-                <strong>Periode Otomatis Terdeteksi:</strong> Periode kerja praktik Anda
-                sudah otomatis disinkronkan dari pengajuan magang yang disetujui.
-                Semua tanggal libur nasional/akhir pekan disaring otomatis.
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                <strong>Periode Otomatis:</strong> Periode kerja praktik Anda
+                sudah otomatis dimuat dari data pengajuan yang telah disetujui.
+                Tanggal mulai dan selesai mengikuti data pengajuan Anda.
               </AlertDescription>
             </Alert>
           )}
           {periodSource === null && !isPeriodSaved && (
-            <Alert className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900 rounded-xl">
-              <AlertCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <AlertDescription className="text-xs text-blue-800 dark:text-blue-350 leading-relaxed font-semibold">
-                <strong>Input Manual Diperlukan:</strong> Sistem belum mendeteksi pengajuan
-                KP aktif Anda. Silakan tentukan rentang tanggal kerja praktik Anda secara mandiri di bawah.
+            <Alert className="bg-blue-50 border-blue-200">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <strong>Input Manual Diperlukan:</strong> Data pengajuan Anda
+                belum tersedia atau belum disetujui. Silakan input periode kerja
+                praktik secara manual di bawah ini.
               </AlertDescription>
             </Alert>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-600 dark:text-slate-400">Tanggal Mulai KP</Label>
+              <Label>Tanggal Mulai</Label>
               <Input
                 type="date"
                 value={workPeriod.startDate || ""}
@@ -1538,11 +1744,10 @@ function LogbookPage() {
                   setWorkPeriod({ ...workPeriod, startDate: e.target.value })
                 }
                 disabled={isPeriodSaved}
-                className="rounded-xl border-slate-200 dark:border-slate-800 shadow-xs focus-visible:ring-indigo-500 h-11"
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-600 dark:text-slate-400">Tanggal Selesai KP</Label>
+              <Label>Tanggal Selesai</Label>
               <Input
                 type="date"
                 value={workPeriod.endDate || ""}
@@ -1550,14 +1755,13 @@ function LogbookPage() {
                   setWorkPeriod({ ...workPeriod, endDate: e.target.value })
                 }
                 disabled={isPeriodSaved}
-                className="rounded-xl border-slate-200 dark:border-slate-800 shadow-xs focus-visible:ring-indigo-500 h-11"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-600 dark:text-slate-400">Hari Kerja Mulai</Label>
+              <Label>Hari Kerja Mulai</Label>
               <Select
                 value={workPeriod.startDay}
                 onValueChange={(value) =>
@@ -1565,10 +1769,10 @@ function LogbookPage() {
                 }
                 disabled={isPeriodSaved}
               >
-                <SelectTrigger className="rounded-xl border-slate-200 dark:border-slate-800 h-11 shadow-xs">
+                <SelectTrigger>
                   <SelectValue placeholder="Pilih hari" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent>
                   {DAYS_OPTIONS.map((day) => (
                     <SelectItem key={day.value} value={day.value}>
                       {day.label}
@@ -1578,7 +1782,7 @@ function LogbookPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-600 dark:text-slate-400">Hari Kerja Selesai</Label>
+              <Label>Hari Kerja Selesai</Label>
               <Select
                 value={workPeriod.endDay}
                 onValueChange={(value) =>
@@ -1586,10 +1790,10 @@ function LogbookPage() {
                 }
                 disabled={isPeriodSaved}
               >
-                <SelectTrigger className="rounded-xl border-slate-200 dark:border-slate-800 h-11 shadow-xs">
+                <SelectTrigger>
                   <SelectValue placeholder="Pilih hari" />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent>
                   {DAYS_OPTIONS.map((day) => (
                     <SelectItem key={day.value} value={day.value}>
                       {day.label}
@@ -1601,23 +1805,21 @@ function LogbookPage() {
           </div>
 
           {!isPeriodSaved && (
-            <div className="flex justify-end pt-2">
-              <Button 
-                onClick={handleSubmitPeriod}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md font-bold px-6 py-5"
-              >
+            <div className="flex justify-end">
+              <Button onClick={handleSubmitPeriod}>
                 <Save className="mr-2 h-4 w-4" />
-                Simpan & Generate Hari Kerja
+                Simpan Periode
               </Button>
             </div>
           )}
 
           {isPeriodSaved && (
-            <Alert className="border-l-4 border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/10 border-slate-250 dark:border-slate-800 rounded-xl">
-              <CheckCircle className="h-4 w-4 text-emerald-600" />
-              <AlertDescription className="text-xs text-emerald-800 dark:text-emerald-350 leading-relaxed font-semibold">
-                Periode kerja praktik Anda telah tersimpan dengan aman! Sistem berhasil melahirkan{" "}
-                <strong>{generatedDates.length} hari kerja</strong> yang siap diisi secara bertahap pada panel di bawah ini.
+            <Alert className="border-l-4 border-green-500 bg-green-50">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                Periode kerja praktik telah disimpan. Tabel logbook dengan{" "}
+                {generatedDates.length} hari kerja siap digunakan. Anda dapat
+                menambahkan catatan harian di bawah ini.
               </AlertDescription>
             </Alert>
           )}
@@ -1629,30 +1831,27 @@ function LogbookPage() {
         <>
           {/* Section 2: Add Logbook Entry Form */}
           <div ref={entryFormRef} className="scroll-mt-20">
-            <Card className="border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white dark:bg-slate-900/80 shadow-md overflow-hidden">
-            <CardHeader className="bg-slate-50/50 dark:bg-slate-950/20 px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <CardTitle className="text-base font-extrabold flex items-center gap-2 text-indigo-950 dark:text-indigo-300">
+            <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
                 {editingId ? (
-                  <Edit className="h-5 w-5 text-indigo-500 animate-pulse" />
+                  <Edit className="h-5 w-5" />
                 ) : (
-                  <Plus className="h-5 w-5 text-indigo-500" />
+                  <Plus className="h-5 w-5" />
                 )}
-                {editingId ? "Edit Catatan Logbook Harian" : "Catat Aktivitas Baru"}
+                {editingId ? "Edit Entri Logbook" : "Tambah Entri Logbook"}
               </CardTitle>
-              <CardDescription className="text-xs text-slate-500">
+              <CardDescription>
                 {editingId
-                  ? "Sesuaikan rincian laporan aktivitas harian Anda di bawah"
-                  : "Dokumentasikan tugas, pengerjaan, dan pencapaian Anda hari ini"}
+                  ? "Edit catatan kegiatan harian Anda"
+                  : "Tambahkan catatan kegiatan harian Anda"}
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-6 items-start">
-                {/* Left Column: Date Selectors */}
-                <div className="space-y-4 p-4 rounded-xl bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-850">
-                  <Label htmlFor="tanggal" className="text-xs font-bold text-slate-700 dark:text-slate-350">
-                    Tanggal Logbook
-                  </Label>
-                  <div className="flex items-center gap-1.5">
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6 items-start">
+                <div className="space-y-2 min-w-0">
+                  <Label htmlFor="tanggal">Tanggal</Label>
+                  <div className="flex items-center gap-2 min-w-0">
                     <Button
                       type="button"
                       variant="outline"
@@ -1660,9 +1859,8 @@ function LogbookPage() {
                       disabled={isSavingLogbook}
                       onClick={() => shiftSelectedDate(-1)}
                       aria-label="Tanggal sebelumnya"
-                      className="rounded-lg h-9 w-9 border-slate-200 dark:border-slate-800 shrink-0"
                     >
-                      <ArrowLeft className="h-4 w-4 text-slate-650" />
+                      <ArrowLeft className="h-4 w-4" />
                     </Button>
                     <Popover
                       open={isDatePickerOpen}
@@ -1673,24 +1871,32 @@ function LogbookPage() {
                           id="tanggal"
                           variant="outline"
                           disabled={isSavingLogbook}
-                          className="h-9 flex-1 justify-start text-left text-xs font-bold rounded-lg border-slate-200 dark:border-slate-800"
+                          className="h-10 w-[190px] flex-1 justify-start text-left text-sm font-normal"
                         >
-                          <Calendar className="mr-2 h-4 w-4 text-indigo-500 shrink-0" />
+                          <Calendar className="mr-2 h-4 w-4" />
                           {selectedDate
                             ? formatDate(selectedDate)
-                            : "Pilih Tanggal"}
+                            : "Pilih tanggal logbook"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 rounded-xl overflow-hidden shadow-lg border" align="start">
+                      <PopoverContent className="w-auto p-0" align="start">
                         <UiCalendar
-                          className="p-2"
+                          className="p-1"
                           mode="single"
                           locale={localeId}
                           weekStartsOn={1}
                           showOutsideDays
                           formatters={{
                             formatWeekdayName: (date) => {
-                              const dayNames = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+                              const dayNames = [
+                                "Min",
+                                "Sen",
+                                "Sel",
+                                "Rab",
+                                "Kam",
+                                "Jum",
+                                "Sab",
+                              ];
                               return dayNames[date.getDay()] || "";
                             },
                           }}
@@ -1713,11 +1919,13 @@ function LogbookPage() {
                             setIsDatePickerOpen(false);
                           }}
                           classNames={{
-                            nav_button: "h-7 w-7 p-0 rounded-md",
+                            nav_button: "h-7 w-7 p-0",
                             weekdays: "grid grid-cols-7",
-                            weekday: "w-8 text-center text-[0.7rem] font-bold text-slate-400 leading-none",
+                            weekday:
+                              "w-8 text-center text-[0.7rem] font-medium leading-none",
                             head_row: "grid grid-cols-7",
-                            head_cell: "w-8 text-center text-[0.7rem] font-bold text-slate-400 leading-none",
+                            head_cell:
+                              "w-8 text-center text-[0.7rem] font-medium leading-none",
                             day_outside: "text-muted-foreground/20 opacity-25",
                           }}
                           disabled={isSavingLogbook}
@@ -1739,13 +1947,13 @@ function LogbookPage() {
                               color: "#94a3b8",
                             },
                             filled: {
-                              backgroundColor: "#e8fbf1",
-                              color: "#0f764a",
-                              border: "1px solid #a7f3d0",
-                              fontWeight: 700,
+                              backgroundColor: "#ecfdf3",
+                              color: "#166534",
+                              border: "1px solid #86efac",
+                              fontWeight: 600,
                             },
                             nonWorkday: {
-                              color: "#ef4444",
+                              color: "#b91c1c",
                             },
                           }}
                           initialFocus
@@ -1759,68 +1967,62 @@ function LogbookPage() {
                       disabled={isSavingLogbook}
                       onClick={() => shiftSelectedDate(1)}
                       aria-label="Tanggal berikutnya"
-                      className="rounded-lg h-9 w-9 border-slate-200 dark:border-slate-800 shrink-0"
                     >
-                      <ArrowLeft className="h-4 w-4 rotate-180 text-slate-655" />
+                      <ArrowLeft className="h-4 w-4 rotate-180" />
                     </Button>
                   </div>
-                  
-                  <div className="pt-2 space-y-2 border-t border-slate-100 dark:border-slate-850">
-                    <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">Keterangan Kalender</span>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-450">
-                        <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-sm" />
-                        Sudah diisi
-                      </span>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-450">
-                        <span className="h-2 w-2 rounded-full bg-red-400 shadow-sm" />
-                        Bukan hari kerja
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-green-300" />
+                      Sudah diisi
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full bg-red-300" />
+                      Bukan hari kerja
+                    </span>
                   </div>
                 </div>
-
-                {/* Right Column: Description textarea */}
-                <div className="space-y-4 w-full">
+                <div className="space-y-2 min-w-0">
                   <div className="flex justify-between items-center">
-                    <Label htmlFor="deskripsi" className="text-xs font-bold text-slate-700 dark:text-slate-350">
-                      Rincian Aktivitas Kerja Praktik
-                    </Label>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400">
+                    <Label htmlFor="deskripsi">Deskripsi Kegiatan</Label>
+                    <span className="text-xs text-muted-foreground">
                       {getWordCount(description)} kata
                     </span>
                   </div>
-                  <Textarea
-                    id="deskripsi"
-                    rows={5}
-                    placeholder="Contoh: Menyusun desain arsitektur database relasional, melakukan setup environment Docker local, berdiskusi dengan mentor tim dev mengenai integrasi API SSO..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    disabled={isSavingLogbook}
-                    className="rounded-xl border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500 text-sm leading-relaxed p-3.5"
-                  />
+                  <div className="space-y-1">
+                    <Textarea
+                      id="deskripsi"
+                      rows={4}
+                      placeholder="Masukkan deskripsi kegiatan..."
+                      value={description}
+                      onChange={(e) => {
+                        setDescription(e.target.value);
+                      }}
+                      disabled={isSavingLogbook}
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Photo Upload Section (Opsional) */}
-              <div className="space-y-3 p-5 rounded-xl border border-slate-200/60 dark:border-slate-800/60 bg-slate-50/30 dark:bg-slate-950/20">
+              <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
                 <div className="flex items-center gap-2">
-                  <Camera className="h-4.5 w-4.5 text-indigo-550 shrink-0" />
-                  <Label className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Bukti Dokumentasi Kegiatan Magang 
-                    <span className="ml-1.5 text-[10px] font-normal text-slate-400 dark:text-slate-500 uppercase tracking-wide">
-                      (Opsional — Maksimal 2MB, JPEG/PNG/WebP)
+                  <Camera className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-medium">
+                    Foto Kegiatan
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      (Opsional — Max 2MB, JPEG/PNG/WebP)
                     </span>
                   </Label>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-start gap-3">
                   <label
                     htmlFor="foto-kegiatan"
-                    className="flex items-center gap-2 cursor-pointer px-4 py-2.5 text-xs font-extrabold border border-dashed rounded-xl bg-white hover:bg-slate-50 dark:bg-slate-900 dark:hover:bg-slate-800 border-slate-300 hover:border-indigo-500 transition-all shadow-xs shrink-0"
+                    className="flex items-center gap-2 cursor-pointer px-3 py-2 text-sm border rounded-md bg-background hover:bg-muted transition-colors"
                   >
-                    <ImageIcon className="h-4 w-4 text-slate-500" />
-                    {photoFile ? photoFile.name : "Pilih File Gambar..."}
+                    <ImageIcon className="h-4 w-4" />
+                    {photoFile ? photoFile.name : "Pilih Foto..."}
                     <input
                       id="foto-kegiatan"
                       type="file"
@@ -1832,56 +2034,52 @@ function LogbookPage() {
                   </label>
 
                   {photoPreview && (
-                    <div className="flex items-start gap-2 p-1 border rounded-xl bg-white dark:bg-slate-900 shadow-sm shrink-0">
+                    <div className="flex items-start gap-2">
                       <img
                         src={photoPreview}
                         alt="Preview foto kegiatan"
-                        className="h-16 w-16 object-cover rounded-lg"
+                        className="h-20 w-20 object-cover rounded-md border"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 text-slate-450 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
                         onClick={() => {
                           setPhotoFile(null);
                           setPhotoPreview(null);
                         }}
                         title="Hapus foto"
                       >
-                        <XCircle className="h-4.5 w-4.5" />
+                        <XCircle className="h-4 w-4" />
                       </Button>
                     </div>
                   )}
-                  
-                  <div className="text-[11px] text-slate-450 dark:text-slate-500 leading-normal flex-1">
-                    💡 <em>Catatan:</em> Foto bersifat bukti otentik yang akan dilihat langsung oleh Pembimbing Lapangan serta Dosen PA. Anda juga bisa mengupload/mengganti foto kapan saja lewat tabel setelah entri disimpan.
-                  </div>
                 </div>
+
+                <p className="text-xs text-muted-foreground">
+                  💡 Foto dapat ditambahkan setelah logbook disimpan. Foto akan
+                  ditampilkan ke mentor dan dosen pembimbing (read-only).
+                </p>
               </div>
 
-              <div className="flex justify-end gap-2.5 pt-2">
+              <div className="flex justify-end gap-2">
                 {editingId && (
                   <Button
                     variant="outline"
                     onClick={handleCancelEdit}
                     disabled={isSavingLogbook}
-                    className="rounded-xl border-slate-200 hover:bg-slate-100 font-bold px-5 text-xs h-10"
                   >
-                    Batal Edit
+                    Batal
                   </Button>
                 )}
-                <Button 
-                  onClick={handleAddLogbook} 
-                  disabled={isSavingLogbook}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md font-bold px-6 h-10 text-xs"
-                >
+                <Button onClick={handleAddLogbook} disabled={isSavingLogbook}>
                   <Save className="mr-2 h-4 w-4" />
                   {isSavingLogbook
                     ? "Menyimpan..."
                     : editingId
                       ? "Simpan Perubahan"
-                      : "Tambah ke Draft Logbook"}
+                      : "Tambah Logbook"}
                 </Button>
               </div>
             </CardContent>
@@ -1889,67 +2087,62 @@ function LogbookPage() {
           </div>
 
           {/* Section 3: Generated Logbook Table */}
-          <Card className="border border-slate-200/60 dark:border-slate-800/60 rounded-2xl bg-white dark:bg-slate-900/80 shadow-md overflow-hidden">
-            <CardHeader className="bg-slate-50/50 dark:bg-slate-950/20 px-6 py-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center justify-between flex-wrap gap-4">
-                <div>
-                  <CardTitle className="text-base font-extrabold flex items-center gap-2 text-indigo-950 dark:text-indigo-300">
-                    <FileText className="h-5 w-5 text-indigo-500" />
-                    Catatan Tabel Logbook Harian
-                  </CardTitle>
-                  <CardDescription className="text-xs text-slate-500 mt-1">
-                    Daftar seluruh hari kerja praktik Anda. Isi catatan harian untuk memproses persetujuan.
-                  </CardDescription>
-                </div>
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Tabel Logbook
+              </CardTitle>
+              <CardDescription>
+                Daftar kegiatan harian berdasarkan periode kerja yang telah
+                digenerate
+              </CardDescription>
             </CardHeader>
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="space-y-6">
               {/* Period Display */}
-              <div className="flex flex-wrap items-center gap-3 p-4 bg-linear-to-r from-indigo-50/50 via-blue-50/30 to-transparent dark:from-slate-950/40 dark:via-slate-950/20 dark:to-transparent border border-slate-100 dark:border-slate-850 rounded-xl">
-                <span className="text-xs font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">
-                  Rentang Waktu KP:
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-muted rounded-lg">
+                <span className="font-medium text-sm text-muted-foreground">
+                  Periode:
                 </span>
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {workPeriod.startDate
-                      ? formatDate(workPeriod.startDate)
-                      : "Belum diset"}
-                  </span>
-                  <span className="text-xs font-semibold text-slate-400">s/d</span>
-                  <span className="px-3 py-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300">
-                    {workPeriod.endDate
-                      ? formatDate(workPeriod.endDate)
-                      : "Belum diset"}
-                  </span>
-                </div>
-                <span className="ml-auto px-3 py-1 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-400 border border-indigo-100/50 dark:border-indigo-900/50 rounded-full text-xs font-black">
-                  🚀 {generatedDates.length} Hari Kerja Praktik
+                <span className="px-3 py-1.5 bg-background rounded-md text-sm font-medium">
+                  {workPeriod.startDate
+                    ? formatDate(workPeriod.startDate)
+                    : "Belum diset"}
+                </span>
+                <span className="text-muted-foreground">s/d</span>
+                <span className="px-3 py-1.5 bg-background rounded-md text-sm font-medium">
+                  {workPeriod.endDate
+                    ? formatDate(workPeriod.endDate)
+                    : "Belum diset"}
+                </span>
+                <span className="ml-auto px-3 py-1.5 bg-blue-100 text-blue-700 rounded-md text-sm font-medium">
+                  {generatedDates.length} Hari Kerja
                 </span>
               </div>
 
               {/* Logbook Table */}
               {generatedDates.length > 0 && (
-                <div className="rounded-2xl border border-slate-200/60 dark:border-slate-800/60 w-full overflow-hidden shadow-xs bg-white dark:bg-slate-900">
-                  <Table className="border-collapse">
-                    <TableHeader className="bg-slate-50/70 dark:bg-slate-950/40">
-                      <TableRow className="border-b border-slate-200/60 dark:border-slate-800/60 hover:bg-transparent">
-                        <TableHead className="w-20 text-center text-xs font-black text-slate-500 uppercase tracking-wider py-4">
-                          Minggu
+                <div className="rounded-md border w-full overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-16 text-center text-xs">
+                          Minggu Ke
                         </TableHead>
-                        <TableHead className="w-36 text-xs font-black text-slate-500 uppercase tracking-wider py-4">
-                          Hari & Tanggal
+                        <TableHead className="w-24 text-xs">
+                          Hari, Tanggal
                         </TableHead>
-                        <TableHead className="w-20 text-center text-xs font-black text-slate-500 uppercase tracking-wider py-4">
+                        <TableHead className="w-16 text-center text-xs">
                           Jam
                         </TableHead>
-                        <TableHead className="text-xs font-black text-slate-500 uppercase tracking-wider py-4">
-                          Deskripsi Aktivitas Kerja
+                        <TableHead className="text-xs">
+                          Deskripsi Kegiatan
                         </TableHead>
-                        <TableHead className="w-28 text-center text-xs font-black text-slate-500 uppercase tracking-wider py-4">
-                          Foto Bukti
+                        <TableHead className="w-24 text-center text-xs">
+                          Foto
                         </TableHead>
-                        <TableHead className="w-40 text-center text-xs font-black text-slate-500 uppercase tracking-wider py-4">
-                          Status & Paraf
+                        <TableHead className="w-32 text-center text-xs">
+                          Paraf Pembimbing
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1966,14 +2159,11 @@ function LogbookPage() {
                         return (
                           <TableRow 
                             key={index}
-                            className={cn(
-                              "border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/40 dark:hover:bg-slate-950/10 transition-colors",
-                              showWeekNumber && index > 0 ? "border-t-2 border-slate-200 dark:border-slate-850" : ""
-                            )}
+                            className={showWeekNumber && index > 0 ? "border-t-4 border-gray-300" : ""}
                           >
                             {showWeekNumber && (
                               <TableCell
-                                className="text-center font-black bg-indigo-50/20 dark:bg-indigo-950/10 text-indigo-700 dark:text-indigo-400 text-sm border-r border-slate-100 dark:border-slate-850"
+                                className="text-center font-medium bg-muted/50"
                                 rowSpan={getWeekRowSpan(generatedDates, index)}
                               >
                                 {weekNum}
@@ -1981,8 +2171,7 @@ function LogbookPage() {
                             )}
                             <TableCell
                               className={cn(
-                                "py-4",
-                                !entry && "cursor-pointer hover:bg-amber-50/20 dark:hover:bg-amber-950/5 group"
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
                               )}
                               onClick={() => {
                                 if (!entry) {
@@ -1996,18 +2185,18 @@ function LogbookPage() {
                               }}
                             >
                               <div className="flex flex-col">
-                                <span className="font-extrabold text-slate-800 dark:text-slate-200 group-hover:text-indigo-650 transition-colors text-xs">
+                                <span className="font-medium group-hover:text-primary transition-colors">
                                   {getDayName(date)}
                                 </span>
-                                <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">
+                                <span className="text-sm text-muted-foreground">
                                   {formatDate(date)}
                                 </span>
                               </div>
                             </TableCell>
                             <TableCell 
                               className={cn(
-                                "text-center font-bold text-xs py-4",
-                                !entry && "cursor-pointer hover:bg-amber-50/20 dark:hover:bg-amber-950/5 group"
+                                "text-center font-medium",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
                               )}
                               onClick={() => {
                                 if (!entry) {
@@ -2020,14 +2209,14 @@ function LogbookPage() {
                                 }
                               }}
                             >
-                              <span className={cn(entry ? "text-slate-800 dark:text-slate-200" : "text-slate-350 dark:text-slate-600")}>
-                                {entry?.time || "—"}
+                              <span className={cn(!entry && "group-hover:text-primary transition-colors")}>
+                                {entry?.time || "-"}
                               </span>
                             </TableCell>
                             <TableCell 
                               className={cn(
-                                "py-4",
-                                !entry && "cursor-pointer hover:bg-amber-50/20 dark:hover:bg-amber-950/5 group"
+                                "relative",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
                               )}
                               onClick={() => {
                                 if (!entry) {
@@ -2040,14 +2229,14 @@ function LogbookPage() {
                                 }
                               }}
                             >
-                              <div className="space-y-1.5 max-w-xl break-words">
+                              <div className="space-y-2 break-words">
                                 {entry ? (
                                   <div className="space-y-2">
-                                    <div className="text-xs leading-relaxed text-slate-700 dark:text-slate-300 break-words whitespace-normal font-semibold">
-                                      <p className="line-clamp-4">
+                                    <div className="text-sm break-words whitespace-normal">
+                                      <p className="text-foreground line-clamp-3">
                                         {entry.description}
                                       </p>
-                                      <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mt-1">
+                                      <p className="text-xs text-muted-foreground mt-1">
                                         {getWordCount(entry.description)} kata
                                       </p>
                                     </div>
@@ -2064,107 +2253,108 @@ function LogbookPage() {
                                           entry?.mentorSignature?.status === "approved" ||
                                           entry?.status === "PENDING"
                                         }
-                                        className="h-7 text-[10px] font-bold rounded-lg border-slate-200 dark:border-slate-800 px-2.5"
                                       >
-                                        <Edit className="h-3 w-3 mr-1 text-slate-500" />
-                                        Edit Rincian
+                                        <Edit className="h-3 w-3 mr-1" />
+                                        Edit
                                       </Button>
                                     </div>
-                                    {entry?.mentorSignature?.status === "approved" && (
-                                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-450 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-lg">
-                                        🔒 Logbook telah diverifikasi mentor lapangan. Entri ini dikunci secara permanen.
+                                    {entry?.mentorSignature?.status ===
+                                      "approved" && (
+                                      <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
+                                        Logbook sudah disetujui mentor, entri
+                                        ini tidak bisa diedit atau dihapus.
                                       </p>
                                     )}
-                                    {entry?.status === "PENDING" && !entry?.mentorSignature && (
-                                      <p className="text-[10px] font-bold text-amber-700 dark:text-amber-450 bg-amber-50 dark:bg-amber-950/30 px-2.5 py-1 rounded-lg">
-                                        ⏳ Sudah diajukan & sedang menanti paraf review dari pembimbing lapangan.
-                                      </p>
-                                    )}
+                                    {entry?.status === "PENDING" &&
+                                      !entry?.mentorSignature && (
+                                        <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
+                                          Logbook sudah diajukan dan sedang
+                                          menunggu review mentor.
+                                        </p>
+                                      )}
                                     {entry?.status === "DRAFT" && (
-                                      <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 px-2.5 py-1 rounded-lg border border-slate-100 dark:border-slate-800">
-                                        📝 Disimpan sebagai draft lokal. Siap diajukan ke pembimbing lapangan.
+                                      <p className="text-xs text-slate-700 bg-slate-100 px-2 py-1 rounded">
+                                        Logbook belum diajukan ke mentor.
                                       </p>
                                     )}
                                   </div>
                                 ) : (
-                                  <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-500 font-bold text-xs py-2 group-hover:text-amber-700 transition-colors">
-                                    <Sparkles className="h-3.5 w-3.5" />
-                                    <span>Belum diisi. Klik untuk mencatat aktivitas hari ini</span>
-                                  </div>
+                                  <span className="text-amber-600 italic group-hover:text-amber-700 transition-colors font-medium">
+                                    Belum diisi
+                                  </span>
                                 )}
                               </div>
                             </TableCell>
                             {/* Foto Kegiatan Cell */}
-                            <TableCell className="text-center py-4">
+                            <TableCell className="text-center align-top">
                               {entry?.photoUrl ? (
                                 <a
                                   href={entry.photoUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   title="Lihat foto kegiatan"
-                                  className="inline-block"
                                 >
-                                  <div className="relative group mx-auto h-12 w-12 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-xs">
-                                    <img
-                                      src={entry.photoUrl}
-                                      alt="Foto kegiatan"
-                                      className="h-12 w-12 object-cover"
-                                    />
-                                    {/* Overlay for replacement (only for editable entries) */}
-                                    {entry.status !== "PENDING" && entry.mentorSignature?.status !== "approved" && (
-                                      <label
-                                        htmlFor={`foto-replace-${entry.id}`}
-                                        className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
-                                        onClick={(e) => e.stopPropagation()} // Prevent bubble
-                                        title="Ganti foto kegiatan"
-                                      >
-                                        <Camera className="h-4.5 w-4.5 text-white" />
-                                        <input
-                                          id={`foto-replace-${entry.id}`}
-                                          type="file"
-                                          accept="image/jpeg,image/png,image/webp"
-                                          className="sr-only"
-                                          onChange={async (e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) {
-                                              const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
-                                              if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
-                                              try {
-                                                setIsUploadingPhoto(true);
-                                                setUploadingPhotoForId(entry.id);
-                                                const res = await uploadLogbookPhoto(entry.id, file);
-                                                if (!res.success) throw new Error(res.message || "Gagal upload foto.");
-                                                setLogbookEntries((prev) =>
-                                                  prev.map((en) =>
-                                                    en.id === entry.id ? { ...en, photoUrl: res.data?.photoUrl ?? en.photoUrl } : en,
-                                                  ),
-                                                );
-                                                toast.success("Foto berhasil diganti!");
-                                              } catch (err) {
-                                                toast.error(err instanceof Error ? err.message : "Gagal ganti foto.");
-                                              } finally {
-                                                setIsUploadingPhoto(false);
-                                                setUploadingPhotoForId(null);
+                                    <div className="relative group mx-auto h-14 w-14">
+                                      <img
+                                        src={entry.photoUrl}
+                                        alt="Foto kegiatan"
+                                        className="h-14 w-14 object-cover rounded-md border"
+                                      />
+                                      {/* Overlay for replacement (only for editable entries) */}
+                                      {entry.status !== "PENDING" && entry.mentorSignature?.status !== "approved" && (
+                                        <label
+                                          htmlFor={`foto-replace-${entry.id}`}
+                                          className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-md opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
+                                          title="Ganti foto kegiatan"
+                                        >
+                                          <Camera className="h-5 w-5 text-white" />
+                                          <input
+                                            id={`foto-replace-${entry.id}`}
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp"
+                                            className="sr-only"
+                                            onChange={async (e) => {
+                                              const file = e.target.files?.[0];
+                                              if (file) {
+                                                const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+                                                if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
+                                                try {
+                                                  setIsUploadingPhoto(true);
+                                                  setUploadingPhotoForId(entry.id);
+                                                  const res = await uploadLogbookPhoto(entry.id, file);
+                                                  if (!res.success) throw new Error(res.message || "Gagal upload foto.");
+                                                  setLogbookEntries((prev) =>
+                                                    prev.map((en) =>
+                                                      en.id === entry.id ? { ...en, photoUrl: res.data?.photoUrl ?? en.photoUrl } : en,
+                                                    ),
+                                                  );
+                                                  toast.success("Foto berhasil diganti!");
+                                                } catch (err) {
+                                                  toast.error(err instanceof Error ? err.message : "Gagal ganti foto.");
+                                                } finally {
+                                                  setIsUploadingPhoto(false);
+                                                  setUploadingPhotoForId(null);
+                                                }
                                               }
-                                            }
-                                          }}
-                                        />
-                                      </label>
-                                    )}
-                                  </div>
+                                            }}
+                                          />
+                                        </label>
+                                      )}
+                                    </div>
                                 </a>
                               ) : entry ? (
                                 <div className="flex flex-col items-center gap-1">
                                   <label
                                     htmlFor={`foto-entry-${entry.id}`}
-                                    className={`flex flex-col items-center gap-1 cursor-pointer text-[10px] font-extrabold text-slate-400 hover:text-indigo-600 transition-colors ${isUploadingPhoto && uploadingPhotoForId === entry.id ? "opacity-50 pointer-events-none" : ""}`}
+                                    className={`flex flex-col items-center gap-1 cursor-pointer text-xs text-muted-foreground hover:text-foreground transition-colors ${isUploadingPhoto && uploadingPhotoForId === entry.id ? "opacity-50 pointer-events-none" : ""}`}
                                     title="Upload foto kegiatan"
                                   >
-                                    <Camera className="h-4.5 w-4.5 text-slate-400" />
+                                    <Camera className="h-5 w-5" />
                                     <span>
-                                      {isUploadingPhoto && uploadingPhotoForId === entry.id
+                                      {isUploadingPhoto &&
+                                      uploadingPhotoForId === entry.id
                                         ? "Uploading..."
-                                        : "Unggah Foto"}
+                                        : "Upload foto"}
                                     </span>
                                     <input
                                       id={`foto-entry-${entry.id}`}
@@ -2173,11 +2363,13 @@ function LogbookPage() {
                                       className="sr-only"
                                       onChange={async (e) => {
                                         handlePhotoFileChange(e);
+                                        // Auto-upload when file selected from row button
                                         const file = e.target.files?.[0];
                                         if (file) {
                                           const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
                                           if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
                                           setPhotoFile(file);
+                                          // Trigger upload immediately
                                           try {
                                             setIsUploadingPhoto(true);
                                             setUploadingPhotoForId(entry.id);
@@ -2204,13 +2396,13 @@ function LogbookPage() {
                                   </label>
                                 </div>
                               ) : (
-                                <span className="text-[11px] text-slate-300 dark:text-slate-700 font-semibold">—</span>
+                                <span className="text-xs text-muted-foreground">—</span>
                               )}
                             </TableCell>
                             <TableCell 
                               className={cn(
-                                "text-center py-4 border-l border-slate-100 dark:border-slate-850",
-                                !entry && "cursor-pointer hover:bg-amber-50/20 dark:hover:bg-amber-950/5 group"
+                                "text-center",
+                                !entry && "cursor-pointer hover:bg-muted/30 transition-colors group"
                               )}
                               onClick={() => {
                                 if (!entry) {
@@ -2223,51 +2415,54 @@ function LogbookPage() {
                                 }
                               }}
                             >
-                              <div className="flex flex-col items-center gap-1.5 break-words">
+                              <div className="flex flex-col items-center gap-1 break-words">
                                 {entry ? (
                                   getMentorSignatureBadge(entry)
                                 ) : (
-                                  <Badge variant="outline" className="bg-slate-50 text-slate-400 border-slate-200 group-hover:text-slate-500 group-hover:border-slate-300 transition-colors font-bold text-[10px] rounded-lg">
+                                  <Badge variant="outline" className="bg-amber-50 border-amber-200 text-amber-700 group-hover:text-amber-800 transition-colors font-medium">
                                     Belum diisi
                                   </Badge>
                                 )}
 
                                 {/* Notes dari mentor (untuk approved) */}
-                                {entry?.mentorSignature?.status === "approved" && entry?.mentorSignature?.notes && (
-                                  <p className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-100 dark:bg-emerald-950/20 dark:border-emerald-900/50 px-2 py-1 rounded-lg mt-1 italic">
-                                    💬 {entry.mentorSignature.notes}
-                                  </p>
-                                )}
+                                {entry?.mentorSignature?.status ===
+                                  "approved" &&
+                                  entry?.mentorSignature?.notes && (
+                                    <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded mt-1 italic">
+                                      💬 {entry.mentorSignature.notes}
+                                    </p>
+                                  )}
 
                                 {/* Rejection note (untuk rejected) - Lebih prominent */}
-                                {entry?.mentorSignature?.status === "rejected" && entry?.mentorSignature?.notes && (
-                                  <div className="mt-2 w-full max-w-[150px]">
-                                    <div 
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditLogbook(entry);
-                                      }}
-                                      className="bg-red-50 border border-red-200 rounded-lg p-2 text-left cursor-pointer hover:bg-red-100 transition-colors"
-                                    >
-                                      <p className="text-[9px] font-extrabold text-red-900 mb-0.5 uppercase tracking-wide">
-                                        📝 Revisi:
-                                      </p>
-                                      <p className="text-[10px] text-red-800 leading-normal line-clamp-3">
-                                        {entry.mentorSignature.notes}
-                                      </p>
-                                      <p className="text-[9px] text-red-600 mt-1 italic font-semibold">
-                                        Klik untuk revisi
-                                      </p>
+                                {entry?.mentorSignature?.status ===
+                                  "rejected" &&
+                                  entry?.mentorSignature?.notes && (
+                                    <div className="mt-2 w-full">
+                                      <div 
+                                        onClick={() => handleEditLogbook(entry)}
+                                        className="bg-red-50 border border-red-200 rounded-lg p-2 text-left cursor-pointer hover:bg-red-100 transition-colors"
+                                      >
+                                        <p className="text-xs font-semibold text-red-900 mb-1">
+                                          📝 Catatan Revisi:
+                                        </p>
+                                        <p className="text-xs text-red-800">
+                                          {entry.mentorSignature.notes}
+                                        </p>
+                                        <p className="text-xs text-red-600 mt-1 italic">
+                                          Silakan perbaiki dan submit ulang
+                                        </p>
+                                      </div>
                                     </div>
-                                  </div>
-                                )}
+                                  )}
 
                                 {/* Revision note (untuk revision) */}
-                                {entry?.mentorSignature?.status === "revision" && entry?.mentorSignature?.notes && (
-                                  <p className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-1 rounded-lg mt-1 italic border border-amber-100">
-                                    ⚠️ {entry.mentorSignature.notes}
-                                  </p>
-                                )}
+                                {entry?.mentorSignature?.status ===
+                                  "revision" &&
+                                  entry?.mentorSignature?.notes && (
+                                    <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded mt-1 italic">
+                                      ⚠️ {entry.mentorSignature.notes}
+                                    </p>
+                                  )}
                               </div>
                             </TableCell>
                           </TableRow>

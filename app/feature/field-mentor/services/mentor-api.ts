@@ -8,7 +8,10 @@ import type { ApiResponse } from "~/lib/api-client";
 import {
   getActiveProfileSignature,
   getSignatureManageUrl,
+  saveSignatureToInternship,
 } from "~/lib/services/signature.service";
+
+export { saveSignatureToInternship };
 
 // ==================== TYPES ====================
 

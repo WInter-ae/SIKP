@@ -52,6 +52,12 @@ import {
 } from "~/feature/during-intern/services/assessment-api";
 import { getAssessmentRecap } from "~/feature/evaluation/services/evaluation-api";
 import type { AssessmentCriterion } from "~/lib/assessment-criteria-api";
+import { INTERNSHIP_API_BASE_URL } from "~/lib/api-client";
+import {
+  generateAssessmentForm,
+  normalizeSignatureForDocument,
+  printAssessmentForm,
+} from "~/feature/during-intern/utils/generate-assessment-form";
 
 const MENTOR_ICONS: Record<string, React.ElementType> = {
   kehadiran: Clock,
@@ -81,6 +87,7 @@ function AssessmentPage() {
   const [mentorAssessments, setMentorAssessments] = useState<any[]>([]);
   const [dosenAssessments, setDosenAssessments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingMentorPdf, setIsGeneratingMentorPdf] = useState(false);
   const [mentorData, setMentorData] = useState<any | null>(null);
   const [dosenData, setDosenData] = useState<any | null>(null);
   const [internshipContext, setInternshipContext] = useState<CompleteInternshipData | null>(null);
@@ -231,23 +238,80 @@ function AssessmentPage() {
 
   const handlePrintMentorAssessment = async (format: 'pdf' | 'docx' = 'pdf') => {
     const ctx = internshipContext;
-    if (!ctx?.internship?.id) {
-      toast.error("Data internship tidak ditemukan.");
+    if (!mentorData) {
+      toast.error("Penilaian mentor belum tersedia.");
       return;
     }
 
+    if (!ctx?.submission && !ctx?.internship) {
+      toast.error("Data pengajuan/saat magang belum lengkap.");
+      return;
+    }
+
+    if (format === "docx") {
+      toast.error("Format DOCX belum tersedia untuk penilaian mentor.");
+      return;
+    }
+
+    const startDate = ctx.submission?.startDate || ctx.internship?.startDate;
+    const endDate = ctx.submission?.endDate || ctx.internship?.endDate;
+    const periodText =
+      startDate && endDate
+        ? `${formatDateId(startDate)} - ${formatDateId(endDate)}`
+        : "-";
+
+    const rows = mentorAssessments.map((item) => {
+      const weight = Number(item.weight || 0);
+      const score = Number(item.score || 0);
+      return {
+        category: item.category,
+        weight,
+        score,
+        weightedScore: (score * weight) / 100,
+      };
+    });
+
+    const totalWeightedScore = rows.reduce(
+      (sum, row) => sum + row.weightedScore,
+      0,
+    );
+
+    setIsGeneratingMentorPdf(true);
     try {
-      const baseUrl = window.location.origin.includes('localhost') 
-        ? 'http://localhost:8787' 
-        : 'https://backend-sikp.pusing.me'; 
-        
-      const url = `${baseUrl}/api/internships/generate/assessment?format=${format}`;
-      
-      window.open(url, '_blank');
-      toast.success(`Sedang menyiapkan dokumen form nilai mentor (${format.toUpperCase()})...`);
+      const normalizedSignature = await normalizeSignatureForDocument(
+        ctx.mentor?.signature || null,
+      );
+
+      const formData = {
+        studentName: ctx.student?.name || "-",
+        nim: ctx.student?.nim || "-",
+        programStudi: ctx.student?.prodi || "-",
+        fakultas: ctx.student?.fakultas || "-",
+        companyName:
+          ctx.submission?.company || ctx.mentor?.company || "-",
+        assessmentPeriod: periodText,
+        assessmentDate: mentorData.updatedAt
+          ? formatDateId(mentorData.updatedAt)
+          : formatDateId(new Date().toISOString()),
+        mentorName: ctx.mentor?.name || "-",
+        mentorPosition: ctx.mentor?.position || "-",
+        mentorSignature: normalizedSignature,
+        rows,
+        totalWeightedScore,
+      };
+
+      try {
+        printAssessmentForm(formData);
+      } catch {
+        await generateAssessmentForm(formData);
+      }
+
+      toast.success("Dokumen penilaian berhasil digenerate.");
     } catch (error) {
       console.error("Gagal generate dokumen:", error);
       toast.error("Terjadi kesalahan saat mengunduh dokumen.");
+    } finally {
+      setIsGeneratingMentorPdf(false);
     }
   };
 
@@ -261,11 +325,7 @@ function AssessmentPage() {
     const internshipId = ctx.internship.id;
 
     try {
-      const baseUrl = window.location.origin.includes('localhost') 
-        ? 'http://localhost:8787' 
-        : 'https://backend-sikp.pusing.me'; 
-        
-      const url = `${baseUrl}/api/reporting/generate/assessment-dosen/${internshipId}?format=${format}`;
+      const url = `${INTERNSHIP_API_BASE_URL}/api/reporting/generate/assessment-dosen/${internshipId}?format=${format}`;
       
       // Open in new tab or trigger download
       window.open(url, '_blank');

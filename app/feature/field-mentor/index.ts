@@ -29,4 +29,5 @@ export {
   saveMentorSignature,
   getMentorSignature,
   deleteMentorSignature,
+  saveSignatureToInternship,
 } from "./services/mentor-api";

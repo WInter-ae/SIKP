@@ -34,6 +34,7 @@ import {
   getMenteeDetail,
   getMentees,
   getStudentLogbook,
+  saveSignatureToInternship,
   type LogbookEntry,
   type MenteeData,
 } from "../services";
@@ -220,6 +221,16 @@ function StudentLogbookDetailPage() {
         ),
       );
       toast.success("Logbook berhasil disetujui.");
+
+      // Simpan TTD aktif dari SSO langsung ke database tabel internships (cache)
+      if (student?.internshipId) {
+        saveSignatureToInternship(student.internshipId).catch((err) => {
+          console.warn(
+            "[StudentLogbookDetailPage] Gagal menyimpan TTD ke DB (non-critical):",
+            err,
+          );
+        });
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Gagal menyetujui logbook.",
@@ -257,6 +268,16 @@ function StudentLogbookDetailPage() {
         ),
       );
       toast.success("Semua logbook pending berhasil disetujui.");
+
+      // Simpan TTD aktif dari SSO langsung ke database tabel internships (cache)
+      if (student?.internshipId) {
+        saveSignatureToInternship(student.internshipId).catch((err) => {
+          console.warn(
+            "[StudentLogbookDetailPage] Gagal menyimpan TTD ke DB (non-critical):",
+            err,
+          );
+        });
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Gagal paraf semua logbook.",
