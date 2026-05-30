@@ -449,9 +449,9 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
 
   return (
     <div className="space-y-8">
-      <Alert className="border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
+      <Alert className="border-l-4 border-blue-500 bg-blue-50">
         <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800 dark:text-blue-300">
+        <AlertDescription className="text-blue-800">
           {type === "mentor" 
             ? "Penilaian ini diberikan oleh pembimbing lapangan berdasarkan kinerja Anda selama di perusahaan."
             : "Penilaian ini diberikan oleh dosen pembimbing berdasarkan laporan dan hasil sidang Anda."}

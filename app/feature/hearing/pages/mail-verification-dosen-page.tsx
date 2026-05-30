@@ -579,7 +579,7 @@ function MailVerificationDosenPage() {
         return (
           <Badge
             variant="outline"
-            className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+            className="bg-amber-500/10 text-amber-600 border-amber-500/30"
           >
             Menunggu Verifikasi
           </Badge>
@@ -588,7 +588,7 @@ function MailVerificationDosenPage() {
         return (
           <Badge
             variant="outline"
-            className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
+            className="bg-green-500/10 text-green-600 border-green-500/30"
           >
             Disetujui
           </Badge>
@@ -625,24 +625,24 @@ function MailVerificationDosenPage() {
             title={stats[0].title}
             value={stats[0].value}
             icon={stats[0].icon}
-            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
-            iconColor="text-blue-600 dark:text-blue-400"
+            iconBgColor="bg-blue-50"
+            iconColor="text-blue-600"
             className="border-l-4 border-l-blue-600 shadow-sm hover:shadow-md transition-shadow duration-200"
           />
           <StatCard
             title={stats[1].title}
             value={stats[1].value}
             icon={stats[1].icon}
-            iconBgColor="bg-green-50 dark:bg-green-900/20"
-            iconColor="text-green-600 dark:text-green-400"
+            iconBgColor="bg-green-50"
+            iconColor="text-green-600"
             className="border-l-4 border-l-green-600 shadow-sm hover:shadow-md transition-shadow duration-200"
           />
           <StatCard
             title={stats[2].title}
             value={stats[2].value}
             icon={stats[2].icon}
-            iconBgColor="bg-red-50 dark:bg-red-900/20"
-            iconColor="text-red-600 dark:text-red-400"
+            iconBgColor="bg-red-50"
+            iconColor="text-red-600"
             className="border-l-4 border-l-red-500 shadow-sm hover:shadow-md transition-shadow duration-200"
           />
           <StatCard

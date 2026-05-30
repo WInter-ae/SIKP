@@ -38,11 +38,11 @@ export function DeleteTeamDialog({
               lama Anda agar sesuai dengan aturan{" "}
               <strong>"Satu Mahasiswa - Satu Tim"</strong>.
             </p>
-            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded p-3">
-              <p className="text-sm text-red-800 dark:text-red-200">
+            <div className="bg-red-50 border border-red-200 rounded p-3">
+              <p className="text-sm text-red-800">
                 <strong>Tim yang akan dihapus:</strong> {teamCode}
               </p>
-              <p className="text-xs text-red-700 dark:text-red-300 mt-2">
+              <p className="text-xs text-red-700 mt-2">
                 Tindakan ini tidak dapat dibatalkan. Semua data anggota tim akan
                 dihapus dari sistem.
               </p>
@@ -65,8 +65,8 @@ export function DeleteTeamDialog({
             Apakah Anda yakin ingin menghapus tim dengan kode{" "}
             <strong>{teamCode}</strong>?
           </p>
-          <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded p-3">
-            <p className="text-xs text-red-700 dark:text-red-300">
+          <div className="bg-red-50 border border-red-200 rounded p-3">
+            <p className="text-xs text-red-700">
               ⚠️ Tindakan ini tidak dapat dibatalkan. Semua data anggota tim
               akan dihapus dari sistem.
             </p>

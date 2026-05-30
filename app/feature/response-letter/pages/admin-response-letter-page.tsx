@@ -144,7 +144,7 @@ function AdminResponseLetterPage() {
   };
   const getStatusBadgeClass = (status?: string) =>
     isApprovedStatus(status)
-      ? "border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400"
+      ? "border-green-500/30 bg-green-500/10 text-green-600"
       : "border-destructive/30 bg-destructive/10 text-destructive";
 
   useEffect(() => {
@@ -350,14 +350,14 @@ function AdminResponseLetterPage() {
                 "border-l-red-500",
               ];
               const iconBgColors = [
-                "bg-blue-50 dark:bg-blue-900/20",
-                "bg-yellow-50 dark:bg-yellow-900/20",
-                "bg-red-50 dark:bg-red-900/20",
+                "bg-blue-50",
+                "bg-yellow-50",
+                "bg-red-50",
               ];
               const iconColors = [
-                "text-blue-600 dark:text-blue-400",
-                "text-yellow-600 dark:text-yellow-300",
-                "text-red-600 dark:text-red-400",
+                "text-blue-600",
+                "text-yellow-600",
+                "text-red-600",
               ];
 
               return (
@@ -385,7 +385,7 @@ function AdminResponseLetterPage() {
                               <span
                                 className={
                                   item.label === "Disetujui"
-                                    ? "text-green-600 dark:text-green-400"
+                                    ? "text-green-600"
                                     : "text-destructive"
                                 }
                               >
@@ -505,7 +505,7 @@ function AdminResponseLetterPage() {
                           {student.adminApproved && (
                             <Badge
                               variant="outline"
-                              className="rounded-full border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs px-2.5 py-0.5"
+                              className="rounded-full border-blue-500/30 bg-blue-500/10 text-blue-600 text-xs px-2.5 py-0.5"
                             >
                               Terverifikasi
                             </Badge>

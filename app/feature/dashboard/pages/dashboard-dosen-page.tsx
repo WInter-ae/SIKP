@@ -50,12 +50,12 @@ export default function DashboardDosenPage({ data }: DashboardDosenPageProps) {
       </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
-        <Card className="border-l-4 border-l-blue-600 bg-blue-50/30 dark:bg-blue-900/10 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <Card className="border-l-4 border-l-blue-600 bg-blue-50/30 shadow-sm hover:shadow-md transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Total Mahasiswa Bimbingan
             </CardTitle>
-            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-blue-600 dark:text-blue-400">
+            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-blue-600">
               <Users className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -72,12 +72,12 @@ export default function DashboardDosenPage({ data }: DashboardDosenPageProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-yellow-300 bg-yellow-50/30 dark:bg-yellow-900/10 shadow-sm hover:shadow-md transition-shadow duration-200">
+        <Card className="border-l-4 border-l-yellow-300 bg-yellow-50/30 shadow-sm hover:shadow-md transition-shadow duration-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Total Surat Ajuan Mahasiswa
             </CardTitle>
-            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-yellow-600 dark:text-yellow-300">
+            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-yellow-600">
               <ListOrdered className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -94,7 +94,7 @@ export default function DashboardDosenPage({ data }: DashboardDosenPageProps) {
         </Card>
       </div>
 
-      <Card className="shadow-lg border-none bg-linear-to-b from-background to-blue-50/20 dark:to-blue-900/5 overflow-hidden">
+      <Card className="shadow-lg border-none bg-linear-to-b from-background to-blue-50/20 overflow-hidden">
         <div className="h-1.5 w-full bg-linear-to-r from-blue-600 to-transparent" />
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

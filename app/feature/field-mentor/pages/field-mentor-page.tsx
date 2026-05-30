@@ -597,7 +597,7 @@ function FieldMentorPage() {
       )}
 
       {/* Process Flow Info Section */}
-      <Card className="border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20">
+      <Card className="border-l-4 border-blue-500 bg-blue-50/50">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             📌 Alur Proses Mentor Lapangan
@@ -676,7 +676,7 @@ function FieldMentorPage() {
               </div>
             </li>
           </ol>
-          <Alert className="mt-6 border-blue-200 bg-blue-50 dark:bg-blue-950">
+          <Alert className="mt-6 border-blue-200 bg-blue-50">
             <CheckCircle className="h-4 w-4" />
             <AlertDescription>
               Mentor tidak perlu kode registrasi. Sistem otomatis mengirim email

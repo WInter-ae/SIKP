@@ -143,9 +143,9 @@ function AdminLogbookResetPage() {
         </p>
       </div>
 
-      <Alert className="border-amber-500/40 bg-amber-50 dark:bg-amber-950/20">
+      <Alert className="border-amber-500/40 bg-amber-50">
         <AlertTriangle className="h-4 w-4 text-amber-600" />
-        <AlertDescription className="text-amber-800 dark:text-amber-300">
+        <AlertDescription className="text-amber-800">
           Tindakan ini bersifat destruktif dan tidak bisa dibatalkan. Pastikan
           Anda memilih filter dengan benar.
         </AlertDescription>

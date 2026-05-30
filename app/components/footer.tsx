@@ -1,15 +1,9 @@
 import { Link } from "react-router";
-import { useTheme } from "~/contexts/theme-context";
 
 const Footer = () => {
-  const { isDarkMode } = useTheme();
-
   return (
-    <footer
-      className={`py-12 transition-colors duration-300 ${
-        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-900 text-white"
-      }`}
-    >
+    <footer className="py-12 transition-colors duration-300 bg-gray-900 text-white">
+
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10">
           <div>

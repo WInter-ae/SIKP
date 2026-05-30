@@ -30,9 +30,7 @@ import {
   Trash2,
   AlertCircle,
   UserRound,
-  ArrowLeft,
   ArrowRight,
-  Crown,
 } from "lucide-react";
 import { useSidebar } from "~/components/ui/sidebar";
 
@@ -329,8 +327,8 @@ export default function TeamCreationPage() {
         dosen_kp_name?: string;
         dosenKpId?: string;
         dosenKpName?: string;
-        leaderId?: string;              // legacy / optional
-        leaderMahasiswaId?: string;    // ✅ actual field returned by backend
+        leaderId?: string; // legacy / optional
+        leaderMahasiswaId?: string; // ✅ actual field returned by backend
         isLeader: boolean;
         status: string;
         members: TeamMember[];
@@ -442,7 +440,9 @@ export default function TeamCreationPage() {
               // FALLBACK LOGIC: Identify if this member is the current user
               const isCurrentMember =
                 (memberIdentity.id || m.userId) === user?.id ||
-                (memberIdentity.nim && user?.nim && memberIdentity.nim === user.nim);
+                (memberIdentity.nim &&
+                  user?.nim &&
+                  memberIdentity.nim === user.nim);
 
               // If name/nim is missing but it's the current user, use data from session
               const resolvedName =
@@ -532,9 +532,7 @@ export default function TeamCreationPage() {
         // Jika `invitedBy` === `leaderMahasiswaId` → undangan dikirim ketua.
         // Jika `invitedBy` === null/undefined atau bukan leader → permintaan gabung dari mahasiswa.
         const leaderMahasiswaId =
-          teamData.leaderMahasiswaId ||
-          teamData.leaderId ||
-          "";
+          teamData.leaderMahasiswaId || teamData.leaderId || "";
 
         const pendingMembers = members.filter(
           (m: TeamMember) => m.status === "PENDING",
@@ -543,8 +541,7 @@ export default function TeamCreationPage() {
         const pendingInvitesListRaw: Member[] = pendingMembers
           .filter(
             (m: TeamMember) =>
-              !!leaderMahasiswaId &&
-              m.invitedBy === leaderMahasiswaId,
+              !!leaderMahasiswaId && m.invitedBy === leaderMahasiswaId,
           )
           .map((m: TeamMember) => {
             const memberIdentity = getTeamMemberIdentity(m);
@@ -566,8 +563,7 @@ export default function TeamCreationPage() {
         const incomingJoinRequestsRaw: Member[] = pendingMembers
           .filter(
             (m: TeamMember) =>
-              !leaderMahasiswaId ||
-              m.invitedBy !== leaderMahasiswaId,
+              !leaderMahasiswaId || m.invitedBy !== leaderMahasiswaId,
           )
           .map((m: TeamMember) => {
             const memberIdentity = getTeamMemberIdentity(m);
@@ -823,9 +819,9 @@ export default function TeamCreationPage() {
         // Timeout error - show helpful message
         console.warn(
           "⚠️ PERFORMANCE ISSUE: Backend response is slow (>5s). Possible causes:\n" +
-          "1. Database query not optimized\n" +
-          "2. Network latency too high\n" +
-          "3. Server resources limited",
+            "1. Database query not optimized\n" +
+            "2. Network latency too high\n" +
+            "3. Server resources limited",
         );
       } else if (
         errorMsg.includes("userId") ||
@@ -2329,9 +2325,9 @@ export default function TeamCreationPage() {
         setTeam((prev) =>
           prev
             ? {
-              ...prev,
-              status: "FIXED",
-            }
+                ...prev,
+                status: "FIXED",
+              }
             : null,
         );
 
@@ -3074,10 +3070,11 @@ export default function TeamCreationPage() {
                 {team.members.map((member) => (
                   <div
                     key={member.id}
-                    className={`rounded-lg border p-4 ${member.isLeader
-                      ? "border-primary/30 bg-primary/5"
-                      : "border-border bg-muted/50"
-                      }`}
+                    className={`rounded-lg border p-4 ${
+                      member.isLeader
+                        ? "border-primary/30 bg-primary/5"
+                        : "border-border bg-muted/50"
+                    }`}
                   >
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <Badge
@@ -3117,8 +3114,8 @@ export default function TeamCreationPage() {
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm border-l-4 border-l-blue-600">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center shrink-0">
-                <UserRound className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                <UserRound className="h-5 w-5 text-blue-600" />
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-foreground truncate">
@@ -3200,18 +3197,23 @@ export default function TeamCreationPage() {
 
           {/* Team Member Requirement Info */}
           {team && team.isLeader && team.status !== "FIXED" && (
-            <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/50 dark:bg-blue-900/10 shadow-sm relative overflow-hidden">
+            <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50/50 p-4 shadow-sm relative overflow-hidden">
               <div className="absolute left-0 top-0 h-full w-1.5 bg-blue-500"></div>
               <div className="flex items-start gap-4 pl-2">
-                <div className="mt-0.5 rounded-full bg-blue-100 p-2 dark:bg-blue-800">
-                  <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+                <div className="mt-0.5 rounded-full bg-blue-100 p-2">
+                  <AlertCircle className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1 text-base">
+                  <h4 className="font-semibold text-blue-900 mb-1 text-base">
                     Ketentuan Jumlah Anggota Tim
                   </h4>
-                  <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-                    Sangat ditekankan agar setiap tim beranggotakan <strong className="text-blue-900 dark:text-blue-100">3 orang mahasiswa</strong>. Pembentukan tim dengan 1 atau 2 anggota <strong>hanya diperbolehkan sebagai kondisi akhir.</strong>
+                  <p className="text-sm text-blue-800 leading-relaxed">
+                    Sangat ditekankan agar setiap tim beranggotakan{" "}
+                    <strong className="text-blue-900">
+                      3 orang mahasiswa
+                    </strong>
+                    . Pembentukan tim dengan 1 atau 2 anggota{" "}
+                    <strong>hanya diperbolehkan sebagai kondisi akhir.</strong>
                   </p>
                 </div>
               </div>
@@ -3392,8 +3394,8 @@ export default function TeamCreationPage() {
           onConfirm={executeConfirmAction}
           variant={
             confirmAction.type.includes("reject") ||
-              confirmAction.type === "remove" ||
-              confirmAction.type === "cancel-invite"
+            confirmAction.type === "remove" ||
+            confirmAction.type === "cancel-invite"
               ? "destructive"
               : "default"
           }

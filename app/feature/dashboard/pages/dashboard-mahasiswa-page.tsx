@@ -144,12 +144,12 @@ export default function DashboardMahasiswaPage({
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:auto-rows-min">
-        <Card className="md:col-start-1 md:row-start-1 border-l-4 border-l-blue-600 bg-blue-50/30 dark:bg-blue-900/10 shadow-sm">
+        <Card className="md:col-start-1 md:row-start-1 border-l-4 border-l-blue-600 bg-blue-50/30 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Status Kerja Praktik
             </CardTitle>
-            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-blue-600 dark:text-blue-400">
+            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-blue-600">
               <GraduationCap className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -164,10 +164,10 @@ export default function DashboardMahasiswaPage({
           </CardContent>
         </Card>
 
-        <Card className="md:col-start-2 md:row-start-1 border-l-4 border-l-yellow-300 bg-yellow-50/30 dark:bg-yellow-900/10 shadow-sm">
+        <Card className="md:col-start-2 md:row-start-1 border-l-4 border-l-yellow-300 bg-yellow-50/30 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Hari Tersisa</CardTitle>
-            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-yellow-600 dark:text-yellow-300">
+            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-yellow-600">
               <Clock className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -183,12 +183,12 @@ export default function DashboardMahasiswaPage({
           </CardContent>
         </Card>
 
-        <Card className="md:col-start-1 md:row-start-2 border-l-4 border-l-red-500 bg-red-50/30 dark:bg-red-900/10 shadow-sm">
+        <Card className="md:col-start-1 md:row-start-2 border-l-4 border-l-red-500 bg-red-50/30 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Tahap KP Berikutnya
             </CardTitle>
-            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-red-600 dark:text-red-400">
+            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-red-600">
               <ListChecks className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -212,7 +212,7 @@ export default function DashboardMahasiswaPage({
           </CardContent>
         </Card>
 
-        <Card className="md:col-start-2 md:row-start-2 md:row-span-2 shadow-lg border-none bg-linear-to-b from-background to-blue-50/20 dark:to-blue-900/5">
+        <Card className="md:col-start-2 md:row-start-2 md:row-span-2 shadow-lg border-none bg-linear-to-b from-background to-blue-50/20">
           <div className="h-1.5 w-full bg-linear-to-r from-blue-600 to-transparent" />
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -277,12 +277,12 @@ export default function DashboardMahasiswaPage({
           </CardContent>
         </Card>
 
-        <Card className="md:col-start-1 md:row-start-3 border-l-4 border-l-blue-600 bg-blue-50/30 dark:bg-blue-900/10 shadow-sm">
+        <Card className="md:col-start-1 md:row-start-3 border-l-4 border-l-blue-600 bg-blue-50/30 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               Status Pengajuan
             </CardTitle>
-            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-blue-600 dark:text-blue-400">
+            <div className="p-2 rounded-full bg-background border border-border shadow-xs text-blue-600">
               <Send className="h-4 w-4" />
             </div>
           </CardHeader>
@@ -321,7 +321,7 @@ export default function DashboardMahasiswaPage({
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2 md:row-start-4 shadow-lg border-none bg-linear-to-b from-background to-yellow-50/20 dark:to-yellow-900/5 overflow-hidden">
+        <Card className="md:col-span-2 md:row-start-4 shadow-lg border-none bg-linear-to-b from-background to-yellow-50/20 overflow-hidden">
           <div className="h-1.5 w-full bg-linear-to-r from-yellow-300 to-transparent" />
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

@@ -522,8 +522,8 @@ function AssessmentPage() {
         description="Berikan penilaian untuk mahasiswa yang magang di perusahaan Anda"
       />
 
-      <Alert className="mb-6 border-blue-500/40 bg-blue-50 dark:bg-blue-950/20">
-        <AlertDescription className="text-blue-800 dark:text-blue-300 text-sm">
+      <Alert className="mb-6 border-blue-500/40 bg-blue-50">
+        <AlertDescription className="text-blue-800 text-sm">
           Bobot dan nama kategori di halaman ini mengikuti konfigurasi admin
           terbaru saat data dimuat. Jika admin mengubah bobot, refresh halaman
           agar bobot baru terlihat. Penilaian lama akan memakai bobot baru
@@ -585,7 +585,7 @@ function AssessmentPage() {
                   </p>
                   <p className="text-muted-foreground mt-2">dari 100</p>
                   {existingAssessmentId && !isEditing && (
-                    <div className="mt-4 flex items-center justify-center gap-2 text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-3 py-1.5 rounded-full text-xs font-medium border border-amber-200 dark:border-amber-900/50">
+                    <div className="mt-4 flex items-center justify-center gap-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full text-xs font-medium border border-amber-200">
                       <Clock className="h-3.5 w-3.5" />
                       Penilaian Terkunci (Read-only)
                     </div>

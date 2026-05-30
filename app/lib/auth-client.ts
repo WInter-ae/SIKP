@@ -51,10 +51,12 @@ interface IdentitySelectionPayload {
 }
 
 const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:8789";
-const DEFAULT_PROD_API_BASE_URL = "http://localhost:8789";
+// Di production, VITE_SIKP_API_BASE_URL WAJIB diset di Vercel Environment Variables
+const DEFAULT_PROD_API_BASE_URL = "";
 const DEFAULT_API_BASE_URL = import.meta.env.DEV
   ? DEFAULT_LOCAL_API_BASE_URL
   : DEFAULT_PROD_API_BASE_URL;
+
 
 const STORAGE_KEYS = {
   session: "sikp_auth_session",

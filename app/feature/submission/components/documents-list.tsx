@@ -228,16 +228,16 @@ export function DocumentsList({
 
       {/* Section 2: Surat Pengantar (TERPISAH - hanya jika approved) */}
       {suratPengantar && (
-        <Card className="mt-6 bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800">
+        <Card className="mt-6 bg-emerald-50/50 border-emerald-200">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               📄 Surat Pengantar Kerja Praktik
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Alert className="bg-emerald-100 border-emerald-300 dark:bg-emerald-950 dark:border-emerald-700">
-              <Sparkles className="h-4 w-4 text-emerald-700 dark:text-emerald-100" />
-              <AlertDescription className="text-emerald-800 dark:text-emerald-100">
+            <Alert className="bg-emerald-100 border-emerald-300">
+              <Sparkles className="h-4 w-4 text-emerald-700" />
+              <AlertDescription className="text-emerald-800">
                 <p className="font-semibold mb-1">
                   ✅ Surat Pengantar Telah Disetujui
                 </p>
@@ -248,7 +248,7 @@ export function DocumentsList({
               </AlertDescription>
             </Alert>
 
-            <div className="border border-emerald-200 dark:border-emerald-800 rounded-lg p-4 bg-white dark:bg-emerald-950/40">
+            <div className="border border-emerald-200 rounded-lg p-4 bg-white">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">

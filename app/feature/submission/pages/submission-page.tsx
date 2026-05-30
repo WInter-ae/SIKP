@@ -539,14 +539,14 @@ function SubmissionPage() {
         const response =
           currentStatus === "DITOLAK" && latestRequestId
             ? await reapplySuratPermohonanApproval(
-              latestRequestId,
-              memberId,
-              mahasiswaEsignatureUrl,
-            )
+                latestRequestId,
+                memberId,
+                mahasiswaEsignatureUrl,
+              )
             : await requestSuratPermohonanApproval(
-              memberId,
-              mahasiswaEsignatureUrl,
-            );
+                memberId,
+                mahasiswaEsignatureUrl,
+              );
         if (response.success) {
           toast.success(
             currentStatus === "DITOLAK"
@@ -867,8 +867,7 @@ function SubmissionPage() {
   }
 
   const isSubmissionLocked = isReadOnlyPreview || isSubmissionSubmitted;
-  const canEditAdditionalInfo =
-    isCurrentUserLeader && !isSubmissionLocked;
+  const canEditAdditionalInfo = isCurrentUserLeader && !isSubmissionLocked;
   const canUploadDocuments = !isSubmissionLocked;
   const canUploadProposal = isCurrentUserLeader && !isSubmissionLocked;
   const canSubmitSubmission = isCurrentUserLeader && !isSubmissionLocked;
@@ -881,8 +880,7 @@ function SubmissionPage() {
           Halaman Pengajuan Kerja Praktik
         </h1>
         <p className="text-sm text-muted-foreground">
-          Lengkapi Peryaratan yang diperlukan untuk melaksanakan Kerja
-          Praktik
+          Lengkapi Peryaratan yang diperlukan untuk melaksanakan Kerja Praktik
         </p>
         <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
@@ -890,7 +888,7 @@ function SubmissionPage() {
       {isReadOnlyPreview && (
         <Alert className="mb-8 border-l-4 border-amber-600 bg-amber-600/5">
           <Info className="h-5 w-5 text-amber-600" />
-          <AlertDescription className="text-amber-700 dark:text-amber-400">
+          <AlertDescription className="text-amber-700">
             Tim belum ditetapkan. Halaman ini hanya dapat dilihat untuk
             mengetahui syarat pengajuan.
           </AlertDescription>
@@ -911,7 +909,7 @@ function SubmissionPage() {
       {isApprovedStage && (
         <Alert className="mb-8 border-l-4 border-green-600 bg-green-600/5">
           <Info className="h-5 w-5 text-green-600" />
-          <AlertDescription className="text-green-700 dark:text-green-400">
+          <AlertDescription className="text-green-700">
             Pengajuan telah disetujui. Data tidak dapat diubah lagi.
           </AlertDescription>
         </Alert>
@@ -931,7 +929,7 @@ function SubmissionPage() {
               <strong>Surat Pengantar</strong>.
             </p>
             {submission?.rejectionReason && (
-              <div className="mt-3 p-2 bg-white dark:bg-slate-900 rounded border border-destructive/30">
+              <div className="mt-3 p-2 bg-white rounded border border-destructive/30">
                 <p className="text-xs font-semibold mb-1">
                   💬 Alasan penolakan:
                 </p>
@@ -956,7 +954,7 @@ function SubmissionPage() {
       {isPendingReviewStage && (
         <Alert className="mb-8 border-l-4 border-amber-600 bg-amber-600/5">
           <Info className="h-5 w-5 text-amber-600" />
-          <AlertDescription className="text-amber-700 dark:text-amber-400">
+          <AlertDescription className="text-amber-700">
             Pengajuan sedang dalam review. Data tidak dapat diubah hingga proses
             review selesai.
           </AlertDescription>

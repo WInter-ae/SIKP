@@ -149,22 +149,22 @@ export default function DashboardAdminPage({
             "border-l-blue-600"
           ];
           const bgColors = [
-            "bg-blue-50/30 dark:bg-blue-900/10",
-            "bg-yellow-50/30 dark:bg-yellow-900/10",
-            "bg-red-50/30 dark:bg-red-900/10",
-            "bg-blue-50/30 dark:bg-blue-900/10",
-            "bg-yellow-50/30 dark:bg-yellow-900/10",
-            "bg-red-50/30 dark:bg-red-900/10",
-            "bg-blue-50/30 dark:bg-blue-900/10"
+            "bg-blue-50/30",
+            "bg-yellow-50/30",
+            "bg-red-50/30",
+            "bg-blue-50/30",
+            "bg-yellow-50/30",
+            "bg-red-50/30",
+            "bg-blue-50/30"
           ];
           const iconColors = [
-            "text-blue-600 dark:text-blue-400",
-            "text-yellow-600 dark:text-yellow-300",
-            "text-red-600 dark:text-red-400",
-            "text-blue-600 dark:text-blue-400",
-            "text-yellow-600 dark:text-yellow-400",
-            "text-red-600 dark:text-red-400",
-            "text-blue-600 dark:text-blue-400"
+            "text-blue-600",
+            "text-yellow-600",
+            "text-red-600",
+            "text-blue-600",
+            "text-yellow-600",
+            "text-red-600",
+            "text-blue-600"
           ];
 
           return (
@@ -187,7 +187,7 @@ export default function DashboardAdminPage({
         })}
       </div>
 
-      <Card className="shadow-lg border-none bg-linear-to-b from-background to-blue-50/20 dark:to-blue-900/5 overflow-hidden">
+      <Card className="shadow-lg border-none bg-linear-to-b from-background to-blue-50/20 overflow-hidden">
         <div className="h-1.5 w-full" />
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -225,7 +225,7 @@ export default function DashboardAdminPage({
                           <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none mb-1">
                             Disetujui
                           </span>
-                          <span className="text-sm font-black text-blue-600 dark:text-blue-400 leading-none">
+                          <span className="text-sm font-black text-blue-600 leading-none">
                             {stat.approved}
                           </span>
                         </div>
@@ -235,7 +235,7 @@ export default function DashboardAdminPage({
                       <span className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">
                         Approval Rate
                       </span>
-                      <span className="text-2xl font-black text-blue-600 dark:text-blue-400 leading-none">
+                      <span className="text-2xl font-black text-blue-600 leading-none">
                         {stat.approvalRate}%
                       </span>
                     </div>
@@ -255,7 +255,7 @@ export default function DashboardAdminPage({
         </CardContent>
       </Card>
 
-      <Card className="shadow-lg border-l-0 border-t-yellow-300 border-t-4 border-r-0 border-b-0 bg-linear-to-b from-background to-yellow-50/20 dark:to-yellow-900/5 overflow-hidden">
+      <Card className="shadow-lg border-l-0 border-t-yellow-300 border-t-4 border-r-0 border-b-0 bg-linear-to-b from-background to-yellow-50/20 overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ListOrdered className="h-5 w-5 text-yellow-600" />
