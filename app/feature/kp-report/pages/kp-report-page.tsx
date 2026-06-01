@@ -437,7 +437,7 @@ export default function KPReportPage() {
                    </div>
                    <div className="flex gap-2">
                      <span className="font-black text-primary/40 italic">03.</span>
-                     <p className="text-muted-foreground">File PDF maksimal berukuran 10MB.</p>
+                     <p className="text-muted-foreground">File PDF maksimal berukuran 5MB.</p>
                    </div>
                 </div>
                 <Separator className="my-4 opacity-50" />

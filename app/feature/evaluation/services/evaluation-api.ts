@@ -381,7 +381,7 @@ function mapRowToEvaluation(
     student: {
       id: studentId,
       name: normalizeText(
-        row.student?.name || studentNode.name || studentNode.nama || row.studentName,
+        (row.student as any)?.name || studentNode.name || studentNode.nama || row.studentName,
         "Mahasiswa",
       ),
       studentId: normalizeText(

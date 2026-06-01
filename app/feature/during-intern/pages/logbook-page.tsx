@@ -645,14 +645,14 @@ function LogbookPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Client-side validation: max 2MB, JPEG/PNG/WebP
+    // Client-side validation: max 5MB, JPEG/PNG/WebP
     const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
     if (!ALLOWED.includes(file.type)) {
       toast.error("Format foto tidak didukung. Gunakan JPEG, PNG, atau WebP.");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("Ukuran foto maksimal 2MB.");
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Ukuran foto maksimal 5MB.");
       return;
     }
 
@@ -1007,6 +1007,7 @@ function LogbookPage() {
         completeData?.submission?.company ||
         "[Posisi]",
       mentorName: completeData?.mentor?.name || "[Nama Pembimbing Lapangan]",
+      mentorPosition: completeData?.mentor?.position || "[Jabatan Pembimbing Lapangan]",
       mentorSignature: completeData?.mentor?.signature,
       startDate: completeData?.submission?.startDate || workPeriod.startDate!,
       endDate: completeData?.submission?.endDate || workPeriod.endDate!,
@@ -1334,7 +1335,7 @@ function LogbookPage() {
               <div>Pembimbing Lapangan,</div>
               ${mentorSignatureBlock}
               <div class="mentor-name">${escapeHtml(data.internship?.mentorName || "-")}</div>
-              <div>${escapeHtml(data.internship?.position || "-")}</div>
+              <div>${escapeHtml(data.internship?.mentorPosition || "-")}</div>
             </div>
           </div>
         </div>
@@ -2317,7 +2318,7 @@ function LogbookPage() {
                                               const file = e.target.files?.[0];
                                               if (file) {
                                                 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
-                                                if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
+                                                if (!ALLOWED.includes(file.type) || file.size > 5 * 1024 * 1024) return;
                                                 try {
                                                   setIsUploadingPhoto(true);
                                                   setUploadingPhotoForId(entry.id);
@@ -2367,7 +2368,7 @@ function LogbookPage() {
                                         const file = e.target.files?.[0];
                                         if (file) {
                                           const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
-                                          if (!ALLOWED.includes(file.type) || file.size > 2 * 1024 * 1024) return;
+                                          if (!ALLOWED.includes(file.type) || file.size > 5 * 1024 * 1024) return;
                                           setPhotoFile(file);
                                           // Trigger upload immediately
                                           try {

@@ -20,6 +20,32 @@ export interface AssessmentFormData {
   totalWeightedScore: number;
 }
 
+type DocxModule = typeof import("docx");
+
+const formatDateId = (value?: string): string => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const parseSignatureDataUri = (dataUri?: string): Uint8Array | null => {
+  if (!dataUri) return null;
+  const match = dataUri.match(/^data:image\/(png|jpe?g);base64,(.+)$/i);
+  if (!match) return null;
+  const base64 = match[2];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
+
 export async function normalizeSignatureForDocument(
   signatureDataUrl?: string | null,
 ): Promise<string | undefined> {
@@ -415,6 +441,330 @@ export async function generateAssessmentForm(
   } finally {
     document.body.removeChild(wrapper);
   }
+}
+
+export async function generateAssessmentDocxForm(
+  data: AssessmentFormData,
+): Promise<void> {
+  const docx = (await import("docx")) as DocxModule;
+  const {
+    Document,
+    Packer,
+    Paragraph,
+    TextRun,
+    Table,
+    TableRow,
+    TableCell,
+    WidthType,
+    AlignmentType,
+    BorderStyle,
+    ImageRun,
+  } = docx;
+
+  const baseFontSize = 24;
+  const makeRun = (
+    text: string,
+    options?: { bold?: boolean; underline?: boolean },
+  ) =>
+    new TextRun({
+      text,
+      size: baseFontSize,
+      bold: options?.bold,
+      underline: options?.underline ? {} : undefined,
+    });
+
+  const rows = data.rows.map((row, index) =>
+    new TableRow({
+      children: [
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: [makeRun(String(index + 1))],
+              alignment: AlignmentType.CENTER,
+            }),
+          ],
+        }),
+        new TableCell({
+          children: [new Paragraph({ children: [makeRun(row.category)] })],
+        }),
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: [makeRun(`${row.weight}%`)],
+              alignment: AlignmentType.CENTER,
+            }),
+          ],
+        }),
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: [makeRun(String(row.score))],
+              alignment: AlignmentType.CENTER,
+            }),
+          ],
+        }),
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: [makeRun(formatDecimalId(row.weightedScore, 1))],
+              alignment: AlignmentType.CENTER,
+            }),
+          ],
+        }),
+      ],
+    }),
+  );
+
+  const totalRow = new TableRow({
+    children: [
+      new TableCell({
+        columnSpan: 4,
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [makeRun("Jumlah", { bold: true })],
+          }),
+        ],
+      }),
+      new TableCell({
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              makeRun(formatDecimalId(data.totalWeightedScore, 1), {
+                bold: true,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const borderStyle = {
+    style: BorderStyle.SINGLE,
+    size: 8,
+    color: "6B7280",
+  } as const;
+
+  const scoreTable = new Table({
+    width: { size: 78, type: WidthType.PERCENTAGE },
+    alignment: AlignmentType.CENTER,
+    rows: [
+      new TableRow({
+        tableHeader: true,
+        children: [
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("No")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("Penilaian")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("Bobot (B)")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("Nilai (N)")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("BxN")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+        ],
+      }),
+      ...rows,
+      totalRow,
+    ],
+    borders: {
+      top: borderStyle,
+      bottom: borderStyle,
+      left: borderStyle,
+      right: borderStyle,
+      insideHorizontal: borderStyle,
+      insideVertical: borderStyle,
+    },
+  });
+
+  // Adjust mentor signature image sizing here.
+  const signatureImage = parseSignatureDataUri(data.mentorSignature);
+  const signatureParagraph = signatureImage
+    ? new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        children: [
+          new ImageRun({
+            data: signatureImage,
+            transformation: { width: 140, height: 60 },
+          } as any),
+        ],
+      })
+    : new Paragraph({ alignment: AlignmentType.RIGHT, text: "" });
+
+  const docxDocument = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              makeRun("FORMULIR PENILAIAN KERJA PRAKTIK (KP)", {
+                bold: true,
+              }),
+            ],
+          }),
+          new Paragraph({ text: "" }),
+          // Adjust student meta table size/centering here.
+          new Table({
+            width: { size: 70, type: WidthType.PERCENTAGE },
+            alignment: AlignmentType.CENTER,
+            rows: [
+              ["Nama", data.studentName],
+              ["NIM", data.nim],
+              ["Program Studi", data.programStudi],
+              ["Fakultas", data.fakultas || "-"],
+              ["Tempat KP", data.companyName],
+              ["Waktu KP", data.assessmentPeriod],
+            ].map(([label, value]) =>
+              new TableRow({
+                children: [
+                  new TableCell({
+                    width: { size: 35, type: WidthType.PERCENTAGE },
+                    children: [
+                      new Paragraph({ children: [makeRun(String(label))] }),
+                    ],
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                  }),
+                  new TableCell({
+                    width: { size: 5, type: WidthType.PERCENTAGE },
+                    children: [
+                      new Paragraph({
+                        children: [makeRun(":")],
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                  }),
+                  new TableCell({
+                    width: { size: 60, type: WidthType.PERCENTAGE },
+                    children: [
+                      new Paragraph({ children: [makeRun(String(value))] }),
+                    ],
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                  }),
+                ],
+              }),
+            ),
+          }),
+          new Paragraph({ text: "" }),
+          scoreTable,
+          new Paragraph({ text: "" }),
+          // Adjust signature block position (date/title/name) here.
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    children: [new Paragraph({ text: "" })],
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                  }),
+                  new TableCell({
+                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                    children: [
+                      new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        children: [
+                          makeRun(
+                            `Palembang, ${formatDateId(data.assessmentDate)}`,
+                          ),
+                        ],
+                      }),
+                      new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        children: [makeRun("Pembimbing Lapangan,")],
+                      }),
+                      signatureParagraph,
+                      new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        children: [
+                          makeRun(data.mentorName, {
+                            bold: true,
+                            underline: true,
+                          }),
+                        ],
+                      }),
+                      new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        children: [makeRun(data.mentorPosition || "-")],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      },
+    ],
+  });
+
+  const blob = await Packer.toBlob(docxDocument);
+  const safeNim = data.nim.replace(/[^a-zA-Z0-9_-]/g, "");
+  const fileDate = new Date().toISOString().slice(0, 10);
+  const fileName = `Form_Penilaian_KP_${safeNim || "mahasiswa"}_${fileDate}.docx`;
+
+  const { saveAs } = await import("file-saver");
+  saveAs(blob, fileName);
 }
 
 export function printAssessmentForm(data: AssessmentFormData): void {

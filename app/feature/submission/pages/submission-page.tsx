@@ -1100,7 +1100,7 @@ function SubmissionPage() {
                 currentMahasiswaId={currentMemberId}
                 submittedRequestKeys={submittedRequestKeys}
                 submittedRequestStatusByKey={submittedRequestStatusByKey}
-                dosenNameByKey={dosenKpNameByKey}
+                dosenKpNameByKey={dosenKpNameByKey}
                 onUpload={handleDocumentUpload}
                 onSubmitRequest={handleAjukanSurat}
                 disabled={isSubmissionSubmitted}

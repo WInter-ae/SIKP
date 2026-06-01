@@ -55,6 +55,7 @@ import type { AssessmentCriterion } from "~/lib/assessment-criteria-api";
 import { INTERNSHIP_API_BASE_URL } from "~/lib/api-client";
 import {
   generateAssessmentForm,
+  generateAssessmentDocxForm,
   normalizeSignatureForDocument,
   printAssessmentForm,
 } from "~/feature/during-intern/utils/generate-assessment-form";
@@ -140,16 +141,18 @@ function AssessmentPage() {
           
           // 1. Try components array (standard for AcademicSupervisorGrade/FieldSupervisorGrade)
           const fromComponent = source.components?.find((comp: any) => {
-            const compName = normalizeKey(comp.name || "");
+            const compName = normalizeKey(comp.name || comp.label || comp.categoryId || comp.categoryKey || "");
             const critId = normalizeKey(c.id || "");
             const critLabel = normalizeKey(c.category || "");
             
+            if (!compName) return false;
+            
             return compName === critId || 
                    compName === critLabel ||
-                   compName.includes(critId) ||
-                   critId.includes(compName) ||
-                   compName.includes(critLabel) ||
-                   critLabel.includes(compName);
+                   (critId && compName.includes(critId)) ||
+                   (compName && critId.includes(compName)) ||
+                   (critLabel && compName.includes(critLabel)) ||
+                   (compName && critLabel.includes(compName));
           })?.score;
           
           if (fromComponent !== undefined) return fromComponent;
@@ -249,12 +252,67 @@ function AssessmentPage() {
     }
 
     if (format === "docx") {
-      toast.error("Format DOCX belum tersedia untuk penilaian mentor.");
+      const startDate = ctx.submission?.startDate || (ctx.internship as any)?.startDate;
+      const endDate = ctx.submission?.endDate || (ctx.internship as any)?.endDate;
+      const periodText =
+        startDate && endDate
+          ? `${formatDateId(startDate)} - ${formatDateId(endDate)}`
+          : "-";
+
+      const rows = mentorAssessments.map((item) => {
+        const weight = Number(item.weight || 0);
+        const score = Number(item.score || 0);
+        return {
+          category: item.category,
+          weight,
+          score,
+          weightedScore: (score * weight) / 100,
+        };
+      });
+
+      const totalWeightedScore = rows.reduce(
+        (sum, row) => sum + row.weightedScore,
+        0,
+      );
+
+      setIsGeneratingMentorPdf(true);
+      try {
+        const normalizedSignature = await normalizeSignatureForDocument(
+          ctx.mentor?.signature || null,
+        );
+
+        const formData = {
+          studentName: ctx.student?.name || "-",
+          nim: ctx.student?.nim || "-",
+          programStudi: ctx.student?.prodi || "-",
+          fakultas: ctx.student?.fakultas || "-",
+          companyName:
+            ctx.submission?.company || ctx.mentor?.company || "-",
+          assessmentPeriod: periodText,
+          assessmentDate: mentorData.updatedAt
+            ? formatDateId(mentorData.updatedAt)
+            : formatDateId(new Date().toISOString()),
+          mentorName: ctx.mentor?.name || "-",
+          mentorPosition: ctx.mentor?.position || "-",
+          mentorSignature: normalizedSignature,
+          rows,
+          totalWeightedScore,
+        };
+
+        await generateAssessmentDocxForm(formData);
+        toast.success("Dokumen DOCX penilaian berhasil digenerate.");
+      } catch (error) {
+        console.error("Gagal generate dokumen:", error);
+        toast.error("Terjadi kesalahan saat mengunduh dokumen.");
+      } finally {
+        setIsGeneratingMentorPdf(false);
+      }
+
       return;
     }
 
-    const startDate = ctx.submission?.startDate || ctx.internship?.startDate;
-    const endDate = ctx.submission?.endDate || ctx.internship?.endDate;
+    const startDate = ctx.submission?.startDate || (ctx.internship as any)?.startDate;
+    const endDate = ctx.submission?.endDate || (ctx.internship as any)?.endDate;
     const periodText =
       startDate && endDate
         ? `${formatDateId(startDate)} - ${formatDateId(endDate)}`
@@ -621,7 +679,7 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
                   {type === "dosen" && !evaluation?.summary.isVerifiedByKaprodi ? "Menunggu Verifikasi" : "Unduh Resmi (PDF)"}
                 </Button>
                 
-                {type === 'dosen' && evaluation?.summary.isVerifiedByKaprodi && (
+                {(type === "mentor" || (type === "dosen" && evaluation?.summary.isVerifiedByKaprodi)) && (
                   <Button 
                     onClick={() => onPrint('docx')} 
                     variant="outline"

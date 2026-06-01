@@ -46,6 +46,7 @@ export interface Template {
   content: string;
   fields: TemplateField[]; // Field metadata untuk dynamic form
   version: number; // Version untuk tracking perubahan
+  isActive: boolean; // Menentukan apakah template aktif
   createdAt: string;
   updatedAt: string;
   previousVersionId?: string; // Link ke version sebelumnya
@@ -57,6 +58,10 @@ export interface CreateTemplateData {
   description?: string;
   content: string;
   fields: TemplateField[];
+  isActive?: boolean;
 }
 
 export interface UpdateTemplateData extends Partial<CreateTemplateData> {}
+
+export type TemplateCategory = "Template Only" | "Generate & Template" | "berita-acara" | "form-nilai";
+export const TEMPLATE_CATEGORIES = ["Template Only", "Generate & Template", "berita-acara", "form-nilai"] as const;

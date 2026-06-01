@@ -58,7 +58,6 @@ export function NavMain({ items }: { items: NavItem[] }) {
             <SidebarMenuSubButton
               asChild={!subItem.disabled}
               isActive={subItemActive}
-              disabled={subItem.disabled}
               className={`h-8 rounded-lg text-[13px] font-medium transition-all duration-200 will-change-transform ${
                 subItem.disabled
                   ? "opacity-50 cursor-not-allowed grayscale"
