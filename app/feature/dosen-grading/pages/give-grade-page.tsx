@@ -16,6 +16,7 @@ import {
 } from "~/feature/evaluation/services/evaluation-api";
 import { getAssessmentCriteria } from "~/lib/assessment-criteria-api";
 import { toast } from "sonner";
+import { GradeSection } from "~/feature/evaluation/components/grade-section";
 
 export default function GiveGradePage() {
   const { id } = useParams();
@@ -26,6 +27,8 @@ export default function GiveGradePage() {
   const [internshipId, setInternshipId] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(false);
   const [initialData, setInitialData] = useState<GradingFormData | undefined>(undefined);
+  const [mentorGrades, setMentorGrades] = useState<any[] | null>(null);
+  const [mentorTotalScore, setMentorTotalScore] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -43,39 +46,48 @@ export default function GiveGradePage() {
             // Check for existing assessment
             const recapRes = await getAssessmentRecap(iid);
             const recapData = recapRes.data;
-            if (recapRes.success && recapData && recapData.summary && recapData.summary.academicSupervisorTotal > 0) {
-              const recap = recapData;
-              const academicGrades = recap.academicSupervisorGrades?.[0]?.components || [];
-              
-              const existingData: GradingFormData = {
-                reportFormat: academicGrades.find(g => 
-                  g.name.toLowerCase().includes("format") || 
-                  g.name.toLowerCase().includes("kesesuaian")
-                )?.score || 0,
-                materialMastery: academicGrades.find(g => 
-                  g.name.toLowerCase().includes("materi") || 
-                  g.name.toLowerCase().includes("penguasaan")
-                )?.score || 0,
-                analysisDesign: academicGrades.find(g => 
-                  g.name.toLowerCase().includes("analisis") || 
-                  g.name.toLowerCase().includes("perancangan") ||
-                  g.name.toLowerCase().includes("analis")
-                )?.score || 0,
-                attitudeEthics: academicGrades.find(g => 
-                  g.name.toLowerCase().includes("sikap") || 
-                  g.name.toLowerCase().includes("etika")
-                )?.score || 0,
-                components: academicGrades.map(g => ({
-                  categoryId: (g as any).categoryId || g.name,
-                  category: g.name,
-                  score: g.score,
-                  weight: g.weight
-                })),
-                notes: recap.notes || (recap.academicSupervisorGrades[0] as any)?.feedback || ""
-              };
-              
-              setInitialData(existingData);
-              setIsLocked(true);
+            if (recapRes.success && recapData) {
+              if (recapData.fieldSupervisorGrades && recapData.fieldSupervisorGrades.length > 0) {
+                setMentorGrades(recapData.fieldSupervisorGrades);
+              }
+              if (recapData.summary) {
+                setMentorTotalScore(recapData.summary.fieldSupervisorTotal);
+              }
+
+              if (recapData.summary && recapData.summary.academicSupervisorTotal > 0) {
+                const recap = recapData;
+                const academicGrades = recap.academicSupervisorGrades?.[0]?.components || [];
+                
+                const existingData: GradingFormData = {
+                  reportFormat: academicGrades.find(g => 
+                    g.name.toLowerCase().includes("format") || 
+                    g.name.toLowerCase().includes("kesesuaian")
+                  )?.score || 0,
+                  materialMastery: academicGrades.find(g => 
+                    g.name.toLowerCase().includes("materi") || 
+                    g.name.toLowerCase().includes("penguasaan")
+                  )?.score || 0,
+                  analysisDesign: academicGrades.find(g => 
+                    g.name.toLowerCase().includes("analisis") || 
+                    g.name.toLowerCase().includes("perancangan") ||
+                    g.name.toLowerCase().includes("analis")
+                  )?.score || 0,
+                  attitudeEthics: academicGrades.find(g => 
+                    g.name.toLowerCase().includes("sikap") || 
+                    g.name.toLowerCase().includes("etika")
+                  )?.score || 0,
+                  components: academicGrades.map(g => ({
+                    categoryId: (g as any).categoryId || g.name,
+                    category: g.name,
+                    score: g.score,
+                    weight: g.weight
+                  })),
+                  notes: recap.notes || (recap.academicSupervisorGrades[0] as any)?.feedback || ""
+                };
+                
+                setInitialData(existingData);
+                setIsLocked(true);
+              }
             }
           }
         }
@@ -250,6 +262,18 @@ export default function GiveGradePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Penilaian Mentor Lapangan */}
+        {mentorGrades && mentorGrades.length > 0 && (
+          <div className="mb-8">
+            <GradeSection
+              title="Penilaian Pembimbing Lapangan (Mentor)"
+              grades={mentorGrades}
+              totalScore={mentorTotalScore || 0}
+              maxScore={100}
+            />
+          </div>
+        )}
 
         {isLocked ? (
           <div className="space-y-6">

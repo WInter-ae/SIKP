@@ -462,92 +462,97 @@ export default function DosenLogbookMonitorPage() {
             </TabsList>
             
             {activeTab !== "inactive" ? (
-              <div className="space-y-4">
-                <div className="rounded-md border overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Mahasiswa</TableHead>
-                        <TableHead>NIM</TableHead>
-                        <TableHead>Perusahaan</TableHead>
-                        <TableHead>Periode Magang</TableHead>
-                        <TableHead className="text-center">Total Logbook</TableHead>
-                        <TableHead className="text-center">Disetujui</TableHead>
-                        <TableHead className="text-center">Menunggu Paraf</TableHead>
-                        <TableHead className="text-right">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredLogbooks.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={8} className="h-20 text-center text-muted-foreground">
-                            Data logbook tidak ditemukan.
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        paginatedLogbooks.map((item) => (
-                          <TableRow key={item.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={item.photoUrl || undefined} />
-                                  <AvatarFallback className="text-xs">
-                                    {item.studentName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium text-sm">{item.studentName}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {item.studentEmail || "No Email"}
-                                  </p>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="font-mono text-sm">{item.nim}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="text-sm">{item.company}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex flex-col gap-1">
+              <div className="space-y-6">
+                {filteredLogbooks.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground border rounded-lg bg-white">
+                    Data logbook tidak ditemukan.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {paginatedLogbooks.map((item) => {
+                      const periodStatus = getInternshipPeriodStatus(item);
+                      const totalEntries = (item.totalApproved || 0) + (item.totalPending || 0);
+                      
+                      return (
+                        <Card key={item.id} className="overflow-hidden hover:shadow-md transition-all duration-300 border-slate-200/80 bg-white group flex flex-col justify-between">
+                          <div>
+                            {/* Card Header Background and Avatar */}
+                            <div className="relative h-20 bg-slate-50 border-b border-slate-100 flex items-end px-5 pb-3">
+                              <div className="absolute right-4 top-4">
                                 {getPeriodStatusBadge(item)}
-                                <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-mono">
-                                  <CalendarDays className="h-3 w-3" />
-                                  <span>{item.startDate ? formatDate(item.startDate) : "-"} s/d {item.endDate ? formatDate(item.endDate) : "-"}</span>
+                              </div>
+                              <Avatar className="h-14 w-14 border-4 border-white shadow-xs -mb-6 bg-white z-10">
+                                <AvatarImage src={item.photoUrl || item.photo_url || undefined} />
+                                <AvatarFallback className="text-sm font-semibold bg-slate-100 text-slate-700">
+                                  {item.studentName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)}
+                                </AvatarFallback>
+                              </Avatar>
+                            </div>
+                            
+                            {/* Student Profile Info */}
+                            <div className="pt-8 px-5 pb-4 space-y-3">
+                              <div>
+                                <h3 className="font-bold text-slate-800 text-base leading-snug group-hover:text-primary transition-colors">
+                                  {item.studentName}
+                                </h3>
+                                <p className="text-xs font-mono text-slate-500 mt-0.5">NIM: {item.nim}</p>
+                                <p className="text-xs text-slate-400 truncate mt-0.5">{item.studentEmail || "No Email"}</p>
+                              </div>
+                              
+                              <div className="pt-2 border-t border-slate-100/80 space-y-2.5">
+                                {/* Company info */}
+                                <div className="flex items-start gap-2.5 text-xs text-slate-600">
+                                  <Building2 className="h-4 w-4 text-slate-450 shrink-0 mt-0.5" />
+                                  <div className="truncate">
+                                    <span className="font-medium text-slate-700 block">Tempat Magang:</span>
+                                    <span className="text-slate-500">{item.company || "-"}</span>
+                                  </div>
+                                </div>
+                                
+                                {/* Period info */}
+                                <div className="flex items-start gap-2.5 text-xs text-slate-600">
+                                  <CalendarDays className="h-4 w-4 text-slate-450 shrink-0 mt-0.5" />
+                                  <div>
+                                    <span className="font-medium text-slate-700 block">Waktu Magang:</span>
+                                    <span className="font-mono text-[11px] text-slate-500">
+                                      {item.startDate ? formatDate(item.startDate) : "-"} s/d {item.endDate ? formatDate(item.endDate) : "-"}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline">{(item.totalApproved || 0) + (item.totalPending || 0)}</Badge>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge className="bg-green-500 hover:bg-green-600">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                {item.totalApproved || 0}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700">
-                                <Clock className="w-3 h-3 mr-1" />
-                                {item.totalPending || 0}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button asChild variant="outline" size="sm">
-                                <Link to={`/dosen/kp/logbook-monitor/${getDetailLinkKey(item)}`}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  Detail
-                                </Link>
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                            </div>
+                          </div>
+                          
+                          {/* Logbook Statistics & Action Footer */}
+                          <div className="bg-slate-50/50 px-5 py-4 border-t border-slate-100 flex flex-col gap-3">
+                            <div className="grid grid-cols-3 gap-2 text-center">
+                              <div className="bg-white border border-slate-200/60 rounded-md py-1.5 px-1 shadow-2xs">
+                                <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Total</span>
+                                <span className="text-sm font-bold text-slate-700">{totalEntries}</span>
+                              </div>
+                              <div className="bg-green-50/60 border border-green-200/50 rounded-md py-1.5 px-1 shadow-2xs">
+                                <span className="text-[10px] text-green-500 block uppercase tracking-wider font-semibold">Disetujui</span>
+                                <span className="text-sm font-bold text-green-600">{item.totalApproved || 0}</span>
+                              </div>
+                              <div className="bg-yellow-50/60 border border-yellow-200/50 rounded-md py-1.5 px-1 shadow-2xs">
+                                <span className="text-[10px] text-yellow-600 block uppercase tracking-wider font-semibold">Pending</span>
+                                <span className="text-sm font-bold text-yellow-750">{item.totalPending || 0}</span>
+                              </div>
+                            </div>
+                            
+                            <Button asChild className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/80 shadow-2xs mt-1 transition-all" size="sm" variant="outline">
+                              <Link to={`/dosen/kp/logbook-monitor/${getDetailLinkKey(item)}`}>
+                                <Eye className="h-4 w-4 mr-2 text-slate-550" />
+                                Lihat Detail Logbook
+                                <ArrowRight className="h-3.5 w-3.5 ml-auto text-slate-400 group-hover:translate-x-1 transition-transform" />
+                              </Link>
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (
@@ -596,47 +601,53 @@ export default function DosenLogbookMonitorPage() {
                 )}
               </div>
             ) : (
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Mahasiswa</TableHead>
-                      <TableHead>NIM</TableHead>
-                      <TableHead>Perusahaan</TableHead>
-                      <TableHead>Terakhir Update</TableHead>
-                      <TableHead className="text-right">Detail</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredInactiveMentees.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-20 text-center text-muted-foreground">
-                          Tidak ada mahasiswa inaktif. Bagus!
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredInactiveMentees.map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium">{item.studentName}</TableCell>
-                          <TableCell>{item.nim}</TableCell>
-                          <TableCell>{item.company}</TableCell>
-                          <TableCell>
-                            <Badge variant="outline" className="text-orange-700 bg-orange-50">
-                              Belum ada entri baru
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button asChild variant="outline" size="sm">
-                              <Link to={`/dosen/kp/logbook-monitor/${getDetailLinkKey(item)}`}>
-                                Detail
-                              </Link>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+              <div>
+                {filteredInactiveMentees.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground border rounded-lg bg-white">
+                    Tidak ada mahasiswa bimbingan yang inaktif. Bagus!
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredInactiveMentees.map((item) => (
+                      <Card key={item.id} className="overflow-hidden border-orange-200 bg-orange-50/10 hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+                        <div className="p-5 space-y-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-11 w-11 bg-white border border-orange-200 shadow-2xs">
+                              <AvatarImage src={item.photoUrl || item.photo_url || undefined} />
+                              <AvatarFallback className="text-sm font-semibold bg-orange-50 text-orange-700">
+                                {item.studentName.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="font-bold text-slate-800 text-sm leading-snug">{item.studentName}</h3>
+                              <p className="text-xs font-mono text-slate-500">NIM: {item.nim}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="h-3.5 w-3.5 text-slate-400" />
+                              <span className="truncate">{item.company || "-"}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <AlertCircle className="h-3.5 w-3.5 text-orange-500" />
+                              <span className="text-orange-700 font-medium">Belum mengisi logbook dalam 3 hari terakhir</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-orange-50/30 px-5 py-3 border-t border-orange-100/60">
+                          <Button asChild className="w-full bg-white hover:bg-orange-50/50 text-orange-850 border border-orange-200 shadow-2xs" size="sm" variant="outline">
+                            <Link to={`/dosen/kp/logbook-monitor/${getDetailLinkKey(item)}`}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Lihat Detail
+                            </Link>
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </Tabs>

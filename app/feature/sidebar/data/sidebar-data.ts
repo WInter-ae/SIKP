@@ -175,16 +175,22 @@ const dosenMenu: NavItem[] = [
     icon: Home,
   },
   {
+    title: "Logbook Bimbingan",
+    url: "/dosen/kp/logbook-monitor",
+    icon: Users,
+  },
+  {
+    title: "Penilaian Mentor",
+    url: "/dosen/kp/penilaian-mentor",
+    icon: ClipboardCheck,
+  },
+  {
     title: "Kerja Praktik",
     url: "#",
     icon: GraduationCap,
     items: [
       {
-        title: "Monitoring Logbook",
-        url: "/dosen/kp/logbook-monitor",
-      },
-      {
-        title: "Penilaian KP",
+        title: "Penilaian Dosen PA",
         url: "/dosen/penilaian",
       },
     ],
