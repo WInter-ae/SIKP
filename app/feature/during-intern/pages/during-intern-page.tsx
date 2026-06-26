@@ -22,7 +22,6 @@ import {
   ClipboardCheck,
   FileCheck,
   UserCircle,
-  FileText,
   User,
   Building,
   Calendar,
@@ -117,15 +116,6 @@ function DuringInternPage() {
       bgColor: "bg-blue-50 dark:bg-blue-500/10",
       iconColor: "text-blue-600 dark:text-blue-400",
     },
-    {
-      title: "Laporan Magang",
-      description: "Susun judul laporan resmi dan upload berkas final PDF hasil Kerja Praktik",
-      icon: FileText,
-      to: "/mahasiswa/kp/laporan",
-      color: "from-purple-400 to-fuchsia-600",
-      bgColor: "bg-purple-50 dark:bg-purple-500/10",
-      iconColor: "text-purple-600 dark:text-purple-400",
-    },
   ];
 
   const HeroSection = () => (
@@ -143,11 +133,11 @@ function DuringInternPage() {
             <span className="flex h-2.5 w-2.5 rounded-full bg-blue-400 mr-2.5 animate-pulse"></span>
             Tahap Pelaksanaan Kerja Praktik
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-r from-white to-blue-200 drop-shadow-xs">
-            Pelaksanaan Magang
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-transparent bg-clip-text bg-linear-to-r from-white to-blue-200 drop-shadow-xs">
+            Pelaksanaan Kerja Praktik
           </h1>
           <p className="text-blue-100/90 text-base sm:text-lg font-medium leading-relaxed max-w-xl">
-            Kelola aktivitas Kerja Praktik Anda secara terpusat. Tulis logbook harian, koordinasi dengan pembimbing industri, dan pantau proses kelulusan.
+            Kelola aktivitas Kerja Praktik Anda secara terpusat. Verifikasi mentor lapangan, tulis logbook harian, dan pantau rekap nilai dari pembimbing industri.
           </p>
         </div>
       </div>
@@ -342,7 +332,7 @@ function DuringInternPage() {
       </UICard>
 
       {/* Menu Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {menuItems.map((item) => (
           <UICard key={item.title} className="relative overflow-hidden rounded-3xl border border-slate-200/60 dark:border-slate-800/60 bg-white dark:bg-slate-900 shadow-sm transition-all duration-350 hover:-translate-y-1 hover:shadow-lg group">
             <div className={`absolute top-0 left-0 w-full h-1.5 bg-linear-to-r ${item.color}`} />

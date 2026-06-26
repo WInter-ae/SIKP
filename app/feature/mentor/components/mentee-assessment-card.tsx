@@ -158,19 +158,31 @@ export function MenteeAssessmentCard({
 
         {/* Action Buttons */}
         <div className="flex gap-3 pt-2">
-          <Button
-            onClick={() => onViewDetail?.(mentee.id)}
-            className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:text-gray-200"
-            variant="outline"
-          >
-            Lihat Detail
-          </Button>
-          <Button
-            onClick={() => onGiveGrade?.(mentee.id)}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {mentee.gradingStatus === "graded" ? "Edit Nilai" : "Beri Nilai"}
-          </Button>
+          {mentee.gradingStatus === "graded" ? (
+            <Button
+              onClick={() => onViewDetail?.(mentee.id)}
+              className="w-full border-gray-300 hover:bg-gray-50 text-gray-700 dark:text-gray-200"
+              variant="outline"
+            >
+              Lihat Detail & Nilai
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={() => onViewDetail?.(mentee.id)}
+                className="flex-1 border-gray-300 hover:bg-gray-50 text-gray-700 dark:text-gray-200"
+                variant="outline"
+              >
+                Lihat Detail
+              </Button>
+              <Button
+                onClick={() => onGiveGrade?.(mentee.id)}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Beri Nilai
+              </Button>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

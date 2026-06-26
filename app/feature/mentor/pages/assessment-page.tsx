@@ -816,36 +816,14 @@ function AssessmentPage() {
             </CardContent>
           </Card>
 
-          <div className="flex justify-center gap-4 mb-6">
-            {existingAssessmentId && !isEditing ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={async () => {
-                  setIsSubmitting(true);
-                  try {
-                    const res = await unlockAssessment(existingAssessmentId);
-                    if (res.success) {
-                      setIsEditing(true);
-                      toast.success("Penilaian dibuka untuk diedit.");
-                    }
-                  } catch {
-                    toast.error("Gagal membuka penilaian.");
-                  } finally {
-                    setIsSubmitting(false);
-                  }
-                }}
-              >
-                Edit Penilaian
-              </Button>
-            ) : (
+          {(!existingAssessmentId || isEditing) && (
+            <div className="flex justify-center gap-4 mb-6">
               <Button type="submit" size="lg" disabled={isSubmitting}>
                 <Save className="mr-2 h-4 w-4" />
                 {isSubmitting ? "Menyimpan..." : "Simpan Penilaian"}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </form>
       </div>
     </div>

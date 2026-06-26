@@ -394,13 +394,13 @@ function FieldMentorPage() {
             <Button 
               variant="destructive" 
               size="sm" 
-              className="mt-4 bg-red-650 hover:bg-red-700 text-white font-extrabold shadow-sm rounded-xl px-4"
+              className="mt-4 bg-red-600 hover:bg-red-700 text-white font-extrabold shadow-sm rounded-xl px-4"
               onClick={() => {
                 setCurrentMentor(null);
                 setShowRequestForm(true);
               }}
             >
-              Ajukan Mentor Baru
+              Ajukan Pembimbing Lapangan Baru
             </Button>
           </AlertDescription>
         </Alert>
