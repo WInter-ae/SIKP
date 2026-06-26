@@ -164,7 +164,7 @@ export function MenteeAssessmentCard({
               className="w-full border-gray-300 hover:bg-gray-50 text-gray-700 dark:text-gray-200"
               variant="outline"
             >
-              Lihat Detail & Nilai
+              Lihat Detail
             </Button>
           ) : (
             <>
