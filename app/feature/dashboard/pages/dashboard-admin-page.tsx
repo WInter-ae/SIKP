@@ -276,9 +276,9 @@ export default function DashboardAdminPage({
             <CardHeader className="pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
               <CardTitle className="flex items-center gap-2 text-xl font-bold">
                 <Archive className="h-5 w-5 text-emerald-500" />
-                Pelaksanaan Magang
+                Pelaksanaan Kerja Praktik
               </CardTitle>
-              <CardDescription>Pusat kontrol masa magang</CardDescription>
+              <CardDescription>Pusat kontrol masa Kerja Praktik</CardDescription>
             </CardHeader>
             <CardContent className="p-4 space-y-3">
               <Button asChild variant="outline" className="w-full justify-start h-auto py-3 px-4 border-slate-200 dark:border-slate-800 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 dark:hover:bg-emerald-900/20 dark:hover:border-emerald-800 transition-all group">
@@ -288,7 +288,7 @@ export default function DashboardAdminPage({
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="font-bold text-slate-800 dark:text-slate-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">Arsip Pelaksanaan</span>
-                    <span className="text-xs text-slate-500">Data mahasiswa magang aktif/selesai</span>
+                    <span className="text-xs text-slate-500">Data mahasiswa Kerja Praktik aktif/selesai</span>
                   </div>
                 </Link>
               </Button>

@@ -60,7 +60,7 @@ export default function DashboardDosenPage({ data }: DashboardDosenPageProps) {
             Dashboard Dosen Pembimbing
           </h1>
           <p className="text-blue-100/90 text-base sm:text-lg font-medium leading-relaxed max-w-xl">
-            Pantau progress bimbingan mahasiswa, verifikasi kelayakan mentor industri, dan awasi laporan harian logbook secara efisien.
+            Pantau progress bimbingan mahasiswa, verifikasi kelayakan pembimbing lapangan industri, dan awasi laporan harian logbook secara efisien.
           </p>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function DashboardDosenPage({ data }: DashboardDosenPageProps) {
             <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
               <BookOpenCheck className="h-5 w-5" />
             </div>
-            Tahap Pelaksanaan Magang
+            Tahap Pelaksanaan Kerja Praktik
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="group cursor-pointer overflow-hidden rounded-2xl border-0 shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
@@ -149,8 +149,8 @@ export default function DashboardDosenPage({ data }: DashboardDosenPageProps) {
                   <div className="p-4 rounded-full bg-indigo-100 dark:bg-indigo-800/30 text-indigo-600 dark:text-indigo-400 mb-4 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-xs">
                     <UserCheck className="h-8 w-8" />
                   </div>
-                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Verifikasi Mentor</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Periksa kualifikasi dan setujui penunjukan mentor lapangan/pembimbing industri mahasiswa.</p>
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Verifikasi Pembimbing Lapangan</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Periksa kualifikasi dan setujui penunjukan pembimbing lapangan/pembimbing industri mahasiswa.</p>
                 </CardContent>
               </Link>
             </Card>

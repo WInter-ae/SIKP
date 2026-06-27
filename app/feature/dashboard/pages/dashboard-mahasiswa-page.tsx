@@ -120,7 +120,7 @@ export default function DashboardMahasiswaPage({
             Selamat Datang, Mahasiswa! 👋
           </h1>
           <p className="text-blue-100/90 text-base sm:text-lg font-medium leading-relaxed max-w-xl">
-            Kelola tim Anda, pantau logbook harian, dan selesaikan seluruh administrasi magang dalam satu dasbor terpadu.
+            Kelola tim Anda, pantau logbook harian, dan selesaikan seluruh administrasi Kerja Praktik dalam satu dasbor terpadu.
           </p>
         </div>
         
@@ -280,7 +280,7 @@ export default function DashboardMahasiswaPage({
             <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
               <BookOpen className="h-5 w-5" />
             </div>
-            Tahap Pelaksanaan Magang
+            Tahap Pelaksanaan Kerja Praktik
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="group cursor-pointer overflow-hidden rounded-2xl border-0 shadow-xs hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
@@ -291,7 +291,7 @@ export default function DashboardMahasiswaPage({
                     <BookOpen className="h-8 w-8" />
                   </div>
                   <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Isi Logbook</h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Catat dan laporkan aktivitas harian magang secara rutin.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Catat dan laporkan aktivitas harian Kerja Praktik secara rutin.</p>
                 </CardContent>
               </Link>
             </Card>
@@ -303,7 +303,7 @@ export default function DashboardMahasiswaPage({
                   <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-800/30 text-blue-600 dark:text-blue-400 mb-4 group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-xs">
                     <UserCheck className="h-8 w-8" />
                   </div>
-                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Data Mentor</h3>
+                  <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100 mb-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Pembimbing Lapangan</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400">Kelola dan lihat profil pembimbing lapangan industri.</p>
                 </CardContent>
               </Link>
@@ -330,9 +330,9 @@ export default function DashboardMahasiswaPage({
           <CardHeader className="pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
             <CardTitle className="flex items-center gap-2 text-xl font-bold">
               <Users className="h-5 w-5 text-indigo-500" />
-              Detail Tim Magang
+              Detail Tim Kerja Praktik
             </CardTitle>
-            <CardDescription>Informasi anggota, dosen pembimbing, dan mentor.</CardDescription>
+            <CardDescription>Informasi anggota, dosen pembimbing, dan pembimbing lapangan.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-800">
@@ -377,7 +377,7 @@ export default function DashboardMahasiswaPage({
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Mentor Industri</div>
+                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Pembimbing Lapangan</div>
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-2xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
                       <GraduationCap className="h-6 w-6" />
