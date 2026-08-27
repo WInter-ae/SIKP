@@ -11,6 +11,7 @@ interface InternshipInfo {
   division?: string;
   position: string;
   mentorName?: string;
+  mentorPosition?: string; // ← NEW: Mentor actual job title/position
   mentorSignature?: string; // ← NEW: Base64 signature image from backend
   startDate?: string;
   endDate?: string;
@@ -103,19 +104,32 @@ const parseSignatureDataUri = (
   signature?: string,
 ): {
   base64: string;
-  extension: "png" | "jpg" | "jpeg";
+  extension: "png" | "jpg" | "jpeg" | "svg";
   contentType: string;
 } | null => {
   if (!signature) return null;
 
   const trimmed = signature.trim();
-  const match = trimmed.match(/^data:image\/(png|jpe?g);base64,(.+)$/i);
+  const match = trimmed.match(
+    /^data:image\/(png|jpe?g|svg\+xml);base64,(.+)$/i,
+  );
   if (!match) return null;
 
   const rawExt = match[1].toLowerCase();
   const extension =
-    rawExt === "png" ? "png" : rawExt === "jpg" ? "jpg" : "jpeg";
-  const contentType = extension === "png" ? "image/png" : "image/jpeg";
+    rawExt === "png"
+      ? "png"
+      : rawExt === "jpg"
+        ? "jpg"
+        : rawExt === "svg+xml"
+          ? "svg"
+          : "jpeg";
+  const contentType =
+    extension === "png"
+      ? "image/png"
+      : extension === "svg"
+        ? "image/svg+xml"
+        : "image/jpeg";
 
   return {
     base64: match[2],
@@ -331,6 +345,7 @@ function createLogbookDocxTemplate(
   const companyName = escapeXml(data.internship?.company || "");
   const position = escapeXml(data.internship?.position || "");
   const mentorName = escapeXml(data.internship?.mentorName || "");
+  const mentorPosition = escapeXml(data.internship?.mentorPosition || data.internship?.position || "");
   const footerSignatureRun = mentorSignatureImage
     ? `<w:r>
       <w:drawing>
@@ -681,7 +696,7 @@ function createLogbookDocxTemplate(
           <w:tcPr><w:tcW w:w="3000" w:type="dxa"/></w:tcPr>
           <w:p>
             <w:pPr><w:jc w:val="left"/><w:spacing w:before="0" w:after="60"/></w:pPr>
-            <w:r><w:rPr><w:sz w:val="24"/></w:rPr><w:t>${position}</w:t></w:r>
+            <w:r><w:rPr><w:sz w:val="24"/></w:rPr><w:t>${mentorPosition}</w:t></w:r>
           </w:p>
         </w:tc>
       </w:tr>

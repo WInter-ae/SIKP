@@ -107,7 +107,7 @@ export function EditTemplateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] rounded-2xl border-none shadow-2xl p-6">
+      <DialogContent className="sm:max-w-137.5 rounded-2xl border-none shadow-2xl p-6">
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-2xl font-bold text-foreground">Edit Template</DialogTitle>
           <DialogDescription className="text-muted-foreground font-medium">
@@ -149,11 +149,11 @@ export function EditTemplateDialog({
               className="cursor-pointer h-11 rounded-xl border-gray-200 file:bg-muted file:border-0 file:text-sm file:font-semibold file:mr-4 file:px-4 file:h-full transition-all"
             />
             {!uploadedFile ? (
-              <p className="text-[10px] font-medium text-muted-foreground italic mt-1">
+              <p className="text-2xs font-medium text-muted-foreground italic mt-1">
                 Biarkan kosong jika tidak ingin mengganti file.
               </p>
             ) : (
-              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-1">
+              <p className="text-2xs font-bold text-blue-600 uppercase tracking-widest mt-1">
                 File Baru: {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(1)} KB)
               </p>
             )}

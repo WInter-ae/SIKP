@@ -485,6 +485,17 @@ export interface KaprodiPendingVerification {
   isVerified: boolean;
 }
 
+export interface KaprodiPendingLecturerVerification {
+  id: string;
+  internshipId: string;
+  studentName: string;
+  nim: string;
+  companyName: string;
+  totalScore: number;
+  assessedAt: string;
+  isVerified: boolean;
+}
+
 /**
  * Get list of pending verifications for Kaprodi
  */
@@ -493,11 +504,26 @@ export async function getKaprodiPendingVerifications(): Promise<ApiResponse<Kapr
 }
 
 /**
+ * Get pending lecturer verifications (Sidang KP)
+ */
+export async function getKaprodiPendingLecturerVerifications(): Promise<ApiResponse<KaprodiPendingLecturerVerification[]>> {
+  return iget<KaprodiPendingLecturerVerification[]>("/api/penilaian/kaprodi/pending-lecturer");
+}
+
+/**
  * Verify grade by Kaprodi
  */
 export async function verifyGradeByKaprodi(gradeId: string): Promise<ApiResponse<{ success: boolean }>> {
   const { ipost } = await import("~/lib/api-client");
   return ipost<{ success: boolean }>(`/api/penilaian/kaprodi/verify/${gradeId}`);
+}
+
+/**
+ * Verify lecturer assessment by Kaprodi
+ */
+export async function verifyLecturerByKaprodi(assessmentId: string): Promise<ApiResponse<{ success: boolean }>> {
+  const { ipost } = await import("~/lib/api-client");
+  return ipost<{ success: boolean }>(`/api/penilaian/kaprodi/verify-lecturer/${assessmentId}`);
 }
 
 /**

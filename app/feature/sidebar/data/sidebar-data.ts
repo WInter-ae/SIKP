@@ -75,7 +75,7 @@ const mahasiswaMenu: NavItem[] = [
     icon: FolderKanban,
   },
   {
-    title: "Mentor Lapangan",
+    title: "Pembimbing Lapangan",
     url: "/mahasiswa/mentor-lapangan",
     icon: UserCircle,
   },
@@ -156,9 +156,14 @@ const kaprodiMenu: NavItem[] = [
     icon: Home,
   },
   {
+    title: "Verifikasi Nilai Sidang",
+    url: "/dosen/kp/verifikasi-nilai-sidang",
+    icon: FileCheck,
+  },
+  {
     title: "Verifikasi Nilai Akhir",
     url: "/dosen/kp/verifikasi-nilai",
-    icon: FileCheck,
+    icon: GraduationCap,
   },
 ];
 
@@ -170,16 +175,22 @@ const dosenMenu: NavItem[] = [
     icon: Home,
   },
   {
+    title: "Logbook Bimbingan",
+    url: "/dosen/kp/logbook-monitor",
+    icon: Users,
+  },
+  {
+    title: "Penilaian Pembimbing Lapangan",
+    url: "/dosen/kp/penilaian-mentor",
+    icon: ClipboardCheck,
+  },
+  {
     title: "Kerja Praktik",
     url: "#",
     icon: GraduationCap,
     items: [
       {
-        title: "Monitoring Logbook",
-        url: "/dosen/kp/logbook-monitor",
-      },
-      {
-        title: "Penilaian KP",
+        title: "Penilaian Dosen PA",
         url: "/dosen/penilaian",
       },
     ],
@@ -206,7 +217,7 @@ const dosenMenu: NavItem[] = [
         url: "/dosen/kp/verifikasi-surat",
       },
       {
-        title: "Verifikasi Mentor",
+        title: "Verifikasi Pembimbing Lapangan",
         url: "/dosen/kp/persetujuan-pembimbing",
       },
     ],
@@ -259,21 +270,6 @@ const mentorMenu: NavItem[] = [
     title: "Notifikasi",
     url: "/mentor/notifikasi",
     icon: Bell,
-  },
-  {
-    title: "Arsip",
-    url: "/mentor/arsip",
-    icon: Archive,
-  },
-  {
-    title: "Profil",
-    url: "https://sso-unsri.vercel.app/profile",
-    icon: UserCircle,
-  },
-  {
-    title: "Pengaturan",
-    url: "/mentor/pengaturan",
-    icon: Settings,
   },
 ];
 

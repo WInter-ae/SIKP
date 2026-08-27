@@ -122,6 +122,15 @@ export default function StudentEvaluationDetailPage() {
     evaluatedAt,
   } = evaluation;
 
+  const internshipId =
+    (evaluation.report as { internshipId?: string; internship_id?: string; internship?: { id?: string } } | undefined)
+      ?.internshipId ||
+    (evaluation.report as { internshipId?: string; internship_id?: string; internship?: { id?: string } } | undefined)
+      ?.internship_id ||
+    (evaluation.report as { internshipId?: string; internship_id?: string; internship?: { id?: string } } | undefined)
+      ?.internship?.id ||
+    null;
+
   const getGradeBadgeColor = (grade: string) => {
     switch (grade) {
       case "A":
@@ -414,7 +423,7 @@ export default function StudentEvaluationDetailPage() {
                     placeholder="Masukkan feedback untuk mahasiswa..."
                     value={feedback}
                     onChange={(e) => setFeedback(e.target.value)}
-                    className="min-h-[80px]"
+                    className="min-h-20"
                   />
                 </div>
               </div>
@@ -422,7 +431,10 @@ export default function StudentEvaluationDetailPage() {
               <div className="flex justify-end pt-2">
                 <Button 
                   onClick={async () => {
-                    if (!id) return;
+                    if (!internshipId) {
+                      toast.error("ID internship tidak ditemukan untuk submit penilaian.");
+                      return;
+                    }
                     const score = parseFloat(dosenScore);
                     if (isNaN(score) || score < 0 || score > 100) {
                       toast.error("Nilai harus antara 0 dan 100.");
@@ -431,7 +443,7 @@ export default function StudentEvaluationDetailPage() {
                     
                     setIsSubmitting(true);
                     const res = await submitFinalScore({
-                      internshipId: id, // Assuming ID is internshipId or studentId
+                      internshipId,
                       scores: {
                         formatKesesuaian: score,
                         penguasaanMateri: score,

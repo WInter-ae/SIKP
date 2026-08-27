@@ -570,7 +570,7 @@ export default function RegisterApprovalPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Pengajuan Perubahan Email Mentor</CardTitle>
+          <CardTitle>Pengajuan Perubahan Email Pembimbing Lapangan</CardTitle>
           <CardDescription>
             Setujui atau tolak pengajuan perubahan email dari pembimbing
             lapangan.
@@ -592,7 +592,7 @@ export default function RegisterApprovalPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Mentor</TableHead>
+                    <TableHead>Pembimbing Lapangan</TableHead>
                     <TableHead>Email Saat Ini</TableHead>
                     <TableHead>Email Diajukan</TableHead>
                     <TableHead>Alasan</TableHead>

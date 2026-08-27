@@ -56,8 +56,26 @@ export interface StudentEvaluation {
   fieldSupervisorGrades: FieldSupervisorGrade[];
   academicSupervisorGrades: AcademicSupervisorGrade[];
   summary: EvaluationSummary;
+  report?: any;
   notes?: string;
   evaluatedAt?: string;
+  lecturer?: {
+    id: string;
+    name: string;
+    nip: string;
+    signature?: string | null;
+  };
+  coordinator?: {
+    id: string;
+    name: string;
+    nip: string;
+    signature?: string | null;
+  };
+  mentor?: {
+    id: string;
+    name: string;
+    signature?: string | null;
+  };
 }
 
 // Props for components

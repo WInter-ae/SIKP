@@ -70,10 +70,10 @@ export default function ReportUploadForm({
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      toast.error("Ukuran file maksimal 10MB");
+      toast.error("Ukuran file maksimal 5MB");
       return;
     }
 
@@ -283,7 +283,7 @@ export default function ReportUploadForm({
             Klik untuk upload atau drag & drop file
           </p>
           <p className="text-sm text-muted-foreground">
-            Format: PDF • Maksimal 10MB
+            Format: PDF • Maksimal 5MB
           </p>
         </div>
 

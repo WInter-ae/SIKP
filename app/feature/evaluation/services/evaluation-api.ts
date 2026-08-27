@@ -283,15 +283,45 @@ function mapRowToEvaluation(
   if (!studentId) return null;
 
   const { components, totalScore } = buildFieldGrades(criteria, assessmentNode);
-  const mentorTotal = parseNumber(
+  
+  const mentorComponents: GradeComponent[] = [...components];
+  let calculatedFallbackTotal = totalScore;
+  const fKehadiran = parseNumber(assessmentNode.kehadiran ?? assessmentNode.attendance ?? assessmentNode.nilaiKehadiran);
+  const fKerjasama = parseNumber(assessmentNode.kerjasama ?? assessmentNode.cooperation ?? assessmentNode.nilaiKerjasama);
+  const fSikapEtika = parseNumber(assessmentNode.sikapEtika ?? assessmentNode.sikap_etika ?? assessmentNode.sikapDanEtika ?? assessmentNode.attitudeEthics ?? assessmentNode.nilaiSikapEtika);
+  const fPrestasiKerja = parseNumber(assessmentNode.prestasiKerja ?? assessmentNode.prestasi_kerja ?? assessmentNode.workAchievement ?? assessmentNode.nilaiPrestasiKerja);
+  const fKreatifitas = parseNumber(assessmentNode.kreatifitas ?? assessmentNode.kreativitas ?? assessmentNode.creativity ?? assessmentNode.nilaiKreatifitas);
+
+  if (mentorComponents.length === 0) {
+    if (fKehadiran > 0 || fKerjasama > 0 || fSikapEtika > 0 || fPrestasiKerja > 0 || fKreatifitas > 0) {
+      mentorComponents.push(
+        { name: "Kehadiran", score: fKehadiran, maxScore: 100, weight: 20 },
+        { name: "Kerjasama", score: fKerjasama, maxScore: 100, weight: 20 },
+        { name: "Sikap & Etika", score: fSikapEtika, maxScore: 100, weight: 20 },
+        { name: "Prestasi Kerja", score: fPrestasiKerja, maxScore: 100, weight: 20 },
+        { name: "Kreatifitas", score: fKreatifitas, maxScore: 100, weight: 20 }
+      );
+      calculatedFallbackTotal = (fKehadiran + fKerjasama + fSikapEtika + fPrestasiKerja + fKreatifitas) / 5;
+    }
+  }
+
+  let mentorTotal = parseNumber(
     assessmentNode.totalScore ??
+      assessmentNode.total_score ??
       assessmentNode.finalScore ??
       assessmentNode.nilaiAkhir,
-    totalScore,
+    calculatedFallbackTotal,
   );
 
+  if (mentorTotal === 0 && calculatedFallbackTotal > 0) {
+    mentorTotal = calculatedFallbackTotal;
+  }
+
   const academicNode =
-    (row.lecturer && typeof row.lecturer === "object"
+    (row.lecturerScore && typeof row.lecturerScore === "object"
+      ? (row.lecturerScore as Record<string, unknown>)
+      : null) ||
+    (row.lecturer && typeof row.lecturer === "object" && (row.lecturer as any).totalScore !== undefined
       ? (row.lecturer as Record<string, unknown>)
       : null) ||
     (row.lecturerAssessment && typeof row.lecturerAssessment === "object"
@@ -311,13 +341,23 @@ function mapRowToEvaluation(
     0,
   );
 
-  const finalScore =
-    academicTotal > 0 ? (mentorTotal + academicTotal) / 2 : mentorTotal;
+  const finalScore = parseNumber(
+    row.finalScore ?? (row.combined as any)?.finalScore ?? row.nilaiAkhir,
+    academicTotal > 0 ? (mentorTotal + academicTotal) / 2 : mentorTotal,
+  );
+
+  if (mentorComponents.length === 0) {
+    mentorComponents.push({
+      name: "Penilaian Pembimbing Lapangan",
+      score: mentorTotal,
+      maxScore: 100,
+    });
+  }
 
   const fieldSupervisorGrades: FieldSupervisorGrade[] = [
     {
       category: "Penilaian Pembimbing Lapangan",
-      components,
+      components: mentorComponents,
       totalScore: mentorTotal,
       maxScore: 100,
       percentage: mentorTotal,
@@ -376,7 +416,7 @@ function mapRowToEvaluation(
     student: {
       id: studentId,
       name: normalizeText(
-        studentNode.name || studentNode.nama || row.studentName,
+        (row.student as any)?.name || studentNode.name || studentNode.nama || row.studentName,
         "Mahasiswa",
       ),
       studentId: normalizeText(
@@ -414,7 +454,7 @@ function mapRowToEvaluation(
       finalScore,
       grade: gradeFromScore(finalScore),
       status: statusFromScore(finalScore),
-      isVerifiedByKaprodi: Boolean(row.isVerifiedByKaprodi || (row.combined as any)?.isVerifiedByKaprodi),
+      isVerifiedByKaprodi: Boolean(row.isVerifiedByKaprodi || (row.combined as any)?.isVerifiedByKaprodi || (row.summary as any)?.isVerifiedByKaprodi),
     },
     notes: normalizeText(assessmentNode.feedback || assessmentNode.catatan, ""),
     evaluatedAt: normalizeText(
@@ -423,6 +463,11 @@ function mapRowToEvaluation(
         assessmentNode.createdAt,
       "",
     ),
+    report: row.report || null,
+    // CAPTURE NEW FIELDS
+    lecturer: row.lecturer as any,
+    coordinator: row.coordinator as any,
+    mentor: row.mentor as any,
   } satisfies StudentEvaluation;
 }
 

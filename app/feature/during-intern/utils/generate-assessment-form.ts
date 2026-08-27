@@ -1,5 +1,3 @@
-import { UNSRI_LOGO_BW_BASE64 } from "~/lib/constants/images";
-
 export interface AssessmentFormRow {
   category: string;
   weight: number;
@@ -18,15 +16,35 @@ export interface AssessmentFormData {
   mentorName: string;
   mentorPosition?: string;
   mentorSignature?: string;
-  coordinatorName?: string;
-  coordinatorNip?: string;
-  coordinatorSignature?: string;
   rows: AssessmentFormRow[];
   totalWeightedScore: number;
-  role?: "MENTOR" | "DOSEN_PA";
-  title?: string;
-  signerLabel?: string;
 }
+
+type DocxModule = typeof import("docx");
+
+const formatDateId = (value?: string): string => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const parseSignatureDataUri = (dataUri?: string): Uint8Array | null => {
+  if (!dataUri) return null;
+  const match = dataUri.match(/^data:image\/(png|jpe?g);base64,(.+)$/i);
+  if (!match) return null;
+  const base64 = match[2];
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+};
 
 export async function normalizeSignatureForDocument(
   signatureDataUrl?: string | null,
@@ -36,7 +54,6 @@ export async function normalizeSignatureForDocument(
   try {
     const image = await new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = "anonymous";
       img.onload = () => resolve(img);
       img.onerror = () =>
         reject(new Error("Gagal memuat gambar tanda tangan."));
@@ -132,7 +149,6 @@ function formatDecimalId(value: number, fractionDigits = 1): string {
     maximumFractionDigits: fractionDigits,
   });
 }
-
 
 function buildAssessmentFormHtml(data: AssessmentFormData): string {
   const rowsHtml = data.rows
@@ -232,11 +248,11 @@ function buildAssessmentFormHtml(data: AssessmentFormData): string {
         }
 
         .meta-label {
-          width: 200px;
+          width: 160px;
         }
 
         .meta-sep {
-          width: 30px;
+          width: 12px;
           text-align: center;
         }
 
@@ -317,7 +333,7 @@ function buildAssessmentFormHtml(data: AssessmentFormData): string {
       <div class="container" id="assessment-form-root">
         <div class="frame-line left"></div>
         <div class="frame-line right"></div>
-        <div class="title">${escapeHtml(data.title || "Formulir Penilaian Kerja Praktik (KP)")}</div>
+        <div class="title">Formulir Penilaian Kerja Praktik (KP)</div>
 
         <table class="meta-table">
           <tr><td class="meta-label">Nama</td><td class="meta-sep">:</td><td>${escapeHtml(data.studentName)}</td></tr>
@@ -350,7 +366,7 @@ function buildAssessmentFormHtml(data: AssessmentFormData): string {
         <div class="signature-section">
           <div class="signature-box">
             <div>Palembang, ${escapeHtml(data.assessmentDate)}</div>
-            <div>${escapeHtml(data.signerLabel || "Pembimbing Lapangan")},</div>
+            <div>Pembimbing Lapangan,</div>
             ${signatureBlock}
             <div class="sign-name">${escapeHtml(data.mentorName)}</div>
             <div class="sign-position">${escapeHtml(data.mentorPosition || "-")}</div>
@@ -422,340 +438,333 @@ export async function generateAssessmentForm(
       })
       .from(element)
       .save();
-  } catch {
-    if (wrapper.parentNode) {
-      document.body.removeChild(wrapper);
-    }
-    openPrintFallback(html);
-    return;
   } finally {
-    if (wrapper.parentNode) {
-      document.body.removeChild(wrapper);
-    }
-  }
-}
-
-function buildDosenAssessmentFormHtml(data: AssessmentFormData & { reportTitle?: string; coordinatorName?: string; coordinatorNip?: string }): string {
-  const rowsHtml = data.rows
-    .map((row, index) => {
-      return `
-        <tr>
-          <td class="center">${index + 1}.</td>
-          <td>${escapeHtml(row.category)}</td>
-          <td class="center">${row.weight} %</td>
-          <td class="center">${row.score}</td>
-          <td class="center">${formatDecimalId(row.weightedScore, 1)}</td>
-        </tr>
-      `;
-    })
-    .join("");
-
-  const signatureBlock = data.mentorSignature
-    ? `
-      <div class="signature-space">
-        <img src="${data.mentorSignature}" alt="Tanda tangan" class="signature-image" />
-      </div>
-    `
-    : `
-      <div class="signature-space" style="height: 60px;"></div>
-    `;
-
-  return `
-    <!DOCTYPE html>
-    <html lang="id">
-    <head>
-      <meta charset="UTF-8" />
-      <title>Form Penilaian Dosen PA - ${escapeHtml(data.nim)}</title>
-      <style>
-        @page {
-          size: A4;
-          margin: 1.5cm;
-        }
-
-        body {
-          font-family: "Times New Roman", serif;
-          font-size: 12pt;
-          color: #000;
-          margin: 0;
-          background: #ffffff;
-          line-height: 1.3;
-        }
-
-        .header {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-bottom: 3px double #000;
-          padding-bottom: 10px;
-          margin-bottom: 15px;
-          position: relative;
-          min-height: 100px;
-        }
-
-        .logo-container {
-          position: absolute;
-          left: 0;
-          top: 0;
-        }
-
-        .logo {
-          width: 130px;
-          height: 130px;
-        }
-
-        .header-text {
-          text-align: center;
-          width: 100%;
-          padding-left: 100px;
-        }
-
-        .header-text h1 {
-          font-size: 14pt;
-          margin: 0 0 2px 0;
-          font-weight: normal;
-          line-height: 1.2;
-          text-transform: uppercase;
-        }
-
-        .header-text h2 {
-          font-size: 13pt;
-          margin: 0 0 2px 0;
-          font-weight: normal;
-          line-height: 1.2;
-          text-transform: uppercase;
-        }
-
-        .header-text .bold {
-          font-weight: bold;
-        }
-
-        .header-text .prodi-name {
-          font-size: 15pt;
-          font-weight: bold;
-          margin: 4px 0;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          line-height: 1.2;
-        }
-
-        .header-text p {
-          font-size: 9pt;
-          margin: 1px 0;
-          line-height: 1.2;
-        }
-
-        .title {
-          text-align: center;
-          font-weight: bold;
-          font-size: 13pt;
-          margin: 20px 0 25px 0;
-          text-transform: uppercase;
-        }
-
-        .meta-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 15px;
-          font-size: 13pt;
-        }
-
-        .meta-table td {
-          padding: 2px 0;
-          vertical-align: top;
-        }
-
-        .meta-label {
-          width: 200px;
-        }
-
-        .meta-sep {
-          width: 30px;
-          text-align: center;
-        }
-
-        .score-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 15px;
-          font-size: 13pt;
-        }
-
-        .score-table th, .score-table td {
-          border: 1px solid #000;
-          padding: 4px 6px;
-        }
-
-        .score-table th {
-          background: #f0f0f0;
-          font-weight: bold;
-        }
-
-        .center {
-          text-align: center;
-        }
-
-        .footer-info {
-          margin-bottom: 25px;
-        }
-
-        .signature-container {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 30px;
-        }
-
-        .signature-box {
-          width: 250px;
-          text-align: left;
-        }
-
-        .signature-space {
-          height: 60px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 5px 0;
-        }
-
-        .signature-image {
-          max-height: 60px;
-          max-width: 150px;
-          object-fit: contain;
-        }
-
-        .name-underline {
-          font-weight: bold;
-          margin-top: 5px;
-          display: block;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container" id="assessment-form-root">
-        <div class="header">
-          <div class="logo-container">
-            <img src="data:image/png;base64,${UNSRI_LOGO_BW_BASE64}" class="logo" alt="Logo UNSRI" />
-          </div>
-          <div class="header-text">
-            <h1>KEMENTERIAN PENDIDIKAN TINGGI,</h1>
-            <h1>SAINS, DAN TEKNOLOGI</h1>
-            <h2>UNIVERSITAS SRIWIJAYA</h2>
-            <h2 class="bold">FAKULTAS ILMU KOMPUTER</h2>
-            <div class="prodi-name">PROGRAM STUDI MANAJEMEN INFORMATIKA</div>
-            <p>Kampus Unsri, Jalan Srijaya Negara Bukit Besar Palembang, Kode Pos : 30139</p>
-            <p>Telepon (+62711) 379249 Pos-el : humas@ilkom.unsri.ac.id</p>
-          </div>
-        </div>
-
-        <div class="title">${escapeHtml(data.title || "FORM PENILAIAN KERJA PRAKTEK (KP)")}</div>
-
-        <table class="meta-table">
-          <tr><td class="meta-label">Nama Mahasiswa</td><td class="meta-sep">:</td><td>${escapeHtml(data.studentName)}</td></tr>
-          <tr><td class="meta-label">NIM</td><td class="meta-sep">:</td><td>${escapeHtml(data.nim)}</td></tr>
-          <tr><td class="meta-label">Program Studi</td><td class="meta-sep">:</td><td>${escapeHtml(data.programStudi)}</td></tr>
-          <tr><td class="meta-label">Tempat KP</td><td class="meta-sep">:</td><td>${escapeHtml(data.companyName)}</td></tr>
-          <tr><td class="meta-label">Judul Laporan KP</td><td class="meta-sep">:</td><td>${escapeHtml(data.reportTitle || "-")}</td></tr>
-          <tr><td class="meta-label">Waktu Pelaksanaan KP</td><td class="meta-sep">:</td><td>${escapeHtml(data.assessmentPeriod)}</td></tr>
-          <tr><td class="meta-label">Dosen Pembimbing</td><td class="meta-sep">:</td><td>${escapeHtml(data.mentorName)}</td></tr>
-          <tr><td class="meta-label">Pembimbing Lapangan</td><td class="meta-sep">:</td><td>${escapeHtml((data.signerLabel === "Dosen Pembimbing" ? "-" : data.signerLabel) || "-")}</td></tr>
-        </table>
-
-        <table class="score-table">
-          <thead>
-            <tr>
-              <th style="width:40px">No.</th>
-              <th>Penilaian</th>
-              <th style="width:100px">Bobot (B)</th>
-              <th style="width:100px">Nilai (N)</th>
-              <th style="width:100px">BxN</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rowsHtml}
-          </tbody>
-        </table>
-
-        <div class="footer-info">
-          <div>Rata-rata Nilai : ${formatDecimalId(data.totalWeightedScore, 1)}</div>
-          <div>Dinyatakan dengan indeks nilai : <strong>${data.totalWeightedScore >= 80 ? "A" : data.totalWeightedScore >= 70 ? "B" : data.totalWeightedScore >= 60 ? "C" : data.totalWeightedScore >= 50 ? "D" : "E"}</strong></div>
-        </div>
-
-        <div class="signature-container">
-          <div class="signature-box">
-            <div>Mengetahui,</div>
-            <div>Koordinator Program Studi</div>
-            <div>${escapeHtml(data.programStudi || "Manajemen Informatika")},</div>
-            <div class="signature-space">
-              ${data.coordinatorSignature 
-                ? `<img src="${data.coordinatorSignature}" alt="Tanda tangan Kaprodi" class="signature-image" />`
-                : ''}
-            </div>
-            <span class="name-underline">${escapeHtml(data.coordinatorName || "Dr. Abdiansah, S.Kom., M.Cs.")}</span>
-            <div>NIP ${escapeHtml(data.coordinatorNip || "198410012009121005")}</div>
-          </div>
-
-          <div class="signature-box">
-            <div>Palembang, ${escapeHtml(data.assessmentDate)}</div>
-            <div>Dosen Pembimbing,</div>
-            ${signatureBlock}
-            <span class="name-underline">${escapeHtml(data.mentorName)}</span>
-            <div>NIP ${escapeHtml(data.mentorPosition || "....................................")}</div>
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-export async function generateDosenAssessmentForm(
-  data: AssessmentFormData & { 
-    reportTitle?: string;  
-    coordinatorName?: string;
-    coordinatorNip?: string;
-    coordinatorSignature?: string;
-  }
-): Promise<void> {
-  const html = buildDosenAssessmentFormHtml(data);
-  const html2pdfInstance = (window as Window & { html2pdf?: any }).html2pdf;
-
-  if (!html2pdfInstance) {
-    openPrintFallback(html);
-    return;
-  }
-
-  const wrapper = document.createElement("div");
-  wrapper.style.position = "fixed";
-  wrapper.style.left = "-99999px";
-  wrapper.innerHTML = html;
-  document.body.appendChild(wrapper);
-
-  const element = wrapper.querySelector("#assessment-form-root") as HTMLElement | null;
-  if (!element) {
     document.body.removeChild(wrapper);
-    throw new Error("Gagal membangun dokumen penilaian.");
   }
+}
 
-  const fileName = `Form_Penilaian_Dosen_PA_${data.nim}_${new Date().toISOString().slice(0, 10)}.pdf`;
+export async function generateAssessmentDocxForm(
+  data: AssessmentFormData,
+): Promise<void> {
+  const docx = (await import("docx")) as DocxModule;
+  const {
+    Document,
+    Packer,
+    Paragraph,
+    TextRun,
+    Table,
+    TableRow,
+    TableCell,
+    WidthType,
+    AlignmentType,
+    BorderStyle,
+    ImageRun,
+  } = docx;
 
-  try {
-    await html2pdfInstance()
-      .set({
-        margin: [5, 5, 5, 5],
-        filename: fileName,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+  const baseFontSize = 24;
+  const makeRun = (
+    text: string,
+    options?: { bold?: boolean; underline?: boolean },
+  ) =>
+    new TextRun({
+      text,
+      size: baseFontSize,
+      bold: options?.bold,
+      underline: options?.underline ? {} : undefined,
+    });
+
+  const rows = data.rows.map((row, index) =>
+    new TableRow({
+      children: [
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: [makeRun(String(index + 1))],
+              alignment: AlignmentType.CENTER,
+            }),
+          ],
+        }),
+        new TableCell({
+          children: [new Paragraph({ children: [makeRun(row.category)] })],
+        }),
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: [makeRun(`${row.weight}%`)],
+              alignment: AlignmentType.CENTER,
+            }),
+          ],
+        }),
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: [makeRun(String(row.score))],
+              alignment: AlignmentType.CENTER,
+            }),
+          ],
+        }),
+        new TableCell({
+          children: [
+            new Paragraph({
+              children: [makeRun(formatDecimalId(row.weightedScore, 1))],
+              alignment: AlignmentType.CENTER,
+            }),
+          ],
+        }),
+      ],
+    }),
+  );
+
+  const totalRow = new TableRow({
+    children: [
+      new TableCell({
+        columnSpan: 4,
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [makeRun("Jumlah", { bold: true })],
+          }),
+        ],
+      }),
+      new TableCell({
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              makeRun(formatDecimalId(data.totalWeightedScore, 1), {
+                bold: true,
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+
+  const borderStyle = {
+    style: BorderStyle.SINGLE,
+    size: 8,
+    color: "6B7280",
+  } as const;
+
+  const scoreTable = new Table({
+    width: { size: 78, type: WidthType.PERCENTAGE },
+    alignment: AlignmentType.CENTER,
+    rows: [
+      new TableRow({
+        tableHeader: true,
+        children: [
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("No")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("Penilaian")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("Bobot (B)")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("Nilai (N)")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+          new TableCell({
+            children: [
+              new Paragraph({
+                children: [makeRun("BxN")],
+                alignment: AlignmentType.CENTER,
+              }),
+            ],
+          }),
+        ],
+      }),
+      ...rows,
+      totalRow,
+    ],
+    borders: {
+      top: borderStyle,
+      bottom: borderStyle,
+      left: borderStyle,
+      right: borderStyle,
+      insideHorizontal: borderStyle,
+      insideVertical: borderStyle,
+    },
+  });
+
+  // Adjust mentor signature image sizing here.
+  const signatureImage = parseSignatureDataUri(data.mentorSignature);
+  const signatureParagraph = signatureImage
+    ? new Paragraph({
+        alignment: AlignmentType.RIGHT,
+        children: [
+          new ImageRun({
+            data: signatureImage,
+            transformation: { width: 140, height: 60 },
+          } as any),
+        ],
       })
-      .from(element)
-      .save();
-  } catch {
-    openPrintFallback(html);
-  } finally {
-    if (wrapper.parentNode) {
-      document.body.removeChild(wrapper);
-    }
-  }
+    : new Paragraph({ alignment: AlignmentType.RIGHT, text: "" });
+
+  const docxDocument = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            children: [
+              makeRun("FORMULIR PENILAIAN KERJA PRAKTIK (KP)", {
+                bold: true,
+              }),
+            ],
+          }),
+          new Paragraph({ text: "" }),
+          // Adjust student meta table size/centering here.
+          new Table({
+            width: { size: 70, type: WidthType.PERCENTAGE },
+            alignment: AlignmentType.CENTER,
+            rows: [
+              ["Nama", data.studentName],
+              ["NIM", data.nim],
+              ["Program Studi", data.programStudi],
+              ["Fakultas", data.fakultas || "-"],
+              ["Tempat KP", data.companyName],
+              ["Waktu KP", data.assessmentPeriod],
+            ].map(([label, value]) =>
+              new TableRow({
+                children: [
+                  new TableCell({
+                    width: { size: 35, type: WidthType.PERCENTAGE },
+                    children: [
+                      new Paragraph({ children: [makeRun(String(label))] }),
+                    ],
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                  }),
+                  new TableCell({
+                    width: { size: 5, type: WidthType.PERCENTAGE },
+                    children: [
+                      new Paragraph({
+                        children: [makeRun(":")],
+                        alignment: AlignmentType.CENTER,
+                      }),
+                    ],
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                  }),
+                  new TableCell({
+                    width: { size: 60, type: WidthType.PERCENTAGE },
+                    children: [
+                      new Paragraph({ children: [makeRun(String(value))] }),
+                    ],
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                  }),
+                ],
+              }),
+            ),
+          }),
+          new Paragraph({ text: "" }),
+          scoreTable,
+          new Paragraph({ text: "" }),
+          // Adjust signature block position (date/title/name) here.
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            rows: [
+              new TableRow({
+                children: [
+                  new TableCell({
+                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    children: [new Paragraph({ text: "" })],
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                  }),
+                  new TableCell({
+                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    borders: {
+                      top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                      right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+                    },
+                    children: [
+                      new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        children: [
+                          makeRun(
+                            `Palembang, ${formatDateId(data.assessmentDate)}`,
+                          ),
+                        ],
+                      }),
+                      new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        children: [makeRun("Pembimbing Lapangan,")],
+                      }),
+                      signatureParagraph,
+                      new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        children: [
+                          makeRun(data.mentorName, {
+                            bold: true,
+                            underline: true,
+                          }),
+                        ],
+                      }),
+                      new Paragraph({
+                        alignment: AlignmentType.LEFT,
+                        children: [makeRun(data.mentorPosition || "-")],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      },
+    ],
+  });
+
+  const blob = await Packer.toBlob(docxDocument);
+  const safeNim = data.nim.replace(/[^a-zA-Z0-9_-]/g, "");
+  const fileDate = new Date().toISOString().slice(0, 10);
+  const fileName = `Form_Penilaian_KP_${safeNim || "mahasiswa"}_${fileDate}.docx`;
+
+  const { saveAs } = await import("file-saver");
+  saveAs(blob, fileName);
 }
 
 export function printAssessmentForm(data: AssessmentFormData): void {
@@ -779,4 +788,3 @@ export function printAssessmentForm(data: AssessmentFormData): void {
     }, 300);
   };
 }
-

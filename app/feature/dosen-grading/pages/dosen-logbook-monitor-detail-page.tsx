@@ -26,16 +26,16 @@ function getStatusBadge(status: DosenLogbookMonitorItem["status"]) {
   if (status === "APPROVED") {
     return (
       <Badge className="bg-green-600 hover:bg-green-600">
-        Disetujui Mentor
+        Disetujui Pembimbing Lapangan
       </Badge>
     );
   }
 
   if (status === "REJECTED") {
-    return <Badge variant="destructive">Ditolak Mentor</Badge>;
+    return <Badge variant="destructive">Ditolak Pembimbing Lapangan</Badge>;
   }
 
-  return <Badge variant="secondary">Menunggu Review Mentor</Badge>;
+  return <Badge variant="secondary">Menunggu Review Pembimbing Lapangan</Badge>;
 }
 
 function formatDate(value?: string) {
@@ -327,7 +327,7 @@ export default function DosenLogbookMonitorDetailPage() {
                   <TableHead className="w-32 text-center">Foto</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Catatan Revisi</TableHead>
-                  <TableHead>Mentor</TableHead>
+                  <TableHead>Pembimbing Lapangan</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

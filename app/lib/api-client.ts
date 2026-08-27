@@ -31,7 +31,7 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:3000";
+const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:8789";
 const DEFAULT_PROD_API_BASE_URL =
   "https://backend-sikp.backend-sikp.workers.dev";
 
@@ -47,8 +47,7 @@ export const API_BASE_URL =
 
 /** Base URL untuk layanan pelaksanaan magang (logbook, mentor, penilaian) */
 export const INTERNSHIP_API_BASE_URL =
-  import.meta.env.VITE_API_INTERNSHIP_URL ||
-  "https://backend-sikp.mukarrobinujiantik.workers.dev";
+  import.meta.env.VITE_API_INTERNSHIP_URL || API_BASE_URL;
 
 // ==================== TYPES ====================
 
@@ -144,7 +143,7 @@ function buildHeaders(
 // ==================== CORE API CLIENT ====================
 
 /**
- * Low-level API client GÇö dipakai oleh factory `createApiClient`.
+ * Low-level API client GÃ‡Ã¶ dipakai oleh factory `createApiClient`.
  * Penanganan error (network, HTTP non-2xx, JSON parse) dilakukan secara
  * terpusat di sini sehingga setiap service tidak perlu try/catch sendiri.
  *
@@ -202,7 +201,7 @@ export async function apiClient<T>(
       if (payloadData !== null && payloadData !== undefined) {
         const validation = schema.safeParse(payloadData);
         if (!validation.success) {
-          console.error("G¥î Zod Validation Error:", validation.error);
+          console.error("GÂ¥Ã® Zod Validation Error:", validation.error);
           return {
             success: false,
             message:
@@ -233,7 +232,7 @@ export async function apiClient<T>(
     return data as ApiResponse<T>;
   } catch (error) {
     if (isNetworkError(error)) {
-      console.error("G¥î Network Error:", error);
+      console.error("GÂ¥Ã® Network Error:", error);
       return {
         success: false,
         message: API_ERROR_MESSAGES.NETWORK_ERROR,
@@ -243,7 +242,7 @@ export async function apiClient<T>(
 
     const errorMessage =
       error instanceof Error ? error.message : API_ERROR_MESSAGES.UNKNOWN_ERROR;
-    console.error("G¥î API Client Error:", error);
+    console.error("GÂ¥Ã® API Client Error:", error);
 
     return {
       success: false,
@@ -353,7 +352,7 @@ export function createApiClient(baseUrl: string) {
     },
 
     /**
-     * Custom fetch GÇö untuk kasus yang membutuhkan opsi RequestInit penuh
+     * Custom fetch GÃ‡Ã¶ untuk kasus yang membutuhkan opsi RequestInit penuh
      */
     request<T>(
       endpoint: string,

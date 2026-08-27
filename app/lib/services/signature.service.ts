@@ -213,3 +213,57 @@ export async function dataUrlToFile(
   const blob = await response.blob();
   return new File([blob], filename, { type: blob.type || "image/png" });
 }
+
+/**
+ * Simpan tanda tangan mentor aktif ke tabel internships di DB.
+ *
+ * Alur:
+ * 1. Ambil TTD aktif dari SSO via getActiveProfileSignature()
+ * 2. Kirim base64-nya ke backend PUT /api/profile/signature/save-to-internship
+ * 3. Backend langsung simpan ke kolom mentor_signature_base64
+ *
+ * Tidak perlu deploy Worker baru — endpoint ini sudah ada di production.
+ */
+export async function saveSignatureToInternship(
+  internshipId: string,
+): Promise<ApiResponse<{ internshipId: string; mimeType: string; cachedAt: string } | null>> {
+  // 1. Ambil TTD aktif dari SSO
+  const sigResponse = await getActiveProfileSignature();
+
+  if (!sigResponse.success || !sigResponse.data?.signatureImage) {
+    return {
+      success: false,
+      message:
+        sigResponse.message ||
+        "Tanda tangan belum tersedia. Silakan upload TTD di portal SSO terlebih dahulu.",
+      data: null,
+    };
+  }
+
+  const signatureBase64 = sigResponse.data.signatureImage;
+  // Deteksi mimeType dari data URL prefix jika ada
+  let mimeType = "image/png";
+  if (signatureBase64.startsWith("data:")) {
+    const mimeMatch = signatureBase64.match(/^data:([^;]+);/);
+    if (mimeMatch) mimeType = mimeMatch[1];
+  } else if (signatureBase64.trim().startsWith("<svg")) {
+    mimeType = "image/svg+xml";
+  }
+
+  // 2. Kirim ke backend untuk disimpan ke DB
+  const saveResponse = await sikpClient.request<{
+    internshipId: string;
+    mimeType: string;
+    cachedAt: string;
+  }>("/api/profile/signature/save-to-internship", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      internshipId,
+      signatureBase64,
+      mimeType,
+    }),
+  });
+
+  return saveResponse;
+}

@@ -1,4 +1,4 @@
-import { internshipClient } from "~/lib/api-client";
+import { internshipClient, INTERNSHIP_API_BASE_URL } from "~/lib/api-client";
 import type { ApiResponse } from "~/lib/api-client";
 
 export interface DosenLogbookMonitorItem {
@@ -22,6 +22,8 @@ export interface DosenLogbookMonitorItem {
   photo_url?: string | null;
   time?: string;
   approvedTime?: string;
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
 export interface DosenLogbookMonitorByStudentItem {
@@ -52,6 +54,8 @@ const DETAIL_ENDPOINT_BUILDERS = [
 ] as const;
 
 const INACTIVE_ENDPOINT = "/api/internship-monitoring/inactive";
+const EXPORT_ZIP_ENDPOINT =
+  "/api/internship-monitoring/logbooks/export";
 
 function asRecord(value: unknown): RawObject | null {
   return typeof value === "object" && value !== null
@@ -195,6 +199,8 @@ function mapRawMenteeItem(raw: RawObject, index: number): DosenLogbookMonitorIte
     totalApproved,
     totalPending,
     mentorName: getFirstString(raw, ["mentorName"], ""),
+    startDate: getFirstString(raw, ["startDate"], "") || null,
+    endDate: getFirstString(raw, ["endDate"], "") || null,
   };
 }
 
@@ -216,6 +222,12 @@ function mapRawLogbookItem(raw: RawObject, index: number): DosenLogbookMonitorIt
     time: raw.createdAt ? new Date(raw.createdAt as string).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : "-",
     approvedTime: raw.verifiedAt ? new Date(raw.verifiedAt as string).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : "-",
   };
+}
+
+function resolveFileName(contentDisposition: string | null) {
+  if (!contentDisposition) return "logbook_pa.zip";
+  const match = /filename="?([^";]+)"?/i.exec(contentDisposition);
+  return match?.[1] || "logbook_pa.zip";
 }
 
 export async function getDosenLogbookMonitorItems(): Promise<
@@ -246,6 +258,48 @@ export async function getDosenLogbookMonitorItems(): Promise<
     message: lastMessage,
     data: [],
   };
+}
+
+export async function exportLogbookZip(): Promise<
+  ApiResponse<{ blob: Blob; fileName: string }>
+> {
+  try {
+    const response = await fetch(
+      `${INTERNSHIP_API_BASE_URL}${EXPORT_ZIP_ENDPOINT}`,
+      {
+        method: "GET",
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok) {
+      let message = "Gagal menyiapkan arsip logbook.";
+      try {
+        const payload = (await response.json()) as ApiResponse<unknown>;
+        message = payload.message || message;
+      } catch {
+        // Ignore JSON parse errors for non-JSON response.
+      }
+      return { success: false, message, data: null };
+    }
+
+    const blob = await response.blob();
+    const fileName = resolveFileName(
+      response.headers.get("content-disposition"),
+    );
+
+    return {
+      success: true,
+      message: "Logbook ZIP siap diunduh",
+      data: { blob, fileName },
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Terjadi kesalahan saat mengunduh logbook.";
+    return { success: false, message, data: null };
+  }
 }
 
 export async function getDosenLogbookMonitorByStudent(

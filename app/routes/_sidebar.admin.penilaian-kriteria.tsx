@@ -164,7 +164,7 @@ export default function PenilaianKriteriaPage() {
             </h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Kelola bobot indikator penilaian untuk mahasiswa magang
+            Kelola bobot indikator penilaian untuk mahasiswa Kerja Praktik
           </p>
         </div>
       </div>
@@ -257,7 +257,7 @@ export default function PenilaianKriteriaPage() {
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-          <TabsTrigger value="MENTOR">Mentor Lapangan</TabsTrigger>
+          <TabsTrigger value="MENTOR">Pembimbing Lapangan</TabsTrigger>
           <TabsTrigger value="DOSEN_PA">Dosen PA</TabsTrigger>
         </TabsList>
       </Tabs>

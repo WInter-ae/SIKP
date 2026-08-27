@@ -34,6 +34,7 @@ import {
   getMenteeDetail,
   getMentees,
   getStudentLogbook,
+  saveSignatureToInternship,
   type LogbookEntry,
   type MenteeData,
 } from "../services";
@@ -220,6 +221,16 @@ function StudentLogbookDetailPage() {
         ),
       );
       toast.success("Logbook berhasil disetujui.");
+
+      // Simpan TTD aktif dari SSO langsung ke database tabel internships (cache)
+      if (student?.internshipId) {
+        saveSignatureToInternship(student.internshipId).catch((err) => {
+          console.warn(
+            "[StudentLogbookDetailPage] Gagal menyimpan TTD ke DB (non-critical):",
+            err,
+          );
+        });
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Gagal menyetujui logbook.",
@@ -257,6 +268,16 @@ function StudentLogbookDetailPage() {
         ),
       );
       toast.success("Semua logbook pending berhasil disetujui.");
+
+      // Simpan TTD aktif dari SSO langsung ke database tabel internships (cache)
+      if (student?.internshipId) {
+        saveSignatureToInternship(student.internshipId).catch((err) => {
+          console.warn(
+            "[StudentLogbookDetailPage] Gagal menyimpan TTD ke DB (non-critical):",
+            err,
+          );
+        });
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Gagal paraf semua logbook.",
@@ -361,7 +382,7 @@ function StudentLogbookDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col md:flex-row gap-6">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <Avatar className="h-24 w-24 rounded-lg border-2 border-muted">
                 <AvatarImage src={(student as any).photoUrl || (student as any).photo} alt={student.nama || student.name} />
                 <AvatarFallback className="rounded-lg text-2xl font-bold bg-muted">
@@ -369,7 +390,7 @@ function StudentLogbookDetailPage() {
                 </AvatarFallback>
               </Avatar>
             </div>
-            <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grow grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Nama Mahasiswa</p>
                 <p className="font-medium text-lg">
@@ -385,7 +406,7 @@ function StudentLogbookDetailPage() {
               <p className="font-medium">{student.prodi || "-"}</p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Periode Magang</p>
+              <p className="text-sm text-muted-foreground">Periode Kerja Praktik</p>
               <p className="font-medium">
                 {formatDate(student.internshipStartDate || student.startDate, mounted)} - {formatDate(student.internshipEndDate || student.endDate, mounted)}
               </p>
@@ -493,14 +514,14 @@ function StudentLogbookDetailPage() {
                         {formatDate(entry.date, mounted)}
                       </TableCell>
                       <TableCell className="align-middle text-left py-4 min-w-0">
-                        <div className="min-h-16 min-w-0 break-words flex flex-col justify-center gap-2">
-                          <p className="font-medium text-sm leading-5 whitespace-normal break-words min-w-0">
+                        <div className="min-h-16 min-w-0 wrap-break-word flex flex-col justify-center gap-2">
+                          <p className="font-medium text-sm leading-5 whitespace-normal wrap-break-word min-w-0">
                             {entry.description}
                           </p>
                           {entry.activity &&
                             entry.activity.trim() !==
                               entry.description.trim() && (
-                              <p className="text-sm leading-5 text-muted-foreground whitespace-pre-line break-words min-w-0">
+                              <p className="text-sm leading-5 text-muted-foreground whitespace-pre-line wrap-break-word min-w-0">
                                 {entry.activity}
                               </p>
                             )}

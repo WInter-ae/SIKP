@@ -516,7 +516,7 @@ function MenteeDetailPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
-                      <p className="font-medium">Penilaian Mentor</p>
+                      <p className="font-medium">Penilaian Pembimbing Lapangan</p>
                       <p className="text-sm text-muted-foreground">
                         {formatDate(
                           assessment.updatedAt || assessment.createdAt,

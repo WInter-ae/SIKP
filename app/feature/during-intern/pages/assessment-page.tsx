@@ -50,14 +50,15 @@ import {
   getMyAssessment,
   type StudentAssessmentData,
 } from "~/feature/during-intern/services/assessment-api";
+import { getAssessmentRecap } from "~/feature/evaluation/services/evaluation-api";
+import type { AssessmentCriterion } from "~/lib/assessment-criteria-api";
+import { INTERNSHIP_API_BASE_URL } from "~/lib/api-client";
 import {
   generateAssessmentForm,
-  generateDosenAssessmentForm,
+  generateAssessmentDocxForm,
   normalizeSignatureForDocument,
   printAssessmentForm,
 } from "~/feature/during-intern/utils/generate-assessment-form";
-import { getAssessmentRecap } from "~/feature/evaluation/services/evaluation-api";
-import type { AssessmentCriterion } from "~/lib/assessment-criteria-api";
 
 const MENTOR_ICONS: Record<string, React.ElementType> = {
   kehadiran: Clock,
@@ -87,12 +88,11 @@ function AssessmentPage() {
   const [mentorAssessments, setMentorAssessments] = useState<any[]>([]);
   const [dosenAssessments, setDosenAssessments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingMentorPdf, setIsGeneratingMentorPdf] = useState(false);
   const [mentorData, setMentorData] = useState<any | null>(null);
   const [dosenData, setDosenData] = useState<any | null>(null);
   const [internshipContext, setInternshipContext] = useState<CompleteInternshipData | null>(null);
   const [evaluationRecap, setEvaluationRecap] = useState<any | null>(null);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [isPrintingFinal, setIsPrintingFinal] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -141,16 +141,18 @@ function AssessmentPage() {
           
           // 1. Try components array (standard for AcademicSupervisorGrade/FieldSupervisorGrade)
           const fromComponent = source.components?.find((comp: any) => {
-            const compName = normalizeKey(comp.name || "");
+            const compName = normalizeKey(comp.name || comp.label || comp.categoryId || comp.categoryKey || "");
             const critId = normalizeKey(c.id || "");
             const critLabel = normalizeKey(c.category || "");
             
+            if (!compName) return false;
+            
             return compName === critId || 
                    compName === critLabel ||
-                   compName.includes(critId) ||
-                   critId.includes(compName) ||
-                   compName.includes(critLabel) ||
-                   critLabel.includes(compName);
+                   (critId && compName.includes(critId)) ||
+                   (compName && critId.includes(compName)) ||
+                   (critLabel && compName.includes(critLabel)) ||
+                   (compName && critLabel.includes(compName));
           })?.score;
           
           if (fromComponent !== undefined) return fromComponent;
@@ -231,123 +233,178 @@ function AssessmentPage() {
     });
 
   const handlePrintFormNilai = () => {
-    if (!internshipContext?.internship?.id) return;
-    const url = `${import.meta.env.VITE_API_URL || "https://sikp-backend.p-it-unsri.workers.dev"}/api/admin/penilaian/print/${internshipContext.internship.id}`;
+    const ctx = internshipContext;
+    if (!ctx?.internship?.id) return;
+    const url = `${import.meta.env.VITE_API_URL || "https://sikp-backend.p-it-unsri.workers.dev"}/api/admin/penilaian/print/${ctx.internship.id}`;
     window.open(url, "_blank");
   };
 
-  const handlePrintMentorAssessment = async () => {
-    if (!mentorData || !internshipContext) {
-      toast.error("Data penilaian mentor belum lengkap.");
+  const handlePrintMentorAssessment = async (format: 'pdf' | 'docx' = 'pdf') => {
+    const ctx = internshipContext;
+    if (!mentorData) {
+      toast.error("Penilaian mentor belum tersedia.");
       return;
     }
 
-    try {
-      const student = internshipContext.student;
-      const mentor = internshipContext.mentor;
-      const submission = internshipContext.submission;
+    if (!ctx?.submission && !ctx?.internship) {
+      toast.error("Data pengajuan/pelaksanaan kerja praktik belum lengkap.");
+      return;
+    }
 
-      // Map rows from mentorAssessments state which contains both legacy and dynamic criteria
-      const rows = mentorAssessments.map(a => ({
-        category: a.category,
-        weight: a.weight,
-        score: a.score,
-        weightedScore: (a.score * a.weight) / 100
-      }));
+    if (format === "docx") {
+      const startDate = ctx.submission?.startDate || (ctx.internship as any)?.startDate;
+      const endDate = ctx.submission?.endDate || (ctx.internship as any)?.endDate;
+      const periodText =
+        startDate && endDate
+          ? `${formatDateId(startDate)} - ${formatDateId(endDate)}`
+          : "-";
 
-      const period = submission?.startDate && submission?.endDate
-        ? `${new Date(submission.startDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })} – ${new Date(submission.endDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}`
+      const rows = mentorAssessments.map((item) => {
+        const weight = Number(item.weight || 0);
+        const score = Number(item.score || 0);
+        return {
+          category: item.category,
+          weight,
+          score,
+          weightedScore: (score * weight) / 100,
+        };
+      });
+
+      const totalWeightedScore = rows.reduce(
+        (sum, row) => sum + row.weightedScore,
+        0,
+      );
+
+      setIsGeneratingMentorPdf(true);
+      try {
+        const normalizedSignature = await normalizeSignatureForDocument(
+          ctx.mentor?.signature || null,
+        );
+
+        const formData = {
+          studentName: ctx.student?.name || "-",
+          nim: ctx.student?.nim || "-",
+          programStudi: ctx.student?.prodi || "-",
+          fakultas: ctx.student?.fakultas || "-",
+          companyName:
+            ctx.submission?.company || ctx.mentor?.company || "-",
+          assessmentPeriod: periodText,
+          assessmentDate: mentorData.updatedAt
+            ? formatDateId(mentorData.updatedAt)
+            : formatDateId(new Date().toISOString()),
+          mentorName: ctx.mentor?.name || "-",
+          mentorPosition: ctx.mentor?.position || "-",
+          mentorSignature: normalizedSignature,
+          rows,
+          totalWeightedScore,
+        };
+
+        await generateAssessmentDocxForm(formData);
+        toast.success("Dokumen DOCX penilaian berhasil digenerate.");
+      } catch (error) {
+        console.error("Gagal generate dokumen:", error);
+        toast.error("Terjadi kesalahan saat mengunduh dokumen.");
+      } finally {
+        setIsGeneratingMentorPdf(false);
+      }
+
+      return;
+    }
+
+    const startDate = ctx.submission?.startDate || (ctx.internship as any)?.startDate;
+    const endDate = ctx.submission?.endDate || (ctx.internship as any)?.endDate;
+    const periodText =
+      startDate && endDate
+        ? `${formatDateId(startDate)} - ${formatDateId(endDate)}`
         : "-";
 
-      const signature = await normalizeSignatureForDocument(mentor?.signature);
+    const rows = mentorAssessments.map((item) => {
+      const weight = Number(item.weight || 0);
+      const score = Number(item.score || 0);
+      return {
+        category: item.category,
+        weight,
+        score,
+        weightedScore: (score * weight) / 100,
+      };
+    });
 
-      await generateAssessmentForm({
-        studentName: student?.name || "-",
-        nim: student?.nim || "-",
-        programStudi: student?.prodi || "-",
-        fakultas: student?.fakultas || "Ilmu Komputer",
-        companyName: submission?.company || "-",
-        assessmentPeriod: period,
-        assessmentDate: mentorData.assessedAt ? new Date(mentorData.assessedAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }),
-        mentorName: mentor?.name || "-",
-        mentorPosition: mentor?.position || "-",
-        mentorSignature: signature,
+    const totalWeightedScore = rows.reduce(
+      (sum, row) => sum + row.weightedScore,
+      0,
+    );
+
+    setIsGeneratingMentorPdf(true);
+    try {
+      const normalizedSignature = await normalizeSignatureForDocument(
+        ctx.mentor?.signature || null,
+      );
+
+      const formData = {
+        studentName: ctx.student?.name || "-",
+        nim: ctx.student?.nim || "-",
+        programStudi: ctx.student?.prodi || "-",
+        fakultas: ctx.student?.fakultas || "-",
+        companyName:
+          ctx.submission?.company || ctx.mentor?.company || "-",
+        assessmentPeriod: periodText,
+        assessmentDate: mentorData.updatedAt
+          ? formatDateId(mentorData.updatedAt)
+          : formatDateId(new Date().toISOString()),
+        mentorName: ctx.mentor?.name || "-",
+        mentorPosition: ctx.mentor?.position || "-",
+        mentorSignature: normalizedSignature,
         rows,
-        totalWeightedScore: totalMentor,
-        title: "Formulir Penilaian Pembimbing Lapangan",
-        signerLabel: "Pembimbing Lapangan"
-      });
+        totalWeightedScore,
+      };
+
+      try {
+        printAssessmentForm(formData);
+      } catch {
+        await generateAssessmentForm(formData);
+      }
+
+      toast.success("Dokumen penilaian berhasil digenerate.");
     } catch (error) {
-      console.error("Gagal generate PDF:", error);
-      toast.error("Terjadi kesalahan saat membuat dokumen PDF.");
+      console.error("Gagal generate dokumen:", error);
+      toast.error("Terjadi kesalahan saat mengunduh dokumen.");
+    } finally {
+      setIsGeneratingMentorPdf(false);
     }
   };
 
-  const handlePrintDosenAssessment = async () => {
-    if (!dosenData || !internshipContext) {
-      toast.error("Data penilaian dosen belum lengkap.");
+  const handlePrintDosenAssessment = async (format: 'pdf' | 'docx' = 'pdf') => {
+    const ctx = internshipContext;
+    if (!ctx?.internship?.id) {
+      toast.error("Data internship tidak ditemukan.");
       return;
     }
 
+    const internshipId = ctx.internship.id;
+
     try {
-      const student = internshipContext.student;
-      const lecturer = internshipContext.lecturer;
-      const submission = internshipContext.submission;
-
-      const rows = dosenAssessments.map(a => ({
-        category: a.category,
-        weight: a.weight,
-        score: a.score,
-        weightedScore: (a.score * a.weight) / 100
-      }));
-
-      const period = submission?.startDate && submission?.endDate
-        ? `${new Date(submission.startDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })} – ${new Date(submission.endDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' })}`
-        : "-";
-
-      // Extract signatures and coordinator data from context
-      const signature = await normalizeSignatureForDocument(lecturer?.signature);
-      const coordinator = (internshipContext as any).coordinator;
+      const url = `${INTERNSHIP_API_BASE_URL}/api/reporting/generate/assessment-dosen/${internshipId}?format=${format}`;
       
-      // ONLY use coordinator signature if verified by Kaprodi
-      const isVerified = evaluationRecap?.summary?.isVerifiedByKaprodi;
-      const coordinatorSignature = isVerified 
-        ? await normalizeSignatureForDocument(coordinator?.signature)
-        : undefined;
+      // Open in new tab or trigger download
+      window.open(url, '_blank');
 
-      // Extract report title if available in context or evaluations
-      const reportTitle = (internshipContext as any).submission?.title || (internshipContext as any).report?.title || "-";
-      const mentorName = internshipContext.mentor?.name || "-";
-
-      await generateDosenAssessmentForm({
-        studentName: student?.name || "-",
-        nim: student?.nim || "-",
-        programStudi: student?.prodi || "-",
-        fakultas: student?.fakultas || "Ilmu Komputer",
-        companyName: submission?.company || "-",
-        assessmentPeriod: period,
-        assessmentDate: new Date().toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }),
-        mentorName: lecturer?.name || "-",
-        mentorPosition: lecturer?.nip || "-", // Use NIP as position for lecturer signer
-        mentorSignature: signature,
-        rows,
-        totalWeightedScore: totalDosen,
-        title: "FORM PENILAIAN KERJA PRAKTEK (KP)",
-        signerLabel: mentorName, // This is used for "Pembimbing Lapangan" field in the metadata
-        reportTitle: reportTitle,
-        coordinatorName: coordinator?.name || "Dr. Abdiansah, S.Kom., M.Cs.",
-        coordinatorNip: coordinator?.nip || "198410012009121005",
-        coordinatorSignature: coordinatorSignature
-      });
+      
+      toast.success(`Sedang menyiapkan dokumen ${format.toUpperCase()}...`);
     } catch (error) {
-      console.error("Gagal generate PDF:", error);
-      toast.error("Terjadi kesalahan saat membuat dokumen PDF.");
+      console.error("Gagal generate dokumen:", error);
+      toast.error("Terjadi kesalahan saat mengunduh dokumen.");
     }
+  };
+
+  const handlePrintFinalAssessment = async (format: 'pdf' | 'docx' = 'pdf') => {
+    // For now, reuse the same backend call or a similar one if we move Combined Grade to Pattern 1 too
+    // Keeping it simple as requested for Dosen Assessment module first.
+    handlePrintDosenAssessment(format);
   };
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 flex flex-col items-center justify-center min-h-[400px]">
+      <div className="max-w-6xl mx-auto p-6 flex flex-col items-center justify-center min-h-100">
         <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-muted-foreground text-sm font-medium">Memuat data penilaian...</p>
       </div>
@@ -499,7 +556,7 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
       </Card>
 
       <Card className="overflow-hidden border-none shadow-sm ring-1 ring-gray-200">
-        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent pt-2">
+        <div className="bg-linear-to-br from-primary/10 via-primary/5 to-transparent pt-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Award className="h-5 w-5 text-primary" />
@@ -560,7 +617,7 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
                       <div>
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-lg font-bold">{assessment.category}</CardTitle>
-                          <Badge variant="secondary" className="bg-primary/5 text-primary text-[10px] font-bold border-none px-2 py-0">{assessment.weight}%</Badge>
+                          <Badge variant="secondary" className="bg-primary/5 text-primary text-2xs font-bold border-none px-2 py-0">{assessment.weight}%</Badge>
                         </div>
                         <CardDescription className="text-xs line-clamp-1 mt-0.5">{assessment.description}</CardDescription>
                       </div>
@@ -570,7 +627,7 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pencapaian Nilai</span>
+                      <span className="text-2xs font-bold text-muted-foreground uppercase tracking-wider">Pencapaian Nilai</span>
                       <span className={`text-lg font-black ${hasAssessment ? getAssessmentScoreTextClass(assessment.score) : "text-muted-foreground"}`}>
                         {hasAssessment ? `${assessment.score} / ${assessment.maxScore || 100}` : `- / 100`}
                       </span>
@@ -605,15 +662,36 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
                   : "Anda dapat mengunduh rekapitulasi nilai resmi dalam format PDF."}
               </p>
             </div>
-            <Button 
-              onClick={onPrint} 
-              size="lg" 
-              className="bg-blue-600 hover:bg-blue-700 font-bold px-10"
-              disabled={type === "dosen" && !evaluation?.summary.isVerifiedByKaprodi}
-            >
-              <Printer className="mr-2 h-5 w-5" />
-              {type === "dosen" && !evaluation?.summary.isVerifiedByKaprodi ? "Menunggu Verifikasi Kaprodi" : "Cetak Form Nilai KP (PDF)"}
-            </Button>
+            {type === 'dosen' && evaluation?.report?.status !== 'APPROVED' ? (
+              <div className="flex flex-col items-center p-3 bg-red-50 rounded-xl border border-red-100 text-red-700">
+                <AlertCircle className="h-5 w-5 mb-1" />
+                <span className="text-xs font-bold text-center">Laporan Belum Disetujui</span>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2 w-full max-w-sm">
+                <Button 
+                  onClick={() => onPrint('pdf')} 
+                  size="lg" 
+                  className="bg-blue-600 hover:bg-blue-700 font-bold w-full"
+                  disabled={type === "dosen" && !evaluation?.summary.isVerifiedByKaprodi}
+                >
+                  <Printer className="mr-2 h-5 w-5" />
+                  {type === "dosen" && !evaluation?.summary.isVerifiedByKaprodi ? "Menunggu Verifikasi" : "Unduh Resmi (PDF)"}
+                </Button>
+                
+                {(type === "mentor" || (type === "dosen" && evaluation?.summary.isVerifiedByKaprodi)) && (
+                  <Button 
+                    onClick={() => onPrint('docx')} 
+                    variant="outline"
+                    size="sm" 
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 font-bold w-full"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Unduh Draft (Word)
+                  </Button>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -641,7 +719,7 @@ function CombinedGradeContent({ evaluation, onPrint }: any) {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <Card className="border-none shadow-lg ring-1 ring-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-white">
+        <div className="bg-linear-to-br from-blue-600 to-indigo-700 p-8 text-white">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="space-y-4 text-center md:text-left">
               <Badge className="bg-white/20 hover:bg-white/30 text-white border-none px-4 py-1">
@@ -700,18 +778,35 @@ function CombinedGradeContent({ evaluation, onPrint }: any) {
                 <h3 className="font-bold text-xl">Dokumen Nilai Akhir</h3>
                 <p className="text-muted-foreground text-sm">Klik tombol di bawah untuk mencetak lembar penilaian resmi KP.</p>
              </div>
-             {!evaluation.summary.isVerifiedByKaprodi ? (
-               <div className="flex flex-col items-center p-6 bg-amber-50 rounded-2xl border border-amber-100 text-amber-800">
+             {evaluation.report?.status !== 'APPROVED' ? (
+               <div className="flex flex-col items-center p-6 bg-red-50 rounded-2xl border border-red-100 text-red-800 w-full max-w-lg">
+                 <AlertCircle className="h-8 w-8 mb-2" />
+                 <p className="font-bold">Laporan Belum Disetujui</p>
+                 <p className="text-sm text-center">Tombol cetak akan terbuka setelah Dosen PA menyetujui laporan akhir Anda dan mengisi penilaian.</p>
+               </div>
+             ) : !evaluation.summary.isVerifiedByKaprodi ? (
+               <div className="flex flex-col items-center p-6 bg-amber-50 rounded-2xl border border-amber-100 text-amber-800 w-full max-w-lg">
                  <AlertCircle className="h-8 w-8 mb-2" />
                  <p className="font-bold">Menunggu Verifikasi Kaprodi</p>
-                 <p className="text-sm text-center">Dokumen nilai akhir hanya dapat diunduh setelah diverifikasi oleh Ketua Program Studi.</p>
+                 <p className="text-sm text-center">Nilai sudah diinput oleh Dosen PA. Dokumen nilai akhir akan tersedia setelah diverifikasi oleh Ketua Program Studi.</p>
                </div>
              ) : (
-               <Button onClick={onPrint} size="lg" className="w-full max-w-sm h-14 text-lg font-bold shadow-xl hover:scale-105 transition-transform">
-                 <Printer className="mr-3 h-6 w-6" />
-                 Cetak Form Nilai Akhir
-               </Button>
-             )}
+                <div className="flex flex-col gap-3 w-full max-w-sm">
+                  <Button onClick={() => onPrint('pdf')} size="lg" className="w-full h-14 text-lg font-bold shadow-xl hover:scale-105 transition-transform bg-blue-600 hover:bg-blue-700 text-white">
+                    <Printer className="mr-3 h-6 w-6" />
+                    Cetak Form Nilai Akhir (PDF)
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => onPrint('docx')} 
+                    variant="outline"
+                    className="w-full h-10 font-bold border-blue-200 text-blue-700 hover:bg-blue-50"
+                  >
+                    <FileText className="mr-2 h-5 w-5" />
+                    Unduh Draft Rekap (Word)
+                  </Button>
+                </div>
+              )}
           </div>
         </CardContent>
       </Card>
@@ -720,4 +815,3 @@ function CombinedGradeContent({ evaluation, onPrint }: any) {
 }
 
 export default AssessmentPage;
-
