@@ -122,7 +122,7 @@ function DuringInternPage() {
     <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-blue-950 via-indigo-900 to-slate-900 p-8 sm:p-10 text-white shadow-2xl mb-8 border border-white/10">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 right-0 -translate-y-8 translate-x-1/4 opacity-10 pointer-events-none">
-        <Sparkles className="w-[400px] h-[400px] text-blue-300" strokeWidth={0.5} />
+        <Sparkles className="w-100 h-100 text-blue-300" strokeWidth={0.5} />
       </div>
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-indigo-500 rounded-full blur-[80px] opacity-40 mix-blend-screen pointer-events-none" />
       <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-blue-500 rounded-full blur-[60px] opacity-30 mix-blend-screen pointer-events-none" />
@@ -137,7 +137,7 @@ function DuringInternPage() {
             Pelaksanaan Kerja Praktik
           </h1>
           <p className="text-blue-100/90 text-base sm:text-lg font-medium leading-relaxed max-w-xl">
-            Kelola aktivitas Kerja Praktik Anda secara terpusat. Verifikasi mentor lapangan, tulis logbook harian, dan pantau rekap nilai dari pembimbing industri.
+            Kelola aktivitas Kerja Praktik Anda secara terpusat. Pendaftaran pembimbing lapangan, tulis logbook harian, dan pantau rekap nilai dari pembimbing industri.
           </p>
         </div>
       </div>
@@ -153,7 +153,7 @@ function DuringInternPage() {
         <div className="absolute top-0 left-0 w-1.5 h-full bg-linear-to-b from-blue-400 to-indigo-600" />
         <CardContent className="p-6 sm:p-8">
           {isLoadingProfile ? (
-            <div className="flex min-h-[160px] items-center justify-center text-sm text-slate-500 font-medium animate-pulse">
+            <div className="flex min-h-40 items-center justify-center text-sm text-slate-500 font-medium animate-pulse">
               Memuat data profil magang...
             </div>
           ) : (
@@ -167,7 +167,7 @@ function DuringInternPage() {
                         <User className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nama Mahasiswa</Label>
+                        <Label className="text-2xs sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Nama Mahasiswa</Label>
                         <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate">
                           {completeData?.student?.name || "-"}
                         </p>
@@ -187,7 +187,7 @@ function DuringInternPage() {
                         <span className="font-black text-sm font-mono">#</span>
                       </div>
                       <div className="min-w-0">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">NIM</Label>
+                        <Label className="text-2xs sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">NIM</Label>
                         <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate">
                           {completeData?.student?.nim || "-"}
                         </p>
@@ -207,7 +207,7 @@ function DuringInternPage() {
                         <UserCircle className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dosen Pembimbing</Label>
+                        <Label className="text-2xs sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Dosen Pembimbing</Label>
                         <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate">
                           {completeData?.lecturer?.name || "-"}
                         </p>
@@ -227,7 +227,7 @@ function DuringInternPage() {
                         <Building className="h-5 w-5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tempat KP</Label>
+                        <Label className="text-2xs sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Tempat KP</Label>
                         <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate" title={completeData?.submission?.company}>
                           {completeData?.submission?.company || "Belum tersedia"}
                         </p>
@@ -247,14 +247,14 @@ function DuringInternPage() {
                         <Briefcase className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Unit / Divisi</Label>
+                        <Label className="text-2xs sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Unit / Divisi</Label>
                         <p className="font-extrabold text-slate-800 dark:text-slate-100 text-sm sm:text-base mt-0.5 leading-tight truncate">
                           {completeData?.submission?.division || "Belum tersedia"}
                         </p>
                       </div>
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="font-semibold shadow-md max-w-[300px]">
+                  <TooltipContent side="top" className="font-semibold shadow-md max-w-75">
                     <p>{completeData?.submission?.division || "Belum tersedia"}</p>
                   </TooltipContent>
                 </Tooltip>
@@ -268,7 +268,7 @@ function DuringInternPage() {
                       </div>
                       <div className="min-w-0 w-full">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <Label className="text-[10px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">Periode</Label>
+                          <Label className="text-2xs sm:text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider font-sans">Periode</Label>
                           <Badge
                             variant={
                               completeData?.internship?.status === "AKTIF"
@@ -277,8 +277,8 @@ function DuringInternPage() {
                             }
                             className={
                               completeData?.internship?.status === "AKTIF"
-                                ? "bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-md shadow-xs px-2 py-0.5 text-[9px] sm:text-[10px]"
-                                : "font-semibold rounded-md text-[9px] sm:text-[10px]"
+                                ? "bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-md shadow-xs px-2 py-0.5 text-[9px] sm:text-2xs"
+                                : "font-semibold rounded-md text-[9px] sm:text-2xs"
                             }
                           >
                             {completeData?.internship?.status || "PENDING"}

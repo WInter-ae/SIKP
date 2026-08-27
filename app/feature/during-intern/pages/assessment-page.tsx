@@ -247,7 +247,7 @@ function AssessmentPage() {
     }
 
     if (!ctx?.submission && !ctx?.internship) {
-      toast.error("Data pengajuan/saat magang belum lengkap.");
+      toast.error("Data pengajuan/pelaksanaan kerja praktik belum lengkap.");
       return;
     }
 
@@ -404,7 +404,7 @@ function AssessmentPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-6xl mx-auto p-6 flex flex-col items-center justify-center min-h-[400px]">
+      <div className="max-w-6xl mx-auto p-6 flex flex-col items-center justify-center min-h-100">
         <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-muted-foreground text-sm font-medium">Memuat data penilaian...</p>
       </div>
@@ -556,7 +556,7 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
       </Card>
 
       <Card className="overflow-hidden border-none shadow-sm ring-1 ring-gray-200">
-        <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent pt-2">
+        <div className="bg-linear-to-br from-primary/10 via-primary/5 to-transparent pt-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <Award className="h-5 w-5 text-primary" />
@@ -617,7 +617,7 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
                       <div>
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-lg font-bold">{assessment.category}</CardTitle>
-                          <Badge variant="secondary" className="bg-primary/5 text-primary text-[10px] font-bold border-none px-2 py-0">{assessment.weight}%</Badge>
+                          <Badge variant="secondary" className="bg-primary/5 text-primary text-2xs font-bold border-none px-2 py-0">{assessment.weight}%</Badge>
                         </div>
                         <CardDescription className="text-xs line-clamp-1 mt-0.5">{assessment.description}</CardDescription>
                       </div>
@@ -627,7 +627,7 @@ function AssessmentContent({ type, assessments, total, context, evaluation, show
                 <CardContent>
                   <div className="space-y-3">
                     <div className="flex justify-between items-end">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pencapaian Nilai</span>
+                      <span className="text-2xs font-bold text-muted-foreground uppercase tracking-wider">Pencapaian Nilai</span>
                       <span className={`text-lg font-black ${hasAssessment ? getAssessmentScoreTextClass(assessment.score) : "text-muted-foreground"}`}>
                         {hasAssessment ? `${assessment.score} / ${assessment.maxScore || 100}` : `- / 100`}
                       </span>
@@ -719,7 +719,7 @@ function CombinedGradeContent({ evaluation, onPrint }: any) {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <Card className="border-none shadow-lg ring-1 ring-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-white">
+        <div className="bg-linear-to-br from-blue-600 to-indigo-700 p-8 text-white">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8">
             <div className="space-y-4 text-center md:text-left">
               <Badge className="bg-white/20 hover:bg-white/30 text-white border-none px-4 py-1">

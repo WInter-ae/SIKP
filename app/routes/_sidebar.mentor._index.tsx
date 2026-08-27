@@ -335,7 +335,7 @@ export default function MentorDashboard() {
   const stats = useMemo(
     () => [
       {
-        title: "Mahasiswa Magang",
+        title: "Mahasiswa Kerja Praktik",
         value: isLoading ? "..." : totalMentees,
         icon: Users,
         description: "Total mahasiswa yang dibimbing",
@@ -382,7 +382,7 @@ export default function MentorDashboard() {
     <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-emerald-950 via-teal-900 to-slate-900 p-8 sm:p-10 text-white shadow-2xl mb-8 border border-white/10">
       {/* Background Decorative Elements */}
       <div className="absolute top-0 right-0 -translate-y-8 translate-x-1/4 opacity-10 pointer-events-none">
-        <Sparkles className="w-[400px] h-[400px] text-teal-300" strokeWidth={0.5} />
+        <Sparkles className="w-100 h-100 text-teal-300" strokeWidth={0.5} />
       </div>
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-teal-500 rounded-full blur-[80px] opacity-40 mix-blend-screen pointer-events-none" />
       <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-emerald-500 rounded-full blur-[60px] opacity-30 mix-blend-screen pointer-events-none" />
@@ -397,7 +397,7 @@ export default function MentorDashboard() {
             Dashboard Pembimbing
           </h1>
           <p className="text-teal-100/90 text-base sm:text-lg font-medium leading-relaxed max-w-xl">
-            Kelola perkembangan mahasiswa magang secara komprehensif, lakukan paraf logbook harian, serta selesaikan form penilaian akhir KP secara instan.
+            Kelola perkembangan mahasiswa Kerja Praktik secara komprehensif, lakukan paraf logbook harian, serta selesaikan form penilaian akhir KP secara instan.
           </p>
         </div>
       </div>
@@ -445,7 +445,7 @@ export default function MentorDashboard() {
           <CardHeader className="pt-6 pb-4 border-b border-slate-100 dark:border-slate-800">
             <CardTitle className="text-xl font-bold flex items-center gap-2.5">
               <Users className="h-5 w-5 text-teal-600 dark:text-teal-400" />
-              Mahasiswa Magang
+              Mahasiswa Kerja Praktik
             </CardTitle>
             <CardDescription className="text-xs text-slate-500">
               Perkembangan penyelesaian logbook dan status bimbingan mahasiswa aktif
@@ -454,8 +454,8 @@ export default function MentorDashboard() {
           <CardContent className="p-6">
             <div className="space-y-4">
               {isLoading ? (
-                <div className="flex min-h-[160px] items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-sm text-slate-500 font-medium">
-                  Memuat data mahasiswa magang dari backend...
+                <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-sm text-slate-500 font-medium">
+                  Memuat data mahasiswa Kerja Praktik dari backend...
                 </div>
               ) : menteeList.length > 0 ? (
                 menteeList.map((mentee) => (
@@ -507,11 +507,11 @@ export default function MentorDashboard() {
                   </div>
                 ))
               ) : (
-                <div className="flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-center text-sm text-slate-500">
+                <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-center text-sm text-slate-500">
                   <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-3">
                     <Users className="h-6 w-6 text-slate-400" />
                   </div>
-                  <span className="font-medium">Belum ada mahasiswa magang yang terhubung.</span>
+                  <span className="font-medium">Belum ada mahasiswa Kerja Praktik yang terhubung.</span>
                 </div>
               )}
             </div>
@@ -533,7 +533,7 @@ export default function MentorDashboard() {
           <CardContent className="p-6">
             <div className="space-y-4">
               {isLoading ? (
-                <div className="flex min-h-[160px] items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-sm text-slate-500 font-medium">
+                <div className="flex min-h-40 items-center justify-center rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-sm text-slate-500 font-medium">
                   Memuat tindakan menunggu...
                 </div>
               ) : pendingAssessments.length > 0 ? (
@@ -585,7 +585,7 @@ export default function MentorDashboard() {
                   </div>
                 ))
               ) : (
-                <div className="flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-center text-sm text-slate-500">
+                <div className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 text-center text-sm text-slate-500">
                   <div className="rounded-full bg-slate-100 dark:bg-slate-800 p-3">
                     <ClipboardCheck className="h-6 w-6 text-slate-400" />
                   </div>
@@ -665,7 +665,7 @@ export default function MentorDashboard() {
 
       {/* Signature Setup Dialog */}
       <Dialog open={showSignatureDialog} onOpenChange={setShowSignatureDialog}>
-        <DialogContent className="sm:max-w-[500px] rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl">
+        <DialogContent className="sm:max-w-125 rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-2xl">
           <DialogHeader>
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50 dark:bg-teal-500/10 mb-4 animate-pulse">
               <Sparkles className="h-8 w-8 text-teal-600 dark:text-teal-400" />
@@ -709,7 +709,7 @@ export default function MentorDashboard() {
               Nanti Saja
             </Button>
             <Button 
-              className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:brightness-105 transition-all"
+              className="w-full sm:w-auto bg-linear-to-r from-emerald-600 to-teal-500 text-white font-bold rounded-xl hover:shadow-lg hover:brightness-105 transition-all"
               onClick={() => window.location.href = "https://sso-unsri.vercel.app/profile"}
             >
               Siapkan Sekarang

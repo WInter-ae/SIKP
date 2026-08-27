@@ -120,7 +120,7 @@ export function MenteeAssessmentCard({
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              Periode Magang
+              Periode Kerja Praktik
             </p>
             <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
               {mentee.internshipStartDate ? new Date(mentee.internshipStartDate).toLocaleDateString(

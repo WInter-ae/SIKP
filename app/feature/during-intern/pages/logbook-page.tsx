@@ -834,7 +834,7 @@ function LogbookPage() {
         toast.error(
           error instanceof Error
             ? error.message
-            : "Gagal mengajukan logbook ke mentor.",
+            : "Gagal mengajukan logbook ke pembimbing lapangan.",
         );
       } finally {
         setIsSavingLogbook(false);
@@ -1526,11 +1526,11 @@ function LogbookPage() {
       <Button variant="secondary" asChild>
         <Link to="/mahasiswa/kp/saat-magang">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Kembali ke Saat Magang
+          Kembali ke Pelaksanaan Kerja Praktik
         </Link>
       </Button>
 
-      {/* Student Profile Card */}
+      {/* TEMPORARILY HIDDEN - Student Profile Card
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -1649,8 +1649,10 @@ function LogbookPage() {
           )}
         </CardContent>
       </Card>
+      */}
 
-      {/* Step Indicator */}
+      {/* TEMPORARILY HIDDEN
+      {/* Step Indicator }
       <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
         <div
           className={`flex items-center gap-2 ${isPeriodSaved ? "text-green-600" : "text-blue-600"}`}
@@ -1677,7 +1679,7 @@ function LogbookPage() {
         </div>
       </div>
 
-      {/* Section 1: Work Period Form */}
+      {/* Section 1: Work Period Form }
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -1713,7 +1715,7 @@ function LogbookPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Info Alert berdasarkan sumber periode */}
+          {/* Info Alert berdasarkan sumber periode }
           {periodSource === "auto" && (
             <Alert className="bg-green-50 border-green-200">
               <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1826,6 +1828,7 @@ function LogbookPage() {
           )}
         </CardContent>
       </Card>
+      END OF TEMPORARILY HIDDEN */}
 
       {/* Show sections below only if period is saved */}
       {isPeriodSaved && (
@@ -1872,7 +1875,7 @@ function LogbookPage() {
                           id="tanggal"
                           variant="outline"
                           disabled={isSavingLogbook}
-                          className="h-10 w-[190px] flex-1 justify-start text-left text-sm font-normal"
+                          className="h-10 w-47.5 flex-1 justify-start text-left text-sm font-normal"
                         >
                           <Calendar className="mr-2 h-4 w-4" />
                           {selectedDate
@@ -2060,7 +2063,7 @@ function LogbookPage() {
 
                 <p className="text-xs text-muted-foreground">
                   💡 Foto dapat ditambahkan setelah logbook disimpan. Foto akan
-                  ditampilkan ke mentor dan dosen pembimbing (read-only).
+                  ditampilkan ke pembimbing lapangan dan dosen pembimbing (read-only).
                 </p>
               </div>
 
@@ -2230,10 +2233,10 @@ function LogbookPage() {
                                 }
                               }}
                             >
-                              <div className="space-y-2 break-words">
+                              <div className="space-y-2 wrap-break-word">
                                 {entry ? (
                                   <div className="space-y-2">
-                                    <div className="text-sm break-words whitespace-normal">
+                                    <div className="text-sm wrap-break-word whitespace-normal">
                                       <p className="text-foreground line-clamp-3">
                                         {entry.description}
                                       </p>
@@ -2262,7 +2265,7 @@ function LogbookPage() {
                                     {entry?.mentorSignature?.status ===
                                       "approved" && (
                                       <p className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
-                                        Logbook sudah disetujui mentor, entri
+                                        Logbook sudah disetujui pembimbing lapangan, entri
                                         ini tidak bisa diedit atau dihapus.
                                       </p>
                                     )}
@@ -2270,12 +2273,12 @@ function LogbookPage() {
                                       !entry?.mentorSignature && (
                                         <p className="text-xs text-amber-700 bg-amber-50 px-2 py-1 rounded">
                                           Logbook sudah diajukan dan sedang
-                                          menunggu review mentor.
+                                          menunggu review pembimbing lapangan.
                                         </p>
                                       )}
                                     {entry?.status === "DRAFT" && (
                                       <p className="text-xs text-slate-700 bg-slate-100 px-2 py-1 rounded">
-                                        Logbook belum diajukan ke mentor.
+                                        Logbook belum diajukan ke pembimbing lapangan.
                                       </p>
                                     )}
                                   </div>
@@ -2416,7 +2419,7 @@ function LogbookPage() {
                                 }
                               }}
                             >
-                              <div className="flex flex-col items-center gap-1 break-words">
+                              <div className="flex flex-col items-center gap-1 wrap-break-word">
                                 {entry ? (
                                   getMentorSignatureBadge(entry)
                                 ) : (
@@ -2478,7 +2481,7 @@ function LogbookPage() {
 
           {/* Submit Logbook Section */}
           {generatedDates.length > 0 && (
-            <Card className="border-2 border-amber-500 bg-gradient-to-br from-amber-50 via-background to-background shadow-sm">
+            <Card className="border-2 border-amber-500 bg-linear-to-br from-amber-50 via-background to-background shadow-sm">
               <CardContent className="pt-6">
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-start gap-4 text-left max-w-2xl">
@@ -2490,11 +2493,11 @@ function LogbookPage() {
                         Ajukan Logbook ke Pembimbing Lapangan
                       </h3>
                       <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-                        Kumpulkan seluruh logbook untuk dikirim ke mentor dalam
+                        Kumpulkan seluruh logbook untuk dikirim ke pembimbing lapangan dalam
                         satu langkah.
                       </p>
                       <div className="-ml-3 max-w-xl rounded-full bg-amber-100/80 px-3 py-1 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
-                        Mahasiswa dapat mengajukan kapan saja. Mentor akan
+                        Mahasiswa dapat mengajukan kapan saja. Pembimbing lapangan akan
                         meninjau dan memberi feedback.
                       </div>
                     </div>
@@ -2517,14 +2520,14 @@ function LogbookPage() {
             open={showSubmitConfirmDialog}
             onOpenChange={setShowSubmitConfirmDialog}
           >
-            <AlertDialogContent className="sm:max-w-[520px]">
+            <AlertDialogContent className="sm:max-w-130">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-xl">
-                  Ajukan Logbook ke Mentor?
+                  Ajukan Logbook ke Pembimbing Lapangan?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-base space-y-3 pt-2">
                   <p className="text-foreground">
-                    Setelah logbook diajukan dan disetujui mentor, entri yang
+                    Setelah logbook diajukan dan disetujui pembimbing lapangan, entri yang
                     berstatus approved tidak bisa diedit.
                   </p>
                   <p>
@@ -2583,7 +2586,7 @@ function LogbookPage() {
             open={showEmptyDataDialog}
             onOpenChange={setShowEmptyDataDialog}
           >
-            <AlertDialogContent className="sm:max-w-[500px]">
+            <AlertDialogContent className="sm:max-w-125">
               <AlertDialogHeader>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-3 bg-amber-100 rounded-full">
@@ -2649,7 +2652,7 @@ function LogbookPage() {
             open={showIncompleteLogbookDialog}
             onOpenChange={setShowIncompleteLogbookDialog}
           >
-            <AlertDialogContent className="sm:max-w-[500px]">
+            <AlertDialogContent className="sm:max-w-125">
               <AlertDialogHeader>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-3 bg-amber-100 rounded-full">
@@ -2661,7 +2664,7 @@ function LogbookPage() {
                 </div>
                 <AlertDialogDescription className="text-base space-y-4 pt-2">
                   <p className="text-foreground">
-                    Beberapa entri logbook Anda belum disetujui oleh mentor atau
+                    Beberapa entri logbook Anda belum disetujui oleh pembimbing lapangan atau
                     belum diisi lengkap untuk seluruh periode kerja.
                   </p>
 
@@ -2672,13 +2675,13 @@ function LogbookPage() {
                     <p className="text-sm text-amber-800 leading-relaxed">
                       Hasil generate berupa <strong>Docx</strong> dan hanya
                       berisi data mahasiswa dan aktivitas{" "}
-                      <strong>tanpa tanda tangan/paraf mentor</strong>.
+                      <strong>tanpa tanda tangan/paraf pembimbing lapangan</strong>.
                     </p>
                   </div>
 
                   <p className="text-sm text-muted-foreground">
                     💡 <strong>Saran:</strong> Pastikan seluruh logbook sudah
-                    disetujui mentor jika Anda membutuhkan dokumen yang memiliki
+                    disetujui pembimbing lapangan jika Anda membutuhkan dokumen yang memiliki
                     tanda tangan digital.
                   </p>
                 </AlertDialogDescription>
@@ -2706,7 +2709,7 @@ function LogbookPage() {
             open={showFormatChoiceDialog}
             onOpenChange={setShowFormatChoiceDialog}
           >
-            <AlertDialogContent className="sm:max-w-[520px]">
+            <AlertDialogContent className="sm:max-w-130">
               <AlertDialogHeader>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-3 bg-blue-100 rounded-full">
@@ -2719,7 +2722,7 @@ function LogbookPage() {
                 <AlertDialogDescription className="text-base space-y-4 pt-2">
                   <p className="text-foreground">
                     Data logbook Anda lengkap dan memiliki entri yang sudah
-                    disetujui mentor. Pilih format file yang Anda inginkan:
+                    disetujui pembimbing lapangan. Pilih format file yang Anda inginkan:
                   </p>
 
                   <div className="space-y-3">

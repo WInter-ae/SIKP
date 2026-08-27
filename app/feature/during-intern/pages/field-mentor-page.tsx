@@ -355,13 +355,13 @@ function FieldMentorPage() {
       <div className="relative z-10 space-y-3 max-w-3xl">
         <div className="inline-flex items-center rounded-full bg-white/10 px-4 py-1.5 text-xs font-semibold text-blue-200 backdrop-blur-md border border-white/20 shadow-xs">
           <UserCircle className="mr-2 h-4 w-4 text-blue-400" />
-          Fase Pelaksanaan Magang
+          Fase Pelaksanaan Kerja Praktik
         </div>
         <h1 className="text-3xl sm:text-4xl font-black tracking-tight bg-linear-to-r from-white via-blue-50 to-blue-200 bg-clip-text text-transparent animate-fade-in">
           Pendaftaran Pembimbing Lapangan
         </h1>
         <p className="text-blue-100/80 leading-relaxed text-sm sm:text-base font-medium max-w-2xl">
-          Daftarkan pembimbing lapangan (mentor) dari instansi tempat Anda melaksanakan Kerja Praktik. Pengajuan Anda akan ditinjau dan divalidasi oleh Dosen PA.
+          Daftarkan pembimbing lapangan dari instansi tempat Anda melaksanakan Kerja Praktik. Pengajuan Anda akan ditinjau dan divalidasi oleh Dosen PA.
         </p>
       </div>
     </div>
@@ -418,7 +418,7 @@ function FieldMentorPage() {
               Pembimbing Lapangan Terdaftar
             </CardTitle>
             <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
-              Detail data pembimbing lapangan (mentor) dari instansi magang Anda.
+              Detail data pembimbing lapangan dari instansi Kerja Praktik Anda.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 sm:p-8 space-y-6">
@@ -445,7 +445,7 @@ function FieldMentorPage() {
               <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div className="rounded-xl border border-slate-100 dark:border-slate-850 p-4 bg-slate-50/50 dark:bg-slate-950/40">
                   <Label className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-                    Nama Mentor
+                    Nama Pembimbing Lapangan
                   </Label>
                   <p className="font-extrabold text-slate-850 dark:text-slate-100 mt-0.5 leading-tight flex items-center gap-2 text-sm sm:text-base">
                     <User className="h-4 w-4 text-slate-400" />
@@ -461,7 +461,7 @@ function FieldMentorPage() {
                   </p>
                 </div>
                 <div className="rounded-xl border border-slate-100 dark:border-slate-850 p-4 bg-slate-50/50 dark:bg-slate-950/40">
-                  <Label className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">Email Mentor</Label>
+                  <Label className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider">Email Pembimbing Lapangan</Label>
                   <p className="font-extrabold text-slate-850 dark:text-slate-200 mt-0.5 leading-tight flex items-center gap-2 text-xs sm:text-sm">
                     <Mail className="h-4 w-4 text-slate-400" />
                     {currentMentor.email}
@@ -568,16 +568,16 @@ function FieldMentorPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2.5 text-indigo-950 dark:text-indigo-300 font-bold">
                   <UserCircle className="h-5 w-5 text-indigo-500" />
-                  Gunakan Mentor Ketua Tim ({completeData.team.leaderMentor.name})?
+                  Gunakan Pembimbing Lapangan Ketua Tim ({completeData.team.leaderMentor.name})?
                 </CardTitle>
                 <CardDescription className="text-xs text-indigo-900/70 dark:text-slate-400">
-                  Ketua tim Anda sudah memiliki mentor lapangan yang terdaftar dan disetujui Dosen PA. Anda disarankan mengikuti mentor yang sama demi sinkronisasi tim.
+                  Ketua tim Anda sudah memiliki pembimbing lapangan yang terdaftar dan disetujui Dosen PA. Anda disarankan mengikuti pembimbing lapangan yang sama demi sinkronisasi tim.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col md:flex-row items-stretch md:items-center gap-6">
                 <div className="flex-1 grid grid-cols-2 gap-3 text-xs bg-white/70 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
                   <div className="space-y-1">
-                    <span className="text-slate-400 uppercase tracking-wider text-[10px] font-bold">Nama Mentor</span>
+                    <span className="text-slate-400 uppercase tracking-wider text-[10px] font-bold">Nama Pembimbing Lapangan</span>
                     <p className="font-extrabold text-slate-800 dark:text-slate-200">{completeData.team.leaderMentor.name}</p>
                   </div>
                   <div className="space-y-1">
@@ -592,7 +592,7 @@ function FieldMentorPage() {
                   disabled={isSubmitting}
                 >
                   <Copy className="mr-2 h-4 w-4" />
-                  {isSubmitting ? "Memproses..." : "Ikuti Mentor Ketua"}
+                  {isSubmitting ? "Memproses..." : "Ikuti Pembimbing Lapangan Ketua"}
                 </Button>
               </CardContent>
             </Card>
@@ -605,12 +605,12 @@ function FieldMentorPage() {
               </div>
               <div className="space-y-2 max-w-md mx-auto">
                 <h3 className="text-lg font-black text-slate-800 dark:text-slate-200">
-                  {completeData?.team?.leaderMentor ? "Atau Daftarkan Mentor Berbeda" : "Belum Ada Mentor Terdaftar"}
+                  {completeData?.team?.leaderMentor ? "Atau Daftarkan Pembimbing Lapangan Berbeda" : "Belum Ada Pembimbing Lapangan Terdaftar"}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   {completeData?.team?.leaderMentor 
-                    ? "Jika Anda memiliki mentor lapangan yang berbeda dengan ketua tim, silakan daftarkan dengan mengisi formulir baru."
-                    : "Anda belum memiliki mentor lapangan yang terdaftar di sistem SIKP. Silakan ajukan pembimbing lapangan untuk memulai pengawasan Kerja Praktik."}
+                    ? "Jika Anda memiliki pembimbing lapangan yang berbeda dengan ketua tim, silakan daftarkan dengan mengisi formulir baru."
+                    : "Anda belum memiliki pembimbing lapangan yang terdaftar di sistem SIKP. Silakan ajukan pembimbing lapangan untuk memulai pengawasan Kerja Praktik."}
                 </p>
               </div>
               <Button 
@@ -622,7 +622,7 @@ function FieldMentorPage() {
                 onClick={() => setShowRequestForm(true)}
               >
                 <UserPlus className="mr-2 h-5 w-5" />
-                {completeData?.team?.leaderMentor ? "Daftarkan Mentor Sendiri" : "Ajukan Mentor Lapangan"}
+                {completeData?.team?.leaderMentor ? "Daftarkan Pembimbing Lapangan Sendiri" : "Ajukan Pembimbing Lapangan"}
               </Button>
             </CardContent>
           </Card>
@@ -636,9 +636,9 @@ function FieldMentorPage() {
               <UserPlus className="h-8 w-8 text-indigo-500" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-lg font-extrabold text-slate-800 dark:text-slate-200">Memuat Data Mentor</h3>
+              <h3 className="text-lg font-extrabold text-slate-800 dark:text-slate-200">Memuat Data Pembimbing Lapangan</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Kami sedang memproses data mentor yang terkait dengan Kerja Praktik Anda. Mohon tunggu...
+                Kami sedang memproses data pembimbing lapangan yang terkait dengan Kerja Praktik Anda. Mohon tunggu...
               </p>
             </div>
           </CardContent>
@@ -657,13 +657,13 @@ function FieldMentorPage() {
                 <UserPlus className="h-5 w-5 text-indigo-500" />
               )}
               {isEditingPending
-                ? "Perbarui Pengajuan Mentor Lapangan"
-                : "Formulir Pendaftaran Mentor Lapangan"}
+                ? "Perbarui Pengajuan Pembimbing Lapangan"
+                : "Formulir Pendaftaran Pembimbing Lapangan"}
             </CardTitle>
             <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
               {isEditingPending
-                ? "Sesuaikan kembali informasi mentor lapangan instansi Kerja Praktik Anda."
-                : "Masukkan data lengkap mentor/pembimbing lapangan dari instansi tempat Kerja Praktik Anda dilaksanakan."}
+                ? "Sesuaikan kembali informasi pembimbing lapangan instansi Kerja Praktik Anda."
+                : "Masukkan data lengkap pembimbing lapangan dari instansi tempat Kerja Praktik Anda dilaksanakan."}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 sm:p-8">
@@ -671,7 +671,7 @@ function FieldMentorPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="mentorName" className="text-slate-700 dark:text-slate-350 text-xs font-bold uppercase tracking-wider">
-                    Nama Lengkap Mentor <span className="text-destructive">*</span>
+                    Nama Lengkap Pembimbing Lapangan <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
                     <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" />
@@ -689,7 +689,7 @@ function FieldMentorPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="mentorEmail" className="text-slate-700 dark:text-slate-350 text-xs font-bold uppercase tracking-wider">
-                    Email Aktif Mentor <span className="text-destructive">*</span>
+                    Email Aktif Pembimbing Lapangan <span className="text-destructive">*</span>
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-400" />
@@ -699,7 +699,7 @@ function FieldMentorPage() {
                       type="email"
                       required
                       className="pl-11 rounded-xl border-slate-200 focus:border-indigo-500"
-                      placeholder="budi.santoso@perusahaanmagang.com"
+                      placeholder="budi.santoso@perusahaankp.com"
                       value={mentorRequest.mentorEmail}
                       onChange={handleInputChange}
                     />
@@ -789,7 +789,7 @@ function FieldMentorPage() {
                       readOnly
                       rows={3}
                       className="pl-11 bg-slate-50/70 dark:bg-slate-950/20 cursor-not-allowed border-dashed rounded-xl leading-relaxed"
-                      placeholder="Alamat kantor / lokasi magang Anda"
+                      placeholder="Alamat kantor / lokasi Kerja Praktik Anda"
                       value={mentorRequest.address}
                     />
                   </div>
@@ -831,7 +831,7 @@ function FieldMentorPage() {
                     ? "Menyimpan..."
                     : isEditingPending
                     ? "Simpan Perubahan"
-                    : "Kirim Pengajuan Mentor"}
+                    : "Kirim Pengajuan Pembimbing Lapangan"}
                 </Button>
               </div>
             </form>
@@ -853,7 +853,7 @@ function FieldMentorPage() {
               </CardHeader>
               <CardContent className="p-6 space-y-5">
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                  Demi kelancaran pemantauan logbook harian, rekapitulasi penilaian industri, dan koordinasi dengan instansi magang, silakan ikuti panduan berikut:
+                  Demi kelancaran pemantauan logbook harian, rekapitulasi penilaian industri, dan koordinasi dengan instansi Kerja Praktik Anda, silakan ikuti panduan berikut:
                 </p>
                 
                 <div className="space-y-5">
@@ -862,9 +862,9 @@ function FieldMentorPage() {
                       1
                     </div>
                     <div>
-                      <p className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">Input Detail Mentor dengan Akurat</p>
+                      <p className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">Input Detail Pembimbing Lapangan dengan Akurat</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                        Pastikan <strong className="text-indigo-600 dark:text-indigo-400 font-semibold">Email Mentor</strong> yang dimasukkan adalah email aktif. Email ini akan didaftarkan sebagai username SSO mereka.
+                        Pastikan <strong className="text-indigo-600 dark:text-indigo-400 font-semibold">Email Pembimbing Lapangan</strong> yang dimasukkan adalah email aktif. Email ini akan didaftarkan sebagai username SSO mereka.
                       </p>
                     </div>
                   </div>
@@ -888,7 +888,7 @@ function FieldMentorPage() {
                     <div>
                       <p className="font-extrabold text-slate-800 dark:text-slate-200 text-sm">Aktivasi SSO & Bimbingan Aktif</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                        Setelah disetujui, akun SSO mentor akan otomatis dibuat dan email pemberitahuan dikirimkan. Mentor dapat langsung masuk ke sistem dan mulai memberikan penilaian untuk Anda.
+                        Setelah disetujui, akun SSO pembimbing lapangan akan otomatis dibuat dan email pemberitahuan dikirimkan. Pembimbing lapangan dapat langsung masuk ke sistem dan mulai memberikan penilaian untuk Anda.
                       </p>
                     </div>
                   </div>
@@ -928,7 +928,7 @@ function FieldMentorPage() {
                   <strong className="text-amber-800 dark:text-amber-400 font-extrabold text-xs">Menunggu Persetujuan</strong>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                  Pengajuan mentor sedang dalam antrean verifikasi oleh Dosen PA Anda. Silakan hubungi Dosen PA Anda agar segera diperiksa.
+                  Pengajuan pembimbing lapangan sedang dalam antrean verifikasi oleh Dosen PA Anda. Silakan hubungi Dosen PA Anda agar segera diperiksa.
                 </p>
               </div>
 
@@ -938,7 +938,7 @@ function FieldMentorPage() {
                   <strong className="text-blue-800 dark:text-blue-400 font-extrabold text-xs">Email Aktivasi Terkirim</strong>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                  Dosen PA telah menyetujui pengajuan. Kredensial SSO mentor lapangan sedang diproses dan dikirimkan via email terdaftar.
+                  Dosen PA telah menyetujui pengajuan. Kredensial SSO pembimbing lapangan sedang diproses dan dikirimkan via email terdaftar.
                 </p>
               </div>
 
@@ -948,7 +948,7 @@ function FieldMentorPage() {
                   <strong className="text-emerald-800 dark:text-emerald-400 font-extrabold text-xs">Disetujui - Aktif</strong>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                  Akun SSO mentor lapangan telah aktif penuh. Mentor dapat login menggunakan email untuk membimbing & menilai Kerja Praktik Anda.
+                  Akun SSO pembimbing lapangan telah aktif penuh. Pembimbing lapangan dapat login menggunakan email untuk membimbing & menilai Kerja Praktik Anda.
                 </p>
               </div>
 
@@ -958,7 +958,7 @@ function FieldMentorPage() {
                   <strong className="text-red-800 dark:text-red-400 font-extrabold text-xs">Ditolak Dosen PA</strong>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-                  Pengajuan ditolak oleh Dosen PA karena ketidaksesuaian data instansi atau mentor. Silakan klik Ajukan Ulang kembali.
+                  Pengajuan ditolak oleh Dosen PA karena ketidaksesuaian data instansi atau pembimbing lapangan. Silakan klik Ajukan Ulang kembali.
                 </p>
               </div>
             </div>
@@ -972,15 +972,15 @@ function FieldMentorPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-xl text-destructive">
               <Trash className="h-5 w-5" />
-              Batalkan Pengajuan Mentor?
+              Batalkan Pengajuan Pembimbing Lapangan?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-base pt-2">
-              Pengajuan mentor lapangan atas nama{" "}
+              Pengajuan pembimbing lapangan atas nama{" "}
               <span className="font-bold text-foreground">
                 {currentMentor?.name}
               </span>{" "}
               akan dihapus secara permanen. Anda perlu mengajukan ulang jika
-              ingin mendaftarkan mentor baru.
+              ingin mendaftarkan pembimbing lapangan baru.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4">
@@ -1002,7 +1002,7 @@ function FieldMentorPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-xl">
               <UserCircle className="h-6 w-6 text-primary" />
-              Konfirmasi Sinkronisasi Mentor
+              Konfirmasi Sinkronisasi Pembimbing Lapangan
             </AlertDialogTitle>
             <AlertDialogDescription className="text-base pt-2">
               Apakah Anda yakin ingin menggunakan pembimbing lapangan yang sama dengan 
@@ -1010,7 +1010,7 @@ function FieldMentorPage() {
             </AlertDialogDescription>
             <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Nama Mentor:</span>
+                <span className="text-muted-foreground">Nama Pembimbing Lapangan:</span>
                 <span className="font-medium text-foreground">{completeData?.team?.leaderMentor?.name}</span>
               </div>
               <div className="flex justify-between text-sm">
@@ -1019,7 +1019,7 @@ function FieldMentorPage() {
               </div>
             </div>
             <p className="text-sm text-muted-foreground mt-4 italic">
-              * Anda tidak perlu lagi mengisi formulir pendaftaran mentor secara manual.
+              * Anda tidak perlu lagi mengisi formulir pendaftaran pembimbing lapangan secara manual.
             </p>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-6">
@@ -1028,7 +1028,7 @@ function FieldMentorPage() {
               onClick={handleJoinLeaderMentor}
               className="bg-primary hover:bg-primary/90"
             >
-              Ya, Gunakan Mentor Ini
+              Ya, Gunakan Pembimbing Lapangan Ini
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

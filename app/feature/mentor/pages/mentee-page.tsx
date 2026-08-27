@@ -129,8 +129,8 @@ function MenteePage() {
   return (
     <div className="p-6">
       <PageHeader
-        title="Mahasiswa Magang"
-        description="Daftar mahasiswa yang magang di perusahaan Anda"
+        title="Mahasiswa Kerja Praktik"
+        description="Daftar mahasiswa yang melaksanakan Kerja Praktik di perusahaan Anda"
       />
 
       {errorMessage && (
@@ -165,7 +165,7 @@ function MenteePage() {
           ))
         ) : (
           <div className="rounded-xl border bg-card p-6 text-muted-foreground">
-            Belum ada mahasiswa magang yang terhubung ke akun mentor ini.
+            Belum ada mahasiswa Kerja Praktik yang terhubung ke akun pembimbing lapangan ini.
           </div>
         )}
       </div>

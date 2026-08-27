@@ -367,7 +367,7 @@ function AdminResponseLetterPage() {
                 >
                   <CardContent className="p-6 flex items-start gap-4">
                     <div
-                      className={`w-14 h-14 rounded-full flex items-center justify-center flex-shrink-0 ${iconBgColors[index % 3]} ${iconColors[index % 3]}`}
+                      className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${iconBgColors[index % 3]} ${iconColors[index % 3]}`}
                     >
                       <stat.icon className="h-6 w-6" />
                     </div>
@@ -408,7 +408,7 @@ function AdminResponseLetterPage() {
           {/* Filter and Search */}
           <Card>
             <CardContent className="p-4 flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center">
-              <div className="flex-1 min-w-[250px] relative">
+              <div className="flex-1 min-w-62.5 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
@@ -419,7 +419,7 @@ function AdminResponseLetterPage() {
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px] font-semibold">
+                <SelectTrigger className="w-45 font-semibold">
                   <SelectValue placeholder="Pilih Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -432,7 +432,7 @@ function AdminResponseLetterPage() {
                 value={verificationFilter}
                 onValueChange={setVerificationFilter}
               >
-                <SelectTrigger className="w-[180px] font-semibold">
+                <SelectTrigger className="w-45 font-semibold">
                   <SelectValue placeholder="Verifikasi" />
                 </SelectTrigger>
                 <SelectContent>

@@ -73,7 +73,7 @@ function MenteeCard({ mentee }: MenteeCardProps) {
 
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Progress Magang</span>
+            <span className="text-muted-foreground">Progress Kerja Praktik</span>
             <span className="font-medium">{progress}%</span>
           </div>
           <div className="w-full bg-muted rounded-full h-2">

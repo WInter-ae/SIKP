@@ -355,9 +355,9 @@ export default function DosenLogbookMonitorPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Menunggu Paraf Mentor</p>
+                <p className="text-sm font-medium text-muted-foreground">Menunggu Paraf Pembimbing Lapangan</p>
                 <p className="text-3xl font-bold">{globalPending}</p>
-                <p className="text-xs text-muted-foreground mt-1">Memerlukan verifikasi mentor</p>
+                <p className="text-xs text-muted-foreground mt-1">Memerlukan verifikasi pembimbing lapangan</p>
               </div>
               <Clock className="h-8 w-8 text-yellow-500" />
             </div>
@@ -405,7 +405,7 @@ export default function DosenLogbookMonitorPage() {
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground whitespace-nowrap font-medium">Periode:</span>
                 <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                  <SelectTrigger className="w-[190px] h-9 bg-white shadow-xs">
+                  <SelectTrigger className="w-47.5 h-9 bg-white shadow-xs">
                     <SelectValue placeholder="Pilih Periode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -420,7 +420,7 @@ export default function DosenLogbookMonitorPage() {
               </div>
 
               {/* Search Input */}
-              <div className="relative w-full sm:w-[220px]">
+              <div className="relative w-full sm:w-55">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
@@ -527,15 +527,15 @@ export default function DosenLogbookMonitorPage() {
                           <div className="bg-slate-50/50 px-5 py-4 border-t border-slate-100 flex flex-col gap-3">
                             <div className="grid grid-cols-3 gap-2 text-center">
                               <div className="bg-white border border-slate-200/60 rounded-md py-1.5 px-1 shadow-2xs">
-                                <span className="text-[10px] text-slate-400 block uppercase tracking-wider font-semibold">Total</span>
+                                <span className="text-2xs text-slate-400 block uppercase tracking-wider font-semibold">Total</span>
                                 <span className="text-sm font-bold text-slate-700">{totalEntries}</span>
                               </div>
                               <div className="bg-green-50/60 border border-green-200/50 rounded-md py-1.5 px-1 shadow-2xs">
-                                <span className="text-[10px] text-green-500 block uppercase tracking-wider font-semibold">Disetujui</span>
+                                <span className="text-2xs text-green-500 block uppercase tracking-wider font-semibold">Disetujui</span>
                                 <span className="text-sm font-bold text-green-600">{item.totalApproved || 0}</span>
                               </div>
                               <div className="bg-yellow-50/60 border border-yellow-200/50 rounded-md py-1.5 px-1 shadow-2xs">
-                                <span className="text-[10px] text-yellow-600 block uppercase tracking-wider font-semibold">Pending</span>
+                                <span className="text-2xs text-yellow-600 block uppercase tracking-wider font-semibold">Pending</span>
                                 <span className="text-sm font-bold text-yellow-750">{item.totalPending || 0}</span>
                               </div>
                             </div>

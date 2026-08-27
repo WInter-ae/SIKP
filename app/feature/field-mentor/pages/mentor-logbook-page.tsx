@@ -118,7 +118,7 @@ function getPeriodStatusBadge(student: Student) {
   if (status === "COMPLETED") {
     return (
       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 font-medium">
-        🏁 Selesai Magang
+        🏁 Selesai Kerja Praktik
       </Badge>
     );
   }
@@ -131,7 +131,7 @@ function getPeriodStatusBadge(student: Student) {
   }
   return (
     <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 font-medium">
-      🟢 Sedang Magang
+      🟢 Sedang Kerja Praktik
     </Badge>
   );
 }
@@ -416,7 +416,7 @@ export default function MentorLogbookPage() {
 
               {/* Academic Period Dropdown Filter */}
               <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-                <SelectTrigger className="w-full sm:w-[220px] bg-white">
+                <SelectTrigger className="w-full sm:w-55 bg-white">
                   <SelectValue placeholder="Semua Periode Akademik" />
                 </SelectTrigger>
                 <SelectContent>
@@ -450,7 +450,7 @@ export default function MentorLogbookPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">
-                    Nama Mentor
+                    Nama Pembimbing Lapangan
                   </p>
                   <p className="font-medium">{mentorProfile?.name && mentorProfile.name !== "-" ? mentorProfile.name : (user?.nama || "-")}</p>
                 </div>
@@ -499,7 +499,7 @@ export default function MentorLogbookPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">
-                      Total Mahasiswa Magang
+                      Total Mahasiswa Kerja Praktik
                     </p>
                     <p className="text-3xl font-bold">{totalStudentsCount}</p>
                   </div>
@@ -542,19 +542,19 @@ export default function MentorLogbookPage() {
                 value="all" 
                 className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground border bg-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
               >
-                Semua Aktivitas Magang ({totalStudentsCount})
+                Semua Aktivitas Kerja Praktik ({totalStudentsCount})
               </TabsTrigger>
               <TabsTrigger 
                 value="ongoing" 
                 className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white border bg-white px-4 py-2 rounded-lg text-sm font-medium text-emerald-700 transition-all"
               >
-                🟢 Sedang Magang ({ongoingStudentsCount})
+                🟢 Sedang Kerja Praktik ({ongoingStudentsCount})
               </TabsTrigger>
               <TabsTrigger 
                 value="completed" 
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white border bg-white px-4 py-2 rounded-lg text-sm font-medium text-blue-700 transition-all"
               >
-                🏁 Selesai Magang ({completedStudentsCount})
+                🏁 Selesai Kerja Praktik ({completedStudentsCount})
               </TabsTrigger>
             </TabsList>
 
@@ -577,7 +577,7 @@ export default function MentorLogbookPage() {
                           <TableHead>Mahasiswa</TableHead>
                           <TableHead>NIM</TableHead>
                           <TableHead>Program Studi</TableHead>
-                          <TableHead>Periode Magang</TableHead>
+                          <TableHead>Periode Kerja Praktik</TableHead>
                           <TableHead className="text-center">
                             Total Logbook
                           </TableHead>

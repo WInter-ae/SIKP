@@ -120,7 +120,7 @@ export default function DashboardMahasiswaPage({
             Selamat Datang, Mahasiswa! 👋
           </h1>
           <p className="text-blue-100/90 text-base sm:text-lg font-medium leading-relaxed max-w-xl">
-            Kelola tim Anda, pantau logbook harian, dan selesaikan seluruh administrasi Kerja Praktik dalam satu dasbor terpadu.
+            Kelola tim Anda, pantau logbook harian, dan selesaikan seluruh administrasi Kerja Praktik dalam satu dashboard terpadu.
           </p>
         </div>
         
@@ -404,7 +404,7 @@ export default function DashboardMahasiswaPage({
           </CardHeader>
           <CardContent className="p-6">
             {activities.length > 0 ? (
-              <div className="relative space-y-6 before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 dark:before:via-slate-700 before:to-transparent">
+              <div className="relative space-y-6 before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-linear-to-b before:from-transparent before:via-slate-200 dark:before:via-slate-700 before:to-transparent">
                 {activities.map((activity, index) => (
                   <div key={`${activity.action}-${index}`} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
                     <div className={`flex items-center justify-center w-5 h-5 rounded-full border-4 border-white dark:border-slate-900 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 ${

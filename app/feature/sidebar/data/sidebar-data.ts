@@ -75,7 +75,7 @@ const mahasiswaMenu: NavItem[] = [
     icon: FolderKanban,
   },
   {
-    title: "Mentor Lapangan",
+    title: "Pembimbing Lapangan",
     url: "/mahasiswa/mentor-lapangan",
     icon: UserCircle,
   },
@@ -180,7 +180,7 @@ const dosenMenu: NavItem[] = [
     icon: Users,
   },
   {
-    title: "Penilaian Mentor",
+    title: "Penilaian Pembimbing Lapangan",
     url: "/dosen/kp/penilaian-mentor",
     icon: ClipboardCheck,
   },
@@ -217,7 +217,7 @@ const dosenMenu: NavItem[] = [
         url: "/dosen/kp/verifikasi-surat",
       },
       {
-        title: "Verifikasi Mentor",
+        title: "Verifikasi Pembimbing Lapangan",
         url: "/dosen/kp/persetujuan-pembimbing",
       },
     ],

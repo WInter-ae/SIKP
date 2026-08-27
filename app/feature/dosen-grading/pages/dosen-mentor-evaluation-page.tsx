@@ -113,10 +113,10 @@ export default function DosenMentorEvaluationPage() {
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
           <ClipboardCheck className="h-8 w-8 text-primary" />
-          Monitoring Penilaian Mentor Lapangan
+          Monitoring Penilaian Pembimbing Lapangan
         </h1>
         <p className="text-sm text-muted-foreground">
-          Pantau dan tinjau seluruh hasil evaluasi mahasiswa bimbingan Anda yang diberikan oleh Mentor Lapangan dari Industri.
+          Pantau dan tinjau seluruh hasil evaluasi mahasiswa bimbingan Anda yang diberikan oleh Pembimbing Lapangan dari Industri.
         </p>
       </div>
 
@@ -183,7 +183,7 @@ export default function DosenMentorEvaluationPage() {
                         </span>
                         <span className="flex items-center gap-1">
                           <User className="h-3.5 w-3.5 text-slate-400" />
-                          Mentor: {student.mentorName || "Belum ditentukan"}
+                          Pembimbing Lapangan: {student.mentorName || "Belum ditentukan"}
                         </span>
                       </div>
                     </div>
@@ -203,9 +203,9 @@ export default function DosenMentorEvaluationPage() {
                     ) : (
                       <div className="bg-amber-50/50 border border-amber-200/60 rounded-xl p-6 text-center space-y-3">
                         <Clock className="h-10 w-10 text-amber-500 mx-auto animate-pulse" />
-                        <h4 className="font-bold text-amber-900 text-sm">Belum Dinilai Oleh Mentor</h4>
+                        <h4 className="font-bold text-amber-900 text-sm">Belum Dinilai Oleh Pembimbing Lapangan</h4>
                         <p className="text-xs text-amber-700 max-w-sm mx-auto leading-relaxed">
-                          Pembimbing lapangan (mentor) dari industri belum melakukan input penilaian untuk mahasiswa ini di sistem.
+                          Pembimbing lapangan dari industri belum melakukan input penilaian untuk mahasiswa ini di sistem.
                         </p>
                       </div>
                     )}
@@ -215,7 +215,7 @@ export default function DosenMentorEvaluationPage() {
                 {/* Footer Actions */}
                 <div className="bg-slate-50/50 border-t border-slate-100 px-5 py-4 flex items-center justify-between">
                   <span className="text-xs text-slate-400 font-medium">
-                    {hasGraded ? "✓ Evaluasi Mentor Selesai" : "⏳ Menunggu Evaluasi"}
+                    {hasGraded ? "✓ Evaluasi Pembimbing Lapangan Selesai" : "⏳ Menunggu Evaluasi"}
                   </span>
                   
                   <div className="flex gap-2">

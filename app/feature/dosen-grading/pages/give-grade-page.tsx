@@ -255,7 +255,7 @@ export default function GiveGradePage() {
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">
                     <User className="h-3.5 w-3.5" />
-                    <span>Mentor: {menteeData.mentorName || "-"}</span>
+                    <span>Pembimbing Lapangan: {menteeData.mentorName || "-"}</span>
                   </div>
                 </div>
               </div>
@@ -267,7 +267,7 @@ export default function GiveGradePage() {
         {mentorGrades && mentorGrades.length > 0 && (
           <div className="mb-8">
             <GradeSection
-              title="Penilaian Pembimbing Lapangan (Mentor)"
+              title="Penilaian Pembimbing Lapangan"
               grades={mentorGrades}
               totalScore={mentorTotalScore || 0}
               maxScore={100}

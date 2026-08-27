@@ -10,6 +10,7 @@ import {
   Lightbulb,
   Search,
   ChevronLeft,
+  Edit,
 } from "lucide-react";
 import { useSearchParams } from "react-router";
 
@@ -428,6 +429,26 @@ function AssessmentPage() {
     return assessments.reduce((sum, a) => sum + (a.score * a.weight) / 100, 0);
   }, [assessments]);
 
+  async function handleUnlock() {
+    if (!existingAssessmentId) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await unlockAssessment(existingAssessmentId);
+      if (response.success) {
+        setIsEditing(true);
+        toast.success("Penilaian berhasil dibuka untuk diedit!");
+      } else {
+        toast.error(response.message || "Gagal membuka kunci penilaian");
+      }
+    } catch (error) {
+      console.error("Error unlocking assessment:", error);
+      toast.error("Terjadi kesalahan saat membuka kunci penilaian");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -558,8 +579,8 @@ function AssessmentPage() {
     return (
       <div className="p-6">
         <PageHeader
-          title="Penilaian Mahasiswa Magang"
-          description="Berikan penilaian untuk mahasiswa yang magang di perusahaan Anda"
+          title="Penilaian Mahasiswa Kerja Praktik"
+          description="Berikan penilaian untuk mahasiswa yang melaksanakan Kerja Praktik di perusahaan Anda"
         />
         <p className="text-muted-foreground text-sm">
           Memuat kriteria penilaian...
@@ -575,10 +596,10 @@ function AssessmentPage() {
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              Penilaian Mahasiswa Magang
+              Penilaian Mahasiswa Kerja Praktik
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Kelola penilaian mahasiswa bimbingan di perusahaan Anda
+              Kelola penilaian mahasiswa bimbingan Kerja Praktik di perusahaan Anda
             </p>
           </div>
 
@@ -651,7 +672,7 @@ function AssessmentPage() {
                 </div>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                  <SelectTrigger className="w-full md:w-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
                     <SelectValue placeholder="Status Penilaian" />
                   </SelectTrigger>
                   <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
@@ -816,7 +837,20 @@ function AssessmentPage() {
             </CardContent>
           </Card>
 
-          {(!existingAssessmentId || isEditing) && (
+          {existingAssessmentId && !isEditing ? (
+            <div className="flex justify-center gap-4 mb-6">
+              <Button
+                type="button"
+                size="lg"
+                onClick={handleUnlock}
+                disabled={isSubmitting}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                {isSubmitting ? "Membuka Kunci..." : "Edit Penilaian"}
+              </Button>
+            </div>
+          ) : (
             <div className="flex justify-center gap-4 mb-6">
               <Button type="submit" size="lg" disabled={isSubmitting}>
                 <Save className="mr-2 h-4 w-4" />
