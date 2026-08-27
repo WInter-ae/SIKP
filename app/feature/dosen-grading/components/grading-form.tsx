@@ -170,9 +170,9 @@ export function GradingForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <Alert className="border-blue-500/40 bg-blue-50 dark:bg-blue-950/20">
+      <Alert className="border-blue-500/40 bg-blue-50">
         <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-800 dark:text-blue-300 text-sm">
+        <AlertDescription className="text-blue-800 text-sm">
           Bobot penilaian dosen pembimbing: {criteria.map(c => `${c.category} (${c.weight}%)`).join(", ")}.
         </AlertDescription>
       </Alert>

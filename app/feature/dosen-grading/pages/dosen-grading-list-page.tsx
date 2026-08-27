@@ -135,84 +135,84 @@ export default function DosenGradingListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Penilaian Kerja Praktik
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600">
             Kelola penilaian mahasiswa bimbingan Anda
           </p>
         </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <Card className="">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <CardTitle className="text-sm font-medium text-gray-600">
                 Total Mahasiswa
               </CardTitle>
-              <Users className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <Users className="h-5 w-5 text-gray-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              <div className="text-3xl font-bold text-gray-900">
                 {totalStudents}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Mahasiswa bimbingan
               </p>
             </CardContent>
           </Card>
 
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <Card className="">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <CardTitle className="text-sm font-medium text-gray-600">
                 Sudah Dinilai
               </CardTitle>
-              <CheckCircle2 className="h-5 w-5 text-green-500 dark:text-green-400" />
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-3xl font-bold text-green-600">
                 {gradedStudents}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 {((gradedStudents / totalStudents) * 100).toFixed(0)}% dari
                 total
               </p>
             </CardContent>
           </Card>
 
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <Card className="">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <CardTitle className="text-sm font-medium text-gray-600">
                 Belum Dinilai
               </CardTitle>
-              <Clock className="h-5 w-5 text-orange-500 dark:text-orange-400" />
+              <Clock className="h-5 w-5 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+              <div className="text-3xl font-bold text-orange-600">
                 {notGradedStudents}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Menunggu penilaian
               </p>
             </CardContent>
           </Card>
 
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
+          <Card className="">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">
+              <CardTitle className="text-sm font-medium text-gray-600">
                 Rata-rata Nilai
               </CardTitle>
-              <TrendingUp className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+              <TrendingUp className="h-5 w-5 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="text-3xl font-bold text-blue-600">
                 {averageScore.toFixed(2)}
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Dari {gradedStudents} mahasiswa
               </p>
             </CardContent>
@@ -220,7 +220,7 @@ export default function DosenGradingListPage() {
         </div>
 
         {/* Search and Filters */}
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <Card className="">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
@@ -234,7 +234,7 @@ export default function DosenGradingListPage() {
                     setSearchQuery(e.target.value);
                     handleFilterChange();
                   }}
-                  className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                  className="pl-10"
                 />
               </div>
 
@@ -246,10 +246,10 @@ export default function DosenGradingListPage() {
                   handleFilterChange();
                 }}
               >
-                <SelectTrigger className="w-full md:w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Status Penilaian" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                <SelectContent className="">
                   <SelectItem value="all">Semua Status</SelectItem>
                   <SelectItem value="graded">Sudah Dinilai</SelectItem>
                   <SelectItem value="not-graded">Belum Dinilai</SelectItem>
@@ -264,10 +264,10 @@ export default function DosenGradingListPage() {
                   handleFilterChange();
                 }}
               >
-                <SelectTrigger className="w-full md:w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Status Revisi" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                <SelectContent className="">
                   <SelectItem value="all">Semua Revisi</SelectItem>
                   <SelectItem value="sudah-direvisi">Sudah Direvisi</SelectItem>
                   <SelectItem value="proses">Proses</SelectItem>
@@ -277,7 +277,7 @@ export default function DosenGradingListPage() {
             </div>
 
             {/* Results count */}
-            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-4 text-sm text-gray-600">
               Menampilkan {paginatedStudents.length} dari{" "}
               {filteredStudents.length} mahasiswa
             </div>
@@ -286,35 +286,35 @@ export default function DosenGradingListPage() {
 
         {/* Students List */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Daftar Mahasiswa Bimbingan
           </h2>
 
           {students.length === 0 ? (
-            <Card className="p-12 border-dashed border-2 dark:bg-gray-800/50 dark:border-gray-700 bg-gray-50/50">
+            <Card className="p-12 border-dashed border-2 bg-gray-50/50">
               <div className="text-center max-w-md mx-auto">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-sm">
-                  <Users className="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                <div className="bg-white p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <Users className="h-12 w-12 text-gray-300" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
                   Belum Ada Mahasiswa yang Upload Laporan
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                <p className="text-gray-500 leading-relaxed">
                   Daftar mahasiswa akan muncul secara otomatis di sini setelah mereka mengunggah Laporan
                   Kerja Praktik pada halaman Pasca Magang.
                 </p>
               </div>
             </Card>
           ) : filteredStudents.length === 0 ? (
-            <Card className="p-12 border-dashed border-2 dark:bg-gray-800/50 dark:border-gray-700 bg-gray-50/50">
+            <Card className="p-12 border-dashed border-2 bg-gray-50/50">
               <div className="text-center max-w-md mx-auto">
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-sm">
-                  <Search className="h-12 w-12 text-gray-300 dark:text-gray-600" />
+                <div className="bg-white p-6 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6 shadow-sm">
+                  <Search className="h-12 w-12 text-gray-300" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
                   Tidak Ada Hasil Pencarian
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+                <p className="text-gray-500 leading-relaxed">
                   Kami tidak menemukan mahasiswa yang sesuai dengan kata kunci "{searchQuery}" atau filter yang Anda pilih.
                 </p>
               </div>
@@ -335,7 +335,7 @@ export default function DosenGradingListPage() {
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="mt-6 flex items-center justify-between">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-gray-600">
                     Halaman {currentPage} dari {totalPages}
                   </div>
                   <div className="flex gap-2">
@@ -346,7 +346,7 @@ export default function DosenGradingListPage() {
                         setCurrentPage((prev) => Math.max(1, prev - 1))
                       }
                       disabled={currentPage === 1}
-                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                      className=""
                     >
                       <ChevronLeft className="h-4 w-4 mr-1" />
                       Sebelumnya
@@ -358,7 +358,7 @@ export default function DosenGradingListPage() {
                         setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                       }
                       disabled={currentPage === totalPages}
-                      className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                      className=""
                     >
                       Berikutnya
                       <ChevronRight className="h-4 w-4 ml-1" />

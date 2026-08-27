@@ -2,7 +2,7 @@ import { jsPDF } from "jspdf";
 import { getAuthToken } from "~/lib/auth-client";
 import unsriLogoUrl from "~/assets/images/unsri.png";
 
-import type { MailEntry } from "../../hearing-dosen/types/dosen";
+import type { MailEntry } from "../types/dosen";
 
 import { API_BASE_URL } from "~/lib/api-client";
 
@@ -246,14 +246,14 @@ export async function generateSuratPengantarPdf(
     entry.teamMembers && entry.teamMembers.length > 0
       ? entry.teamMembers
       : [
-          {
-            id: `fallback-${entry.id}`,
-            name: entry.namaMahasiswa || "-",
-            nim: entry.nim || "-",
-            prodi: entry.programStudi || "-",
-            role: "Ketua",
-          },
-        ];
+        {
+          id: `fallback-${entry.id}`,
+          name: entry.namaMahasiswa || "-",
+          nim: entry.nim || "-",
+          prodi: entry.programStudi || "-",
+          role: "Ketua",
+        },
+      ];
 
   const tujuanSurat = buildRecipientLine(entry);
   const alamatPerusahaan = entry.alamatPerusahaan || "-";

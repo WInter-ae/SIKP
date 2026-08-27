@@ -23,7 +23,7 @@ function StatCard({
         <div
           className={`w-14 h-14 rounded-full flex items-center justify-center mr-4 ${iconBgColor}`}
         >
-          <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          <Icon className="h-6 w-6 text-blue-600" />
         </div>
         <div>
           <h3 className="text-2xl font-bold text-foreground">{value}</h3>

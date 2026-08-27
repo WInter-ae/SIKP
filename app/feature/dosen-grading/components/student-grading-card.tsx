@@ -35,21 +35,21 @@ export function StudentGradingCard({
     switch (gradingStatus) {
       case "graded":
         return (
-          <Badge className="bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400">
+          <Badge className="bg-green-50 text-green-700 border border-green-200">
             <CheckCircle2 className="h-3 w-3 mr-1" />
             Sudah Dinilai
           </Badge>
         );
       case "pending":
         return (
-          <Badge className="bg-yellow-50 text-yellow-700 border border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400">
+          <Badge className="bg-yellow-50 text-yellow-700 border border-yellow-200">
             <Clock className="h-3 w-3 mr-1" />
             Pending
           </Badge>
         );
       case "not-graded":
         return (
-          <Badge className="bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/30 dark:text-gray-400">
+          <Badge className="bg-gray-50 text-gray-700 border border-gray-200">
             <Clock className="h-3 w-3 mr-1" />
             Belum Dinilai
           </Badge>
@@ -63,21 +63,21 @@ export function StudentGradingCard({
     switch (revisionStatus) {
       case "sudah-direvisi":
         return (
-          <Badge className="bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-400">
+          <Badge className="bg-green-50 text-green-700 border border-green-200">
             <FileCheck className="h-3 w-3 mr-1" />
             Sudah Direvisi
           </Badge>
         );
       case "proses":
         return (
-          <Badge className="bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-400">
+          <Badge className="bg-blue-50 text-blue-700 border border-blue-200">
             <RefreshCw className="h-3 w-3 mr-1" />
             Proses
           </Badge>
         );
       case "belum-direvisi":
         return (
-          <Badge className="bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/30 dark:text-orange-400">
+          <Badge className="bg-orange-50 text-orange-700 border border-orange-200">
             <FileX className="h-3 w-3 mr-1" />
             Belum Direvisi
           </Badge>
@@ -88,27 +88,27 @@ export function StudentGradingCard({
   const getGradeBadgeColor = (grade: string) => {
     switch (grade) {
       case "A":
-        return "bg-green-500 text-white dark:bg-green-600";
+        return "bg-green-500 text-white";
       case "B":
-        return "bg-blue-500 text-white dark:bg-blue-600";
+        return "bg-blue-500 text-white";
       case "C":
-        return "bg-yellow-500 text-white dark:bg-yellow-600";
+        return "bg-yellow-500 text-white";
       case "D":
-        return "bg-orange-500 text-white dark:bg-orange-600";
+        return "bg-orange-500 text-white";
       case "E":
-        return "bg-red-500 text-white dark:bg-red-600";
+        return "bg-red-500 text-white";
       default:
-        return "bg-gray-500 text-white dark:bg-gray-600";
+        return "bg-gray-500 text-white";
     }
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-200 dark:bg-gray-800 dark:border-gray-700">
+    <Card className="hover:shadow-lg transition-shadow duration-200">
       <CardHeader className="pb-3">
         <div className="flex items-start gap-4">
           <Avatar className="h-16 w-16 flex-shrink-0">
             <AvatarImage src={student.photo} alt={student.name} />
-            <AvatarFallback className="bg-blue-100 text-blue-700 dark:bg-gray-700 dark:text-gray-200 text-xl font-semibold">
+            <AvatarFallback className="bg-blue-100 text-blue-700 text-xl font-semibold">
               {student.name
                 .split(" ")
                 .map((n) => n[0])
@@ -119,10 +119,10 @@ export function StudentGradingCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-lg leading-tight dark:text-gray-100">
+                <h3 className="font-semibold text-lg leading-tight">
                   {student.name}
                 </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                <p className="text-sm text-gray-500 mt-0.5">
                   {student.studentId}
                 </p>
               </div>
@@ -139,13 +139,13 @@ export function StudentGradingCard({
         {/* Company Info */}
         <div className="flex items-start gap-3">
           <div className="mt-0.5">
-            <Building2 className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+            <Building2 className="h-4 w-4 text-gray-500 flex-shrink-0" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-xs text-gray-500 mb-1">
               Perusahaan
             </p>
-            <p className="font-semibold text-gray-900 dark:text-gray-100">
+            <p className="font-semibold text-gray-900">
               {student.company}
             </p>
           </div>
@@ -154,13 +154,13 @@ export function StudentGradingCard({
         {/* Intern Period */}
         <div className="flex items-start gap-3">
           <div className="mt-0.5">
-            <Calendar className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+            <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-xs text-gray-500 mb-1">
               Periode Magang
             </p>
-            <p className="text-sm text-gray-900 dark:text-gray-100 font-medium">
+            <p className="text-sm text-gray-900 font-medium">
               {new Date(student.internPeriod.start).toLocaleDateString(
                 "id-ID",
                 {
@@ -182,13 +182,13 @@ export function StudentGradingCard({
         {/* Field Supervisor */}
         <div className="flex items-start gap-3">
           <div className="mt-0.5">
-            <User className="h-4 w-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+            <User className="h-4 w-4 text-gray-500 flex-shrink-0" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+            <p className="text-xs text-gray-500 mb-1">
               Pembimbing Lapangan
             </p>
-            <p className="font-semibold text-gray-900 dark:text-gray-100">
+            <p className="font-semibold text-gray-900">
               {student.fieldSupervisor}
             </p>
           </div>

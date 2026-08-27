@@ -1,6 +1,6 @@
 import { jsPDF } from "jspdf";
 
-import type { MailEntry } from "../../hearing-dosen/types/dosen";
+import type { MailEntry } from "../types/dosen";
 
 function getImageFormatFromDataUrl(dataUrl: string): "PNG" | "JPEG" {
   if (dataUrl.startsWith("data:image/png")) return "PNG";
@@ -42,10 +42,10 @@ export async function generateSuratKesediaanPdf(
   const formattedDate = Number.isNaN(letterDate.getTime())
     ? entry.tanggal
     : new Intl.DateTimeFormat("id-ID", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(letterDate);
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(letterDate);
 
   const pdf = new jsPDF("portrait", "mm", "a4");
   let y = 22;

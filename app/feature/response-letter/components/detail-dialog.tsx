@@ -177,21 +177,21 @@ function DetailDialog({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-green-50 dark:bg-green-950/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                   <div className="flex items-start gap-3">
                     <div className="w-10 h-10 bg-green-600 text-white rounded-lg flex items-center justify-center flex-shrink-0">
                       <FileText className="w-5 h-5" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
+                      <p className="font-semibold text-green-900 mb-1">
                         File Surat Balasan
                       </p>
-                      <p className="text-sm text-green-800 dark:text-green-200 mb-4">
+                      <p className="text-sm text-green-800 mb-4">
                         Surat balasan telah diupload dan siap ditinjau
                       </p>
                       <Button
                         variant="outline"
-                        className="border-green-600 text-green-600 hover:bg-green-50 dark:hover:bg-green-950"
+                        className="border-green-600 text-green-600 hover:bg-green-50:bg-green-950"
                         onClick={() => {
                           const url = student.responseFileUrl ?? "#";
                           try {

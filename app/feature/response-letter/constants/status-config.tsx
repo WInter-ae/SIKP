@@ -29,9 +29,9 @@ export function getResponseLetterStatusConfig(
         "Surat balasan Anda sedang dalam proses review oleh admin. Mohon tunggu konfirmasi lebih lanjut.",
       icon: <Clock className="size-6" />,
       iconBg: "bg-gray-500",
-      bg: "bg-gray-50 dark:bg-gray-950/20",
+      bg: "bg-gray-50",
       border: "border-gray-500",
-      textColor: "text-gray-600 dark:text-gray-400",
+      textColor: "text-gray-600",
     },
     APPROVED: {
       title: "Surat Balasan(berstatus: Disetujui) Terverifikasi",
@@ -39,9 +39,9 @@ export function getResponseLetterStatusConfig(
         "Surat balasan Anda telah diverifikasi oleh admin. Sekarang, anda diizinkan untuk melaksanakan kerja praktik.",
       icon: <CheckCircle2 className="size-6" />,
       iconBg: "bg-green-600",
-      bg: "bg-green-50 dark:bg-green-950/20",
+      bg: "bg-green-50",
       border: "border-green-600",
-      textColor: "text-green-600 dark:text-green-400",
+      textColor: "text-green-600",
     },
     REJECTED: {
       title: "Surat Balasan(berstatus: Ditolak) Terverifikasi",
@@ -49,9 +49,9 @@ export function getResponseLetterStatusConfig(
         "Surat balasan Anda telah diverifikasi oleh admin. Dikarenakan surat balasan Anda ditolak, silakan ajukan ulang dengan mencari instansi lain.",
       icon: <XCircle className="size-6" />,
       iconBg: "bg-red-600",
-      bg: "bg-red-50 dark:bg-red-950/20",
+      bg: "bg-red-50",
       border: "border-red-600",
-      textColor: "text-red-600 dark:text-red-400",
+      textColor: "text-red-600",
     },
   };
 

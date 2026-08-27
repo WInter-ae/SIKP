@@ -409,28 +409,28 @@ function SubmissionAdminPage() {
             title={stats[0].title}
             value={stats[0].value}
             icon={stats[0].icon}
-            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            iconBgColor="bg-blue-50"
             className="border-l-4 border-l-blue-600 shadow-sm"
           />
           <StatCard
             title={stats[1].title}
             value={stats[1].value}
             icon={stats[1].icon}
-            iconBgColor="bg-yellow-50 dark:bg-yellow-900/20"
+            iconBgColor="bg-yellow-50"
             className="border-l-4 border-l-yellow-300 shadow-sm"
           />
           <StatCard
             title={stats[2].title}
             value={stats[2].value}
             icon={stats[2].icon}
-            iconBgColor="bg-red-50 dark:bg-red-900/20"
+            iconBgColor="bg-red-50"
             className="border-l-4 border-l-red-500 shadow-sm"
           />
           <StatCard
             title={stats[3].title}
             value={stats[3].value}
             icon={stats[3].icon}
-            iconBgColor="bg-blue-50 dark:bg-blue-900/20"
+            iconBgColor="bg-blue-50"
             className="border-l-4 border-l-blue-600 shadow-sm"
           />
         </div>

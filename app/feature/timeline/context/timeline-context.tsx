@@ -37,10 +37,15 @@ export function TimelineProvider({ children }: { children: ReactNode }) {
     {
       id: 1,
       step: TimelineStep.BUAT_TIM,
-      title: "Pembuatan Tim",
+      title: "Bentuk Tim",
       active: false,
     },
-    { id: 2, step: TimelineStep.PENGAJUAN, title: "Pengajuan", active: false },
+    {
+      id: 2,
+      step: TimelineStep.PENGAJUAN,
+      title: "Pengajuan",
+      active: false,
+    },
     {
       id: 3,
       step: TimelineStep.SURAT_PENGANTAR,

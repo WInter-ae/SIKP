@@ -40,14 +40,14 @@ function CoverLetterVerificationDialog({
     entry.teamMembers && entry.teamMembers.length > 0
       ? entry.teamMembers
       : [
-          {
-            id: `fallback-${entry.id}`,
-            name: entry.namaMahasiswa || "-",
-            nim: entry.nim || "-",
-            prodi: entry.programStudi || "-",
-            role: "Ketua",
-          },
-        ];
+        {
+          id: `fallback-${entry.id}`,
+          name: entry.namaMahasiswa || "-",
+          nim: entry.nim || "-",
+          prodi: entry.programStudi || "-",
+          role: "Ketua",
+        },
+      ];
 
   const handleCloseMainDialog = () => {
     setIsRejectFormVisible(false);
@@ -112,52 +112,51 @@ function CoverLetterVerificationDialog({
         <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 flex-1 overflow-y-auto scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Student Information */}
           <div className="rounded-lg border border-border bg-muted/30 p-4 sm:p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-foreground">
-              Informasi Tim Kerja Praktik
-            </h3>
-          </div>
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold text-foreground">
+                Informasi Tim Kerja Praktik
+              </h3>
+            </div>
 
-          <div className="bg-primary/10 p-4 rounded-lg">
-            <p className="text-sm text-muted-foreground">
-              Dosen Pembimbing Kerja Praktik:
-            </p>
-            <p className="font-semibold text-primary text-lg">
-              {entry.supervisor || "-"}
-            </p>
-          </div>
+            <div className="bg-primary/10 p-4 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                Dosen Pembimbing Kerja Praktik:
+              </p>
+              <p className="font-semibold text-primary text-lg">
+                {entry.supervisor || "-"}
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {displayTeamMembers.map((member) => (
-              <div
-                key={member.id}
-                className={`min-w-0 p-4 rounded-lg border ${
-                  member.role === "Ketua"
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {displayTeamMembers.map((member) => (
+                <div
+                  key={member.id}
+                  className={`min-w-0 p-4 rounded-lg border ${member.role === "Ketua"
                     ? "border-primary/30 bg-primary/5"
                     : "border-border bg-muted/50"
-                }`}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <Badge
-                    variant={member.role === "Ketua" ? "default" : "secondary"}
-                  >
-                    {member.role}
-                  </Badge>
+                    }`}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge
+                      variant={member.role === "Ketua" ? "default" : "secondary"}
+                    >
+                      {member.role}
+                    </Badge>
+                  </div>
+                  <p className="font-bold text-foreground break-words">
+                    {member.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground break-all">
+                    {member.nim || "-"}
+                  </p>
+                  <p className="text-sm text-muted-foreground/80 break-words">
+                    {member.prodi || "-"}
+                  </p>
                 </div>
-                <p className="font-bold text-foreground break-words">
-                  {member.name}
-                </p>
-                <p className="text-sm text-muted-foreground break-all">
-                  {member.nim || "-"}
-                </p>
-                <p className="text-sm text-muted-foreground/80 break-words">
-                  {member.prodi || "-"}
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
           <div className="rounded-lg border border-border p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground text-center sm:text-left">

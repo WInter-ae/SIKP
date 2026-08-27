@@ -59,12 +59,12 @@ export default function DashboardWakdekPage({
         <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
 
-      <Card className="border-l-4 border-l-blue-600 bg-blue-50/30 dark:bg-blue-900/10 shadow-sm hover:shadow-md transition-shadow duration-200">
+      <Card className="border-l-4 border-l-blue-600 bg-blue-50/30 shadow-sm hover:shadow-md transition-shadow duration-200">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             Total Ajuan Surat Pengantar yang Masuk
           </CardTitle>
-          <div className="p-2 rounded-full bg-background border border-border shadow-xs text-blue-600 dark:text-blue-400">
+          <div className="p-2 rounded-full bg-background border border-border shadow-xs text-blue-600">
             <ListOrdered className="h-4 w-4" />
           </div>
         </CardHeader>
@@ -81,7 +81,7 @@ export default function DashboardWakdekPage({
       </Card>
 
       {/* Activity Log */}
-      <Card className="shadow-lg border-none bg-linear-to-b from-background to-yellow-50/20 dark:to-yellow-900/5 overflow-hidden">
+      <Card className="shadow-lg border-none bg-linear-to-b from-background to-yellow-50/20 overflow-hidden">
         <div className="h-1.5 w-full bg-linear-to-r from-yellow-300 to-transparent" />
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

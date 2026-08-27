@@ -46,15 +46,15 @@ export default function ReportDetailPage() {
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "draft":
-        return "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+        return "bg-gray-200 text-gray-700";
       case "review":
-        return "bg-yellow-200 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+        return "bg-yellow-200 text-yellow-800";
       case "approved":
-        return "bg-blue-200 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+        return "bg-blue-200 text-blue-800";
       case "published":
-        return "bg-green-200 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+        return "bg-green-200 text-green-800";
       default:
-        return "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+        return "bg-gray-200 text-gray-700";
     }
   };
 

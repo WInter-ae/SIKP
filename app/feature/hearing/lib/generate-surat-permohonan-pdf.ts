@@ -1,7 +1,7 @@
 import { jsPDF } from "jspdf";
 import { getAuthToken } from "~/lib/auth-client";
 
-import type { MailEntry } from "../../hearing-dosen/types/dosen";
+import type { MailEntry } from "../types/dosen";
 
 type SignatureRenderSource = {
   source: string;
@@ -124,7 +124,7 @@ function calculateLamaKP(startStr?: string, endStr?: string): string {
   const months = Math.max(
     1,
     (end.getFullYear() - start.getFullYear()) * 12 +
-      (end.getMonth() - start.getMonth()),
+    (end.getMonth() - start.getMonth()),
   );
   return `(${months}) bulan`;
 }

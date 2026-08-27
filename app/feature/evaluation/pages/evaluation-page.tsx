@@ -135,41 +135,41 @@ export default function EvaluationPage() {
       title: "Total Mahasiswa",
       value: totalStudents,
       icon: Users,
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
     },
     {
       title: "Mahasiswa Lulus",
       value: passedStudents,
       icon: CheckCircle2,
-      color: "text-green-600 dark:text-green-400",
-      bgColor: "bg-green-50 dark:bg-green-900/20",
+      color: "text-green-600",
+      bgColor: "bg-green-50",
     },
     {
       title: "Rata-rata Nilai",
       value: averageScore.toFixed(2),
       icon: TrendingUp,
-      color: "text-purple-600 dark:text-purple-400",
-      bgColor: "bg-purple-50 dark:bg-purple-900/20",
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
     },
     {
       title: "Nilai Tertinggi",
       value: highestScore.toFixed(2),
       icon: Award,
-      color: "text-yellow-600 dark:text-yellow-400",
-      bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
+      color: "text-yellow-600",
+      bgColor: "bg-yellow-50",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Penilaian Kerja Praktik
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600">
             Kelola dan pantau penilaian mahasiswa Kerja Praktik
           </p>
         </div>
@@ -177,14 +177,14 @@ export default function EvaluationPage() {
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, idx) => (
-            <Card key={idx} className="dark:bg-gray-800 dark:border-gray-700">
+            <Card key={idx} className="">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                    <p className="text-sm text-gray-600 mb-1">
                       {stat.title}
                     </p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    <p className="text-3xl font-bold text-gray-900">
                       {isLoading ? "..." : stat.value}
                     </p>
                   </div>
@@ -198,7 +198,7 @@ export default function EvaluationPage() {
         </div>
 
         {/* Search and Filters */}
-        <Card className="dark:bg-gray-800 dark:border-gray-700">
+        <Card className="">
           <CardContent className="p-6">
             <div className="flex flex-col md:flex-row gap-4">
               {/* Search */}
@@ -212,7 +212,7 @@ export default function EvaluationPage() {
                     setSearchQuery(e.target.value);
                     handleFilterChange();
                   }}
-                  className="pl-10 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                  className="pl-10"
                 />
               </div>
 
@@ -224,10 +224,10 @@ export default function EvaluationPage() {
                   handleFilterChange();
                 }}
               >
-                <SelectTrigger className="w-full md:w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                <SelectContent className="">
                   <SelectItem value="all">Semua Status</SelectItem>
                   <SelectItem value="passed">Lulus</SelectItem>
                   <SelectItem value="failed">Tidak Lulus</SelectItem>
@@ -242,10 +242,10 @@ export default function EvaluationPage() {
                   handleFilterChange();
                 }}
               >
-                <SelectTrigger className="w-full md:w-[200px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Nilai" />
                 </SelectTrigger>
-                <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+                <SelectContent className="">
                   <SelectItem value="all">Semua Nilai</SelectItem>
                   <SelectItem value="A">A</SelectItem>
                   <SelectItem value="B">B</SelectItem>
@@ -257,7 +257,7 @@ export default function EvaluationPage() {
             </div>
 
             {/* Results count */}
-            <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-4 text-sm text-gray-600">
               Menampilkan {paginatedEvaluations.length} dari{" "}
               {filteredEvaluations.length} mahasiswa
             </div>
@@ -266,7 +266,7 @@ export default function EvaluationPage() {
 
         {/* Students List */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
             Daftar Mahasiswa
           </h2>
           <StudentList
@@ -278,7 +278,7 @@ export default function EvaluationPage() {
           {/* Pagination */}
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-between">
-              <div className="text-sm text-gray-600 dark:text-gray-400">
+              <div className="text-sm text-gray-600">
                 Halaman {currentPage} dari {totalPages}
               </div>
               <div className="flex gap-2">
@@ -289,7 +289,7 @@ export default function EvaluationPage() {
                     setCurrentPage((prev) => Math.max(1, prev - 1))
                   }
                   disabled={currentPage === 1}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                  className=""
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Sebelumnya
@@ -301,7 +301,7 @@ export default function EvaluationPage() {
                     setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                   }
                   disabled={currentPage === totalPages}
-                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                  className=""
                 >
                   Berikutnya
                   <ChevronRight className="h-4 w-4 ml-1" />

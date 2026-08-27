@@ -412,7 +412,7 @@ export default function PenilaianKriteriaPage() {
       )}
 
       {isLocked && (
-        <Alert variant="destructive" className="border-amber-500/50 bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-200">
+        <Alert variant="destructive" className="border-amber-500/50 bg-amber-50 text-amber-800">
           <AlertCircle className="h-4 w-4 text-amber-600" />
           <AlertTitle className="font-bold">Kriteria Terkunci</AlertTitle>
           <AlertDescription>

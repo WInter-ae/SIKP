@@ -316,7 +316,7 @@ function ResponseLetterPage() {
       {/* Header Section */}
       <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
-          Halaman Surat Balasan
+          Halaman Kelola Surat Balasan
         </h1>
         <p className="text-sm text-muted-foreground">
           Upload surat balasan dan pantau status persetujuan kerja praktik
@@ -397,7 +397,7 @@ function ResponseLetterPage() {
             {/* Upload Surat Balasan Section */}
             <CardHeader className="px-0 pt-0 mb-2">
               <CardTitle className="text-base font-semibold text-foreground">
-                Upload Surat Balasan
+                Surat Balasan Instansi
               </CardTitle>
             </CardHeader>
             <Separator className="mb-4" />
@@ -409,7 +409,7 @@ function ResponseLetterPage() {
                   // After file selection OR after submission: Show "Terupload" button or "Belum Diupload"
                   <div className="mb-2">
                     <p className="block text-sm font-medium mb-2">
-                      Surat Balasan dari Perusahaan
+                      Upload Surat Balasan
                     </p>
                     <div className="flex items-center gap-2 flex-wrap">
                       {isLeader ? (

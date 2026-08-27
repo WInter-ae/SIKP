@@ -91,10 +91,10 @@ function CoverLetterPage() {
       {/* Header Section */}
       <div className="mb-6 relative pb-2">
         <h1 className="text-xl sm:text-3xl font-bold text-foreground mb-1">
-          Status Pengajuan Surat Pengantar
+          Halaman Status Pengajuan Kerja Praktik
         </h1>
         <p className="text-sm text-muted-foreground">
-          Monitor status pengajuan surat pengantar kerja praktik Anda
+          Pantau surat pengantar kerja praktik
         </p>
         <div className="absolute bottom-0 left-0 h-1 w-20 bg-linear-to-r from-blue-600 via-yellow-300 to-red-500 rounded-full" />
       </div>
